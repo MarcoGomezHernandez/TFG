@@ -1,0 +1,6 @@
+https://doi.org/10.3389/fninf.2019.00011
+https://doi.org/10.1007/s12021-019-09440-z
+https://doi.org/10.1016/j.neunet.2023.04.034
+
+https://github.com/Pablosanmar97/Parametrization_chemical
+https://github.com/GNB-UAM/Neun/tree/master
