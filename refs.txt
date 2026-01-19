@@ -1,6 +1,6 @@
-https://doi.org/10.3389/fninf.2019.00011
-https://doi.org/10.1007/s12021-019-09440-z
-https://doi.org/10.1016/j.neunet.2023.04.034
+https://link.springer.com/article/10.1007/s12021-019-09440-z
+https://www.frontiersin.org/journals/neuroinformatics/articles/10.3389/fninf.2019.00011/full
+https://www.sciencedirect.com/science/article/pii/S0893608023002204?via%3Dihub
 
 https://github.com/Pablosanmar97/Parametrization_chemical
 https://github.com/GNB-UAM/Neun/tree/master
