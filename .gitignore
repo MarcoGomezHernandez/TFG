@@ -1,12 +1,7 @@
-*.pdf
-*.aux
-*.fdb_latexmk
-*.fls
-*.log
-*.synctex.gz
 *.csv
 .venv/*
 *.zip
+
 *.xdy
 *.toc
 *.out
@@ -26,3 +21,9 @@
 *.bbl
 *.acn
 *.gnuplot
+*.pdf
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
