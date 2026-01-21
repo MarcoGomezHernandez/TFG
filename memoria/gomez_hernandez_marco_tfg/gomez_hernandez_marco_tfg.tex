@@ -1,58 +1,65 @@
-% Archivo: gomez_hernandez_marco_tfg.tex
-\documentclass[epsbased,copyright,final,printable,covers,tfg]{tfgtfmthesisuam}
+% Configuración idéntica a martin_masuda_antonio_tfg.pdf
+% epsbased: Escuela Politécnica Superior
+% tfg: Trabajo Fin de Grado
+% final: Elimina la marca de agua "DRAFT"
+% printable: Configura márgenes para impresión a doble cara (encuadernación)
+% copyright: Muestra la página de derechos reservados
+% covers: Genera la portada y contraportada oficiales
+% firstnumbered: Empieza la numeración en el capítulo 1
+% loa, loc, loe, lof, lot: Genera listas de Algoritmos, Códigos, Ecuaciones, Figuras y Tablas
+\documentclass[epsbased,tfg,final,printable,copyright,covers,firstnumbered,loa,loc,loe,lof,lot]{tfgtfmthesisuam}
 
-% --- Metadatos del Estudiante y TFG ---
-\advisor{Nombre del Tutor}
+% Datos del TFG (Personalización para Marco Gomez Hernandez)
 \author{Marco Gomez Hernandez}
 \title{Título del Trabajo Fin de Grado}
-\levelin{Ingeniería Informática}
-\copyrightdate{Junio 2026}
+\subtitle{Subtítulo opcional del trabajo}
+\advisor{Nombre del Tutor}
+% Si tienes cotutor, descomenta la siguiente línea:
+% \coadvisor{Nombre del Cotutor}
 
-% --- Datos de la Facultad (EPS) ---
+\levelin{Grado en Ingeniería Informática} % Titulación
+\degreeyear{2026} % Año
+\degreemonth{Junio} % Mes
+
+% Datos de contacto para la contraportada (según formato UAM)
 \coverdata{
   Escuela Politécnica Superior \\
   Universidad Autónoma de Madrid \\
   C\textbackslash Francisco Tomás y Valiente nº 11
 }
 
-% --- Archivos de Inicio (Resúmenes y Agradecimientos) ---
-\prefacefile{inicio/prefacio}       % Opcional
-\ackfile{inicio/agradecimientos}    % Obligatorio
-\resumenfile{inicio/resumen}        % Obligatorio
-\abstractfile{inicio/abstract}      % Obligatorio
+% Configuración de carpetas
+\graphicsdir{img} % Carpeta de imágenes
+\logosdir{img}    % Carpeta de logos (copiados de la plantilla original)
 
-\keywords{Palabra clave 1, Palabra clave 2, Palabra clave 3}
-\palabrasclave{Keyword 1, Keyword 2, Keyword 3}
+% Archivos de inicio
+\prefacefile{inicio/prefacio}
+\ackfile{inicio/agradecimientos}
+\resumenfile{inicio/resumen}
+\abstractfile{inicio/abstract}
 
-% --- Configuración de fuentes de datos ---
+% Palabras clave
+\keywords{Keyword1, Keyword2, Keyword3}
+\palabrasclave{PalabraClave1, PalabraClave2, PalabraClave3}
+
+% Configuración de bibliografía
 \bibliographyconfig{bib/bibliografia}
-\graphicsdir{img}
-\logosdir{img}
-\codesdir{codes}    % Carpeta para códigos fuente
-\datadir{data}      % Carpeta para datos de gráficas
 
 \begin{document}
 
-% NOTA: Los índices (Figuras, Tablas, Ecuaciones, Algoritmos, Códigos) 
-% se generan AUTOMÁTICAMENTE al compilar gracias a la clase tfgtfmthesisuam.
+% -------------------------------------------------------------------
+% CONTENIDO DEL TRABAJO
+% -------------------------------------------------------------------
 
-% --- CAPÍTULOS ---
-% La sintaxis de esta plantilla es: \chapter{Título del Capítulo}{ruta/del/fichero}
+% Capítulos (Estructura calcada al ejemplo, pero contenido genérico)
+\input{capitulos/1_introduccion}
+\input{capitulos/2_desarrollo_generico}
+\input{capitulos/3_conclusiones}
 
-% 1. Introducción (Motivación, Objetivos, Estructura)
-\chapter{Introducción\label{CAP:INTRO}}{capitulos/01_Introduccion}
-
-% 2. Estado del Arte / Conceptos Teóricos
-\chapter{Estado del Arte\label{CAP:ESTADO}}{capitulos/02_EstadoArte}
-
-% 3. Desarrollo / Metodología (Aquí ponemos ejemplos para rellenar los índices)
-\chapter{Desarrollo y Ejemplos\label{CAP:DESARROLLO}}{capitulos/03_Desarrollo}
-
-% 4. Conclusiones y Trabajo Futuro
-\chapter{Conclusiones\label{CAP:CONCLUSIONES}}{capitulos/04_Conclusiones}
-
-% --- APÉNDICES ---
+% -------------------------------------------------------------------
+% APÉNDICES
+% -------------------------------------------------------------------
 \appendix
-\chapter{Manual de Usuario\label{APD:MANUAL}}{apendices/apendiceA}
+\input{apendices/apendice_a}
 
 \end{document}
