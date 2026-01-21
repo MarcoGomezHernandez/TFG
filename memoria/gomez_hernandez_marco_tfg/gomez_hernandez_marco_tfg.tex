@@ -7,21 +7,18 @@
 % arara: pdflatex: {shell: yes}
 % arara: clean: {files: [gomez_hernandez_marco_tfg.aux, gomez_hernandez_marco_tfg.idx, gomez_hernandez_marco_tfg.ilg, gomez_hernandez_marco_tfg.ind, gomez_hernandez_marco_tfg.bbl, gomez_hernandez_marco_tfg.bcf, gomez_hernandez_marco_tfg.blg, gomez_hernandez_marco_tfg.run.xml, gomez_hernandez_marco_tfg.fdb_latexmk, gomez_hernandez_marco_tfg.fls, gomez_hernandez_marco_tfg.loe, gomez_hernandez_marco_tfg.lof, gomez_hernandez_marco_tfg.lol, gomez_hernandez_marco_tfg.lot, gomez_hernandez_marco_tfg.ltb, gomez_hernandez_marco_tfg.out, gomez_hernandez_marco_tfg.toc, gomez_hernandez_marco_tfg.upa, gomez_hernandez_marco_tfg.upb, gomez_hernandez_marco_tfg.acn, gomez_hernandez_marco_tfg.acr, gomez_hernandez_marco_tfg.alg, gomez_hernandez_marco_tfg.glg, gomez_hernandez_marco_tfg.glo, gomez_hernandez_marco_tfg.gls, gomez_hernandez_marco_tfg.glsdefs, gomez_hernandez_marco_tfg.idx,  gomez_hernandez_marco_tfg.ilg, gomez_hernandez_marco_tfg.xdy, gomez_hernandez_marco_tfg.loa, gomez_hernandez_marco_tfg.gnuploterrors , gomez_hernandez_marco_tfg.mw, gomez_hernandez_marco_tfg.fdb_latexmk ]}
 
-% Opciones añadidas: loa (algoritmos), loc (código), lof (figuras), lot (tablas), loe (ecuaciones) para forzar su aparición.
-\documentclass[epsbased,copyright,final,printable,covers,extendedindex,firstnumbered,tfg,loa,loc,lof,lot,loe]{tfgtfmthesisuam}
+\documentclass[epsbased,gnuplot,copyright,final,covers,extendedindex,firstnumbered,tfg,loa,loc,loe,lof,lot,lotb]{tfgtfmthesisuam}
 
-% --- DATOS DEL TFG ---
 \advisor{Nombre del Tutor}
-\levelin{Grado en Ingeniería Informática} % Ajusta tu grado
+\levelin{Grado en Ingeniería Informática}
 \title{Título del Trabajo Fin de Grado}
 \subtitle{Subtítulo opcional}
 \author{Marco Gómez Hernández}
 \privateaddress{Dirección Privada Opcional}
 \copyrightdate{\today}
 
-% --- PRELIMINARES ---
 \dedication{A mi familia y amigos.}
-\famouscite{Cita famosa opcional.\\[0.1em] \begin{flushright}Autor Cita\end{flushright}}
+\famouscite{Lo peor es cuando has terminado un capítulo\\y la máquina de escribir no aplaude. \\[0.1em] \begin{flushright}Orson Welles\end{flushright}}
 
 \prefacefile{inicio/prefacio}
 \ackfile{inicio/agradecimientos}
@@ -31,30 +28,26 @@
 \keywords{Latex, TFG, UAM, Ingeniería}
 \palabrasclave{Latex, TFG, UAM, Engineering}
 
-% Datos de la portada (Ajustar según necesidad)
 \coverdata{
   Escuela Politécnica Superior \\
   Universidad Autónoma de Madrid \\
   C\textbackslash Francisco Tomás y Valiente nº 11
 }
 
-% --- CONFIGURACIÓN DE RUTAS ---
-\bibliographyconfig{bibliografia/bibliografia} % Nombre del .bib sin extensión
-\datadir{data}     % Si usas datos externos
-\graphicsdir{img}  % Carpeta de imágenes
-\logosdir{img}     % Carpeta de logos (si tienes propios, si no usa los de la clase instalada)
-\codesdir{codes}   % Carpeta de código
+\bibliographyconfig{bibliografia/bibliografia}
+
+\datadir{data}
+\graphicsdir{img}
+\logosdir{img}
+\codesdir{codes}
 
 \begin{document}
 
-% --- CAPÍTULOS ---
-% La clase tfgtfmthesisuam usa \chapter{Título}{Ruta del fichero}
-\chapter{Introducción\label{chap:intro}}{capitulos/01_introduccion}
-\chapter{Desarrollo y Ejemplos\label{chap:desarrollo}}{capitulos/02_desarrollo_ejemplos}
-\chapter{Conclusiones\label{chap:conclusiones}}{capitulos/03_conclusiones}
+\chapter{Introducción\label{CAP:INTRO}}{capitulos/01_introduccion}
+\chapter{Estado del arte\label{CAP:ESTADO_DEL_ARTE}}{capitulos/02_estado_del_arte}
+\chapter{Conclusión\label{CAP:CONCLUSION}}{capitulos/03_conclusion}
 
-% --- APÉNDICES ---
 \appendix
-\chapter{Apéndice A\label{app:A}}{apendices/apendice01}
+\chapter{Apéndice A\label{CAP:APENDICE_A}}{apendices/apendice_a}
 
 \end{document}
