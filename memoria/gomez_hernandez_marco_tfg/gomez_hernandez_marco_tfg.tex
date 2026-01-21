@@ -1,0 +1,58 @@
+% Archivo: gomez_hernandez_marco_tfg.tex
+\documentclass[epsbased,copyright,final,printable,covers,tfg]{tfgtfmthesisuam}
+
+% --- Metadatos del Estudiante y TFG ---
+\advisor{Nombre del Tutor}
+\author{Marco Gomez Hernandez}
+\title{Título del Trabajo Fin de Grado}
+\levelin{Ingeniería Informática}
+\copyrightdate{Junio 2026}
+
+% --- Datos de la Facultad (EPS) ---
+\coverdata{
+  Escuela Politécnica Superior \\
+  Universidad Autónoma de Madrid \\
+  C\textbackslash Francisco Tomás y Valiente nº 11
+}
+
+% --- Archivos de Inicio (Resúmenes y Agradecimientos) ---
+\prefacefile{inicio/prefacio}       % Opcional
+\ackfile{inicio/agradecimientos}    % Obligatorio
+\resumenfile{inicio/resumen}        % Obligatorio
+\abstractfile{inicio/abstract}      % Obligatorio
+
+\keywords{Palabra clave 1, Palabra clave 2, Palabra clave 3}
+\palabrasclave{Keyword 1, Keyword 2, Keyword 3}
+
+% --- Configuración de fuentes de datos ---
+\bibliographyconfig{bib/bibliografia}
+\graphicsdir{img}
+\logosdir{img}
+\codesdir{codes}    % Carpeta para códigos fuente
+\datadir{data}      % Carpeta para datos de gráficas
+
+\begin{document}
+
+% NOTA: Los índices (Figuras, Tablas, Ecuaciones, Algoritmos, Códigos) 
+% se generan AUTOMÁTICAMENTE al compilar gracias a la clase tfgtfmthesisuam.
+
+% --- CAPÍTULOS ---
+% La sintaxis de esta plantilla es: \chapter{Título del Capítulo}{ruta/del/fichero}
+
+% 1. Introducción (Motivación, Objetivos, Estructura)
+\chapter{Introducción\label{CAP:INTRO}}{capitulos/01_Introduccion}
+
+% 2. Estado del Arte / Conceptos Teóricos
+\chapter{Estado del Arte\label{CAP:ESTADO}}{capitulos/02_EstadoArte}
+
+% 3. Desarrollo / Metodología (Aquí ponemos ejemplos para rellenar los índices)
+\chapter{Desarrollo y Ejemplos\label{CAP:DESARROLLO}}{capitulos/03_Desarrollo}
+
+% 4. Conclusiones y Trabajo Futuro
+\chapter{Conclusiones\label{CAP:CONCLUSIONES}}{capitulos/04_Conclusiones}
+
+% --- APÉNDICES ---
+\appendix
+\chapter{Manual de Usuario\label{APD:MANUAL}}{apendices/apendiceA}
+
+\end{document}
