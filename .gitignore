@@ -1,6 +1,7 @@
-*.csv
 .venv/*
 *.zip
+*.csv
+*.pdf
 
 *.xdy
 *.toc
@@ -21,9 +22,9 @@
 *.bbl
 *.acn
 *.gnuplot
-*.pdf
 *.aux
 *.fdb_latexmk
 *.fls
 *.log
 *.synctex.gz
+*.ist
