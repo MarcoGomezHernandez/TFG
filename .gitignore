@@ -31,3 +31,7 @@ build/*
 *.log
 *.synctex.gz
 *.ist
+*.acr
+*.alg
+*.glg
+*.gls
