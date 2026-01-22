@@ -3,6 +3,9 @@
 *.csv
 *.pdf
 
+.vscode/*
+build/*
+
 *.xdy
 *.toc
 *.out
