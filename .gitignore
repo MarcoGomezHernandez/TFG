@@ -30,7 +30,6 @@ build/*
 *.fls
 *.log
 *.synctex.gz
-*.ist
 *.acr
 *.alg
 *.glg
