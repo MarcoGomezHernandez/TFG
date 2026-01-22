@@ -2,6 +2,27 @@
 
 Como se indica en la literatura técnica \cite{primes}, es fundamental seguir estándares de codificación. 
 
+\begin{table}[h]
+\centering
+\begin{tabular}{|r|r|r|}
+\hline
+DOF & L2 Error & Level \\
+\hline
+5 & 8.312e-02 & 2 \\
+17 & 2.547e-02 & 3 \\
+49 & 7.407e-03 & 4 \\
+129 & 2.102e-03 & 5 \\
+321 & 5.874e-04 & 6 \\
+769 & 1.623e-04 & 7 \\
+1793 & 4.442e-05 & 8 \\
+4097 & 1.207e-05 & 9 \\
+9217 & 3.261e-06 & 10 \\
+\hline
+\end{tabular}
+\caption{Ejemplo de tabla con datos de error L2 y niveles.}
+\label{tab:ejemplo_datos}
+\end{table}
+
 En el \cref{COD:EJEMPLO_C} se puede observar una implementación básica en lenguaje C.
 
 \CCode[COD:EJEMPLO_C]{Programa Hola Mundo}{Implementación básica en C para demostrar la inclusión de ficheros externos}{ejemplo.c}{1}{6}{1}
