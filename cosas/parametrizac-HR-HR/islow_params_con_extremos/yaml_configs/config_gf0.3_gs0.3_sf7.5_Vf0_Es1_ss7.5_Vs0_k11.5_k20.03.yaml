@@ -1,0 +1,40 @@
+HR1:
+  e: 3.281
+  mu: 0.0029
+  S: 4
+  a: 1
+  b: 3
+  c: 1
+  d: 5
+  xr: -1.6
+  vh: 1
+HR2:
+  e: 3.281
+  mu: 0.0039
+  S: 4
+  a: 1
+  b: 3
+  c: 1
+  d: 5
+  xr: -1.6
+  vh: 1
+Chemical-HR1-HR2:
+  gfast: 0.3
+  Esyn: 1
+  sfast: 7.5
+  Vfast: 0
+  Vslow: 0
+  gslow: 0.3
+  k1: 1.5
+  k2: 0.03
+  sslow: 7.5
+Chemical-HR2-HR1:
+  gfast: 0.015
+  Esyn: -1.5
+  sfast: 0.2
+  Vfast: 0
+  Vslow: 0
+  gslow: 0.025
+  k1: 1
+  k2: 0.03
+  sslow: 1
