@@ -1,6 +1,7 @@
 https://link.springer.com/article/10.1007/s12021-019-09440-z
 https://www.frontiersin.org/journals/neuroinformatics/articles/10.3389/fninf.2019.00011/full
 https://www.sciencedirect.com/science/article/pii/S0893608023002204?via%3Dihub
+https://direct.mit.edu/neco/article/11/5/1079/6277/Network-Stability-from-Activity-Dependent (la de GolowaschNeuralComp99.pdf, que no tengo acceso online)
 
 https://github.com/Pablosanmar97/Parametrization_chemical
 https://github.com/GNB-UAM/Neun/tree/master
