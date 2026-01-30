@@ -5,3 +5,5 @@ https://direct.mit.edu/neco/article/11/5/1079/6277/Network-Stability-from-Activi
 
 https://github.com/Pablosanmar97/Parametrization_chemical
 https://github.com/GNB-UAM/Neun/tree/master
+https://github.com/GNB-UAM/RTHy_genetic/tree/master
+https://github.com/gnb-uam/rthybrid
