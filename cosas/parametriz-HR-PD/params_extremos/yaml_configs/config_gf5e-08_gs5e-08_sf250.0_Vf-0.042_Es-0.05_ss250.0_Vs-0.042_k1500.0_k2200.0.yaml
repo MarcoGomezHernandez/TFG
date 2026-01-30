@@ -21,12 +21,12 @@ HR2:
 Chemical-HR1-HR2:
   gfast: 5.0e-08
   Esyn: -0.05
-  sfast: 50000.0
+  sfast: 250.0
   Vfast: -0.042
   Vslow: -0.042
   gslow: 5.0e-08
   k1: 500.0
-  k2: 100.0
+  k2: 200.0
   sslow: 250.0
 Chemical-HR2-HR1:
   gfast: 0.015
