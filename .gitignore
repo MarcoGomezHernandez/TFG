@@ -5,6 +5,8 @@
 .vscode/*
 build/*
 
+*.asc
+
 *.xdy
 *.toc
 *.out
