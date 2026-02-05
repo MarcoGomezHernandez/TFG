@@ -53,6 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <HindmarshRoseModel.h>
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
+#include "scaling.h"
 
 using namespace std;
 
@@ -97,16 +98,11 @@ int main(int argc, char **argv) {
         csv_file = argv[4];
     }
 
-    double model_step = 0.01;
-    int step_factor = 8;
-
     cout << "YAML file: " << yaml_file << "\n";
     cout << "Output file: " << output_file << "\n";
     cout << "Simulation time: " << simulation_time << "\n";
     cout << "CSV file: " << csv_file << "\n";
     cout << "Real step: " << real_step << "\n";
-    cout << "Model step: " << model_step << "\n";
-    cout << "Step factor: " << step_factor << "\n";
 
     // --- Initialize postsynaptic neuron HR1 ---
     HR::ConstructorArgs args;
@@ -151,38 +147,40 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // --- Open CSV file for on-the-fly reading ---
-    ifstream csv(csv_file);
-    if (!csv.is_open()) throw runtime_error("Could not open csv_file");
-    string line;
-
-    // --- Pre-pass to compute livingv_min and livingv_max ---
-    double livingv_min = numeric_limits<double>::max();
-    double livingv_max = numeric_limits<double>::lowest();
-    while (getline(csv, line)) {
-        stringstream ss(line);
-        string cell;
-        if (getline(ss, cell, ',')) {
-            try {
-                double val = stod(cell);
-                livingv_min = min(livingv_min, val);
-                livingv_max = max(livingv_max, val);
-            } catch (...) {
-                // Skip invalid lines
-            }
-        }
+    // --- Process CSV with scaling ---
+    // Parameters for scale_signal:
+    // csv_path, column_index, csv_step, start_time, use_time,
+    // observation_time, freq, integrator, check_drift, sec_per_burst
+    
+    int column_index = 0;
+    double csv_step = (real_step > 0.0) ? real_step : 0.0001; // Default if not provided
+    double start_time = 0.0;
+    double use_time = simulation_time;
+    double observation_time = simulation_time; // Use full time for observation
+    double freq = 1.0 / csv_step; // Sampling frequency
+    int integrator = RK4;
+    bool check_drift = false; // Set to true if drift correction needed
+    double sec_per_burst = -1.0; // Auto-detect
+    
+    ScaledSignalResult result = scale_signal(
+        csv_file,
+        column_index,
+        csv_step,
+        start_time,
+        use_time,
+        observation_time,
+        freq,
+        integrator,
+        check_drift,
+        sec_per_burst
+    );
+    
+    if (!result.success) {
+        std::cerr << "Error: scaling failed\n";
+        return 1;
     }
-    // Reset file pointer to beginning
-    csv.clear();
-    csv.seekg(0);
-
-    // --- Compute scaling factors ---
-    double modelv_min = -1.608734;
-    double modelv_max = 1.797032;
-    double model_range = modelv_max - modelv_min;
-    double living_range = livingv_max - livingv_min;
-    double factor_to_model = model_range / living_range;
-    double offset_to_model = modelv_min - (livingv_min * factor_to_model);
+    
+    double dt_model = result.dt;
 
     // --- Initialize min/max and accumulated distance ---
     double h1_min = numeric_limits<double>::max();
@@ -191,36 +189,18 @@ int main(int argc, char **argv) {
     double syn_max = numeric_limits<double>::lowest();
     double accumulated_distance = 0.0;
 
-    size_t n_steps = static_cast<size_t>(simulation_time / real_step);
-    
-
     // --- Simulation loop ---
-    for (size_t i = 0; i < n_steps; ++i) {
-        double time = i * real_step;
-        double csv_val = 0.0;
-
-        // Read next CSV line
-        if (getline(csv, line)) {
-            stringstream ss(line);
-            string cell;
-            if (getline(ss, cell, ',')) {
-                try { csv_val = stod(cell); } catch (...) { csv_val = 0.0; }
-            }
-        }
-
-        // Apply scaling to csv_val
-        csv_val = factor_to_model * csv_val + offset_to_model;
+    for (size_t i = 0; i < result.scaled_signal.size(); ++i) {
+        double time = i * dt_model;
+        double csv_val = result.scaled_signal[i];
 
         // Overwrite dummy neuron
         HR_csv.set(HR::x, csv_val);
 
-        double h1_val = 0.0;
-        for (int j = 0; j < step_factor; ++j) {
-            h1_val = h1.get(HR::x);
-            s.step(model_step, HR_csv.get(HR::x), h1_val);
-            h1.add_synaptic_input(s.get(Synapsis::ifast));
-            h1.step(model_step);
-        }
+        double h1_val = h1.get(HR::x);
+        s.step(dt_model, HR_csv.get(HR::x), h1_val);
+        h1.add_synaptic_input(s.get(Synapsis::ifast));
+        h1.step(dt_model);
 
         double syn_val = s.get(Synapsis::ifast);
 
@@ -247,7 +227,6 @@ int main(int argc, char **argv) {
 
     }
     std::cout << "H1  min: " << h1_min  << " | H1  max: " << h1_max  << std::endl;
-    csv.close();
 
     // --- Append distance to file ---
     if (!exists)

@@ -21,6 +21,7 @@ struct DTSelection
 {
     double dt;
     double pts_burst;
+    bool success;
 };
 
 struct SignalStats
@@ -192,6 +193,25 @@ DTSelection select_dt_neuron_model(const std::vector<double> &dts,
         }
     }
 
+    selection.success = (selection.dt != -1.0);
+
+    return selection;
+}
+
+DTSelection nm_hindmarsh_rose_1986_set_pts_burst(double pts_live, Integrator method)
+{
+    DTSelection selection;
+    if (method == Integrator::RK4)
+    {
+        selection = select_dt_neuron_model(HR_DTS_RK4, HR_PTS_RK4, pts_live);
+    }
+    else
+    {
+        // Invalid for unsupported integrators
+        selection.dt = -1.0;
+        selection.pts_burst = -1.0;
+        selection.success = false;
+    }
     return selection;
 }
 
@@ -224,14 +244,14 @@ ScaledSignalResult scale_signal(
 
     // Calculate dt and pts_burst
     double external_pts_per_burst = stats.period_signal / csv_step;
-    double pts_burst = -1.0;
 
-    if (integrator == Integrator::RK4)
+    DTSelection selection = nm_hindmarsh_rose_1986_set_pts_burst(external_pts_per_burst, integrator);
+    if (!selection.success)
     {
-        DTSelection selection = select_dt_neuron_model(HR_DTS_RK4, HR_PTS_RK4, external_pts_per_burst);
-        result.dt = selection.dt;
-        pts_burst = selection.pts_burst;
+        result.success = false;
+        return result;
     }
+    result.dt = selection.dt;
 
     if (result.dt == -1.0)
     {
@@ -239,7 +259,7 @@ ScaledSignalResult scale_signal(
     }
 
     // Calculate s_points
-    size_t s_points = static_cast<size_t>(pts_burst / external_pts_per_burst);
+    size_t s_points = static_cast<size_t>(selection.pts_burst / external_pts_per_burst);
     if (s_points == 0)
         s_points = 1;
 
