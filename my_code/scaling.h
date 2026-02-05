@@ -9,6 +9,11 @@ enum Integrator {
     RK4
 };
 
+// Neuron model types
+enum NeuronModel {
+    HINDMARSH_ROSE
+};
+
 // Structure to hold the result
 struct ScaledSignalResult {
     std::vector<double> scaled_signal;
@@ -25,6 +30,7 @@ ScaledSignalResult scale_signal(
     double use_time,
     double observation_time,
     Integrator integrator,
+    NeuronModel model,
     bool check_drift
 );
 
