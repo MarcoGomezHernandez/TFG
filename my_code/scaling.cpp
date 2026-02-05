@@ -56,30 +56,34 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
     size_t start_index = static_cast<size_t>(start_time / csv_step);
     size_t num_points = static_cast<size_t>(use_time / csv_step);
 
+    data.reserve(num_points);
+
+    size_t end_index = start_index + num_points;
+
     std::string line;
     size_t current_line = 0;
 
     while (std::getline(file, line))
     {
-        if (current_line >= start_index && current_line < start_index + num_points)
+        if (current_line >= start_index)
         {
             std::stringstream ss(line);
             std::string value;
-            size_t col = 0;
+            size_t current_col = 0;
 
             while (std::getline(ss, value, ','))
             {
-                if (col == column_index)
+                if (current_col == column_index)
                 {
                     data.push_back(std::stod(value));
                     break;
                 }
-                col++;
+                current_col++;
             }
         }
 
         current_line++;
-        if (current_line >= start_index + num_points)
+        if (current_line >= end_index)
             break;
     }
 
