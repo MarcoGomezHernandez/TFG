@@ -221,6 +221,32 @@ DTSelection set_pts_burst(const std::array<double, N> &dts,
     return selection;
 }
 
+ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SignalStats &stats)
+{
+    ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
+
+    double per_min = 0.1, per_max = 0.1;
+    if (min_window > 0)
+    {
+        stats.min_rel_real = min_window + (min_window * per_min);
+    }
+    else
+    {
+        stats.min_rel_real = min_window - (min_window * per_min);
+    }
+
+    if (max_window > 0)
+    {
+        stats.max_rel_real = max_window - (max_window * per_max);
+    }
+    else
+    {
+        stats.max_rel_real = max_window + (max_window * per_max);
+    }
+
+    return factors;
+}
+
 ScaledSignalResult scale_signal(
     const std::string &csv_path,
     size_t column_index,
@@ -311,33 +337,12 @@ ScaledSignalResult scale_signal(
             if (drift_counter >= (drift_n_burst * external_pts_per_burst) &&
                 max_window != -999999.0 && min_window != 999999.0)
             {
+                drift_counter = 0;
 
-                factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
-
-                drift_aux_range = max_window - min_window;
-
-                double per_min = 0.1, per_max = 0.1;
-                if (min_window > 0)
-                {
-                    stats.min_rel_real = min_window + (min_window * per_min);
-                }
-                else
-                {
-                    stats.min_rel_real = min_window - (min_window * per_min);
-                }
-
-                if (max_window > 0)
-                {
-                    stats.max_rel_real = max_window - (max_window * per_max);
-                }
-                else
-                {
-                    stats.max_rel_real = max_window + (max_window * per_max);
-                }
+                factors = fix_drift(min_abs_model, max_abs_model, min_window, max_window, stats);
 
                 max_window = -999999.0;
                 min_window = 999999.0;
-                drift_counter = 0;
             }
 
             drift_counter++;
