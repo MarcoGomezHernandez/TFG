@@ -6,6 +6,19 @@
 #include <limits>
 #include <cfloat>
 
+// Structs for return values
+struct ScalingFactors
+{
+    double scale_real_to_virtual;
+    double offset_real_to_virtual;
+};
+
+struct DTSelection
+{
+    double dt;
+    double pts_burst;
+};
+
 // Precomputed tables for Hindmarsh-Rose RK4
 static const std::vector<double> HR_DTS_RK4 = {
     0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
@@ -80,7 +93,7 @@ double signal_period(int seg_observacion, const std::vector<double> &signal,
     bool up = (signal[0] > th_up);
     double changes = 0.0;
 
-    for (const auto& value : signal)
+    for (const auto &value : signal)
     {
         if (!up && value > th_up)
         {
@@ -96,32 +109,31 @@ double signal_period(int seg_observacion, const std::vector<double> &signal,
     return 1.0 / (changes / seg_observacion);
 }
 
-void calcula_escala(double min_virtual, double max_virtual,
-                    double min_viva, double max_viva,
-                    double &scale_virtual_to_real, double &scale_real_to_virtual,
-                    double &offset_virtual_to_real, double &offset_real_to_virtual)
+ScalingFactors calcula_escala(double min_virtual, double max_virtual,
+                              double min_viva, double max_viva)
 {
     double rg_virtual = max_virtual - min_virtual;
     double rg_viva = max_viva - min_viva;
 
-    scale_virtual_to_real = rg_viva / rg_virtual;
-    scale_real_to_virtual = rg_virtual / rg_viva;
+    ScalingFactors factors;
+    factors.scale_real_to_virtual = rg_virtual / rg_viva;
+    factors.offset_real_to_virtual = min_virtual - (min_viva * factors.scale_real_to_virtual);
 
-    offset_virtual_to_real = min_viva - (min_virtual * scale_virtual_to_real);
-    offset_real_to_virtual = min_virtual - (min_viva * scale_real_to_virtual);
+    return factors;
 }
 
-void select_dt_neuron_model(const std::vector<double> &dts,
-                            const std::vector<double> &pts,
-                            double pts_live, double &dt, double &pts_burst)
+DTSelection select_dt_neuron_model(const std::vector<double> &dts,
+                                   const std::vector<double> &pts,
+                                   double pts_live)
 {
     double aux = pts_live;
     double factor = 1.0;
     double intpart, fractpart;
     bool flag = false;
 
-    dt = -1.0;
-    pts_burst = -1.0;
+    DTSelection selection;
+    selection.dt = -1.0;
+    selection.pts_burst = -1.0;
 
     while (aux < pts[0])
     {
@@ -132,10 +144,10 @@ void select_dt_neuron_model(const std::vector<double> &dts,
         {
             if (pts[i] > aux)
             {
-                dt = dts[i];
-                pts_burst = pts[i];
+                selection.dt = dts[i];
+                selection.pts_burst = pts[i];
 
-                fractpart = std::modf(pts_burst / pts_live, &intpart);
+                fractpart = std::modf(selection.pts_burst / pts_live, &intpart);
 
                 if (fractpart <= 0.1 * intpart)
                 {
@@ -155,12 +167,14 @@ void select_dt_neuron_model(const std::vector<double> &dts,
         {
             if (pts[i] > aux)
             {
-                dt = dts[i];
-                pts_burst = pts[i];
+                selection.dt = dts[i];
+                selection.pts_burst = pts[i];
                 break;
             }
         }
     }
+
+    return selection;
 }
 
 ScaledSignalResult scale_signal(
@@ -227,7 +241,9 @@ ScaledSignalResult scale_signal(
 
     if (integrator == RK4)
     {
-        select_dt_neuron_model(HR_DTS_RK4, HR_PTS_RK4, external_pts_per_burst, result.dt, pts_burst);
+        DTSelection selection = select_dt_neuron_model(HR_DTS_RK4, HR_PTS_RK4, external_pts_per_burst);
+        result.dt = selection.dt;
+        pts_burst = selection.pts_burst;
     }
 
     if (result.dt == -1.0)
@@ -244,12 +260,7 @@ ScaledSignalResult scale_signal(
     double min_abs_model = HINDMARSH_ROSE_MIN;
     double max_abs_model = HINDMARSH_ROSE_MAX;
 
-    double scale_virtual_to_real, scale_real_to_virtual;
-    double offset_virtual_to_real, offset_real_to_virtual;
-
-    calcula_escala(min_abs_model, max_abs_model, min_abs_real, max_abs_real,
-                   scale_virtual_to_real, scale_real_to_virtual,
-                   offset_virtual_to_real, offset_real_to_virtual);
+    ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_abs_real, max_abs_real);
 
     // Apply vertical scaling to entire signal
     std::vector<double> scaled_signal;
@@ -263,7 +274,7 @@ ScaledSignalResult scale_signal(
         double min_window = 999999.0;
         double drift_aux_range = max_abs_real - min_abs_real;
 
-        for (const auto& val : signal)
+        for (const auto &val : signal)
         {
             // Update window
             if ((min_window > val) && (val > (min_abs_real - drift_aux_range)))
@@ -280,9 +291,7 @@ ScaledSignalResult scale_signal(
                 max_window != -999999.0 && min_window != 999999.0)
             {
 
-                calcula_escala(min_abs_model, max_abs_model, min_window, max_window,
-                               scale_virtual_to_real, scale_real_to_virtual,
-                               offset_virtual_to_real, offset_real_to_virtual);
+                factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
 
                 drift_aux_range = max_window - min_window;
 
@@ -313,7 +322,7 @@ ScaledSignalResult scale_signal(
             drift_counter++;
 
             // Scale current point (vertical scaling)
-            double scaled_val = val * scale_real_to_virtual + offset_real_to_virtual;
+            double scaled_val = val * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
             scaled_signal.push_back(scaled_val);
         }
     }
@@ -322,7 +331,7 @@ ScaledSignalResult scale_signal(
         // No drift checking - simple scaling
         for (double val : signal)
         {
-            double scaled_val = val * scale_real_to_virtual + offset_real_to_virtual;
+            double scaled_val = val * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
             scaled_signal.push_back(scaled_val);
         }
     }
