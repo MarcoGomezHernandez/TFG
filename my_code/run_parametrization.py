@@ -3,7 +3,7 @@ import subprocess
 import glob
 
 # Path to your C++ executable
-exe_path = "./parametrize_chemicalSynapsis_PD-HR"
+exe_path = "./programa"
 
 # Folder containing YAML files
 yaml_folder = "yaml_configs"

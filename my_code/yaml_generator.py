@@ -64,10 +64,10 @@ if __name__ == "__main__":
 
     gfast_values = [0.046]
     gslow_values = [0.208]
-    Esyn_values = [3.0] # 3 el mejor
+    Esyn_values = [9.0] # 3 el mejor
     Vfast_values = [-1.66]
     Vslow_values = [-1.74]
-    sfast_values = [-30.0, -2.0, 0.44, 2.0, 30.0]
+    sfast_values = [0.44]
     sslow_values = [1.0]
     k1_values = [0.74]
     k2_values = [0.007]

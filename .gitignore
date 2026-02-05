@@ -7,6 +7,9 @@ build/*
 
 *.asc
 
+calculate_consts
+programa
+
 *.xdy
 *.toc
 *.out
