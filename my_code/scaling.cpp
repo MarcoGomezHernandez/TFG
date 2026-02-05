@@ -200,12 +200,16 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     return selection;
 }
 
-DTSelection nm_hindmarsh_rose_1986_set_pts_burst(double pts_live, Integrator method)
+template <size_t N>
+DTSelection set_pts_burst(const std::array<double, N> &dts,
+                          const std::array<double, N> &pts,
+                          double pts_live,
+                          Integrator method)
 {
     DTSelection selection;
     if (method == Integrator::RK4)
     {
-        selection = select_dt_neuron_model(HindmarshRose::dts, HindmarshRose::pts, pts_live);
+        selection = select_dt_neuron_model(dts, pts, pts_live);
     }
     else
     {
@@ -258,7 +262,7 @@ ScaledSignalResult scale_signal(
     {
         min_abs_model = HindmarshRose::min;
         max_abs_model = HindmarshRose::max;
-        selection = nm_hindmarsh_rose_1986_set_pts_burst(external_pts_per_burst, integrator);
+        selection = set_pts_burst(HindmarshRose::dts, HindmarshRose::pts, external_pts_per_burst, integrator);
     }
     else
     {
