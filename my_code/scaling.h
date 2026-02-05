@@ -19,7 +19,7 @@ struct ScaledSignalResult {
 // Main external function
 ScaledSignalResult scale_signal(
     const std::string& csv_path,
-    int column_index,
+    size_t column_index,
     double csv_step,
     double start_time,
     double use_time,

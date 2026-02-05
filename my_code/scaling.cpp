@@ -42,7 +42,7 @@ static const std::vector<double> HR_DTS_RK4 = {
 
 static const std::vector<double> HR_PTS_RK4 = {1861445.200000, 1551204.200000, 1329603.600000, 1163403.200000, 1034136.200000, 930722.600000, 846111.400000, 775602.200000, 715940.400000, 664801.800000, 620481.800000, 581701.800000, 517068.200000, 465361.200000, 423055.600000, 372289.000000, 332401.000000, 320938.800000, 310240.800000, 300233.000000, 290850.800000, 282037.200000, 273742.000000, 265920.800000, 258534.000000, 251546.600000, 244927.000000, 238646.800000, 232680.600000, 227005.400000, 221600.600000, 216447.000000, 211527.800000, 206827.400000, 202331.000000, 198026.200000, 193900.600000, 189943.200000, 186144.400000, 182494.600000, 178985.200000, 172356.000000, 166200.400000, 160469.400000, 155120.400000, 150116.600000, 145425.400000, 141018.400000, 136871.000000, 132960.400000, 129267.000000, 125773.200000, 120873.000000, 116340.400000, 112135.400000, 108223.600000, 104575.600000, 101165.600000, 96950.200000, 93072.200000, 89492.600000, 85387.400000, 81642.400000, 78212.000000, 74457.800000, 71047.600000, 67443.600000, 63748.200000, 60436.600000, 57099.600000, 53489.800000, 50038.800000, 46536.200000, 43089.000000, 39605.000000, 36215.000000, 32887.600000, 32542.800000, 32205.000000, 31765.200000, 31337.400000, 30921.000000, 30515.400000, 30120.400000, 29735.600000, 29360.400000, 28994.400000, 28637.400000, 28289.400000, 27949.400000, 27617.800000, 27214.000000, 26821.800000, 26440.800000, 26070.600000, 25710.600000, 25360.200000, 25019.200000, 24687.400000, 24300.800000, 23925.800000, 23562.600000, 23210.000000, 22867.800000, 22535.600000, 22160.000000, 21796.600000, 21445.200000, 21104.800000, 20728.800000, 20365.800000, 20015.400000, 19676.800000, 19309.400000, 18955.600000, 18614.200000, 18249.200000, 17898.400000, 17560.600000, 17203.400000, 16860.600000, 16502.000000, 16158.000000, 15801.400000, 15460.200000, 15108.800000, 14773.000000, 14429.400000, 14080.000000, 13747.400000, 13410.400000, 13071.400000, 12731.400000, 12392.400000, 12055.200000, 11706.200000, 11363.200000, 11026.400000, 10684.400000, 10340.200000, 9995.600000, 9653.200000, 9305.400000};
 
-std::vector<double> read_csv_column(const std::string &csv_path, int column_index,
+std::vector<double> read_csv_column(const std::string &csv_path, size_t column_index,
                                     double start_time, double use_time, double csv_step)
 {
     std::vector<double> data;
@@ -53,11 +53,11 @@ std::vector<double> read_csv_column(const std::string &csv_path, int column_inde
         return data;
     }
 
-    int start_index = static_cast<int>(start_time / csv_step);
-    int num_points = static_cast<int>(use_time / csv_step);
+    size_t start_index = static_cast<size_t>(start_time / csv_step);
+    size_t num_points = static_cast<size_t>(use_time / csv_step);
 
     std::string line;
-    int current_line = 0;
+    size_t current_line = 0;
 
     while (std::getline(file, line))
     {
@@ -65,7 +65,7 @@ std::vector<double> read_csv_column(const std::string &csv_path, int column_inde
         {
             std::stringstream ss(line);
             std::string value;
-            int col = 0;
+            size_t col = 0;
 
             while (std::getline(ss, value, ','))
             {
@@ -87,7 +87,7 @@ std::vector<double> read_csv_column(const std::string &csv_path, int column_inde
     return data;
 }
 
-double signal_period(int seg_observacion, const std::vector<double> &signal,
+double signal_period(double tiempo_observacion, const std::vector<double> &signal,
                      double th_up, double th_on)
 {
     bool up = (signal[0] > th_up);
@@ -106,7 +106,7 @@ double signal_period(int seg_observacion, const std::vector<double> &signal,
         }
     }
 
-    return 1.0 / (changes / seg_observacion);
+    return 1.0 / (changes / tiempo_observacion);
 }
 
 ScalingFactors calcula_escala(double min_virtual, double max_virtual,
@@ -140,7 +140,7 @@ DTSelection select_dt_neuron_model(const std::vector<double> &dts,
         aux = pts_live * factor;
         factor += 1.0;
 
-        for (int i = pts.size() - 1; i >= 0; i--)
+        for (size_t i = pts.size() - 1; i >= 0; i--)
         {
             if (pts[i] > aux)
             {
@@ -163,7 +163,7 @@ DTSelection select_dt_neuron_model(const std::vector<double> &dts,
 
     if (!flag)
     {
-        for (int i = pts.size() - 1; i >= 0; i--)
+        for (size_t i = pts.size() - 1; i >= 0; i--)
         {
             if (pts[i] > aux)
             {
@@ -179,7 +179,7 @@ DTSelection select_dt_neuron_model(const std::vector<double> &dts,
 
 ScaledSignalResult scale_signal(
     const std::string &csv_path,
-    int column_index,
+    size_t column_index,
     double csv_step,
     double start_time,
     double use_time,
@@ -252,7 +252,7 @@ ScaledSignalResult scale_signal(
     }
 
     // Calculate s_points
-    int s_points = static_cast<int>(pts_burst / external_pts_per_burst);
+    size_t s_points = static_cast<size_t>(pts_burst / external_pts_per_burst);
     if (s_points == 0)
         s_points = 1;
 
@@ -268,8 +268,8 @@ ScaledSignalResult scale_signal(
     if (check_drift)
     {
         // Drift checking logic
-        const int drift_n_burst = 2;
-        int drift_counter = 0;
+        const size_t drift_n_burst = 2;
+        size_t drift_counter = 0;
         double max_window = -999999.0;
         double min_window = 999999.0;
         double drift_aux_range = max_abs_real - min_abs_real;
@@ -344,7 +344,7 @@ ScaledSignalResult scale_signal(
         interpolated_signal.push_back(scaled_signal[i]);
 
         // Add s_points - 1 intermediate points
-        for (int j = 1; j < s_points; j++)
+        for (size_t j = 1; j < s_points; j++)
         {
             double alpha = static_cast<double>(j) / s_points;
             double interp_val = scaled_signal[i] + alpha * (scaled_signal[i + 1] - scaled_signal[i]);
