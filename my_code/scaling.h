@@ -4,10 +4,10 @@
 #include <vector>
 #include <string>
 
-// Constants
-constexpr int RK4 = 0;
-constexpr double HINDMARSH_ROSE_MIN = -1.608734;
-constexpr double HINDMARSH_ROSE_MAX = 1.797032;
+// Integrator types
+enum Integrator {
+    RK4
+};
 
 // Structure to hold the result
 struct ScaledSignalResult {
@@ -24,10 +24,8 @@ ScaledSignalResult scale_signal(
     double start_time,
     double use_time,
     double observation_time,
-    double freq,
-    int integrator,
-    bool check_drift,
-    double sec_per_burst = -1.0
+    Integrator integrator,
+    bool check_drift
 );
 
 #endif // SCALING_H

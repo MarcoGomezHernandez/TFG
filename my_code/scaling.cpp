@@ -6,6 +6,10 @@
 #include <limits>
 #include <cfloat>
 
+// Constants
+constexpr double HINDMARSH_ROSE_MIN = -1.608734;
+constexpr double HINDMARSH_ROSE_MAX = 1.797032;
+
 // Structs for return values
 struct ScalingFactors
 {
@@ -17,6 +21,15 @@ struct DTSelection
 {
     double dt;
     double pts_burst;
+};
+
+struct SignalStats
+{
+    double min_abs_real;
+    double max_abs_real;
+    double min_rel_real;
+    double max_rel_real;
+    double period_signal;
 };
 
 // Precomputed tables for Hindmarsh-Rose RK4
@@ -91,14 +104,15 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
     return data;
 }
 
-double signal_period(double tiempo_observacion, const std::vector<double> &signal,
+double signal_period(double tiempo_observacion, const std::vector<double> &signal, size_t size,
                      double th_up, double th_on)
 {
     bool up = (signal[0] > th_up);
     double changes = 0.0;
 
-    for (const auto &value : signal)
+    for (size_t i = 0; i < size; i++)
     {
+        double value = signal[i];
         if (!up && value > th_up)
         {
             changes++;
@@ -188,10 +202,8 @@ ScaledSignalResult scale_signal(
     double start_time,
     double use_time,
     double observation_time,
-    double freq,
-    int integrator,
-    bool check_drift,
-    double sec_per_burst)
+    Integrator integrator,
+    bool check_drift)
 {
 
     ScaledSignalResult result;
@@ -201,49 +213,20 @@ ScaledSignalResult scale_signal(
     // Read CSV data
     std::vector<double> signal = read_csv_column(csv_path, column_index, start_time, use_time, csv_step);
 
-    if (signal.empty())
+    size_t signal_size = signal.size();
+    if (signal_size == 0)
     {
         return result;
     }
 
-    // Calculate observation range
-    size_t obs_points = static_cast<size_t>(observation_time / csv_step);
-    if (obs_points > signal.size())
-        obs_points = signal.size();
-
-    std::vector<double> obs_signal(signal.begin(), signal.begin() + obs_points);
-
-    // Determine min/max from observation
-    double max_abs_real = -DBL_MAX;
-    double min_abs_real = DBL_MAX;
-
-    for (double val : obs_signal)
-    {
-        if (val > max_abs_real)
-            max_abs_real = val;
-        if (val < min_abs_real)
-            min_abs_real = val;
-    }
-
-    double range = max_abs_real - min_abs_real;
-    double percentage_min = 0.10;
-    double percentage_max = 0.90;
-    double min_rel_real = percentage_min * range + min_abs_real;
-    double max_rel_real = percentage_max * range + min_abs_real;
-
-    // Calculate signal period
-    double external_firing_rate = signal_period(observation_time, obs_signal, max_rel_real, min_rel_real);
-
-    if (sec_per_burst != -1.0)
-    {
-        external_firing_rate = sec_per_burst;
-    }
+    // Get signal statistics using ini_recibido
+    SignalStats stats = ini_recibido(signal, observation_time, csv_step);
 
     // Calculate dt and pts_burst
-    double external_pts_per_burst = freq * external_firing_rate;
+    double external_pts_per_burst = stats.period_signal / csv_step;
     double pts_burst = -1.0;
 
-    if (integrator == RK4)
+    if (integrator == Integrator::RK4)
     {
         DTSelection selection = select_dt_neuron_model(HR_DTS_RK4, HR_PTS_RK4, external_pts_per_burst);
         result.dt = selection.dt;
@@ -264,7 +247,7 @@ ScaledSignalResult scale_signal(
     double min_abs_model = HINDMARSH_ROSE_MIN;
     double max_abs_model = HINDMARSH_ROSE_MAX;
 
-    ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_abs_real, max_abs_real);
+    ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, stats.min_abs_real, stats.max_abs_real);
 
     // Apply vertical scaling to entire signal
     std::vector<double> scaled_signal;
@@ -276,16 +259,16 @@ ScaledSignalResult scale_signal(
         size_t drift_counter = 0;
         double max_window = -999999.0;
         double min_window = 999999.0;
-        double drift_aux_range = max_abs_real - min_abs_real;
+        double drift_aux_range = stats.max_abs_real - stats.min_abs_real;
 
         for (const auto &val : signal)
         {
             // Update window
-            if ((min_window > val) && (val > (min_abs_real - drift_aux_range)))
+            if ((min_window > val) && (val > (stats.min_abs_real - drift_aux_range)))
             {
                 min_window = val;
             }
-            if ((max_window < val) && (val < (max_abs_real + drift_aux_range)))
+            if ((max_window < val) && (val < (stats.max_abs_real + drift_aux_range)))
             {
                 max_window = val;
             }
@@ -302,20 +285,20 @@ ScaledSignalResult scale_signal(
                 double per_min = 0.1, per_max = 0.1;
                 if (min_window > 0)
                 {
-                    min_rel_real = min_window + (min_window * per_min);
+                    stats.min_rel_real = min_window + (min_window * per_min);
                 }
                 else
                 {
-                    min_rel_real = min_window - (min_window * per_min);
+                    stats.min_rel_real = min_window - (min_window * per_min);
                 }
 
                 if (max_window > 0)
                 {
-                    max_rel_real = max_window - (max_window * per_max);
+                    stats.max_rel_real = max_window - (max_window * per_max);
                 }
                 else
                 {
-                    max_rel_real = max_window + (max_window * per_max);
+                    stats.max_rel_real = max_window + (max_window * per_max);
                 }
 
                 max_window = -999999.0;
@@ -363,4 +346,45 @@ ScaledSignalResult scale_signal(
     result.success = true;
 
     return result;
+}
+
+SignalStats ini_recibido(const std::vector<double> &signal, double observation_time, double csv_step)
+{
+    size_t signal_size = signal.size();
+
+    // Calculate observation range
+    size_t obs_points = static_cast<size_t>(observation_time / csv_step);
+    if (obs_points > signal_size)
+        obs_points = signal_size;
+
+    double observation_time_to_use = obs_points * csv_step;
+
+    SignalStats stats;
+
+    // Determine min/max from signal
+    double max_abs = -DBL_MAX;
+    double min_abs = DBL_MAX;
+
+    for (size_t i = 0; i < obs_points; ++i)
+    {
+        double val = signal[i];
+        if (val > max_abs)
+            max_abs = val;
+        if (val < min_abs)
+            min_abs = val;
+    }
+
+    stats.min_abs_real = min_abs;
+    stats.max_abs_real = max_abs;
+
+    double range = max_abs - min_abs;
+    double percentage_min = 0.10;
+    double percentage_max = 0.90;
+    stats.min_rel_real = percentage_min * range + min_abs;
+    stats.max_rel_real = percentage_max * range + min_abs;
+
+    // Calculate signal period
+    stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, stats.max_rel_real, stats.min_rel_real);
+
+    return stats;
 }
