@@ -228,10 +228,14 @@ ScaledSignalResult scale_signal(
     NeuronModel model,
     bool check_drift)
 {
-
     ScaledSignalResult result;
     result.success = false;
     result.dt = -1.0;
+
+    if (csv_step <= 0 || use_time <= 0 || observation_time <= 0 || start_time < 0 || column_index < 0 || csv_path.empty())
+    {
+        return result;
+    }
 
     // Read CSV data
     std::vector<double> signal = read_csv_column(csv_path, column_index, start_time, use_time, csv_step);
@@ -258,22 +262,15 @@ ScaledSignalResult scale_signal(
     }
     else
     {
-        // Unsupported model
-        result.success = false;
         return result;
     }
 
     if (!selection.success)
     {
-        result.success = false;
         return result;
     }
-    result.dt = selection.dt;
 
-    if (result.dt == -1.0)
-    {
-        return result;
-    }
+    result.dt = selection.dt;
 
     // Calculate s_points
     size_t s_points = static_cast<size_t>(selection.pts_burst / external_pts_per_burst);
@@ -283,20 +280,19 @@ ScaledSignalResult scale_signal(
     // Initial scaling factors
     ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, stats.min_abs_real, stats.max_abs_real);
 
-    // Apply vertical scaling to entire signal
-    std::vector<double> scaled_signal;
-
+    // Apply vertical scaling in-place to signal
     if (check_drift)
     {
-        // Drift checking logic
+        // Drift checking logic with in-place scaling
         const size_t drift_n_burst = 2;
         size_t drift_counter = 0;
         double max_window = -999999.0;
         double min_window = 999999.0;
         double drift_aux_range = stats.max_abs_real - stats.min_abs_real;
 
-        for (const auto &val : signal)
+        for (size_t i = 0; i < signal_size; i++)
         {
+            double val = signal[i];
             // Update window
             if ((min_window > val) && (val > (stats.min_abs_real - drift_aux_range)))
             {
@@ -342,39 +338,39 @@ ScaledSignalResult scale_signal(
 
             drift_counter++;
 
-            // Scale current point (vertical scaling)
-            double scaled_val = val * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
-            scaled_signal.push_back(scaled_val);
+            // Scale current point in-place (vertical scaling)
+            signal[i] = val * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
         }
     }
     else
     {
         // No drift checking - simple scaling
-        for (double val : signal)
+        for (size_t i = 0; i < signal_size; i++)
         {
-            double scaled_val = val * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
-            scaled_signal.push_back(scaled_val);
+            signal[i] = signal[i] * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
         }
     }
 
-    // Perform linear interpolation (horizontal scaling)
+    // Perform linear interpolation (horizontal scaling) on the now-scaled signal
+    size_t interpolated_size = (signal_size - 1) * s_points + 1;
     std::vector<double> interpolated_signal;
+    interpolated_signal.reserve(interpolated_size);
 
-    for (size_t i = 0; i < scaled_signal.size() - 1; i++)
+    for (size_t i = 0; i < signal_size - 1; i++)
     {
-        interpolated_signal.push_back(scaled_signal[i]);
+        interpolated_signal.push_back(signal[i]);
 
         // Add s_points - 1 intermediate points
         for (size_t j = 1; j < s_points; j++)
         {
             double alpha = static_cast<double>(j) / s_points;
-            double interp_val = scaled_signal[i] + alpha * (scaled_signal[i + 1] - scaled_signal[i]);
+            double interp_val = signal[i] + alpha * (signal[i + 1] - signal[i]);
             interpolated_signal.push_back(interp_val);
         }
     }
 
     // Add last point
-    interpolated_signal.push_back(scaled_signal.back());
+    interpolated_signal.push_back(signal.back());
 
     result.scaled_signal = interpolated_signal;
     result.success = true;
