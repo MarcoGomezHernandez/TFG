@@ -204,10 +204,10 @@ template <size_t N>
 DTSelection set_pts_burst(const std::array<double, N> &dts,
                           const std::array<double, N> &pts,
                           double pts_live,
-                          Integrator method)
+                          NumericIntegrator method)
 {
     DTSelection selection;
-    if (method == Integrator::RK4)
+    if (method == NumericIntegrator::RK4)
     {
         selection = select_dt_neuron_model(dts, pts, pts_live);
     }
@@ -247,6 +247,47 @@ ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_
     return factors;
 }
 
+SignalStats ini_recibido(const std::vector<double> &signal, double observation_time, double csv_step)
+{
+    size_t signal_size = signal.size();
+
+    // Calculate observation range
+    size_t obs_points = static_cast<size_t>(observation_time / csv_step);
+    if (obs_points > signal_size)
+        obs_points = signal_size;
+
+    double observation_time_to_use = obs_points * csv_step;
+
+    SignalStats stats;
+
+    // Determine min/max from signal
+    double max_abs = -DBL_MAX;
+    double min_abs = DBL_MAX;
+
+    for (size_t i = 0; i < obs_points; i++)
+    {
+        double val = signal[i];
+        if (val > max_abs)
+            max_abs = val;
+        if (val < min_abs)
+            min_abs = val;
+    }
+
+    stats.min_abs_real = min_abs;
+    stats.max_abs_real = max_abs;
+
+    double range = max_abs - min_abs;
+    double percentage_min = 0.10;
+    double percentage_max = 0.90;
+    stats.min_rel_real = percentage_min * range + min_abs;
+    stats.max_rel_real = percentage_max * range + min_abs;
+
+    // Calculate signal period
+    stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, stats.max_rel_real, stats.min_rel_real);
+
+    return stats;
+}
+
 ScaledSignalResult scale_signal(
     const std::string &csv_path,
     size_t column_index,
@@ -254,7 +295,7 @@ ScaledSignalResult scale_signal(
     double start_time,
     double use_time,
     double observation_time,
-    Integrator integrator,
+    NumericIntegrator integrator,
     NeuronModel model,
     bool check_drift)
 {
@@ -385,45 +426,4 @@ ScaledSignalResult scale_signal(
     result.success = true;
 
     return result;
-}
-
-SignalStats ini_recibido(const std::vector<double> &signal, double observation_time, double csv_step)
-{
-    size_t signal_size = signal.size();
-
-    // Calculate observation range
-    size_t obs_points = static_cast<size_t>(observation_time / csv_step);
-    if (obs_points > signal_size)
-        obs_points = signal_size;
-
-    double observation_time_to_use = obs_points * csv_step;
-
-    SignalStats stats;
-
-    // Determine min/max from signal
-    double max_abs = -DBL_MAX;
-    double min_abs = DBL_MAX;
-
-    for (size_t i = 0; i < obs_points; i++)
-    {
-        double val = signal[i];
-        if (val > max_abs)
-            max_abs = val;
-        if (val < min_abs)
-            min_abs = val;
-    }
-
-    stats.min_abs_real = min_abs;
-    stats.max_abs_real = max_abs;
-
-    double range = max_abs - min_abs;
-    double percentage_min = 0.10;
-    double percentage_max = 0.90;
-    stats.min_rel_real = percentage_min * range + min_abs;
-    stats.max_rel_real = percentage_max * range + min_abs;
-
-    // Calculate signal period
-    stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, stats.max_rel_real, stats.min_rel_real);
-
-    return stats;
 }

@@ -5,7 +5,7 @@
 #include <string>
 
 // Integrator types
-enum Integrator {
+enum NumericIntegrator {
     RK4
 };
 
@@ -29,7 +29,7 @@ ScaledSignalResult scale_signal(
     double start_time,
     double use_time,
     double observation_time,
-    Integrator integrator,
+    NumericIntegrator integrator,
     NeuronModel model,
     bool check_drift
 );

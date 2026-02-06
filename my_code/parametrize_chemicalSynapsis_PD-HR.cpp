@@ -157,10 +157,8 @@ int main(int argc, char **argv) {
     double start_time = 0.0;
     double use_time = simulation_time;
     double observation_time = simulation_time; // Use full time for observation
-    double freq = 1.0 / csv_step; // Sampling frequency
-    int integrator = RK4;
+    NumericIntegrator integrator = RK4;
     bool check_drift = false; // Set to true if drift correction needed
-    double sec_per_burst = -1.0; // Auto-detect
     
     ScaledSignalResult result = scale_signal(
         csv_file,
@@ -169,10 +167,9 @@ int main(int argc, char **argv) {
         start_time,
         use_time,
         observation_time,
-        freq,
         integrator,
-        check_drift,
-        sec_per_burst
+        HINDMARSH_ROSE,
+        check_drift
     );
     
     if (!result.success) {
