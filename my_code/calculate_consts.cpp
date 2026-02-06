@@ -72,15 +72,14 @@ struct CalcResult
  * Función principal de cálculo.
  * N: Tamaño del array dts
  */
-template <size_t N>
+template <typename T_Integrator, size_t N>
 CalcResult calculate_metrics(
-    NumericIntegrator integrator,
     NeuronModel model,
     const NeuronParams &config,
     const std::array<double, N> &dts,
-    size_t periods_to_average = 10)
+    size_t periods_to_average)
 {
-    CalcResult<N> result;
+    CalcResult result;
     result.global_min = std::numeric_limits<double>::max();
     result.global_max = std::numeric_limits<double>::lowest();
 
@@ -90,13 +89,13 @@ CalcResult calculate_metrics(
 
         if (integrator == RK4)
         {
-            using Integrator = RungeKutta4;
+            RungeKutta4 integrator;
         }
         else
         {
             throw std::runtime_error("Integrador no implementado para Hindmarsh-Rose.");
         }
-        using HR_Type = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
+        typedef HR_Type = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, T_Integrator>;
 
         // Mapeo de parámetros
         // HR Param order: a, b, c, d, r, s, x_rest, I
@@ -221,7 +220,7 @@ int main()
 
     // 3. Ejecución
     std::cout << "Calculando constantes... Espere.\n";
-    auto result = calculate_metrics(RK4, HINDMARSH_ROSE, hr_params, dts, 20);
+    auto result = calculate_metrics<RungeKutta4>(HINDMARSH_ROSE, hr_params, dts, 20);
 
     // 4. Salida Formateada
     std::cout << std::fixed << std::setprecision(6);

@@ -9,6 +9,29 @@
 #include <cstddef>
 #include <stdexcept>
 
+namespace SignalConfig
+{
+    // Para select_dt_neuron_model
+    static constexpr double DT_SELECTION_TOLERANCE = 0.1;
+
+    // Drift checking parameters
+    static constexpr double DRIFT_PERCENTAGE_MIN = 0.1;
+    static constexpr double DRIFT_PERCENTAGE_MAX = 0.1;
+    static constexpr size_t DRIFT_N_BURST = 2;
+
+    // Signal range percentages
+    static constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
+    static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
+
+    // Sentinel values
+    static constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
+    static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
+
+    // Invalid values
+    static constexpr double INVALID_DT = -1.0;
+    static constexpr double INVALID_PTS = -1.0;
+}
+
 // Structs for return values
 struct ScalingFactors
 {
@@ -34,9 +57,9 @@ struct SignalStats
 
 struct HindmarshRose
 {
-    static constexpr double min = -1.608734;
-    static constexpr double max = 1.797032;
-    static constexpr std::array<double, 144> dts = {
+    static constexpr double MIN = -1.608734;
+    static constexpr double MAX = 1.797032;
+    static constexpr std::array<double, 144> DTS = {
         0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
         0.001300, 0.001400, 0.001500, 0.001600, 0.001800, 0.002000, 0.002200, 0.002500,
         0.002800, 0.002900, 0.003000, 0.003100, 0.003200, 0.003300, 0.003400, 0.003500,
@@ -55,7 +78,7 @@ struct HindmarshRose
         0.054500, 0.055600, 0.056800, 0.058000, 0.059300, 0.060600, 0.062000, 0.063400,
         0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700,
         0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
-    static constexpr std::array<double, 144> pts = {1861445.200000, 1551204.200000, 1329603.600000, 1163403.200000, 1034136.200000, 930722.600000, 846111.400000, 775602.200000, 715940.400000, 664801.800000, 620481.800000, 581701.800000, 517068.200000, 465361.200000, 423055.600000, 372289.000000, 332401.000000, 320938.800000, 310240.800000, 300233.000000, 290850.800000, 282037.200000, 273742.000000, 265920.800000, 258534.000000, 251546.600000, 244927.000000, 238646.800000, 232680.600000, 227005.400000, 221600.600000, 216447.000000, 211527.800000, 206827.400000, 202331.000000, 198026.200000, 193900.600000, 189943.200000, 186144.400000, 182494.600000, 178985.200000, 172356.000000, 166200.400000, 160469.400000, 155120.400000, 150116.600000, 145425.400000, 141018.400000, 136871.000000, 132960.400000, 129267.000000, 125773.200000, 120873.000000, 116340.400000, 112135.400000, 108223.600000, 104575.600000, 101165.600000, 96950.200000, 93072.200000, 89492.600000, 85387.400000, 81642.400000, 78212.000000, 74457.800000, 71047.600000, 67443.600000, 63748.200000, 60436.600000, 57099.600000, 53489.800000, 50038.800000, 46536.200000, 43089.000000, 39605.000000, 36215.000000, 32887.600000, 32542.800000, 32205.000000, 31765.200000, 31337.400000, 30921.000000, 30515.400000, 30120.400000, 29735.600000, 29360.400000, 28994.400000, 28637.400000, 28289.400000, 27949.400000, 27617.800000, 27214.000000, 26821.800000, 26440.800000, 26070.600000, 25710.600000, 25360.200000, 25019.200000, 24687.400000, 24300.800000, 23925.800000, 23562.600000, 23210.000000, 22867.800000, 22535.600000, 22160.000000, 21796.600000, 21445.200000, 21104.800000, 20728.800000, 20365.800000, 20015.400000, 19676.800000, 19309.400000, 18955.600000, 18614.200000, 18249.200000, 17898.400000, 17560.600000, 17203.400000, 16860.600000, 16502.000000, 16158.000000, 15801.400000, 15460.200000, 15108.800000, 14773.000000, 14429.400000, 14080.000000, 13747.400000, 13410.400000, 13071.400000, 12731.400000, 12392.400000, 12055.200000, 11706.200000, 11363.200000, 11026.400000, 10684.400000, 10340.200000, 9995.600000, 9653.200000, 9305.400000};
+    static constexpr std::array<double, 144> PTS = {1861445.200000, 1551204.200000, 1329603.600000, 1163403.200000, 1034136.200000, 930722.600000, 846111.400000, 775602.200000, 715940.400000, 664801.800000, 620481.800000, 581701.800000, 517068.200000, 465361.200000, 423055.600000, 372289.000000, 332401.000000, 320938.800000, 310240.800000, 300233.000000, 290850.800000, 282037.200000, 273742.000000, 265920.800000, 258534.000000, 251546.600000, 244927.000000, 238646.800000, 232680.600000, 227005.400000, 221600.600000, 216447.000000, 211527.800000, 206827.400000, 202331.000000, 198026.200000, 193900.600000, 189943.200000, 186144.400000, 182494.600000, 178985.200000, 172356.000000, 166200.400000, 160469.400000, 155120.400000, 150116.600000, 145425.400000, 141018.400000, 136871.000000, 132960.400000, 129267.000000, 125773.200000, 120873.000000, 116340.400000, 112135.400000, 108223.600000, 104575.600000, 101165.600000, 96950.200000, 93072.200000, 89492.600000, 85387.400000, 81642.400000, 78212.000000, 74457.800000, 71047.600000, 67443.600000, 63748.200000, 60436.600000, 57099.600000, 53489.800000, 50038.800000, 46536.200000, 43089.000000, 39605.000000, 36215.000000, 32887.600000, 32542.800000, 32205.000000, 31765.200000, 31337.400000, 30921.000000, 30515.400000, 30120.400000, 29735.600000, 29360.400000, 28994.400000, 28637.400000, 28289.400000, 27949.400000, 27617.800000, 27214.000000, 26821.800000, 26440.800000, 26070.600000, 25710.600000, 25360.200000, 25019.200000, 24687.400000, 24300.800000, 23925.800000, 23562.600000, 23210.000000, 22867.800000, 22535.600000, 22160.000000, 21796.600000, 21445.200000, 21104.800000, 20728.800000, 20365.800000, 20015.400000, 19676.800000, 19309.400000, 18955.600000, 18614.200000, 18249.200000, 17898.400000, 17560.600000, 17203.400000, 16860.600000, 16502.000000, 16158.000000, 15801.400000, 15460.200000, 15108.800000, 14773.000000, 14429.400000, 14080.000000, 13747.400000, 13410.400000, 13071.400000, 12731.400000, 12392.400000, 12055.200000, 11706.200000, 11363.200000, 11026.400000, 10684.400000, 10340.200000, 9995.600000, 9653.200000, 9305.400000};
 };
 
 std::vector<double> read_csv_column(const std::string &csv_path, size_t column_index,
@@ -154,8 +177,8 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     bool flag = false;
 
     DTSelection selection;
-    selection.dt = -1.0;
-    selection.pts_burst = -1.0;
+    selection.dt = SignalConfig::INVALID_DT;
+    selection.pts_burst = SignalConfig::INVALID_PTS;
 
     while (aux < pts[0])
     {
@@ -171,7 +194,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
 
                 fractpart = std::modf(selection.pts_burst / pts_live, &intpart);
 
-                if (fractpart <= 0.1 * intpart)
+                if (fractpart <= SignalConfig::DT_SELECTION_TOLERANCE * intpart)
                 {
                     flag = true;
                 }
@@ -196,7 +219,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
         }
     }
 
-    selection.success = (selection.dt != -1.0);
+    selection.success = (selection.dt != SignalConfig::INVALID_DT);
 
     return selection;
 }
@@ -223,23 +246,22 @@ ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_
 {
     ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
 
-    double per_min = 0.1, per_max = 0.1;
     if (min_window > 0)
     {
-        stats.min_rel_real = min_window + (min_window * per_min);
+        stats.min_rel_real = min_window + (min_window * SignalConfig::DRIFT_PERCENTAGE_MIN);
     }
     else
     {
-        stats.min_rel_real = min_window - (min_window * per_min);
+        stats.min_rel_real = min_window - (min_window * SignalConfig::DRIFT_PERCENTAGE_MIN);
     }
 
     if (max_window > 0)
     {
-        stats.max_rel_real = max_window - (max_window * per_max);
+        stats.max_rel_real = max_window - (max_window * SignalConfig::DRIFT_PERCENTAGE_MAX);
     }
     else
     {
-        stats.max_rel_real = max_window + (max_window * per_max);
+        stats.max_rel_real = max_window + (max_window * SignalConfig::DRIFT_PERCENTAGE_MAX);
     }
 
     return factors;
@@ -275,10 +297,8 @@ SignalStats ini_recibido(const std::vector<double> &signal, double observation_t
     stats.max_abs_real = max_abs;
 
     double range = max_abs - min_abs;
-    double percentage_min = 0.10;
-    double percentage_max = 0.90;
-    stats.min_rel_real = percentage_min * range + min_abs;
-    stats.max_rel_real = percentage_max * range + min_abs;
+    stats.min_rel_real = SignalConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
+    stats.max_rel_real = SignalConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
 
     // Calculate signal period
     stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, stats.max_rel_real, stats.min_rel_real);
@@ -323,9 +343,9 @@ ScaledSignalResult scale_signal(
     double min_abs_model, max_abs_model;
     if (model == NeuronModel::HINDMARSH_ROSE)
     {
-        min_abs_model = HindmarshRose::min;
-        max_abs_model = HindmarshRose::max;
-        selection = set_pts_burst(HindmarshRose::dts, HindmarshRose::pts, external_pts_per_burst, integrator);
+        min_abs_model = HindmarshRose::MIN;
+        max_abs_model = HindmarshRose::MAX;
+        selection = set_pts_burst(HindmarshRose::DTS, HindmarshRose::PTS, external_pts_per_burst, integrator);
     }
     else
     {
@@ -335,7 +355,7 @@ ScaledSignalResult scale_signal(
     if (!selection.success)
     {
         result.success = false;
-        result.dt = -1.0;
+        result.dt = SignalConfig::INVALID_DT;
         return result;
     }
 
@@ -353,10 +373,9 @@ ScaledSignalResult scale_signal(
     if (check_drift)
     {
         // Drift checking logic with in-place scaling
-        const size_t drift_n_burst = 2;
         size_t drift_counter = 0;
-        double max_window = -999999.0;
-        double min_window = 999999.0;
+        double max_window = SignalConfig::DOUBLE_MIN;
+        double min_window = SignalConfig::DOUBLE_MAX;
         double drift_aux_range = stats.max_abs_real - stats.min_abs_real;
 
         for (size_t i = 0; i < signal_size; i++)
@@ -373,15 +392,15 @@ ScaledSignalResult scale_signal(
             }
 
             // Recalculate every drift_n_burst bursts
-            if (drift_counter >= (drift_n_burst * external_pts_per_burst) &&
-                max_window != -999999.0 && min_window != 999999.0)
+            if (drift_counter >= (SignalConfig::DRIFT_N_BURST * external_pts_per_burst) &&
+                max_window != SignalConfig::DOUBLE_MIN && min_window != SignalConfig::DOUBLE_MAX)
             {
                 drift_counter = 0;
 
                 factors = fix_drift(min_abs_model, max_abs_model, min_window, max_window, stats);
 
-                max_window = -999999.0;
-                min_window = 999999.0;
+                max_window = SignalConfig::DOUBLE_MIN;
+                min_window = SignalConfig::DOUBLE_MAX;
             }
 
             drift_counter++;
