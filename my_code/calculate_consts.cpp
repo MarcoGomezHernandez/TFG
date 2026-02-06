@@ -86,16 +86,7 @@ CalcResult calculate_metrics(
     // Lógica para Hindmarsh-Rose con RK4
     if (model == HINDMARSH_ROSE)
     {
-
-        if (integrator == RK4)
-        {
-            RungeKutta4 integrator;
-        }
-        else
-        {
-            throw std::runtime_error("Integrador no implementado para Hindmarsh-Rose.");
-        }
-        typedef HR_Type = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, T_Integrator>;
+        typedef DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, T_Integrator> HR_Type;
 
         // Mapeo de parámetros
         // HR Param order: a, b, c, d, r, s, x_rest, I
@@ -103,14 +94,15 @@ CalcResult calculate_metrics(
         if (std::holds_alternative<HindmarshRoseParams>(config))
         {
             auto &p = std::get<HindmarshRoseParams>(config);
-            args.params[0] = p.a;
-            args.params[1] = p.b;
-            args.params[2] = p.c;
-            args.params[3] = p.d;
-            args.params[4] = p.r;
-            args.params[5] = p.s;
-            args.params[6] = p.x_rest;
-            args.params[7] = p.I;
+            // Están mal
+            // args.params[0] = p.a;
+            // args.params[1] = p.b;
+            // args.params[2] = p.c;
+            // args.params[3] = p.d;
+            // args.params[4] = p.r;
+            // args.params[5] = p.s;
+            // args.params[6] = p.x_rest;
+            // args.params[7] = p.I;
         }
 
         // Iterar sobre cada dt
