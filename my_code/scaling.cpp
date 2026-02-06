@@ -7,6 +7,7 @@
 #include <cfloat>
 #include <array>
 #include <cstddef>
+#include <stdexcept>
 
 // Structs for return values
 struct ScalingFactors
@@ -65,7 +66,7 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
 
     if (!file.is_open())
     {
-        return data;
+        throw std::runtime_error("Unable to open CSV file: " + csv_path);
     }
 
     size_t start_index = static_cast<size_t>(start_time / csv_step);
@@ -213,10 +214,7 @@ DTSelection set_pts_burst(const std::array<double, N> &dts,
     }
     else
     {
-        // Invalid for unsupported integrators
-        selection.dt = -1.0;
-        selection.pts_burst = -1.0;
-        selection.success = false;
+        throw std::runtime_error("Unsupported integrator");
     }
     return selection;
 }
@@ -300,12 +298,10 @@ ScaledSignalResult scale_signal(
     bool check_drift)
 {
     ScaledSignalResult result;
-    result.success = false;
-    result.dt = -1.0;
 
     if (csv_step <= 0 || use_time <= 0 || observation_time <= 0 || start_time < 0 || column_index < 0 || csv_path.empty())
     {
-        return result;
+        throw std::runtime_error("Invalid arguments: csv_step, use_time, observation_time must be positive, start_time and column_index non-negative, csv_path non-empty");
     }
 
     // Read CSV data
@@ -314,7 +310,7 @@ ScaledSignalResult scale_signal(
     size_t signal_size = signal.size();
     if (signal_size == 0)
     {
-        return result;
+        throw std::runtime_error("No data read from CSV file");
     }
 
     // Get signal statistics using ini_recibido
@@ -333,11 +329,13 @@ ScaledSignalResult scale_signal(
     }
     else
     {
-        return result;
+        throw std::runtime_error("Unsupported neuron model");
     }
 
     if (!selection.success)
     {
+        result.success = false;
+        result.dt = -1.0;
         return result;
     }
 
