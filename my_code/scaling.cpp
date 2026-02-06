@@ -161,7 +161,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
         aux = pts_live * factor;
         factor += 1.0;
 
-        for (size_t i = pts.size() - 1; i >= 0; i--)
+        for (size_t i = N - 1; i >= 0; i--)
         {
             if (pts[i] > aux)
             {
@@ -184,7 +184,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
 
     if (!flag)
     {
-        for (size_t i = pts.size() - 1; i >= 0; i--)
+        for (size_t i = N - 1; i >= 0; i--)
         {
             if (pts[i] > aux)
             {
@@ -361,7 +361,7 @@ ScaledSignalResult scale_signal(
     }
 
     // Perform linear interpolation (horizontal scaling) on the now-scaled signal
-    size_t interpolated_size = (signal_size - 1) * s_points + 1;
+    size_t interpolated_size = ((signal_size - 1) * s_points) + 1;
     std::vector<double> interpolated_signal;
     interpolated_signal.reserve(interpolated_size);
 
@@ -370,10 +370,10 @@ ScaledSignalResult scale_signal(
         interpolated_signal.push_back(signal[i]);
 
         // Add s_points - 1 intermediate points
-        for (size_t j = 1; j < s_points; j++)
+        for (double j = 1.0; j < s_points; j++)
         {
-            double alpha = static_cast<double>(j) / s_points;
-            double interp_val = signal[i] + alpha * (signal[i + 1] - signal[i]);
+            double alpha = j / s_points;
+            double interp_val = signal[i] + (alpha * (signal[i + 1] - signal[i]));
             interpolated_signal.push_back(interp_val);
         }
     }
@@ -404,7 +404,7 @@ SignalStats ini_recibido(const std::vector<double> &signal, double observation_t
     double max_abs = -DBL_MAX;
     double min_abs = DBL_MAX;
 
-    for (size_t i = 0; i < obs_points; ++i)
+    for (size_t i = 0; i < obs_points; i++)
     {
         double val = signal[i];
         if (val > max_abs)
