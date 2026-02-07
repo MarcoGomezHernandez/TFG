@@ -280,7 +280,7 @@ int main()
         if (i < ds_size_minus_1)
             std::cout << ", ";
     }
-    std::cout << "\n};\n";
+    std::cout << "};\n";
 
     std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> PTS = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
@@ -291,7 +291,7 @@ int main()
         if (i < ds_size_minus_1)
             std::cout << ", ";
     }
-    std::cout << "\n};\n";
+    std::cout << "};\n";
 
     if (!result.invalid_dts.empty())
     {
