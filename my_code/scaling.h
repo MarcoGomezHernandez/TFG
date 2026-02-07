@@ -4,17 +4,6 @@
 #include <vector>
 #include <string>
 
-namespace SignalConstants
-{
-    // Sentinel values
-    inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
-    inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
-
-    // Invalid values
-    inline constexpr double INVALID_DT = -1.0;
-    inline constexpr double INVALID_PTS = -1.0;
-}
-
 // Integrator types
 enum NumericIntegrator
 {

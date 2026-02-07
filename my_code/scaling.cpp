@@ -1,4 +1,5 @@
 #include "scaling.h"
+#include "scaling_utils.h"
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -9,7 +10,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-namespace SignalConfig
+namespace SignalPrivateConfig
 {
     // Para select_dt_neuron_model
     static constexpr double DT_SELECTION_TOLERANCE = 0.1;
@@ -18,10 +19,6 @@ namespace SignalConfig
     static constexpr double DRIFT_PERCENTAGE_MIN = 0.1;
     static constexpr double DRIFT_PERCENTAGE_MAX = 0.1;
     static constexpr size_t DRIFT_N_BURST = 2;
-
-    // Signal range percentages
-    static constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
-    static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
 }
 
 // Structs for return values
@@ -169,8 +166,8 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     bool flag = false;
 
     DTSelection selection;
-    selection.dt = SignalConfig::INVALID_DT;
-    selection.pts_burst = SignalConfig::INVALID_PTS;
+    selection.dt = SignalConstants::INVALID_DT;
+    selection.pts_burst = SignalConstants::INVALID_PTS;
 
     while (aux < pts[0])
     {
@@ -186,7 +183,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
 
                 fractpart = std::modf(selection.pts_burst / pts_live, &intpart);
 
-                if (fractpart <= SignalConfig::DT_SELECTION_TOLERANCE * intpart)
+                if (fractpart <= SignalPrivateConfig::DT_SELECTION_TOLERANCE * intpart)
                 {
                     flag = true;
                 }
@@ -211,7 +208,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
         }
     }
 
-    selection.success = (selection.dt != SignalConfig::INVALID_DT);
+    selection.success = (selection.dt != SignalConstants::INVALID_DT);
 
     return selection;
 }
@@ -240,20 +237,20 @@ ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_
 
     if (min_window > 0)
     {
-        stats.min_rel_real = min_window + (min_window * SignalConfig::DRIFT_PERCENTAGE_MIN);
+        stats.min_rel_real = min_window + (min_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MIN);
     }
     else
     {
-        stats.min_rel_real = min_window - (min_window * SignalConfig::DRIFT_PERCENTAGE_MIN);
+        stats.min_rel_real = min_window - (min_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MIN);
     }
 
     if (max_window > 0)
     {
-        stats.max_rel_real = max_window - (max_window * SignalConfig::DRIFT_PERCENTAGE_MAX);
+        stats.max_rel_real = max_window - (max_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MAX);
     }
     else
     {
-        stats.max_rel_real = max_window + (max_window * SignalConfig::DRIFT_PERCENTAGE_MAX);
+        stats.max_rel_real = max_window + (max_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MAX);
     }
 
     return factors;
@@ -289,8 +286,8 @@ SignalStats ini_recibido(const std::vector<double> &signal, double observation_t
     stats.max_abs_real = max_abs;
 
     double range = max_abs - min_abs;
-    stats.min_rel_real = SignalConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
-    stats.max_rel_real = SignalConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
+    stats.min_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
+    stats.max_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
 
     // Calculate signal period
     stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, stats.max_rel_real, stats.min_rel_real);
@@ -347,7 +344,7 @@ ScaledSignalResult scale_signal(
     if (!selection.success)
     {
         result.success = false;
-        result.dt = SignalConfig::INVALID_DT;
+        result.dt = SignalConstants::INVALID_DT;
         return result;
     }
 
@@ -366,8 +363,8 @@ ScaledSignalResult scale_signal(
     {
         // Drift checking logic with in-place scaling
         size_t drift_counter = 0;
-        double max_window = SignalConfig::DOUBLE_MIN;
-        double min_window = SignalConfig::DOUBLE_MAX;
+        double max_window = SignalConstants::DOUBLE_MIN;
+        double min_window = SignalConstants::DOUBLE_MAX;
         double drift_aux_range = stats.max_abs_real - stats.min_abs_real;
 
         for (size_t i = 0; i < signal_size; i++)
@@ -384,15 +381,15 @@ ScaledSignalResult scale_signal(
             }
 
             // Recalculate every drift_n_burst bursts
-            if (drift_counter >= (SignalConfig::DRIFT_N_BURST * external_pts_per_burst) &&
-                max_window != SignalConfig::DOUBLE_MIN && min_window != SignalConfig::DOUBLE_MAX)
+            if (drift_counter >= (SignalPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
+                max_window != SignalConstants::DOUBLE_MIN && min_window != SignalConstants::DOUBLE_MAX)
             {
                 drift_counter = 0;
 
                 factors = fix_drift(min_abs_model, max_abs_model, min_window, max_window, stats);
 
-                max_window = SignalConfig::DOUBLE_MIN;
-                min_window = SignalConfig::DOUBLE_MAX;
+                max_window = SignalConstants::DOUBLE_MIN;
+                min_window = SignalConstants::DOUBLE_MAX;
             }
 
             drift_counter++;

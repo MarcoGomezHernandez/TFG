@@ -20,11 +20,10 @@
 #include <RungeKutta4.h>
 #include "scaling.h"
 
-namespace MtrictsConfig
+namespace SignalConfig
 {
-    // Sentinel values
-    static constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
-    static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
+    static constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
+    static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
 }
 
 // Definición de dts (Input)
@@ -87,81 +86,102 @@ CalcResult calculate_metrics(
     NeuronModel model,
     const NeuronParams &config,
     const std::array<double, N> &dts,
-    size_t periods_to_average)
+    size_t periods_to_average,
+    double observation_time)
 {
-    CalcResult result;
-    result.min = std::numeric_limits<double>::max();
-    result.max = std::numeric_limits<double>::lowest();
-
     NeuronType::ConstructorArgs args;
     if (model == HINDMARSH_ROSE)
     {
-        // Mapeo de parámetros
-        // HR Param order: e, mu, S, a, b, c, d, xr, vh
-        if (std::holds_alternative<HindmarshRoseParams>(config))
-        {
-            auto &p = std::get<HindmarshRoseParams>(config);
-            args.params[NeuronType::e] = p.e;
-            args.params[NeuronType::mu] = p.mu;
-            args.params[NeuronType::S] = p.S;
-            args.params[NeuronType::a] = p.a;
-            args.params[NeuronType::b] = p.b;
-            args.params[NeuronType::c] = p.c;
-            args.params[NeuronType::d] = p.d;
-            args.params[NeuronType::xr] = p.xr;
-            args.params[NeuronType::vh] = p.vh;
-        }
+        args.params[NeuronType::e] = p.e;
+        args.params[NeuronType::mu] = p.mu;
+        args.params[NeuronType::S] = p.S;
+        args.params[NeuronType::a] = p.a;
+        args.params[NeuronType::b] = p.b;
+        args.params[NeuronType::c] = p.c;
+        args.params[NeuronType::d] = p.d;
+        args.params[NeuronType::xr] = p.xr;
+        args.params[NeuronType::vh] = p.vh;
     }
     else
     {
         throw std::runtime_error("Modelo no implementado.");
     }
 
+    double min_abs = SignalConstants::DOUBLE_MAX;
+    double max_abs = SignalConstants::DOUBLE_MIN;
+
+    NeuronType neuron(args);
+
+    CalcResult result;
+
     // Iterar sobre cada dt
-    for (size_t i = 0; i < N; ++i)
+    for (size_t i = 0; i < N; i++)
     {
         double dt = dts[i];
 
-        // Instanciar modelo
-        NeuronType neuron(args);
-        if (std::holds_alternative<HindmarshRoseParams>(config))
+        // First pass: simulate for observation_time to find min_abs and max_abs
+        size_t obs_steps = static_cast<size_t>(observation_time / dt);
+        double min_abs = std::numeric_limits<double>::max();
+        double max_abs = std::numeric_limits<double>::lowest();
+
+        if (model == HINDMARSH_ROSE)
         {
-            auto &p = std::get<HindmarshRoseParams>(config);
             neuron.set(NeuronType::x, p.x);
             neuron.set(NeuronType::y, p.y);
             neuron.set(NeuronType::z, p.z);
         }
 
-        // Variables para detección de periodo
+        // Estabilización inicial (transitorio)
+        for (int k = 0; k < 10000; ++k)
+            neuron.step(dt);
+
+        for (size_t step = 0; step < obs_steps; ++step)
+        {
+            double x_val = neuron.get(NeuronType::x);
+            if (x_val < min_abs) min_abs = x_val;
+            if (x_val > max_abs) max_abs = x_val;
+            neuron.step(dt);
+        }
+
+        // Compute relative thresholds
+        double range = max_abs - min_abs;
+        double min_rel = SIGNAL_PERCENTAGE_MIN * range + min_abs;
+        double max_rel = SIGNAL_PERCENTAGE_MAX * range + min_abs;
+
+        // Set global min/max from first pass
+        result.min = min_abs;
+        result.max = max_abs;
+
+        // Reset neuron for second pass
+        if (model == HINDMARSH_ROSE)
+        {
+            neuron.set(NeuronType::x, p.x);
+            neuron.set(NeuronType::y, p.y);
+            neuron.set(NeuronType::z, p.z);
+        }
+
+        // Estabilización inicial again
+        for (int k = 0; k < 10000; ++k)
+            neuron.step(dt);
+
+        // Second pass: detect 20 bursts using relative thresholds
         int burst_count = 0;
         bool in_burst = false;
-        double threshold = 1.0; // Umbral empírico para detección de disparo en HR
 
         double time_start = 0.0;
         double time_end = 0.0;
         double current_time = 0.0;
 
         // Simulación
-        // Límite de seguridad: 1 millón de pasos o suficientes periodos
         size_t step = 0;
         size_t max_steps_safety = 20000000;
-
-        // Estabilización inicial (transitorio)
-        for (int k = 0; k < 10000; ++k)
-            neuron.step(dt);
 
         while (burst_count <= periods_to_average && step < max_steps_safety)
         {
             double x_val = neuron.get(NeuronType::x);
 
-            // Actualizar min/max globales
-            if (x_val < result.min)
-                result.min = x_val;
-            if (x_val > result.max)
-                result.max = x_val;
-
             // Detección de flanco de subida (inicio de burst)
-            if (x_val > threshold && !in_burst)
+            if (x_val > max_rel && !in_burst)
             {
                 in_burst = true;
                 if (burst_count == 0)
@@ -174,7 +194,7 @@ CalcResult calculate_metrics(
                 }
                 burst_count++;
             }
-            else if (x_val < 0.0 && in_burst)
+            else if (x_val < min_rel && in_burst)
             { // Hysteresis reset
                 in_burst = false;
             }
@@ -218,8 +238,9 @@ int main()
     };
 
     // 3. Ejecución
+    double observation_time = 1000.0; // Dimensionless observation time for first pass
     std::cout << "Calculando constantes... Espere.\n";
-    auto result = calculate_metrics<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>>(HINDMARSH_ROSE, hr_params, dts, 20);
+    auto result = calculate_metrics<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>>(HINDMARSH_ROSE, hr_params, dts, 20, observation_time);
 
     // 4. Salida Formateada
     std::cout << std::fixed << std::setprecision(6);
