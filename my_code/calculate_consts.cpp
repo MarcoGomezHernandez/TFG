@@ -19,12 +19,7 @@
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
 #include "scaling.h"
-
-namespace SignalConfig
-{
-    static constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
-    static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
-}
+#include "scaling_utils.h"
 
 // Definición de dts (Input)
 static constexpr std::array<double, 144> dts = {
@@ -47,6 +42,16 @@ static constexpr std::array<double, 144> dts = {
     0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700,
     0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
 
+static constexpr size_t dts_size = dts.size();
+
+// Add struct for neuron state
+struct HindmarshRoseState
+{
+    double x;
+    double y;
+    double z;
+};
+
 // Parámetros y estado inicial del modelo Hindmarsh-Rose
 struct HindmarshRoseParams
 {
@@ -59,15 +64,7 @@ struct HindmarshRoseParams
     double d;
     double xr;
     double vh;
-    double x;
-    double y;
-    double z;
 };
-
-// Variant for config types
-using NeuronParams = std::variant<HindmarshRoseParams>;
-
-static constexpr size_t dts_size = dts.size();
 
 // Estructura de retorno
 struct CalcResult
@@ -75,145 +72,160 @@ struct CalcResult
     std::array<double, dts_size> pts;
     double min;
     double max;
+    std::vector<double> invalid_dts;
 };
+
+namespace ConstCalculatorConstants
+{
+    static constexpr size_t BURSTS_TO_AVERAGE = 20;
+}
 
 /**
  * Función principal de cálculo.
  * N: Tamaño del array dts
  */
-template <typename NeuronType, size_t N>
+template <typename NeuronType, typename NeuronParamsType, typename StateType, size_t N>
 CalcResult calculate_metrics(
     NeuronModel model,
-    const NeuronParams &config,
+    const NeuronParamsType &config,
+    const StateType &initial_state,
     const std::array<double, N> &dts,
-    size_t periods_to_average,
-    double observation_time)
+    double observation_time,
+    double minmax_dt,
+    double stabilization_time)
 {
+    if observation_time
+        <= 0 || minmax_dt <= 0 || stabilization_time < 0
+        {
+            throw std::runtime_error("observation_time and minmax_dt must be positive, stabilization_time non-negative");
+        }
+
     NeuronType::ConstructorArgs args;
     if (model == HINDMARSH_ROSE)
     {
-        args.params[NeuronType::e] = p.e;
-        args.params[NeuronType::mu] = p.mu;
-        args.params[NeuronType::S] = p.S;
-        args.params[NeuronType::a] = p.a;
-        args.params[NeuronType::b] = p.b;
-        args.params[NeuronType::c] = p.c;
-        args.params[NeuronType::d] = p.d;
-        args.params[NeuronType::xr] = p.xr;
-        args.params[NeuronType::vh] = p.vh;
+        args.params[NeuronType::e] = config.e;
+        args.params[NeuronType::mu] = config.mu;
+        args.params[NeuronType::S] = config.S;
+        args.params[NeuronType::a] = config.a;
+        args.params[NeuronType::b] = config.b;
+        args.params[NeuronType::c] = config.c;
+        args.params[NeuronType::d] = config.d;
+        args.params[NeuronType::xr] = config.xr;
+        args.params[NeuronType::vh] = config.vh;
     }
     else
     {
         throw std::runtime_error("Modelo no implementado.");
     }
 
-    double min_abs = SignalConstants::DOUBLE_MAX;
-    double max_abs = SignalConstants::DOUBLE_MIN;
-
     NeuronType neuron(args);
 
     CalcResult result;
+
+    // Set to initial state
+    if (model == HINDMARSH_ROSE)
+    {
+        neuron.set(NeuronType::x, initial_state.x);
+        neuron.set(NeuronType::y, initial_state.y);
+        neuron.set(NeuronType::z, initial_state.z);
+    }
+
+    // Stabilization with minmax_dt
+    size_t stabilization_steps = static_cast<size_t>(stabilization_time / minmax_dt);
+    for (size_t i = 0; i < stabilization_steps; i++)
+        neuron.step(minmax_dt);
+
+    double min_abs = SignalConstants::DOUBLE_MAX;
+    double max_abs = SignalConstants::DOUBLE_MIN;
+    size_t obs_steps = static_cast<size_t>(observation_time / minmax_dt);
+    for (size_t step = 0; step < obs_steps; step++)
+    {
+        neuron.step(minmax_dt);
+
+        double val;
+        if (model == HINDMARSH_ROSE)
+        {
+            val = neuron.get(NeuronType::x);
+        }
+
+        if (val > max_abs)
+            max_abs = val;
+        if (val < min_abs)
+            min_abs = val;
+    }
+    result.min = min_abs;
+    result.max = max_abs;
+
+    // Compute relative thresholds
+    double range = max_abs - min_abs;
+    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
+    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
 
     // Iterar sobre cada dt
     for (size_t i = 0; i < N; i++)
     {
         double dt = dts[i];
 
-        // First pass: simulate for observation_time to find min_abs and max_abs
-        size_t obs_steps = static_cast<size_t>(observation_time / dt);
-        double min_abs = std::numeric_limits<double>::max();
-        double max_abs = std::numeric_limits<double>::lowest();
-
+        // Set to initial state
         if (model == HINDMARSH_ROSE)
         {
-            neuron.set(NeuronType::x, p.x);
-            neuron.set(NeuronType::y, p.y);
-            neuron.set(NeuronType::z, p.z);
+            neuron.set(NeuronType::x, initial_state.x);
+            neuron.set(NeuronType::y, initial_state.y);
+            neuron.set(NeuronType::z, initial_state.z);
         }
 
-        // Estabilización inicial (transitorio)
-        for (int k = 0; k < 10000; ++k)
+        // Estabilización inicial (transitorio) with current dt
+        size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
+        for (int j = 0; j < stabilization_steps; j++)
             neuron.step(dt);
 
-        for (size_t step = 0; step < obs_steps; ++step)
-        {
-            double x_val = neuron.get(NeuronType::x);
-            if (x_val < min_abs) min_abs = x_val;
-            if (x_val > max_abs) max_abs = x_val;
-            neuron.step(dt);
-        }
-
-        // Compute relative thresholds
-        double range = max_abs - min_abs;
-        double min_rel = SIGNAL_PERCENTAGE_MIN * range + min_abs;
-        double max_rel = SIGNAL_PERCENTAGE_MAX * range + min_abs;
-
-        // Set global min/max from first pass
-        result.min = min_abs;
-        result.max = max_abs;
-
-        // Reset neuron for second pass
-        if (model == HINDMARSH_ROSE)
-        {
-            neuron.set(NeuronType::x, p.x);
-            neuron.set(NeuronType::y, p.y);
-            neuron.set(NeuronType::z, p.z);
-        }
-
-        // Estabilización inicial again
-        for (int k = 0; k < 10000; ++k)
-            neuron.step(dt);
-
-        // Second pass: detect 20 bursts using relative thresholds
-        int burst_count = 0;
-        bool in_burst = false;
-
-        double time_start = 0.0;
-        double time_end = 0.0;
-        double current_time = 0.0;
+        // Second pass: detect bursts using relative thresholds
+        double total_steps = 0;
+        size_t bursts_seen = 0;
+        bool up = false;
+        size_t steps_in_current_burst = 0;
 
         // Simulación
         size_t step = 0;
-        size_t max_steps_safety = 20000000;
+        size_t max_steps = static_cast<size_t>(observation_time / dt);
 
-        while (burst_count <= periods_to_average && step < max_steps_safety)
+        while (bursts_seen < ConstCalculatorConstants::BURSTS_TO_AVERAGE && step < max_steps)
         {
-            double x_val = neuron.get(NeuronType::x);
-
-            // Detección de flanco de subida (inicio de burst)
-            if (x_val > max_rel && !in_burst)
-            {
-                in_burst = true;
-                if (burst_count == 0)
-                {
-                    time_start = current_time;
-                }
-                if (burst_count == periods_to_average)
-                {
-                    time_end = current_time;
-                }
-                burst_count++;
-            }
-            else if (x_val < min_rel && in_burst)
-            { // Hysteresis reset
-                in_burst = false;
-            }
-
             neuron.step(dt);
-            current_time += dt;
             step++;
+
+            double val;
+            if (model == HINDMARSH_ROSE)
+            {
+                val = neuron.get(NeuronType::x);
+            }
+
+            if (!up && val > th_up)
+            {
+                up = true;
+                steps_in_current_burst = 0;
+            }
+            else if (up && val < th_on)
+            {
+                up = false;
+                bursts_seen++;
+                total_steps += steps_in_current_burst;
+            }
+
+            if (up)
+            {
+                steps_in_current_burst++;
+            }
         }
 
-        if (burst_count > periods_to_average)
+        if (bursts_seen == 0)
         {
-            double total_time = time_end - time_start;
-            double avg_period = total_time / static_cast<double>(periods_to_average);
-            result.pts[i] = avg_period / dt;
+            result.pts[i] = SignalConstants::DOUBLE_MAX; // No bursts detected, set to max as sentinel
+            result.invalid_dts.push_back(dts[i]);
         }
         else
         {
-            std::cerr << "Warning: No se detectaron suficientes periodos para dt=" << dt << "\n";
-            result.pts[i] = 0.0;
+            result.pts[i] = total_steps / static_cast<double>(bursts_seen);
         }
     }
 
@@ -231,16 +243,21 @@ int main()
         0.006, // r
         4.0,   // s
         -1.6,  // x_rest
-        3.0,   // I (genera bursting)
+        3.0    // I (genera bursting)
+    };
+
+    HindmarshRoseState initial_state = {
         -1.6,  // x
         -10.0, // y
         0.0    // z
     };
 
     // 3. Ejecución
-    double observation_time = 1000.0; // Dimensionless observation time for first pass
+    double observation_time = 1000.0;   // Dimensionless observation time
+    double minmax_dt = dts[0];          // Use first dt for min/max calculation
+    double stabilization_time = 1000.0; // Stabilization time
     std::cout << "Calculando constantes... Espere.\n";
-    auto result = calculate_metrics<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>>(HINDMARSH_ROSE, hr_params, dts, 20, observation_time);
+    auto result = calculate_metrics<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(HINDMARSH_ROSE, hr_params, initial_state, dts, observation_time, minmax_dt, stabilization_time);
 
     // 4. Salida Formateada
     std::cout << std::fixed << std::setprecision(6);
@@ -270,6 +287,16 @@ int main()
             std::cout << ", ";
     }
     std::cout << "};\n";
+
+    if (!result.invalid_dts.empty())
+    {
+        std::cout << "Invalid dts (no bursts detected): ";
+        for (auto dt : result.invalid_dts)
+        {
+            std::cout << dt << " ";
+        }
+        std::cout << std::endl;
+    }
 
     return 0;
 }
