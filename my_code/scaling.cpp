@@ -22,14 +22,6 @@ namespace SignalConfig
     // Signal range percentages
     static constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
     static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
-
-    // Sentinel values
-    static constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
-    static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
-
-    // Invalid values
-    static constexpr double INVALID_DT = -1.0;
-    static constexpr double INVALID_PTS = -1.0;
 }
 
 // Structs for return values

@@ -20,6 +20,13 @@
 #include <RungeKutta4.h>
 #include "scaling.h"
 
+namespace MtrictsConfig
+{
+    // Sentinel values
+    static constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
+    static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
+}
+
 // Definición de dts (Input)
 static constexpr std::array<double, 144> dts = {
     0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
@@ -53,6 +60,9 @@ struct HindmarshRoseParams
     double d;
     double xr;
     double vh;
+    double x;
+    double y;
+    double z;
 };
 
 // Variant for config types
@@ -64,15 +74,15 @@ static constexpr size_t dts_size = dts.size();
 struct CalcResult
 {
     std::array<double, dts_size> pts;
-    double global_min;
-    double global_max;
+    double min;
+    double max;
 };
 
 /**
  * Función principal de cálculo.
  * N: Tamaño del array dts
  */
-template <typename T_Integrator, size_t N>
+template <typename NeuronType, size_t N>
 CalcResult calculate_metrics(
     NeuronModel model,
     const NeuronParams &config,
@@ -80,114 +90,111 @@ CalcResult calculate_metrics(
     size_t periods_to_average)
 {
     CalcResult result;
-    result.global_min = std::numeric_limits<double>::max();
-    result.global_max = std::numeric_limits<double>::lowest();
+    result.min = std::numeric_limits<double>::max();
+    result.max = std::numeric_limits<double>::lowest();
 
-    // Lógica para Hindmarsh-Rose con RK4
+    NeuronType::ConstructorArgs args;
     if (model == HINDMARSH_ROSE)
     {
-        typedef DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, T_Integrator> HR_Type;
-
         // Mapeo de parámetros
-        // HR Param order: a, b, c, d, r, s, x_rest, I
-        HR_Type::ConstructorArgs args;
+        // HR Param order: e, mu, S, a, b, c, d, xr, vh
         if (std::holds_alternative<HindmarshRoseParams>(config))
         {
             auto &p = std::get<HindmarshRoseParams>(config);
-            // Están mal
-            // args.params[0] = p.a;
-            // args.params[1] = p.b;
-            // args.params[2] = p.c;
-            // args.params[3] = p.d;
-            // args.params[4] = p.r;
-            // args.params[5] = p.s;
-            // args.params[6] = p.x_rest;
-            // args.params[7] = p.I;
-        }
-
-        // Iterar sobre cada dt
-        for (size_t i = 0; i < N; ++i)
-        {
-            double dt = dts[i];
-
-            // Instanciar modelo
-            HR_Type neuron(args);
-            if (std::holds_alternative<HindmarshRoseParams>(config))
-            {
-                auto &p = std::get<HindmarshRoseParams>(config);
-                neuron.set(HR_Type::x, p.x);
-                neuron.set(HR_Type::y, p.y);
-                neuron.set(HR_Type::z, p.z);
-            }
-
-            // Variables para detección de periodo
-            int burst_count = 0;
-            bool in_burst = false;
-            double threshold = 1.0; // Umbral empírico para detección de disparo en HR
-
-            double time_start = 0.0;
-            double time_end = 0.0;
-            double current_time = 0.0;
-
-            // Simulación
-            // Límite de seguridad: 1 millón de pasos o suficientes periodos
-            size_t step = 0;
-            size_t max_steps_safety = 20000000;
-
-            // Estabilización inicial (transitorio)
-            for (int k = 0; k < 10000; ++k)
-                neuron.step(dt);
-
-            while (burst_count <= periods_to_average && step < max_steps_safety)
-            {
-                double x_val = neuron.get(HR_Type::x);
-
-                // Actualizar min/max globales
-                if (x_val < result.global_min)
-                    result.global_min = x_val;
-                if (x_val > result.global_max)
-                    result.global_max = x_val;
-
-                // Detección de flanco de subida (inicio de burst)
-                if (x_val > threshold && !in_burst)
-                {
-                    in_burst = true;
-                    if (burst_count == 0)
-                    {
-                        time_start = current_time;
-                    }
-                    if (burst_count == periods_to_average)
-                    {
-                        time_end = current_time;
-                    }
-                    burst_count++;
-                }
-                else if (x_val < 0.0 && in_burst)
-                { // Hysteresis reset
-                    in_burst = false;
-                }
-
-                neuron.step(dt);
-                current_time += dt;
-                step++;
-            }
-
-            if (burst_count > periods_to_average)
-            {
-                double total_time = time_end - time_start;
-                double avg_period = total_time / static_cast<double>(periods_to_average);
-                result.pts[i] = avg_period / dt;
-            }
-            else
-            {
-                std::cerr << "Warning: No se detectaron suficientes periodos para dt=" << dt << "\n";
-                result.pts[i] = 0.0;
-            }
+            args.params[NeuronType::e] = p.e;
+            args.params[NeuronType::mu] = p.mu;
+            args.params[NeuronType::S] = p.S;
+            args.params[NeuronType::a] = p.a;
+            args.params[NeuronType::b] = p.b;
+            args.params[NeuronType::c] = p.c;
+            args.params[NeuronType::d] = p.d;
+            args.params[NeuronType::xr] = p.xr;
+            args.params[NeuronType::vh] = p.vh;
         }
     }
     else
     {
         throw std::runtime_error("Modelo no implementado.");
+    }
+
+    // Iterar sobre cada dt
+    for (size_t i = 0; i < N; ++i)
+    {
+        double dt = dts[i];
+
+        // Instanciar modelo
+        NeuronType neuron(args);
+        if (std::holds_alternative<HindmarshRoseParams>(config))
+        {
+            auto &p = std::get<HindmarshRoseParams>(config);
+            neuron.set(NeuronType::x, p.x);
+            neuron.set(NeuronType::y, p.y);
+            neuron.set(NeuronType::z, p.z);
+        }
+
+        // Variables para detección de periodo
+        int burst_count = 0;
+        bool in_burst = false;
+        double threshold = 1.0; // Umbral empírico para detección de disparo en HR
+
+        double time_start = 0.0;
+        double time_end = 0.0;
+        double current_time = 0.0;
+
+        // Simulación
+        // Límite de seguridad: 1 millón de pasos o suficientes periodos
+        size_t step = 0;
+        size_t max_steps_safety = 20000000;
+
+        // Estabilización inicial (transitorio)
+        for (int k = 0; k < 10000; ++k)
+            neuron.step(dt);
+
+        while (burst_count <= periods_to_average && step < max_steps_safety)
+        {
+            double x_val = neuron.get(NeuronType::x);
+
+            // Actualizar min/max globales
+            if (x_val < result.min)
+                result.min = x_val;
+            if (x_val > result.max)
+                result.max = x_val;
+
+            // Detección de flanco de subida (inicio de burst)
+            if (x_val > threshold && !in_burst)
+            {
+                in_burst = true;
+                if (burst_count == 0)
+                {
+                    time_start = current_time;
+                }
+                if (burst_count == periods_to_average)
+                {
+                    time_end = current_time;
+                }
+                burst_count++;
+            }
+            else if (x_val < 0.0 && in_burst)
+            { // Hysteresis reset
+                in_burst = false;
+            }
+
+            neuron.step(dt);
+            current_time += dt;
+            step++;
+        }
+
+        if (burst_count > periods_to_average)
+        {
+            double total_time = time_end - time_start;
+            double avg_period = total_time / static_cast<double>(periods_to_average);
+            result.pts[i] = avg_period / dt;
+        }
+        else
+        {
+            std::cerr << "Warning: No se detectaron suficientes periodos para dt=" << dt << "\n";
+            result.pts[i] = 0.0;
+        }
     }
 
     return result;
@@ -212,14 +219,14 @@ int main()
 
     // 3. Ejecución
     std::cout << "Calculando constantes... Espere.\n";
-    auto result = calculate_metrics<RungeKutta4>(HINDMARSH_ROSE, hr_params, dts, 20);
+    auto result = calculate_metrics<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>>(HINDMARSH_ROSE, hr_params, dts, 20);
 
     // 4. Salida Formateada
     std::cout << std::fixed << std::setprecision(6);
 
     std::cout << "\n// Copiar y pegar en scaling.cpp / struct correspondiente:\n\n";
-    std::cout << "static constexpr double min = " << result.global_min << ";\n";
-    std::cout << "static constexpr double max = " << result.global_max << ";\n";
+    std::cout << "static constexpr double min = " << result.min << ";\n";
+    std::cout << "static constexpr double max = " << result.max << ";\n";
 
     std::cout << "static constexpr std::array<double, " << dts_size << "> dts = {";
     for (size_t i = 0; i < dts_size; ++i)
