@@ -7,7 +7,7 @@ build/*
 
 *.asc
 
-calculate_consts
+consts_calculator
 programa
 
 *.xdy

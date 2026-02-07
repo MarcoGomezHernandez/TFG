@@ -45,7 +45,7 @@ struct HindmarshRoseParams
 
 namespace ConstCalculatorConstants
 {
-    static constexpr size_t BURSTS_TO_AVERAGE = 20;
+    static constexpr int BURSTS_TO_AVERAGE = 20;
 }
 
 namespace ConstCalculatorConfig
@@ -201,19 +201,20 @@ ConstCalcResult calculate_constants(
             neuron.step(dt);
 
         // Second pass: detect bursts using relative thresholds
+        bool up;
+        if (model == HINDMARSH_ROSE)
+        {
+            up = (neuron.get(NeuronType::x) > th_up);
+        }
         double total_steps = 0;
-        size_t bursts_seen = 0;
-        bool up = false;
+        int bursts_seen = -1;
         size_t steps_in_current_burst = 0;
+        double act_time = 0.0;
 
-        // Simulación
-        size_t step = 0;
-        size_t max_steps = static_cast<size_t>(observation_time / dt);
-
-        while (bursts_seen < ConstCalculatorConstants::BURSTS_TO_AVERAGE && step < max_steps)
+        while (bursts_seen < ConstCalculatorConstants::BURSTS_TO_AVERAGE && act_time < observation_time)
         {
             neuron.step(dt);
-            step++;
+            act_time += dt;
 
             double val;
             if (model == HINDMARSH_ROSE)
@@ -224,22 +225,19 @@ ConstCalcResult calculate_constants(
             if (!up && val > th_up)
             {
                 up = true;
+                bursts_seen++;
+                total_steps += steps_in_current_burst;
                 steps_in_current_burst = 0;
             }
             else if (up && val < th_on)
             {
                 up = false;
-                bursts_seen++;
-                total_steps += steps_in_current_burst;
             }
 
-            if (up)
-            {
-                steps_in_current_burst++;
-            }
+            steps_in_current_burst++;
         }
 
-        if (bursts_seen == 0)
+        if (bursts_seen <= 0)
         {
             result.pts[i] = SignalConstants::DOUBLE_MAX; // No bursts detected, set to max as sentinel
             result.invalid_dts.push_back(dts[i]);
