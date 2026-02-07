@@ -21,6 +21,4 @@ namespace SignalPublicConfig
     static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
 }
 
-namespace
-
 #endif // SCALING_UTILS_H

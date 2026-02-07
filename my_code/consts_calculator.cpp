@@ -1,5 +1,5 @@
 /*
- * calculate_consts.cpp
+ * consts_calculator.cpp
  * Calcula constantes de normalización (pts, min, max) para modelos neuronales (NeuN).
  */
 
@@ -20,6 +20,33 @@
 #include <RungeKutta4.h>
 #include "scaling.h"
 #include "scaling_utils.h"
+
+// Add struct for neuron state
+struct HindmarshRoseState
+{
+    double x;
+    double y;
+    double z;
+};
+
+// Parámetros y estado inicial del modelo Hindmarsh-Rose
+struct HindmarshRoseParams
+{
+    double e;
+    double mu;
+    double S;
+    double a;
+    double b;
+    double c;
+    double d;
+    double xr;
+    double vh;
+};
+
+namespace ConstCalculatorConstants
+{
+    static constexpr size_t BURSTS_TO_AVERAGE = 20;
+}
 
 namespace ConstCalculatorConfig
 {
@@ -60,33 +87,11 @@ namespace ConstCalculatorConfig
         3.16568    // z
     };
     static constexpr double OBSERVATION_TIME = 2000.0;
-    static constexpr double MINMAX_DT = ConstCalculatorConfig::DTS[0];
+    static constexpr double MINMAX_DT = DTS[0];
     static constexpr double STABILIZATION_TIME = 2000.0;
 }
 
 static constexpr size_t DTS_SIZE = ConstCalculatorConfig::DTS.size();
-
-// Add struct for neuron state
-struct HindmarshRoseState
-{
-    double x;
-    double y;
-    double z;
-};
-
-// Parámetros y estado inicial del modelo Hindmarsh-Rose
-struct HindmarshRoseParams
-{
-    double e;
-    double mu;
-    double S;
-    double a;
-    double b;
-    double c;
-    double d;
-    double xr;
-    double vh;
-};
 
 // Estructura de retorno
 struct ConstCalcResult
@@ -96,11 +101,6 @@ struct ConstCalcResult
     double max;
     std::vector<double> invalid_dts;
 };
-
-namespace ConstCalculatorConstants
-{
-    static constexpr size_t BURSTS_TO_AVERAGE = 20;
-}
 
 /**
  * Función principal de cálculo.
@@ -116,13 +116,12 @@ ConstCalcResult calculate_constants(
     double minmax_dt,
     double stabilization_time)
 {
-    if observation_time
-        <= 0 || minmax_dt <= 0 || stabilization_time < 0
-        {
-            throw std::runtime_error("observation_time and minmax_dt must be positive, stabilization_time non-negative");
-        }
+    if (observation_time <= 0 || minmax_dt <= 0 || stabilization_time < 0)
+    {
+        throw std::runtime_error("observation_time and minmax_dt must be positive, stabilization_time non-negative");
+    }
 
-    NeuronType::ConstructorArgs args;
+    typename NeuronType::ConstructorArgs args;
     if (model == HINDMARSH_ROSE)
     {
         args.params[NeuronType::e] = config.e;
@@ -198,7 +197,7 @@ ConstCalcResult calculate_constants(
 
         // Estabilización inicial (transitorio) with current dt
         size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
-        for (int j = 0; j < stabilization_steps; j++)
+        for (size_t j = 0; j < stabilization_steps; j++)
             neuron.step(dt);
 
         // Second pass: detect bursts using relative thresholds
@@ -268,11 +267,11 @@ int main()
     // 4. Salida Formateada
     std::cout << std::fixed << std::setprecision(6);
 
-    std::cout << "static constexpr double min = " << result.min << ";\n";
-    std::cout << "static constexpr double max = " << result.max << ";\n";
+    std::cout << "static constexpr double MIN = " << result.min << ";\n";
+    std::cout << "static constexpr double MAX = " << result.max << ";\n";
 
     size_t ds_size_minus_1 = DTS_SIZE - 1;
-    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> dts = {";
+    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> DTS = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
@@ -283,7 +282,7 @@ int main()
     }
     std::cout << "\n};\n";
 
-    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> pts = {";
+    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> PTS = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
