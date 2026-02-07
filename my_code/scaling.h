@@ -1,22 +1,29 @@
+// Signal scaling interface for neural model integration
 #ifndef SCALING_H
 #define SCALING_H
 
 #include <vector>
 #include <string>
 
-// Integrator types
+/*
+ * Numeric integration methods
+ */
 enum NumericIntegrator
 {
     RK4
 };
 
-// Neuron model types
+/*
+ * Supported neural models
+ */
 enum NeuronModel
 {
     HINDMARSH_ROSE
 };
 
-// Structure to hold the result
+/*
+ * Result of signal scaling operation
+ */
 struct ScaledSignalResult
 {
     std::vector<double> scaled_signal;
@@ -24,7 +31,9 @@ struct ScaledSignalResult
     bool success;
 };
 
-// Main external function
+/*
+ * Scale external signal to match neural model dynamics
+ */
 ScaledSignalResult scale_signal(
     const std::string &csv_path,
     size_t column_index,
