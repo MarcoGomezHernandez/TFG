@@ -15,7 +15,7 @@
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
 #include "scaling.h"
-#include "scaling_utils.h"
+#include "signal_utils.h"
 
 /*
  * State variables for Hindmarsh-Rose model

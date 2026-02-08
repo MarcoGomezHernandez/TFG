@@ -1,6 +1,6 @@
 // Signal scaling and transformation for neural model integration
 #include "scaling.h"
-#include "scaling_utils.h"
+#include "signal_utils.h"
 #include <cmath>
 #include <fstream>
 #include <sstream>
