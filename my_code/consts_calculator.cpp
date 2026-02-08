@@ -321,37 +321,30 @@ PtsResult calculate_pts(
     return result;
 }
 
-int main()
+/*
+ * Convert NumericIntegrator enum to string
+ */
+std::string integrator_to_string(NumericIntegrator integrator)
 {
-    // Calculate min and max for Hindmarsh-Rose model with RK4 integration
-    MinMaxResult mmr = calculate_min_max<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
-        NeuronModel::HINDMARSH_ROSE,
-        ConstCalculatorConfig::HR_PARAMS,
-        ConstCalculatorConfig::HR_INITIAL_STATE,
-        ConstCalculatorConfig::OBSERVATION_TIME,
-        ConstCalculatorConfig::MINMAX_DT,
-        ConstCalculatorConfig::STABILIZATION_TIME);
+    switch (integrator)
+    {
+    case RK4:
+        return "RK4";
+    default:
+        return "UNKNOWN";
+    }
+}
 
-    // Calculate pts for Hindmarsh-Rose model with RK4 integration
-    PtsResult pr = calculate_pts<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
-        NeuronModel::HINDMARSH_ROSE,
-        ConstCalculatorConfig::HR_PARAMS,
-        ConstCalculatorConfig::HR_INITIAL_STATE,
-        ConstCalculatorConfig::DTS,
-        ConstCalculatorConfig::OBSERVATION_TIME,
-        ConstCalculatorConfig::STABILIZATION_TIME,
-        mmr.min,
-        mmr.max);
-
-    // Output results in C++ format for direct inclusion in code
-    std::cout << std::fixed << std::setprecision(6);
-
-    std::cout << "static constexpr double MIN = " << mmr.min << ";\n";
-    std::cout << "static constexpr double MAX = " << mmr.max << ";\n";
+/*
+ * Print DTS array, PTS array, and invalid dts from PtsResult
+ */
+void print_tables(const PtsResult &pr, NumericIntegrator integrator)
+{
+    std::string integrator_str = integrator_to_string(integrator);
 
     // Output DTS array with formatting
     size_t ds_size_minus_1 = DTS_SIZE - 1;
-    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> DTS = {";
+    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> DTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
@@ -363,7 +356,7 @@ int main()
     std::cout << "};\n";
 
     // Output PTS array with formatting
-    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> PTS = {";
+    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> PTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
@@ -384,6 +377,38 @@ int main()
         }
         std::cout << "\n";
     }
+}
+
+int main()
+{
+    // Calculate min and max for Hindmarsh-Rose model with RK4 integration
+    MinMaxResult mmr = calculate_min_max<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
+        NeuronModel::HINDMARSH_ROSE,
+        ConstCalculatorConfig::HR_PARAMS,
+        ConstCalculatorConfig::HR_INITIAL_STATE,
+        ConstCalculatorConfig::OBSERVATION_TIME,
+        ConstCalculatorConfig::MINMAX_DT,
+        ConstCalculatorConfig::STABILIZATION_TIME);
+
+    // Output results in C++ format for direct inclusion in code
+    std::cout << std::fixed << std::setprecision(6);
+
+    std::cout << "static constexpr double MIN = " << mmr.min << ";\n";
+    std::cout << "static constexpr double MAX = " << mmr.max << ";\n";
+
+    // Calculate pts for Hindmarsh-Rose model with RK4 integration
+    PtsResult pr = calculate_pts<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
+        NeuronModel::HINDMARSH_ROSE,
+        ConstCalculatorConfig::HR_PARAMS,
+        ConstCalculatorConfig::HR_INITIAL_STATE,
+        ConstCalculatorConfig::DTS,
+        ConstCalculatorConfig::OBSERVATION_TIME,
+        ConstCalculatorConfig::STABILIZATION_TIME,
+        mmr.min,
+        mmr.max);
+
+    // Print DTS, PTS, and invalid dts using the new function
+    print_tables(pr, NumericIntegrator::RK4);
 
     return 0;
 }
