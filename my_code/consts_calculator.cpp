@@ -108,49 +108,55 @@ namespace ConstCalculatorConfig
 static constexpr size_t DTS_SIZE = ConstCalculatorConfig::DTS.size();
 
 /*
- * Result structure containing calculated constants
+ * Result structure for min and max values
  */
-struct ConstCalcResult
+struct MinMaxResult
+{
+    double min; // Minimum model output value
+    double max; // Maximum model output value
+};
+
+/*
+ * Result structure for points per burst and invalid dts
+ */
+struct PtsResult
 {
     std::array<double, DTS_SIZE> pts; // Points per burst for each dt
-    double min;                       // Minimum model output value
-    double max;                       // Maximum model output value
     std::vector<double> invalid_dts;  // dts where no bursts were detected
 };
 
 /*
- * Calculate model constants: min/max range and points per burst for each dt
- * Simulates neuron model with different time steps and analyzes bursting behavior
+ * Calculate model min and max values over observation time
+ * Simulates neuron model with finest dt and analyzes output range
  */
-template <typename NeuronType, typename NeuronParamsType, typename StateType, size_t N>
-ConstCalcResult calculate_constants(
+template <typename NeuronType, typename NeuronParamsType, typename StateType>
+MinMaxResult calculate_min_max(
     NeuronModel model,
-    const NeuronParamsType &config,
+    const NeuronParamsType &params,
     const StateType &initial_state,
-    const std::array<double, N> &dts,
     double observation_time,
-    double minmax_dt,
+    double dt,
     double stabilization_time)
 {
     // Validate time parameters
-    if (observation_time <= 0 || minmax_dt <= 0 || stabilization_time < 0)
+    if (observation_time <= 0 || dt <= 0 || stabilization_time < 0)
     {
-        throw std::runtime_error("observation_time and minmax_dt must be positive, stabilization_time non-negative");
+        throw std::runtime_error("observation_time and dt must be positive, stabilization_time non-negative");
     }
 
     // Configure neuron model with provided parameters
     typename NeuronType::ConstructorArgs args;
     if (model == HINDMARSH_ROSE)
     {
-        args.params[NeuronType::e] = config.e;
-        args.params[NeuronType::mu] = config.mu;
-        args.params[NeuronType::S] = config.S;
-        args.params[NeuronType::a] = config.a;
-        args.params[NeuronType::b] = config.b;
-        args.params[NeuronType::c] = config.c;
-        args.params[NeuronType::d] = config.d;
-        args.params[NeuronType::xr] = config.xr;
-        args.params[NeuronType::vh] = config.vh;
+        args.params[NeuronType::e] = params.e;
+        args.params[NeuronType::mu] = params.mu;
+        args.params[NeuronType::S] = params.S;
+        args.params[NeuronType::a] = params.a;
+        args.params[NeuronType::b] = params.b;
+        args.params[NeuronType::c] = params.c;
+        args.params[NeuronType::d] = params.d;
+        args.params[NeuronType::xr] = params.xr;
+        args.params[NeuronType::vh] = params.vh;
     }
     else
     {
@@ -158,8 +164,6 @@ ConstCalcResult calculate_constants(
     }
 
     NeuronType neuron(args);
-
-    ConstCalcResult result;
 
     // Initialize neuron to specified state
     if (model == HINDMARSH_ROSE)
@@ -170,17 +174,17 @@ ConstCalcResult calculate_constants(
     }
 
     // Run stabilization phase to remove transients
-    size_t stabilization_steps = static_cast<size_t>(stabilization_time / minmax_dt);
+    size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
     for (size_t i = 0; i < stabilization_steps; i++)
-        neuron.step(minmax_dt);
+        neuron.step(dt);
 
     // Find absolute min/max over observation time using finest dt
-    double min_abs = SignalConstants::DOUBLE_MAX;
-    double max_abs = SignalConstants::DOUBLE_MIN;
-    size_t obs_steps = static_cast<size_t>(observation_time / minmax_dt);
+    double min = SignalConstants::DOUBLE_MAX;
+    double max = SignalConstants::DOUBLE_MIN;
+    size_t obs_steps = static_cast<size_t>(observation_time / dt);
     for (size_t step = 0; step < obs_steps; step++)
     {
-        neuron.step(minmax_dt);
+        neuron.step(dt);
 
         double val;
         if (model == HINDMARSH_ROSE)
@@ -188,18 +192,61 @@ ConstCalcResult calculate_constants(
             val = neuron.get(NeuronType::x);
         }
 
-        if (val > max_abs)
-            max_abs = val;
-        if (val < min_abs)
-            min_abs = val;
+        if (val > max)
+            max = val;
+        if (val < min)
+            min = val;
     }
-    result.min = min_abs;
-    result.max = max_abs;
+
+    MinMaxResult result;
+    result.min = min;
+    result.max = max;
+
+    return result;
+}
+
+/*
+ * Calculate points per burst for each dt given min and max
+ * Simulates neuron model with different time steps and analyzes bursting behavior
+ */
+template <typename NeuronType, typename NeuronParamsType, typename StateType, size_t N>
+PtsResult calculate_pts(
+    NeuronModel model,
+    const NeuronParamsType &params,
+    const StateType &initial_state,
+    const std::array<double, N> &dts,
+    double observation_time,
+    double stabilization_time,
+    double min_val,
+    double max_val)
+{
+    // Configure neuron model with provided parameters
+    typename NeuronType::ConstructorArgs args;
+    if (model == HINDMARSH_ROSE)
+    {
+        args.params[NeuronType::e] = params.e;
+        args.params[NeuronType::mu] = params.mu;
+        args.params[NeuronType::S] = params.S;
+        args.params[NeuronType::a] = params.a;
+        args.params[NeuronType::b] = params.b;
+        args.params[NeuronType::c] = params.c;
+        args.params[NeuronType::d] = params.d;
+        args.params[NeuronType::xr] = params.xr;
+        args.params[NeuronType::vh] = params.vh;
+    }
+    else
+    {
+        throw std::runtime_error("Modelo no implementado.");
+    }
+
+    NeuronType neuron(args);
+
+    PtsResult result;
 
     // Compute relative thresholds for burst detection (10% and 90% of range)
-    double range = max_abs - min_abs;
-    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
-    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
+    double range = max_val - min_val;
+    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
+    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
 
     // Calculate points per burst for each dt in the array
     for (size_t i = 0; i < N; i++)
@@ -276,21 +323,31 @@ ConstCalcResult calculate_constants(
 
 int main()
 {
-    // Calculate constants for Hindmarsh-Rose model with RK4 integration
-    ConstCalcResult result = calculate_constants<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
+    // Calculate min and max for Hindmarsh-Rose model with RK4 integration
+    MinMaxResult mmr = calculate_min_max<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
+        NeuronModel::HINDMARSH_ROSE,
+        ConstCalculatorConfig::HR_PARAMS,
+        ConstCalculatorConfig::HR_INITIAL_STATE,
+        ConstCalculatorConfig::OBSERVATION_TIME,
+        ConstCalculatorConfig::MINMAX_DT,
+        ConstCalculatorConfig::STABILIZATION_TIME);
+
+    // Calculate pts for Hindmarsh-Rose model with RK4 integration
+    PtsResult pr = calculate_pts<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
         NeuronModel::HINDMARSH_ROSE,
         ConstCalculatorConfig::HR_PARAMS,
         ConstCalculatorConfig::HR_INITIAL_STATE,
         ConstCalculatorConfig::DTS,
         ConstCalculatorConfig::OBSERVATION_TIME,
-        ConstCalculatorConfig::MINMAX_DT,
-        ConstCalculatorConfig::STABILIZATION_TIME);
+        ConstCalculatorConfig::STABILIZATION_TIME,
+        mmr.min,
+        mmr.max);
 
     // Output results in C++ format for direct inclusion in code
     std::cout << std::fixed << std::setprecision(6);
 
-    std::cout << "static constexpr double MIN = " << result.min << ";\n";
-    std::cout << "static constexpr double MAX = " << result.max << ";\n";
+    std::cout << "static constexpr double MIN = " << mmr.min << ";\n";
+    std::cout << "static constexpr double MAX = " << mmr.max << ";\n";
 
     // Output DTS array with formatting
     size_t ds_size_minus_1 = DTS_SIZE - 1;
@@ -311,17 +368,17 @@ int main()
     {
         if (i % 8 == 0)
             std::cout << "\n    ";
-        std::cout << result.pts[i];
+        std::cout << pr.pts[i];
         if (i < ds_size_minus_1)
             std::cout << ", ";
     }
     std::cout << "};\n";
 
     // Report any dts where burst detection failed
-    if (!result.invalid_dts.empty())
+    if (!pr.invalid_dts.empty())
     {
         std::cout << "Invalid dts (no bursts detected): ";
-        for (double dt : result.invalid_dts)
+        for (double dt : pr.invalid_dts)
         {
             std::cout << dt << " ";
         }
