@@ -67,7 +67,7 @@ struct HindmarshRose
 {
     static constexpr double MIN = -1.668473;
     static constexpr double MAX = 1.764310;
-    static constexpr std::array<double, 144> DTS = {
+    static constexpr std::array<double, 144> DTS_RK4 = {
         0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
         0.001300, 0.001400, 0.001500, 0.001600, 0.001800, 0.002000, 0.002200, 0.002500,
         0.002800, 0.002900, 0.003000, 0.003100, 0.003200, 0.003300, 0.003400, 0.003500,
@@ -86,7 +86,7 @@ struct HindmarshRose
         0.054500, 0.055600, 0.056800, 0.058000, 0.059300, 0.060600, 0.062000, 0.063400,
         0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700,
         0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
-    static constexpr std::array<double, 144> PTS = {
+    static constexpr std::array<double, 144> PTS_RK4 = {
         1689645.000000, 1408038.000000, 1206890.000000, 1056028.000000, 938692.000000, 844822.500000, 768021.000000, 704019.000000,
         649863.500000, 603445.000000, 563215.000000, 528014.000000, 469346.000000, 422411.000000, 384010.500000, 337929.000000,
         301722.500000, 291318.000000, 281607.500000, 272523.500000, 264007.000000, 256007.000000, 248477.000000, 241378.000000,
@@ -285,20 +285,23 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
  * Dispatch dt selection based on integration method
  * Currently only supports RK4
  */
-template <size_t N>
-DTSelection set_pts_burst(const std::array<double, N> &dts,
-                          const std::array<double, N> &pts,
-                          double pts_live,
-                          NumericIntegrator method)
+DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_live)
 {
     DTSelection selection;
-    if (method == NumericIntegrator::RK4)
+    if (model == NeuronModel::HINDMARSH_ROSE)
     {
-        selection = select_dt_neuron_model(dts, pts, pts_live);
+        if (integrator == NumericIntegrator::RK4)
+        {
+            selection = select_dt_neuron_model(HindmarshRose::DTS_RK4, HindmarshRose::PTS_RK4, pts_live);
+        }
+        else
+        {
+            throw std::runtime_error("Unsupported integrator");
+        }
     }
     else
     {
-        throw std::runtime_error("Unsupported integrator");
+        throw std::runtime_error("Unsupported neuron model");
     }
     return selection;
 }
@@ -426,7 +429,7 @@ ScaledSignalResult scale_signal(
     {
         min_abs_model = HindmarshRose::MIN;
         max_abs_model = HindmarshRose::MAX;
-        selection = set_pts_burst(HindmarshRose::DTS, HindmarshRose::PTS, external_pts_per_burst, integrator);
+        selection = set_pts_burst(model, integrator, external_pts_per_burst);
     }
     else
     {
