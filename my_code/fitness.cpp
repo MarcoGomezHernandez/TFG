@@ -80,8 +80,8 @@ double antiphase_fitness(const std::vector<double> &signal1, const std::vector<d
     bool up1 = (signal1[0] > th_up1);
     bool up2 = (signal2[0] > th_up2);
 
-    int bursts_seen1 = 0;
-    int bursts_seen2 = 0;
+    int bursts_seen_1 = 0;
+    int bursts_seen_2 = 0;
 
     double antiphase_score = 0.0;
 
@@ -98,7 +98,7 @@ double antiphase_fitness(const std::vector<double> &signal1, const std::vector<d
         else if (up1 && val1 < th_on1)
         {
             up1 = false;
-            bursts_seen1++;
+            bursts_seen_1++;
         }
 
         // --- State Machine Signal 2 ---
@@ -109,7 +109,7 @@ double antiphase_fitness(const std::vector<double> &signal1, const std::vector<d
         else if (up2 && val2 < th_on2)
         {
             up2 = false;
-            bursts_seen2++;
+            bursts_seen_2++;
         }
 
         // --- Fitness Logic ---
@@ -123,9 +123,9 @@ double antiphase_fitness(const std::vector<double> &signal1, const std::vector<d
     antiphase_score /= signal_size; // Normalize to [0,1]
 
     // Compute bursts_score
-    double burst_min_score_1 = min_0_no_max_desc_normalization(bursts_seen1, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
-    double burst_min_score_2 = min_0_no_max_desc_normalization(bursts_seen2, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
-    double burst_diff_score = hard_sigmoid(std::abs(bursts_seen1 - bursts_seen2), FitnessConfig::HALF_SCORE_BURST_DIFFERENCE);
+    double burst_min_score_1 = min_0_no_max_desc_normalization(bursts_seen_1, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
+    double burst_min_score_2 = min_0_no_max_desc_normalization(bursts_seen_2, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
+    double burst_diff_score = hard_sigmoid(std::abs(bursts_seen_1 - bursts_seen_2), FitnessConfig::HALF_SCORE_BURST_DIFFERENCE);
     double bursts_score = (FitnessConfig::BURST_MIN_WEIGHT * burst_min_score_1) +
                           (FitnessConfig::BURST_MIN_WEIGHT * burst_min_score_2) +
                           (FitnessConfig::BURST_DIFF_WEIGHT * burst_diff_score);
