@@ -19,22 +19,31 @@ namespace FitnessConfig
  */
 double fitness(const std::vector<double> &signal1, const std::vector<double> &signal2)
 {
+    size_t signal_size = signal1.size();
+
     // Validation: Sizes must match
-    if (signal1.size() != signal2.size() || signal1.empty())
+    if (signal_size != signal2.size() || signal_size == 0)
     {
         return 0.0;
     }
 
-    size_t n_steps = signal1.size();
+    double min1 = SignalConstants::DOUBLE_MAX;
+    double max1 = SignalConstants::DOUBLE_MIN;
+    double min2 = SignalConstants::DOUBLE_MAX;
+    double max2 = SignalConstants::DOUBLE_MIN;
 
-    // 1. First Pass: Calculate Min/Max for both signals
-    auto [min1_it, max1_it] = std::minmax_element(signal1.begin(), signal1.end());
-    auto [min2_it, max2_it] = std::minmax_element(signal2.begin(), signal2.end());
+    for (size_t i = 0; i < signal_size; i++)
+    {
+        if (signal1[i] < min1)
+            min1 = signal1[i];
+        if (signal1[i] > max1)
+            max1 = signal1[i];
 
-    double min1 = *min1_it;
-    double max1 = *max1_it;
-    double min2 = *min2_it;
-    double max2 = *max2_it;
+        if (signal2[i] < min2)
+            min2 = signal2[i];
+        if (signal2[i] > max2)
+            max2 = signal2[i];
+    }
 
     // Calculate dynamic thresholds
     double range1 = max1 - min1;
@@ -52,9 +61,9 @@ double fitness(const std::vector<double> &signal1, const std::vector<double> &si
     int bursts_seen1 = 0;
     int bursts_seen2 = 0;
 
-    double fitness_score = 0.0;
+    double antiphase_score = 0.0;
 
-    for (size_t i = 0; i < n_steps; i++)
+    for (size_t i = 0; i < signal_size; i++)
     {
         double val1 = signal1[i];
         double val2 = signal2[i];
@@ -85,7 +94,7 @@ double fitness(const std::vector<double> &signal1, const std::vector<double> &si
         // Increment score if one signal is in burst and the other is not (XOR)
         if (up1 != up2)
         {
-            fitness_score += 1.0;
+            antiphase_score += 1.0;
         }
     }
 
@@ -96,5 +105,5 @@ double fitness(const std::vector<double> &signal1, const std::vector<double> &si
         return 0.0;
     }
 
-    return fitness_score;
+    return antiphase_score;
 }

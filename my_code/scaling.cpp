@@ -140,15 +140,15 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
         if (current_line >= start_index)
         {
             std::stringstream ss(line);
-            std::string value;
+            std::string val;
             size_t current_col = 0;
 
             // Extract specified column
-            while (std::getline(ss, value, ','))
+            while (std::getline(ss, val, ','))
             {
                 if (current_col == column_index)
                 {
-                    data.push_back(std::stod(value));
+                    data.push_back(std::stod(val));
                     break;
                 }
                 current_col++;
@@ -179,13 +179,13 @@ double signal_period(double tiempo_observacion, const std::vector<double> &signa
     // Count upward threshold crossings (burst onsets)
     for (size_t i = 0; i < size; i++)
     {
-        double value = signal[i];
-        if (!up && value > th_up)
+        double val = signal[i];
+        if (!up && val > th_up)
         {
             changes++;
             up = true;
         }
-        else if (up && value < th_on)
+        else if (up && val < th_on)
         {
             up = false;
         }
