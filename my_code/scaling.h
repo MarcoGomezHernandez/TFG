@@ -26,7 +26,9 @@ enum NeuronModel
  */
 struct ScaledSignalResult
 {
-    std::vector<double> scaled_signal;
+    std::vector<double> signal;              // Non-interpolated scaled signal
+    std::vector<double> interpolated_points; // Interpolated points (new points only)
+    size_t points_factor;                    // Horizontal scaling factor
     double dt;
     bool success;
 };

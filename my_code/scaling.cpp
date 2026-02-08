@@ -506,18 +506,19 @@ ScaledSignalResult scale_signal(
         }
     }
 
+    // Store non-interpolated scaled signal
+    result.signal = signal;
+    result.points_factor = s_points;
+
     // Apply horizontal scaling (time interpolation)
-    // Calculate output size: between each pair of points, insert (s_points-1) interpolated points
-    size_t interpolated_size = ((signal_size - 1) * s_points) + 1;
+    // Calculate output size: only the newly interpolated points between originals
+    size_t interpolated_size = (signal_size - 1) * (s_points - 1);
     std::vector<double> interpolated_signal;
     interpolated_signal.reserve(interpolated_size);
 
     for (size_t i = 0; i < signal_size - 1; i++)
     {
-        // Add original point
-        interpolated_signal.push_back(signal[i]);
-
-        // Add linearly interpolated points between current and next
+        // Add linearly interpolated points between current and next, excluding originals
         for (double j = 1.0; j < s_points; j++)
         {
             double alpha = j / s_points;
@@ -526,10 +527,7 @@ ScaledSignalResult scale_signal(
         }
     }
 
-    // Add final point
-    interpolated_signal.push_back(signal.back());
-
-    result.scaled_signal = interpolated_signal;
+    result.interpolated_points = interpolated_signal;
     result.success = true;
 
     return result;
