@@ -9,23 +9,45 @@
  */
 namespace FitnessConfig
 {
-    // Minimum bursts required to consider the signal valid
-    static constexpr int MIN_REQUIRED_BURSTS = 3;
+    // Weight for scores
+    static constexpr double BURSTS_WEIGHT = 0.5;
+    static constexpr double ANTIPHASE_WEIGHT = 0.5;
+    static constexpr double MINIMUM_BURSTS_WITH_MAX_SCORE = 20.0; // Minimum number of bursts to achieve maximum score in burst count component. We assume that in the perfect case we will see 20 bursts
+    // Sensibility constant for algebraic sigmoid; set to the value that will get half (0.5) of the score.
+    static constexpr double HALF_SCORE_BURST_DIFFERENCE = 1.0; // Very low value to heavily penalize any difference in burst count between the two signals
+    // Weights for burst score components
+    static constexpr double BURST_MIN_WEIGHT = 0.25;
+    static constexpr double BURST_DIFF_WEIGHT = 0.5;
+}
+
+/*
+ * Compute a function that maps a non-negative value to a score between 0 and 1, with a maximum score of 1 at val=0 and approaching 0 as val increases. The sensibility parameter controls how quickly the score decreases as val increases, and must be positive.
+ */
+double min_0_no_max_desc_normalization(double val, double sensibility)
+{
+    return 1.0 - (val / (val + sensibility));
+}
+
+/*
+ * Compute a function that maps a non-negative value to a score between 0 and 1, with a maximum score of 1 at val=min_one_val and the next, a minimum score of 0 at val=0, and a linear score between 0 and 1 for values between 0 and min_one_val. val must be non-negative and min_one_val must non zero.
+ */
+double hard_sigmoid(double val, double min_one_val)
+{
+    if (val <= 0)
+        return 0.0;
+    else if (val >= min_one_val)
+        return 1.0;
+    else
+        return val / min_one_val;
 }
 
 /*
  * Calculate fitness based on exclusive burst activity (XOR logic)
  * Returns a score based on mismatched burst states, or 0 if signals are invalid
  */
-double fitness(const std::vector<double> &signal1, const std::vector<double> &signal2)
+double antiphase_fitness(const std::vector<double> &signal1, const std::vector<double> &signal2)
 {
     size_t signal_size = signal1.size();
-
-    // Validation: Sizes must match
-    if (signal_size != signal2.size() || signal_size == 0)
-    {
-        return 0.0;
-    }
 
     double min1 = SignalConstants::DOUBLE_MAX;
     double max1 = SignalConstants::DOUBLE_MIN;
@@ -72,22 +94,22 @@ double fitness(const std::vector<double> &signal1, const std::vector<double> &si
         if (!up1 && val1 > th_up1)
         {
             up1 = true;
-            bursts_seen1++;
         }
         else if (up1 && val1 < th_on1)
         {
             up1 = false;
+            bursts_seen1++;
         }
 
         // --- State Machine Signal 2 ---
         if (!up2 && val2 > th_up2)
         {
             up2 = true;
-            bursts_seen2++;
         }
         else if (up2 && val2 < th_on2)
         {
             up2 = false;
+            bursts_seen2++;
         }
 
         // --- Fitness Logic ---
@@ -98,12 +120,18 @@ double fitness(const std::vector<double> &signal1, const std::vector<double> &si
         }
     }
 
-    // 3. Validation: Check minimum burst requirements
-    if (bursts_seen1 < FitnessConfig::MIN_REQUIRED_BURSTS ||
-        bursts_seen2 < FitnessConfig::MIN_REQUIRED_BURSTS)
-    {
-        return 0.0;
-    }
+    antiphase_score /= signal_size; // Normalize to [0,1]
 
-    return antiphase_score;
+    // Compute bursts_score
+    double burst_min_score_1 = min_0_no_max_desc_normalization(bursts_seen1, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
+    double burst_min_score_2 = min_0_no_max_desc_normalization(bursts_seen2, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
+    double burst_diff_score = hard_sigmoid(std::abs(bursts_seen1 - bursts_seen2), FitnessConfig::HALF_SCORE_BURST_DIFFERENCE);
+    double bursts_score = (FitnessConfig::BURST_MIN_WEIGHT * burst_min_score_1) +
+                          (FitnessConfig::BURST_MIN_WEIGHT * burst_min_score_2) +
+                          (FitnessConfig::BURST_DIFF_WEIGHT * burst_diff_score);
+
+    // Compute final weighted score
+    double final_score = (FitnessConfig::BURSTS_WEIGHT * bursts_score) + (FitnessConfig::ANTIPHASE_WEIGHT * antiphase_score);
+
+    return final_score;
 }

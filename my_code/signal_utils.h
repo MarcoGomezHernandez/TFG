@@ -24,8 +24,8 @@ namespace SignalConstants
 namespace SignalPublicConfig
 {
     // Relative thresholds for period detection (10%-90% of signal range)
-    static constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
-    static constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
+    inline constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
+    inline constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
 }
 
 #endif // SCALING_UTILS_H
