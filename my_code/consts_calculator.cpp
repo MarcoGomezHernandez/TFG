@@ -160,7 +160,7 @@ MinMaxResult calculate_min_max(
     }
     else
     {
-        throw std::runtime_error("Modelo no implementado.");
+        throw std::runtime_error("Model not implemented.");
     }
 
     NeuronType neuron(args);
@@ -236,7 +236,7 @@ PtsResult calculate_pts(
     }
     else
     {
-        throw std::runtime_error("Modelo no implementado.");
+        throw std::runtime_error("Model not implemented.");
     }
 
     NeuronType neuron(args);
