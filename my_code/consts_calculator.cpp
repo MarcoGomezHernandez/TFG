@@ -344,7 +344,7 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 
     // Output DTS array with formatting
     size_t ds_size_minus_1 = DTS_SIZE - 1;
-    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> DTS_" << integrator_str << " = {";
+    std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> DTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
@@ -356,7 +356,7 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
     std::cout << "};\n";
 
     // Output PTS array with formatting
-    std::cout << "static constexpr std::array<double, " << DTS_SIZE << "> PTS_" << integrator_str << " = {";
+    std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> PTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
@@ -393,8 +393,8 @@ int main()
     // Output results in C++ format for direct inclusion in code
     std::cout << std::fixed << std::setprecision(6);
 
-    std::cout << "static constexpr double MIN = " << mmr.min << ";\n";
-    std::cout << "static constexpr double MAX = " << mmr.max << ";\n";
+    std::cout << "inline constexpr double MIN = " << mmr.min << ";\n";
+    std::cout << "inline constexpr double MAX = " << mmr.max << ";\n";
 
     // Calculate pts for Hindmarsh-Rose model with RK4 integration
     PtsResult pr = calculate_pts<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(

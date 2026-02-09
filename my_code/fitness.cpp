@@ -9,15 +9,17 @@
  */
 namespace FitnessConfig
 {
-    // Weight for scores
-    static constexpr double BURSTS_WEIGHT = 0.5;
-    static constexpr double ANTIPHASE_WEIGHT = 0.5;
+    // Weights for score components
+    static constexpr double BURSTS_MIN_WEIGHT = 0.15;
+    static constexpr double BURSTS_DIFF_WEIGHT = 0.15;
+    static constexpr double PHASE_WEIGHT = 0.4;
+    static constexpr double MINMAX_WEIGHT = 0.3;
+
     static constexpr double MINIMUM_BURSTS_WITH_MAX_SCORE = 20.0; // Minimum number of bursts to achieve maximum score in burst count component. We assume that in the perfect case we will see 20 bursts
     // Sensibility constant for algebraic sigmoid; set to the value that will get half (0.5) of the score.
-    static constexpr double HALF_SCORE_BURST_DIFFERENCE = 1.0; // Very low value to heavily penalize any difference in burst count between the two signals
-    // Weights for burst score components
-    static constexpr double BURST_MIN_WEIGHT = 0.25;
-    static constexpr double BURST_DIFF_WEIGHT = 0.5;
+    static constexpr double HALF_SCORE_BURSTS_DIFFERENCE = 1.0; // Very low value to heavily penalize any difference in bursts count between the two signals
+    // Sensibility constant for minmax distance normalization; set to the value that will get half (0.5) of the score. Set to a fraction of the expected range of the signal to get a meaningful score distribution.
+    static constexpr double HALF_SCORE_MINMAX_DIFFERENCE = (HindmarshRose::MAX - HindmarshRose::MIN) / 6;
 }
 
 /*
@@ -41,31 +43,20 @@ double hard_sigmoid(double val, double min_one_val)
         return val / min_one_val;
 }
 
-// New struct to hold precomputed signal statistics
+// struct to hold precomputed signal statistics
 struct ConstantSignalFitnessVals
 {
     double min;
     double max;
     std::vector<bool> up_states;
     double bursts_seen;
-    double burst_min_score;
+    double bursts_min_score;
 };
 
-// New function to preprocess a signal and compute statistics
-ConstantSignalFitnessVals calc_constant_signal_fitness_vals(const std::vector<double> &signal)
+// function to preprocess a signal and compute statistics
+ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal, double min, double max)
 {
     ConstantSignalFitnessVals result;
-
-    double min = SignalConstants::DOUBLE_MAX;
-    double max = SignalConstants::DOUBLE_MIN;
-
-    for (double val : signal)
-    {
-        if (val < min)
-            min = val;
-        if (val > max)
-            max = val;
-    }
 
     result.min = min;
     result.max = max;
@@ -92,19 +83,19 @@ ConstantSignalFitnessVals calc_constant_signal_fitness_vals(const std::vector<do
         result.up_states.push_back(up);
     }
 
-    double burst_min_score = min_0_no_max_desc_normalization(bursts_seen, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
+    double bursts_min_score = min_0_no_max_desc_normalization(bursts_seen, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
 
     result.bursts_seen = bursts_seen;
-    result.burst_min_score = burst_min_score;
+    result.bursts_min_score = bursts_min_score;
 
     return result;
 }
 
 /*
- * Calculate fitness based on exclusive burst activity (XOR logic)
- * Now takes precomputed stats for signal1 and raw signal2
+ * Calculate fitness based on bursts activity (XNOR for phase, XOR for antiphase)
+ * Now takes precomputed stats for signal1, raw signal2, and a bool search_phase (true for phase, false for antiphase)
  */
-double antiphase_fitness(const ConstantSignalFitnessVals &stats1, const std::vector<double> &signal2)
+double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::vector<double> &signal2, bool search_phase)
 {
     size_t signal_size = signal2.size();
 
@@ -124,10 +115,15 @@ double antiphase_fitness(const ConstantSignalFitnessVals &stats1, const std::vec
     double th_on2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range2 + min2;
     double th_up2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range2 + min2;
 
+    // Compute minmax_score
+    double max_score = min_0_no_max_desc_normalization(std::abs(stats1.max - max2), FitnessConfig::HALF_SCORE_MINMAX_DIFFERENCE);
+    double min_score = min_0_no_max_desc_normalization(std::abs(stats1.min - min2), FitnessConfig::HALF_SCORE_MINMAX_DIFFERENCE);
+    double minmax_score = (max_score + min_score) / 2.0;
+
     // State machine for signal2
     bool up2 = (signal2[0] > th_up2);
     double bursts_seen_2 = 0;
-    double antiphase_score = 0.0;
+    double phase_score = 0.0;
 
     for (size_t i = 0; i < signal_size; i++)
     {
@@ -145,24 +141,28 @@ double antiphase_fitness(const ConstantSignalFitnessVals &stats1, const std::vec
             bursts_seen_2++;
         }
 
-        // Fitness logic: XOR
-        if (up1 != up2)
+        // Fitness logic: calculate phase fraction (XNOR)
+        if (up1 == up2)
         {
-            antiphase_score += 1.0;
+            phase_score += 1.0;
         }
     }
 
-    antiphase_score /= signal_size;
+    phase_score /= signal_size;
+
+    // Adjust for antiphase mode
+    if (!search_phase)
+    {
+        phase_score = 1.0 - phase_score;
+    }
 
     // Compute bursts_score using precomputed for signal1
-    double burst_min_score_2 = min_0_no_max_desc_normalization(bursts_seen_2, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
-    double burst_diff_score = hard_sigmoid(std::abs(stats1.bursts_seen - bursts_seen_2), FitnessConfig::HALF_SCORE_BURST_DIFFERENCE);
-    double bursts_score = (FitnessConfig::BURST_MIN_WEIGHT * stats1.burst_min_score) +
-                          (FitnessConfig::BURST_MIN_WEIGHT * burst_min_score_2) +
-                          (FitnessConfig::BURST_DIFF_WEIGHT * burst_diff_score);
+    double bursts_min_score_2 = min_0_no_max_desc_normalization(bursts_seen_2, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
+    double bursts_diff_score = hard_sigmoid(std::abs(stats1.bursts_seen - bursts_seen_2), FitnessConfig::HALF_SCORE_BURSTS_DIFFERENCE);
+    double bursts_min_score = (stats1.bursts_min_score + bursts_min_score_2) / 2.0;
 
     // Compute final weighted score
-    double final_score = (FitnessConfig::BURSTS_WEIGHT * bursts_score) + (FitnessConfig::ANTIPHASE_WEIGHT * antiphase_score);
+    double final_score = (FitnessConfig::BURSTS_MIN_WEIGHT * bursts_min_score) + (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
 
     return final_score;
 }
