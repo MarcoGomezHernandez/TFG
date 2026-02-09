@@ -19,7 +19,7 @@ namespace FitnessConfig
     // Sensibility constant for algebraic sigmoid; set to the value that will get half (0.5) of the score.
     static constexpr double HALF_SCORE_BURSTS_DIFFERENCE = 1.0; // Very low value to heavily penalize any difference in bursts count between the two signals
     // Sensibility constant for minmax distance normalization; set to the value that will get half (0.5) of the score. Set to a fraction of the expected range of the signal to get a meaningful score distribution.
-    static constexpr double HALF_SCORE_MINMAX_DIFFERENCE = (HindmarshRose::MAX - HindmarshRose::MIN) / 6;
+    static constexpr double HALF_SCORE_MINMAX_DIFFERENCE = (HindmarshRose::MAX - HindmarshRose::MIN) / 4.0;
 }
 
 /*
@@ -116,9 +116,8 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     double th_up2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range2 + min2;
 
     // Compute minmax_score
-    double max_score = min_0_no_max_desc_normalization(std::abs(stats1.max - max2), FitnessConfig::HALF_SCORE_MINMAX_DIFFERENCE);
-    double min_score = min_0_no_max_desc_normalization(std::abs(stats1.min - min2), FitnessConfig::HALF_SCORE_MINMAX_DIFFERENCE);
-    double minmax_score = (max_score + min_score) / 2.0;
+    double minmax_diff = std::abs(stats1.max - max2) + std::abs(stats1.min - min2);
+    double minmax_score = min_0_no_max_desc_normalization(minmax_diff, FitnessConfig::HALF_SCORE_MINMAX_DIFFERENCE);
 
     // State machine for signal2
     bool up2 = (signal2[0] > th_up2);
