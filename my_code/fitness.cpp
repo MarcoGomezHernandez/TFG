@@ -36,20 +36,6 @@ struct ConstantSignalFitnessVals
     double norm_max_bursts_diff;
 };
 
-// struct for Chemical Synapsis parameters
-struct ChemicalSinapsis
-{
-    double gfast;
-    double Esyn;
-    double sfast;
-    double Vfast;
-    double Vslow;
-    double gslow;
-    double k1;
-    double k2;
-    double sslow;
-};
-
 // function to preprocess a signal and compute statistics
 ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal)
 {
