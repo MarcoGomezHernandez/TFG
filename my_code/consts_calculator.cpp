@@ -18,16 +18,6 @@
 #include "signal_utils.h"
 
 /*
- * State variables for Hindmarsh-Rose model
- */
-struct HindmarshRoseState
-{
-    double x; // Membrane potential
-    double y; // Recovery variable
-    double z; // Slow adaptation current
-};
-
-/*
  * Parameters for Hindmarsh-Rose model configuration
  */
 struct HindmarshRoseParams

@@ -30,6 +30,16 @@ namespace SignalPublicConfig
 }
 
 /*
+ * State variables for Hindmarsh-Rose model
+ */
+struct HindmarshRoseState
+{
+    double x; // Membrane potential
+    double y; // Recovery variable
+    double z; // Slow adaptation current
+};
+
+/*
  * Hindmarsh-Rose model constants and precomputed lookup tables
  * MIN/MAX: Range of model output
  * DTS: Available time steps for integration
