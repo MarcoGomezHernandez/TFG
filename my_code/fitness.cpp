@@ -31,24 +31,33 @@ double inverse_normalization(double val, double min_val, double max_val)
 // struct to hold precomputed signal statistics
 struct ConstantSignalFitnessVals
 {
-    double min;
-    double max;
     std::vector<bool> up_states;
     double bursts_seen;
     double norm_max_bursts_diff;
 };
 
+// struct for Chemical Synapsis parameters
+struct ChemicalSinapsis
+{
+    double gfast;
+    double Esyn;
+    double sfast;
+    double Vfast;
+    double Vslow;
+    double gslow;
+    double k1;
+    double k2;
+    double sslow;
+};
+
 // function to preprocess a signal and compute statistics
-ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal, double min, double max)
+ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal)
 {
     ConstantSignalFitnessVals result;
 
-    result.min = min;
-    result.max = max;
-
-    double range = max - min;
-    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min;
-    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min;
+    double range = HindmarshRose::MAX - HindmarshRose::MIN;
+    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + HindmarshRose::MIN;
+    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + HindmarshRose::MIN;
 
     result.up_states.reserve(signal.size());
     bool up = (signal[0] > th_up);
@@ -99,7 +108,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     double th_up2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range2 + min2;
 
     // Compute minmax_score
-    double minmax_diff = std::abs(stats1.max - max2) + std::abs(stats1.min - min2);
+    double minmax_diff = std::abs(HindmarshRose::MAX - max2) + std::abs(HindmarshRose::MIN - min2);
     double minmax_score = inverse_normalization(minmax_diff, 0.0, FitnessConstants::NORM_MAX_MINMAX_DIFF);
 
     // State machine for signal2
