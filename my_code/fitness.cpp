@@ -14,24 +14,18 @@ namespace FitnessConfig
     static constexpr double BURSTS_DIFF_WEIGHT = 0.15;
     static constexpr double PHASE_WEIGHT = 0.4;
     static constexpr double MINMAX_WEIGHT = 0.3;
-
-    static constexpr double MINIMUM_BURSTS_WITH_MAX_SCORE = 20.0; // Minimum number of bursts to achieve maximum score in burst count component. We assume that in the perfect case we will see 20 bursts
-    // Sensibility constant for algebraic sigmoid; set to the value that will get half (0.5) of the score.
-    static constexpr double HALF_SCORE_BURSTS_DIFFERENCE = 1.0; // Very low value to heavily penalize any difference in bursts count between the two signals
-    // Sensibility constant for minmax distance normalization; set to the value that will get half (0.5) of the score. Set to a fraction of the expected range of the signal to get a meaningful score distribution.
-    static constexpr double HALF_SCORE_MINMAX_DIFFERENCE = (HindmarshRose::MAX - HindmarshRose::MIN) / 4.0;
 }
 
 /*
- * Compute a function that maps a non-negative value to a score between 0 and 1, with a maximum score of 1 at val=0 and approaching 0 as val increases. The sensibility parameter controls how quickly the score decreases as val increases, and must be positive.
+ * Compute an inverse normalization that maps a value to a score between 0 and 1, with score=1 at val=min_val and score=0 at val=max_val, clamped to [0,1].
  */
-double min_0_no_max_desc_normalization(double val, double sensibility)
+double inverse_normalization(double val, double min_val, double max_val)
 {
-    return 1.0 - (val / (val + sensibility));
+    return (max_val - val) / (max_val - min_val);
 }
 
 /*
- * Compute a function that maps a non-negative value to a score between 0 and 1, with a maximum score of 1 at val=min_one_val and the next, a minimum score of 0 at val=0, and a linear score between 0 and 1 for values between 0 and min_one_val. val must be non-negative and min_one_val must non zero.
+ * Compute a function that maps a non-negative value to a score between 0 and 1, with score=1 for val >= min_one_val, score=0 for val <=0, and linear interpolation for 0 < val < min_one_val. val must be non-negative and min_one_val must be positive.
  */
 double hard_sigmoid(double val, double min_one_val)
 {
@@ -51,6 +45,9 @@ struct ConstantSignalFitnessVals
     std::vector<bool> up_states;
     double bursts_seen;
     double bursts_min_score;
+    double min_bursts_max_score;
+    double norm_max_bursts_diff;
+    double norm_max_minmax_diff;
 };
 
 // function to preprocess a signal and compute statistics
@@ -83,10 +80,12 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
         result.up_states.push_back(up);
     }
 
-    double bursts_min_score = min_0_no_max_desc_normalization(bursts_seen, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
-
     result.bursts_seen = bursts_seen;
-    result.bursts_min_score = bursts_min_score;
+    result.min_bursts_max_score = bursts_seen;
+    result.norm_max_bursts_diff = bursts_seen / 2.0;
+    result.norm_max_minmax_diff = (HindmarshRose::MAX - HindmarshRose::MIN) * 2.0;
+
+    result.bursts_min_score = hard_sigmoid(bursts_seen, result.min_bursts_max_score);
 
     return result;
 }
@@ -117,7 +116,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
 
     // Compute minmax_score
     double minmax_diff = std::abs(stats1.max - max2) + std::abs(stats1.min - min2);
-    double minmax_score = min_0_no_max_desc_normalization(minmax_diff, FitnessConfig::HALF_SCORE_MINMAX_DIFFERENCE);
+    double minmax_score = inverse_normalization(minmax_diff, 0.0, stats1.norm_max_minmax_diff);
 
     // State machine for signal2
     bool up2 = (signal2[0] > th_up2);
@@ -156,8 +155,8 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     }
 
     // Compute bursts_score using precomputed for signal1
-    double bursts_min_score_2 = min_0_no_max_desc_normalization(bursts_seen_2, FitnessConfig::MINIMUM_BURSTS_WITH_MAX_SCORE);
-    double bursts_diff_score = hard_sigmoid(std::abs(stats1.bursts_seen - bursts_seen_2), FitnessConfig::HALF_SCORE_BURSTS_DIFFERENCE);
+    double bursts_min_score_2 = hard_sigmoid(bursts_seen_2, stats1.min_bursts_max_score);
+    double bursts_diff_score = inverse_normalization(std::abs(stats1.bursts_seen - bursts_seen_2), 0.0, stats1.norm_max_bursts_diff);
     double bursts_min_score = (stats1.bursts_min_score + bursts_min_score_2) / 2.0;
 
     // Compute final weighted score
