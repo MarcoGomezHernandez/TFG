@@ -45,6 +45,15 @@ struct HindmarshRoseState
 };
 
 /*
+ * Neuron model types for configuration
+ */
+struct SynapseFitness
+{
+    double fitness;
+    size_t index;
+};
+
+/*
  * Hindmarsh-Rose model constants and precomputed lookup tables
  * MIN/MAX: Range of model output
  * DTS: Available time steps for integration

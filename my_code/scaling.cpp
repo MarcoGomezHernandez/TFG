@@ -10,6 +10,7 @@
 #include <array>
 #include <cstddef>
 #include <stdexcept>
+#include <iostream>
 
 /*
  * Private configuration constants for signal processing algorithms
@@ -108,6 +109,15 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
         current_line++;
         if (current_line >= end_index)
             break;
+    }
+
+    // Precalculate data size for efficiency
+    size_t data_size = data.size();
+
+    // Check if fewer points were read than expected and warn
+    if (data_size < num_points)
+    {
+        std::cout << "Warning: Fewer data points read (" << data_size << ") than expected (" << num_points << ") from CSV file: " << csv_path << std::endl;
     }
 
     file.close();
