@@ -10,8 +10,7 @@
 namespace FitnessConfig
 {
     // Weights for score components
-    static constexpr double BURSTS_MIN_WEIGHT = 0.15;
-    static constexpr double BURSTS_DIFF_WEIGHT = 0.15;
+    static constexpr double BURSTS_DIFF_WEIGHT = 0.3;
     static constexpr double PHASE_WEIGHT = 0.4;
     static constexpr double MINMAX_WEIGHT = 0.3;
 }
@@ -24,19 +23,6 @@ double inverse_normalization(double val, double min_val, double max_val)
     return (max_val - val) / (max_val - min_val);
 }
 
-/*
- * Compute a function that maps a non-negative value to a score between 0 and 1, with score=1 for val >= min_one_val, score=0 for val <=0, and linear interpolation for 0 < val < min_one_val. val must be non-negative and min_one_val must be positive.
- */
-double hard_sigmoid(double val, double min_one_val)
-{
-    if (val <= 0)
-        return 0.0;
-    else if (val >= min_one_val)
-        return 1.0;
-    else
-        return val / min_one_val;
-}
-
 // struct to hold precomputed signal statistics
 struct ConstantSignalFitnessVals
 {
@@ -44,8 +30,6 @@ struct ConstantSignalFitnessVals
     double max;
     std::vector<bool> up_states;
     double bursts_seen;
-    double bursts_min_score;
-    double min_bursts_max_score;
     double norm_max_bursts_diff;
     double norm_max_minmax_diff;
 };
@@ -81,11 +65,8 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
     }
 
     result.bursts_seen = bursts_seen;
-    result.min_bursts_max_score = bursts_seen;
     result.norm_max_bursts_diff = bursts_seen / 2.0;
     result.norm_max_minmax_diff = (HindmarshRose::MAX - HindmarshRose::MIN) * 2.0;
-
-    result.bursts_min_score = hard_sigmoid(bursts_seen, result.min_bursts_max_score);
 
     return result;
 }
@@ -155,12 +136,10 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     }
 
     // Compute bursts_score using precomputed for signal1
-    double bursts_min_score_2 = hard_sigmoid(bursts_seen_2, stats1.min_bursts_max_score);
     double bursts_diff_score = inverse_normalization(std::abs(stats1.bursts_seen - bursts_seen_2), 0.0, stats1.norm_max_bursts_diff);
-    double bursts_min_score = (stats1.bursts_min_score + bursts_min_score_2) / 2.0;
 
     // Compute final weighted score
-    double final_score = (FitnessConfig::BURSTS_MIN_WEIGHT * bursts_min_score) + (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
+    double final_score = (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
 
     return final_score;
 }
