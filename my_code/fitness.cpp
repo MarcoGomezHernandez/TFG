@@ -15,6 +15,11 @@ namespace FitnessConfig
     static constexpr double MINMAX_WEIGHT = 0.3;
 }
 
+namespace FitnessConstants
+{
+    static constexpr double NORM_MAX_MINMAX_DIFF = (HindmarshRose::MAX - HindmarshRose::MIN) * 2.0;
+}
+
 /*
  * Compute an inverse normalization that maps a value to a score between 0 and 1, with score=1 at val=min_val and score=0 at val=max_val, clamped to [0,1].
  */
@@ -31,7 +36,6 @@ struct ConstantSignalFitnessVals
     std::vector<bool> up_states;
     double bursts_seen;
     double norm_max_bursts_diff;
-    double norm_max_minmax_diff;
 };
 
 // function to preprocess a signal and compute statistics
@@ -66,7 +70,6 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
 
     result.bursts_seen = bursts_seen;
     result.norm_max_bursts_diff = bursts_seen / 2.0;
-    result.norm_max_minmax_diff = (HindmarshRose::MAX - HindmarshRose::MIN) * 2.0;
 
     return result;
 }
@@ -97,7 +100,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
 
     // Compute minmax_score
     double minmax_diff = std::abs(stats1.max - max2) + std::abs(stats1.min - min2);
-    double minmax_score = inverse_normalization(minmax_diff, 0.0, stats1.norm_max_minmax_diff);
+    double minmax_score = inverse_normalization(minmax_diff, 0.0, FitnessConstants::NORM_MAX_MINMAX_DIFF);
 
     // State machine for signal2
     bool up2 = (signal2[0] > th_up2);
