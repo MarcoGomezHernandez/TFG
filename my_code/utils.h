@@ -6,14 +6,19 @@
 #include <array>
 
 /*
+ * General constants
+ */
+namespace GeneralConstants
+{
+    inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
+    inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
+}
+
+/*
  * Sentinel and invalid values used throughout signal processing
  */
 namespace SignalConstants
 {
-    // Sentinel values for range tracking
-    inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
-    inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
-
     // Invalid/uninitialized values
     inline constexpr double INVALID_DT = -1.0;
     inline constexpr double INVALID_PTS = -1.0;

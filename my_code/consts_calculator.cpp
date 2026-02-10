@@ -15,7 +15,7 @@
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
 #include "scaling.h"
-#include "signal_utils.h"
+#include "utils.h"
 
 /*
  * Parameters for Hindmarsh-Rose model configuration
@@ -169,8 +169,8 @@ MinMaxResult calculate_min_max(
         neuron.step(dt);
 
     // Find absolute min/max over observation time using finest dt
-    double min = SignalConstants::DOUBLE_MAX;
-    double max = SignalConstants::DOUBLE_MIN;
+    double min = GeneralConstants::DOUBLE_MAX;
+    double max = GeneralConstants::DOUBLE_MIN;
     size_t obs_steps = static_cast<size_t>(observation_time / dt);
     for (size_t step = 0; step < obs_steps; step++)
     {
@@ -299,7 +299,7 @@ PtsResult calculate_pts(
         // Store average points per burst, or mark as invalid
         if (bursts_seen <= 0)
         {
-            result.pts[i] = SignalConstants::DOUBLE_MAX; // Sentinel for invalid
+            result.pts[i] = GeneralConstants::DOUBLE_MAX; // Sentinel for invalid
             result.invalid_dts.push_back(dts[i]);
         }
         else

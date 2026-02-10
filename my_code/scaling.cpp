@@ -1,6 +1,6 @@
 // Signal scaling and transformation for neural model integration
 #include "scaling.h"
-#include "signal_utils.h"
+#include "utils.h"
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -409,8 +409,8 @@ ScaledSignalResult scale_signal(
     {
         // Drift checking mode: recalculate scaling periodically
         size_t drift_counter = 0;
-        double max_window = SignalConstants::DOUBLE_MIN;
-        double min_window = SignalConstants::DOUBLE_MAX;
+        double max_window = GeneralConstants::DOUBLE_MIN;
+        double min_window = GeneralConstants::DOUBLE_MAX;
         double drift_aux_range = stats.max_abs_real - stats.min_abs_real;
 
         for (size_t i = 0; i < signal_size; i++)
@@ -429,7 +429,7 @@ ScaledSignalResult scale_signal(
 
             // Recalculate scaling factors every N bursts
             if (drift_counter >= (SignalPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
-                max_window != SignalConstants::DOUBLE_MIN && min_window != SignalConstants::DOUBLE_MAX)
+                max_window != GeneralConstants::DOUBLE_MIN && min_window != GeneralConstants::DOUBLE_MAX)
             {
                 drift_counter = 0;
 
@@ -437,8 +437,8 @@ ScaledSignalResult scale_signal(
                 factors = fix_drift(min_abs_model, max_abs_model, min_window, max_window, stats);
 
                 // Reset window trackers
-                max_window = SignalConstants::DOUBLE_MIN;
-                min_window = SignalConstants::DOUBLE_MAX;
+                max_window = GeneralConstants::DOUBLE_MIN;
+                min_window = GeneralConstants::DOUBLE_MAX;
             }
 
             drift_counter++;
