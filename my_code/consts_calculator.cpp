@@ -277,13 +277,14 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 
 int main()
 {
-    using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>;
+    using Integrator = RungeKutta4;
+    using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
 
     // Calculate min and max for Hindmarsh-Rose model with RK4 integration
     MinMaxResult mmr = calculate_min_max<NeuronType>(
-        &create_hindmarsh_rose<RungeKutta4>,
-        &reset_state_hindmarsh_rose<NeuronType>,
-        &get_v_hindmarsh_rose<NeuronType>,
+        &create_hindmarsh_rose<Integrator>,
+        &reset_state_hindmarsh_rose<Integrator>,
+        &get_v_hindmarsh_rose<Integrator>,
         ConstCalculatorConfig::OBSERVATION_TIME,
         ConstCalculatorConfig::MINMAX_DT,
         ConstCalculatorConfig::STABILIZATION_TIME);
@@ -296,9 +297,9 @@ int main()
 
     // Calculate pts for Hindmarsh-Rose model with RK4 integration
     PtsResult pr = calculate_pts<NeuronType>(
-        &create_hindmarsh_rose<RungeKutta4>,
-        &reset_state_hindmarsh_rose<RungeKutta4>,
-        &get_v_hindmarsh_rose<RungeKutta4>,
+        &create_hindmarsh_rose<Integrator>,
+        &reset_state_hindmarsh_rose<Integrator>,
+        &get_v_hindmarsh_rose<Integrator>,
         ConstCalculatorConfig::DTS,
         ConstCalculatorConfig::OBSERVATION_TIME,
         ConstCalculatorConfig::STABILIZATION_TIME,
