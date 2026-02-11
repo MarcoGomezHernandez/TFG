@@ -154,7 +154,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, params_individuals, scaled_result, initial_state, stats1, search_phase, buffers, reset_model_func, get_v_model_func, set_v_csv_func
+ * Parameters: synapsis, neurons, params_individuals, scaled_result, initial_state, stats1, search_phase, buffers, reset_state_neur, get_v_neur, set_v_neur
  */
 template <typename Integrator, typename NeuronType, typename StateType, size_t N>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
@@ -167,9 +167,9 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
                     std::array<double, N> &fitnesses_buffer,
-                    void (*reset_model_func)(NeuronType &, const StateType &),
-                    double (*get_v_model_func)(const NeuronType &),
-                    void (*set_v_csv_func)(NeuronType &, double))
+                    void (*reset_state_neur)(NeuronType &, const StateType &),
+                    double (*get_v_neur)(const NeuronType &),
+                    void (*set_v_neur)(NeuronType &, double))
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
@@ -194,14 +194,14 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         synapsis.set(ChemicalSynapsisType::mslow, FitnessConstants::M_SLOW_INITIAL_VALUE);
 
         // Reset neuron state using provided function
-        reset_model_func(model_neur, initial_state);
+        reset_state_neur(model_neur, initial_state);
 
         // Simulate and collect neur signal
         size_t signal_counter = 0;
         size_t interpolated_signal_counter = 0;
         for (size_t j = 0; j < total_size; j++)
         {
-            double model_neur_val = get_v_model_func(model_neur);
+            double model_neur_val = get_v_neur(model_neur);
 
             double csv_neur_val_to_use;
             if ((j % scaled_result.points_factor) == 0)
@@ -216,7 +216,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                 interpolated_signal_counter++;
             }
 
-            set_v_csv_func(csv_neur, csv_neur_val_to_use);
+            set_v_neur(csv_neur, csv_neur_val_to_use);
             synapsis.step(scaled_result.dt, csv_neur_val_to_use, model_neur_val);
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(scaled_result.dt);
@@ -225,34 +225,4 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         // Compute fitness
         fitnesses_buffer[i] = fitness_from_signals(stats1, model_signal_buffer, search_phase);
     }
-}
-
-/*
- * Reset the state of a Hindmarsh-Rose neuron using the provided StateType
- */
-template <typename NeuronType>
-void reset_hindmarsh_rose_state(NeuronType &neuron, const HindmarshRoseState &state)
-{
-    neuron.set(NeuronType::x, state.x);
-    neuron.set(NeuronType::y, state.y);
-    neuron.set(NeuronType::z, state.z);
-    neuron.reset_synaptic_input();
-}
-
-/*
- * Get the voltage (membrane potential) from a Hindmarsh-Rose neuron
- */
-template <typename NeuronType>
-double get_hindmarsh_rose_voltage(const NeuronType &neuron)
-{
-    return neuron.get(NeuronType::x);
-}
-
-/*
- * Set the voltage (membrane potential) of a Hindmarsh-Rose neuron
- */
-template <typename NeuronType>
-void set_hindmarsh_rose_voltage(NeuronType &neuron, double voltage)
-{
-    neuron.set(NeuronType::x, voltage);
 }

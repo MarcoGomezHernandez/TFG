@@ -18,22 +18,6 @@
 #include "utils.h"
 
 /*
- * Parameters for Hindmarsh-Rose model configuration
- */
-struct HindmarshRoseParams
-{
-    double e;  // Time scale parameter
-    double mu; // Slow dynamics parameter
-    double S;  // External stimulus
-    double a;  // Cubic nonlinearity coefficient
-    double b;  // Quadratic coefficient
-    double c;  // Recovery variable coefficient
-    double d;  // Recovery variable coefficient
-    double xr; // Rest potential
-    double vh; // Threshold parameter
-};
-
-/*
  * Algorithm constants for burst detection
  */
 namespace ConstCalculatorConstants

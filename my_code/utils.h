@@ -6,6 +6,12 @@
 #include <array>
 #include <cstddef>
 
+// NeuN Headers
+#include <DifferentialNeuronWrapper.h>
+#include <HindmarshRoseModel.h>
+#include <SystemWrapper.h>
+#include <RungeKutta4.h>
+
 /*
  * General constants
  */
@@ -45,15 +51,71 @@ struct HindmarshRoseState
     double z; // Slow adaptation current
 };
 
-// Prototypes for Hindmarsh-Rose utility functions
-template <typename NeuronType>
-void reset_hindmarsh_rose_state(NeuronType &neuron, const HindmarshRoseState &state);
+/*
+ * Parameters for Hindmarsh-Rose model configuration
+ */
+struct HindmarshRoseParams
+{
+    double e;  // Time scale parameter
+    double mu; // Slow dynamics parameter
+    double S;  // External stimulus
+    double a;  // Cubic nonlinearity coefficient
+    double b;  // Quadratic coefficient
+    double c;  // Recovery variable coefficient
+    double d;  // Recovery variable coefficient
+    double xr; // Rest potential
+    double vh; // Threshold parameter
+};
 
+/*
+ * Reset the state of a Hindmarsh-Rose neuron using the provided StateType
+ */
 template <typename NeuronType>
-double get_hindmarsh_rose_voltage(const NeuronType &neuron);
+inline void reset_state_hindmarsh_rose(NeuronType &neuron, const HindmarshRoseState &state)
+{
+    neuron.set(NeuronType::x, state.x);
+    neuron.set(NeuronType::y, state.y);
+    neuron.set(NeuronType::z, state.z);
+    neuron.reset_synaptic_input();
+}
 
+/*
+ * Get the voltage (membrane potential) from a Hindmarsh-Rose neuron
+ */
 template <typename NeuronType>
-void set_hindmarsh_rose_voltage(NeuronType &neuron, double voltage);
+inline double get_v_hindmarsh_rose(const NeuronType &neuron)
+{
+    return neuron.get(NeuronType::x);
+}
+
+/*
+ * Set the voltage (membrane potential) of a Hindmarsh-Rose neuron
+ */
+template <typename NeuronType>
+inline void set_v_hindmarsh_rose(NeuronType &neuron, double voltage)
+{
+    neuron.set(NeuronType::x, voltage);
+}
+
+/*
+ * Create a Hindmarsh-Rose neuron with the specified integrator and parameters
+ */
+template <typename Integrator>
+inline DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator> create_hindmarsh_rose_neuron(const HindmarshRoseParams &params)
+{
+    using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
+    typename NeuronType::ConstructorArgs args;
+    args.params[NeuronType::e] = params.e;
+    args.params[NeuronType::mu] = params.mu;
+    args.params[NeuronType::S] = params.S;
+    args.params[NeuronType::a] = params.a;
+    args.params[NeuronType::b] = params.b;
+    args.params[NeuronType::c] = params.c;
+    args.params[NeuronType::d] = params.d;
+    args.params[NeuronType::xr] = params.xr;
+    args.params[NeuronType::vh] = params.vh;
+    return NeuronType(args);
+}
 
 /*
  * Parameters for chemical synapse model
