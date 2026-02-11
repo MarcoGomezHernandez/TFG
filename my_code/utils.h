@@ -4,6 +4,7 @@
 
 #include <limits>
 #include <array>
+#include <cstddef>
 
 /*
  * General constants
@@ -45,12 +46,19 @@ struct HindmarshRoseState
 };
 
 /*
- * Neuron model types for configuration
+ * Parameters for chemical synapse model
  */
-struct SynapseFitness
+struct ChemicalSynapsisParams
 {
-    double fitness;
-    size_t index;
+    double gfast;
+    double Esyn;
+    double sfast;
+    double Vfast;
+    double Vslow;
+    double gslow;
+    double k1;
+    double k2;
+    double sslow;
 };
 
 /*

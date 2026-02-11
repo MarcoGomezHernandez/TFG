@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
-#include "signal_utils.h"
+#include "utils.h"
+#include "scaling.h"
+#include <ChemicalSynapsis.h>
 
 /*
  * Configuration constants for fitness calculation
@@ -18,6 +20,7 @@ namespace FitnessConfig
 namespace FitnessConstants
 {
     static constexpr double NORM_MAX_MINMAX_DIFF = (HindmarshRose::MAX - HindmarshRose::MIN) * 2.0;
+    static constexpr double M_SLOW_INITIAL_VALUE = 0.0;
 }
 
 /*
@@ -77,8 +80,8 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
 {
     size_t signal_size = signal2.size();
 
-    double min2 = SignalConstants::DOUBLE_MAX;
-    double max2 = SignalConstants::DOUBLE_MIN;
+    double min2 = GeneralConstants::DOUBLE_MAX;
+    double max2 = GeneralConstants::DOUBLE_MIN;
 
     for (double val2 : signal2)
     {
@@ -140,4 +143,88 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     double final_score = (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
 
     return final_score;
+}
+
+template <typename Integrator, typename NeuronType, typename StateType, size_t N>
+void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
+                    NeuronType &csv_neur,
+                    NeuronType &model_neur,
+                    const std::array<ChemicalSynapsisParams, N> &params_individuals,
+                    const ScaledSignalResult &scaled_result,
+                    const StateType &initial_state,
+                    NeuronModel model,
+                    const ConstantSignalFitnessVals &stats1,
+                    bool search_phase,
+                    bool inject_ifast,
+                    std::vector<double> &model_signal_buffer,
+                    std::array<double, N> &fitnesses_buffer)
+{
+    using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
+
+    size_t total_size = scaled_result.signal.size() + scaled_result.interpolated_points.size();
+
+    for (size_t i = 0; i < N; i++)
+    {
+        const ChemicalSynapsisParams &params = params_individuals[i];
+
+        // Set synapsis parameters
+        synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
+        synapsis.set(ChemicalSynapsisType::Esyn, params.Esyn);
+        synapsis.set(ChemicalSynapsisType::sfast, params.sfast);
+        synapsis.set(ChemicalSynapsisType::Vfast, params.Vfast);
+        synapsis.set(ChemicalSynapsisType::Vslow, params.Vslow);
+        synapsis.set(ChemicalSynapsisType::gslow, params.gslow);
+        synapsis.set(ChemicalSynapsisType::k1, params.k1);
+        synapsis.set(ChemicalSynapsisType::k2, params.k2);
+        synapsis.set(ChemicalSynapsisType::sslow, params.sslow);
+
+        // Reset synapsis
+        synapsis.set(ChemicalSynapsisType::mslow, FitnessConstants::M_SLOW_INITIAL_VALUE);
+
+        // Reset neuron state if Hindmarsh-Rose
+        if (model == HINDMARSH_ROSE)
+        {
+            model_neur.set(NeuronType::x, initial_state.x);
+            model_neur.set(NeuronType::y, initial_state.y);
+            model_neur.set(NeuronType::z, initial_state.z);
+            model_neur.reset_synaptic_input();
+        }
+
+        // Simulate and collect neur signal
+        size_t signal_counter = 0;
+        size_t interpolated_signal_counter = 0;
+        for (size_t j = 0; j < total_size; j++)
+        {
+            double model_neur_val;
+            if (model == HINDMARSH_ROSE)
+            {
+                model_neur_val = model_neur.get(NeuronType::x);
+            }
+
+            double csv_neur_val_to_use;
+            if ((j % scaled_result.points_factor) == 0)
+            {
+                csv_neur_val_to_use = scaled_result.signal[signal_counter];
+                model_signal_buffer[signal_counter] = model_neur_val;
+                signal_counter++;
+            }
+            else
+            {
+                csv_neur_val_to_use = scaled_result.interpolated_points[interpolated_signal_counter];
+                interpolated_signal_counter++;
+            }
+
+            if (model == HINDMARSH_ROSE)
+            {
+                csv_neur.set(NeuronType::x, csv_neur_val_to_use);
+            }
+            synapsis.step(scaled_result.dt, csv_neur_val_to_use, model_neur_val);
+            double i = inject_ifast ? synapsis.get(ChemicalSynapsisType::ifast) : synapsis.get(ChemicalSynapsisType::islow);
+            model_neur.add_synaptic_input(i);
+            model_neur.step(scaled_result.dt);
+        }
+
+        // Compute fitness
+        fitnesses_buffer[i] = fitness_from_signals(stats1, model_signal_buffer, search_phase);
+    }
 }
