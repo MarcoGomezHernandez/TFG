@@ -31,7 +31,9 @@ double inverse_normalization(double val, double min_val, double max_val)
     return (max_val - val) / (max_val - min_val);
 }
 
-// struct to hold precomputed signal statistics
+/*
+ * Struct to hold precomputed signal statistics
+ */
 struct ConstantSignalFitnessVals
 {
     std::vector<bool> up_states;
@@ -39,7 +41,10 @@ struct ConstantSignalFitnessVals
     double norm_max_bursts_diff;
 };
 
-// function to preprocess a signal and compute statistics
+/*
+ * Function to preprocess a signal and compute statistics
+ * Returns ConstantSignalFitnessVals containing up_states, bursts_seen, and norm_max_bursts_diff
+ */
 ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal)
 {
     ConstantSignalFitnessVals result;
@@ -74,7 +79,8 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
 
 /*
  * Calculate fitness based on bursts activity (XNOR for phase, XOR for antiphase)
- * Now takes precomputed stats for signal1, raw signal2, and a bool search_phase (true for phase, false for antiphase)
+ * Takes precomputed stats for signal1, raw signal2, and a bool search_phase (true for phase, false for antiphase)
+ * Returns the computed fitness score
  */
 double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::vector<double> &signal2, bool search_phase)
 {
@@ -145,6 +151,11 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     return final_score;
 }
 
+/*
+ * Template function to calculate fitnesses for multiple parameter sets
+ * Simulates the neural model with given parameters and computes fitness against precomputed stats
+ * Parameters: synapsis, neurons, params_individuals, scaled_result, initial_state, model, stats1, search_phase, buffers
+ */
 template <typename Integrator, typename NeuronType, typename StateType, size_t N>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &csv_neur,
@@ -155,7 +166,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     NeuronModel model,
                     const ConstantSignalFitnessVals &stats1,
                     bool search_phase,
-                    bool inject_ifast,
                     std::vector<double> &model_signal_buffer,
                     std::array<double, N> &fitnesses_buffer)
 {
@@ -219,8 +229,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                 csv_neur.set(NeuronType::x, csv_neur_val_to_use);
             }
             synapsis.step(scaled_result.dt, csv_neur_val_to_use, model_neur_val);
-            double i = inject_ifast ? synapsis.get(ChemicalSynapsisType::ifast) : synapsis.get(ChemicalSynapsisType::islow);
-            model_neur.add_synaptic_input(i);
+            model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(scaled_result.dt);
         }
 
