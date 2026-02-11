@@ -39,19 +39,21 @@ struct ConstantSignalFitnessVals
     std::vector<bool> up_states;
     double bursts_seen;
     double norm_max_bursts_diff;
+    double min_val;
+    double max_val;
 };
 
 /*
  * Function to preprocess a signal and compute statistics
  * Returns ConstantSignalFitnessVals containing up_states, bursts_seen, and norm_max_bursts_diff
  */
-ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal)
+ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal, double min_val, double max_val)
 {
     ConstantSignalFitnessVals result;
 
-    double range = HindmarshRose::MAX - HindmarshRose::MIN;
-    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + HindmarshRose::MIN;
-    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + HindmarshRose::MIN;
+    double range = max_val - min_val;
+    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
+    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
 
     result.up_states.reserve(signal.size());
     bool up = (signal[0] > th_up);
@@ -73,6 +75,8 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
 
     result.bursts_seen = bursts_seen;
     result.norm_max_bursts_diff = bursts_seen / 2.0;
+    result.min_val = min_val;
+    result.max_val = max_val;
 
     return result;
 }
@@ -103,7 +107,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     double th_up2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range2 + min2;
 
     // Compute minmax_score
-    double minmax_diff = std::abs(HindmarshRose::MAX - max2) + std::abs(HindmarshRose::MIN - min2);
+    double minmax_diff = std::abs(stats1.max_val - max2) + std::abs(stats1.min_val - min2);
     double minmax_score = inverse_normalization(minmax_diff, 0.0, FitnessConstants::NORM_MAX_MINMAX_DIFF);
 
     // State machine for signal2
