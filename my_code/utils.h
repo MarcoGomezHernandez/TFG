@@ -12,8 +12,12 @@
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
 
+/*
+ * Para for the hindmarsh-rose model
+ */
 namespace HindmarshRoseParams
 {
+    // Parameters for the Hindmarsh-Rose neuron model
     inline constexpr double e = 2.281;
     inline constexpr double mu = 0.0021;
     inline constexpr double S = 1.0;
@@ -25,8 +29,12 @@ namespace HindmarshRoseParams
     inline constexpr double vh = 0.1;
 }
 
+/*
+ * Initial state for the hindmarsh-rose model
+ */
 namespace HindmarshRoseInitialState
 {
+    // Initial state values for the Hindmarsh-Rose neuron variables (x, y, z)
     inline constexpr double x = -0.712841;
     inline constexpr double y = -1.93688;
     inline constexpr double z = 3.16568;
@@ -41,6 +49,7 @@ using HindmarshRoseNeuron = DifferentialNeuronWrapper<SystemWrapper<HindmarshRos
  */
 namespace GeneralConstants
 {
+    // Maximum and minimum double values for boundary checks
     inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
     inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 }
@@ -121,15 +130,15 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose()
  */
 struct ChemicalSynapsisParams
 {
-    double gfast;
-    double Esyn;
-    double sfast;
-    double Vfast;
-    double Vslow;
-    double gslow;
-    double k1;
-    double k2;
-    double sslow;
+    double gfast; // Fast synaptic conductance
+    double Esyn;  // Synaptic reversal potential
+    double sfast; // Fast synaptic gating variable
+    double Vfast; // Fast voltage threshold
+    double Vslow; // Slow voltage threshold
+    double gslow; // Slow synaptic conductance
+    double k1;    // Forward rate constant
+    double k2;    // Backward rate constant
+    double sslow; // Slow synaptic gating variable
 };
 
 /*
