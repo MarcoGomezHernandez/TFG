@@ -162,7 +162,6 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
  */
 template <typename Integrator, typename NeuronType, size_t N>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
-                    NeuronType &csv_neur,
                     NeuronType &model_neur,
                     const std::array<ChemicalSynapsisParams, N> &params_individuals,
                     const ScaledSignalResult &scaled_result,
@@ -171,12 +170,11 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     std::vector<double> &model_signal_buffer,
                     std::array<double, N> &fitnesses_buffer,
                     void (*reset_state_neur)(NeuronType &),
-                    double (*get_v_neur)(const NeuronType &),
-                    void (*set_v_neur)(NeuronType &, double))
+                    double (*get_v_neur)(const NeuronType &))
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
-    size_t total_size = scaled_result.signal.size() + scaled_result.interpolated_points.size();
+    size_t signal_size = scaled_result.signal.size();
 
     for (size_t i = 0; i < N; i++)
     {
@@ -200,30 +198,28 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         reset_state_neur(model_neur);
 
         // Simulate and collect neur signal
-        size_t signal_counter = 0;
-        size_t interpolated_signal_counter = 0;
-        for (size_t j = 0; j < total_size; j++)
+        size_t interp_signal_counter = 0;
+        size_t j = 0;
+        for (; j < signal_size; j++)
         {
-            double model_neur_val = get_v_neur(model_neur);
-
-            double csv_neur_val_to_use;
-            if ((j % scaled_result.points_factor) == 0)
-            {
-                csv_neur_val_to_use = scaled_result.signal[signal_counter];
-                model_signal_buffer[signal_counter] = model_neur_val;
-                signal_counter++;
-            }
-            else
-            {
-                csv_neur_val_to_use = scaled_result.interpolated_points[interpolated_signal_counter];
-                interpolated_signal_counter++;
-            }
-
-            set_v_neur(csv_neur, csv_neur_val_to_use);
-            synapsis.step(scaled_result.dt, csv_neur_val_to_use, model_neur_val);
+            synapsis.step(scaled_result.dt, scaled_result.signal[j], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(scaled_result.dt);
+            model_signal_buffer[j] = get_v_neur(model_neur);
+
+            for (size_t k = 1; k < scaled_result.points_factor; k++)
+            {
+                synapsis.step(scaled_result.dt, scaled_result.interpolated_signal[interp_signal_counter], get_v_neur(model_neur));
+                model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
+                model_neur.step(scaled_result.dt);
+                interp_signal_counter++;
+            }
         }
+
+        synapsis.step(scaled_result.dt, scaled_result.signal[j], get_v_neur(model_neur));
+        model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
+        model_neur.step(scaled_result.dt);
+        model_signal_buffer[j] = get_v_neur(model_neur);
 
         // Compute fitness
         fitnesses_buffer[i] = fitness_from_signals(stats1, model_signal_buffer, search_phase);

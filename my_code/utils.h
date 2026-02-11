@@ -97,15 +97,6 @@ inline double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron
 }
 
 /*
- * Set the voltage (membrane potential) of a Hindmarsh-Rose neuron
- */
-template <typename Integrator>
-inline void set_v_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron, double voltage)
-{
-    neuron.set(HindmarshRoseNeuron<Integrator>::x, voltage);
-}
-
-/*
  * Create a Hindmarsh-Rose neuron with the specified integrator and parameters
  */
 template <typename Integrator>
