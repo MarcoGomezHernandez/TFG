@@ -12,6 +12,26 @@
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
 
+namespace HindmarshRoseParams
+{
+    inline constexpr double e = 2.281;
+    inline constexpr double mu = 0.0021;
+    inline constexpr double S = 1.0;
+    inline constexpr double a = 1.0;
+    inline constexpr double b = 3.0;
+    inline constexpr double c = 1.0;
+    inline constexpr double d = 5.0;
+    inline constexpr double xr = -1.6;
+    inline constexpr double vh = 0.1;
+}
+
+namespace HindmarshRoseInitialState
+{
+    inline constexpr double x = -0.712841;
+    inline constexpr double y = -1.93688;
+    inline constexpr double z = 3.16568;
+}
+
 // Alias for Hindmarsh-Rose neuron type
 template <typename Integrator>
 using HindmarshRoseNeuron = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
@@ -46,41 +66,15 @@ namespace SignalPublicConfig
 }
 
 /*
- * State variables for Hindmarsh-Rose model
- */
-struct HindmarshRoseState
-{
-    double x; // Membrane potential
-    double y; // Recovery variable
-    double z; // Slow adaptation current
-};
-
-/*
- * Parameters for Hindmarsh-Rose model configuration
- */
-struct HindmarshRoseParams
-{
-    double e;  // Time scale parameter
-    double mu; // Slow dynamics parameter
-    double S;  // External stimulus
-    double a;  // Cubic nonlinearity coefficient
-    double b;  // Quadratic coefficient
-    double c;  // Recovery variable coefficient
-    double d;  // Recovery variable coefficient
-    double xr; // Rest potential
-    double vh; // Threshold parameter
-};
-
-/*
  * Reset the state of a Hindmarsh-Rose neuron using the provided StateType
  */
 template <typename Integrator>
-inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron, const HindmarshRoseState &state)
+inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
 {
     using NeuronType = HindmarshRoseNeuron<Integrator>;
-    neuron.set(NeuronType::x, state.x);
-    neuron.set(NeuronType::y, state.y);
-    neuron.set(NeuronType::z, state.z);
+    neuron.set(NeuronType::x, HindmarshRoseInitialState::x);
+    neuron.set(NeuronType::y, HindmarshRoseInitialState::y);
+    neuron.set(NeuronType::z, HindmarshRoseInitialState::z);
     neuron.reset_synaptic_input();
 }
 
@@ -106,19 +100,19 @@ inline void set_v_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron, double
  * Create a Hindmarsh-Rose neuron with the specified integrator and parameters
  */
 template <typename Integrator>
-inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(const HindmarshRoseParams &params)
+inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose()
 {
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     typename NeuronType::ConstructorArgs args;
-    args.params[NeuronType::e] = params.e;
-    args.params[NeuronType::mu] = params.mu;
-    args.params[NeuronType::S] = params.S;
-    args.params[NeuronType::a] = params.a;
-    args.params[NeuronType::b] = params.b;
-    args.params[NeuronType::c] = params.c;
-    args.params[NeuronType::d] = params.d;
-    args.params[NeuronType::xr] = params.xr;
-    args.params[NeuronType::vh] = params.vh;
+    args.params[NeuronType::e] = HindmarshRoseParams::e;
+    args.params[NeuronType::mu] = HindmarshRoseParams::mu;
+    args.params[NeuronType::S] = HindmarshRoseParams::S;
+    args.params[NeuronType::a] = HindmarshRoseParams::a;
+    args.params[NeuronType::b] = HindmarshRoseParams::b;
+    args.params[NeuronType::c] = HindmarshRoseParams::c;
+    args.params[NeuronType::d] = HindmarshRoseParams::d;
+    args.params[NeuronType::xr] = HindmarshRoseParams::xr;
+    args.params[NeuronType::vh] = HindmarshRoseParams::vh;
     return NeuronType(args);
 }
 

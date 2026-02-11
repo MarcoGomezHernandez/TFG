@@ -53,26 +53,6 @@ namespace ConstCalculatorConfig
         0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700,
         0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
 
-    // Hindmarsh-Rose model parameters
-    static constexpr HindmarshRoseParams HR_PARAMS = {
-        3.281,  // e
-        0.0021, // mu
-        1.0,    // S
-        1.0,    // a
-        3.0,    // b
-        1.0,    // c
-        5.0,    // d
-        -1.6,   // xr
-        0.1     // vh
-    };
-
-    // Initial state for simulation
-    static constexpr HindmarshRoseState HR_INITIAL_STATE = {
-        -0.712841, // x
-        -1.93688,  // y
-        3.16568    // z
-    };
-
     // Simulation time parameters
     static constexpr double OBSERVATION_TIME = 2000.0;   // Time to observe bursts
     static constexpr double MINMAX_DT = DTS[0];          // Finest dt for min/max calculation
@@ -103,13 +83,11 @@ struct PtsResult
  * Calculate model min and max values over observation time
  * Simulates neuron model with finest dt and analyzes output range
  */
-template <typename NeuronType, typename NeuronParamsType, typename StateType>
+template <typename NeuronType>
 MinMaxResult calculate_min_max(
-    NeuronType (*create_neur)(const NeuronParamsType &),
-    void (*reset_state_neur)(NeuronType &, const StateType &),
+    NeuronType (*create_neur)(),
+    void (*reset_state_neur)(NeuronType &),
     double (*get_v_neur)(const NeuronType &),
-    const NeuronParamsType &params,
-    const StateType &initial_state,
     double observation_time,
     double dt,
     double stabilization_time)
@@ -121,10 +99,10 @@ MinMaxResult calculate_min_max(
     }
 
     // Create neuron model with provided parameters
-    NeuronType neuron = create_neur(params);
+    NeuronType neuron = create_neur();
 
     // Initialize neuron to specified state
-    reset_state_neur(neuron, initial_state);
+    reset_state_neur(neuron);
 
     // Run stabilization phase to remove transients
     size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
@@ -158,13 +136,11 @@ MinMaxResult calculate_min_max(
  * Calculate points per burst for each dt given min and max
  * Simulates neuron model with different time steps and analyzes bursting behavior
  */
-template <typename NeuronType, typename NeuronParamsType, typename StateType, size_t N>
+template <typename NeuronType, size_t N>
 PtsResult calculate_pts(
-    NeuronType (*create_neur)(const NeuronParamsType &),
-    void (*reset_state_neur)(NeuronType &, const StateType &),
+    NeuronType (*create_neur)(),
+    void (*reset_state_neur)(NeuronType &),
     double (*get_v_neur)(const NeuronType &),
-    const NeuronParamsType &params,
-    const StateType &initial_state,
     const std::array<double, N> &dts,
     double observation_time,
     double stabilization_time,
@@ -172,7 +148,7 @@ PtsResult calculate_pts(
     double max_val)
 {
     // Create neuron model with provided parameters
-    NeuronType neuron = create_neur(params);
+    NeuronType neuron = create_neur();
 
     PtsResult result;
 
@@ -187,7 +163,7 @@ PtsResult calculate_pts(
         double dt = dts[i];
 
         // Reset neuron to initial state for this dt
-        reset_state_neur(neuron, initial_state);
+        reset_state_neur(neuron);
 
         // Stabilization phase with current dt
         size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
@@ -304,12 +280,10 @@ int main()
     using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>;
 
     // Calculate min and max for Hindmarsh-Rose model with RK4 integration
-    MinMaxResult mmr = calculate_min_max<NeuronType, HindmarshRoseParams, HindmarshRoseState>(
+    MinMaxResult mmr = calculate_min_max<NeuronType>(
         &create_hindmarsh_rose<RungeKutta4>,
         &reset_state_hindmarsh_rose<NeuronType>,
         &get_v_hindmarsh_rose<NeuronType>,
-        ConstCalculatorConfig::HR_PARAMS,
-        ConstCalculatorConfig::HR_INITIAL_STATE,
         ConstCalculatorConfig::OBSERVATION_TIME,
         ConstCalculatorConfig::MINMAX_DT,
         ConstCalculatorConfig::STABILIZATION_TIME);
@@ -321,12 +295,10 @@ int main()
     std::cout << "inline constexpr double MAX = " << mmr.max << ";\n";
 
     // Calculate pts for Hindmarsh-Rose model with RK4 integration
-    PtsResult pr = calculate_pts<NeuronType, HindmarshRoseParams, HindmarshRoseState>(
+    PtsResult pr = calculate_pts<NeuronType>(
         &create_hindmarsh_rose<RungeKutta4>,
         &reset_state_hindmarsh_rose<RungeKutta4>,
         &get_v_hindmarsh_rose<RungeKutta4>,
-        ConstCalculatorConfig::HR_PARAMS,
-        ConstCalculatorConfig::HR_INITIAL_STATE,
         ConstCalculatorConfig::DTS,
         ConstCalculatorConfig::OBSERVATION_TIME,
         ConstCalculatorConfig::STABILIZATION_TIME,
