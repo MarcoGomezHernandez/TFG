@@ -105,7 +105,9 @@ struct PtsResult
  */
 template <typename NeuronType, typename NeuronParamsType, typename StateType>
 MinMaxResult calculate_min_max(
-    NeuronModel model,
+    NeuronType (*create_neur)(const NeuronParamsType &),
+    void (*reset_state_neur)(NeuronType &, const StateType &),
+    double (*get_v_neur)(const NeuronType &),
     const NeuronParamsType &params,
     const StateType &initial_state,
     double observation_time,
@@ -118,34 +120,11 @@ MinMaxResult calculate_min_max(
         throw std::runtime_error("observation_time and dt must be positive, stabilization_time non-negative");
     }
 
-    // Configure neuron model with provided parameters
-    typename NeuronType::ConstructorArgs args;
-    if (model == HINDMARSH_ROSE)
-    {
-        args.params[NeuronType::e] = params.e;
-        args.params[NeuronType::mu] = params.mu;
-        args.params[NeuronType::S] = params.S;
-        args.params[NeuronType::a] = params.a;
-        args.params[NeuronType::b] = params.b;
-        args.params[NeuronType::c] = params.c;
-        args.params[NeuronType::d] = params.d;
-        args.params[NeuronType::xr] = params.xr;
-        args.params[NeuronType::vh] = params.vh;
-    }
-    else
-    {
-        throw std::runtime_error("Model not implemented.");
-    }
-
-    NeuronType neuron(args);
+    // Create neuron model with provided parameters
+    NeuronType neuron = create_neur(params);
 
     // Initialize neuron to specified state
-    if (model == HINDMARSH_ROSE)
-    {
-        neuron.set(NeuronType::x, initial_state.x);
-        neuron.set(NeuronType::y, initial_state.y);
-        neuron.set(NeuronType::z, initial_state.z);
-    }
+    reset_state_neur(neuron, initial_state);
 
     // Run stabilization phase to remove transients
     size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
@@ -160,11 +139,7 @@ MinMaxResult calculate_min_max(
     {
         neuron.step(dt);
 
-        double val;
-        if (model == HINDMARSH_ROSE)
-        {
-            val = neuron.get(NeuronType::x);
-        }
+        double val = get_v_neur(neuron);
 
         if (val > max)
             max = val;
@@ -185,7 +160,9 @@ MinMaxResult calculate_min_max(
  */
 template <typename NeuronType, typename NeuronParamsType, typename StateType, size_t N>
 PtsResult calculate_pts(
-    NeuronModel model,
+    NeuronType (*create_neur)(const NeuronParamsType &),
+    void (*reset_state_neur)(NeuronType &, const StateType &),
+    double (*get_v_neur)(const NeuronType &),
     const NeuronParamsType &params,
     const StateType &initial_state,
     const std::array<double, N> &dts,
@@ -194,26 +171,8 @@ PtsResult calculate_pts(
     double min_val,
     double max_val)
 {
-    // Configure neuron model with provided parameters
-    typename NeuronType::ConstructorArgs args;
-    if (model == HINDMARSH_ROSE)
-    {
-        args.params[NeuronType::e] = params.e;
-        args.params[NeuronType::mu] = params.mu;
-        args.params[NeuronType::S] = params.S;
-        args.params[NeuronType::a] = params.a;
-        args.params[NeuronType::b] = params.b;
-        args.params[NeuronType::c] = params.c;
-        args.params[NeuronType::d] = params.d;
-        args.params[NeuronType::xr] = params.xr;
-        args.params[NeuronType::vh] = params.vh;
-    }
-    else
-    {
-        throw std::runtime_error("Model not implemented.");
-    }
-
-    NeuronType neuron(args);
+    // Create neuron model with provided parameters
+    NeuronType neuron = create_neur(params);
 
     PtsResult result;
 
@@ -228,12 +187,7 @@ PtsResult calculate_pts(
         double dt = dts[i];
 
         // Reset neuron to initial state for this dt
-        if (model == HINDMARSH_ROSE)
-        {
-            neuron.set(NeuronType::x, initial_state.x);
-            neuron.set(NeuronType::y, initial_state.y);
-            neuron.set(NeuronType::z, initial_state.z);
-        }
+        reset_state_neur(neuron, initial_state);
 
         // Stabilization phase with current dt
         size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
@@ -241,11 +195,7 @@ PtsResult calculate_pts(
             neuron.step(dt);
 
         // Detect bursts using threshold crossings
-        bool up;
-        if (model == HINDMARSH_ROSE)
-        {
-            up = (neuron.get(NeuronType::x) > th_up);
-        }
+        bool up = (get_v_neur(neuron) > th_up);
         double total_steps = 0;
         int bursts_seen = -1; // Start at -1 to skip partial first burst
         size_t steps_in_current_burst = 0;
@@ -257,11 +207,7 @@ PtsResult calculate_pts(
             neuron.step(dt);
             act_time += dt;
 
-            double val;
-            if (model == HINDMARSH_ROSE)
-            {
-                val = neuron.get(NeuronType::x);
-            }
+            double val = get_v_neur(neuron);
 
             // Detect burst onset (rising edge)
             if (!up && val > th_up)
@@ -355,9 +301,13 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 
 int main()
 {
+    using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>;
+
     // Calculate min and max for Hindmarsh-Rose model with RK4 integration
-    MinMaxResult mmr = calculate_min_max<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
-        NeuronModel::HINDMARSH_ROSE,
+    MinMaxResult mmr = calculate_min_max<NeuronType, HindmarshRoseParams, HindmarshRoseState>(
+        &create_hindmarsh_rose<RungeKutta4>,
+        &reset_state_hindmarsh_rose<NeuronType>,
+        &get_v_hindmarsh_rose<NeuronType>,
         ConstCalculatorConfig::HR_PARAMS,
         ConstCalculatorConfig::HR_INITIAL_STATE,
         ConstCalculatorConfig::OBSERVATION_TIME,
@@ -371,8 +321,10 @@ int main()
     std::cout << "inline constexpr double MAX = " << mmr.max << ";\n";
 
     // Calculate pts for Hindmarsh-Rose model with RK4 integration
-    PtsResult pr = calculate_pts<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, RungeKutta4>, HindmarshRoseParams, HindmarshRoseState>(
-        NeuronModel::HINDMARSH_ROSE,
+    PtsResult pr = calculate_pts<NeuronType, HindmarshRoseParams, HindmarshRoseState>(
+        &create_hindmarsh_rose<RungeKutta4>,
+        &reset_state_hindmarsh_rose<RungeKutta4>,
+        &get_v_hindmarsh_rose<RungeKutta4>,
         ConstCalculatorConfig::HR_PARAMS,
         ConstCalculatorConfig::HR_INITIAL_STATE,
         ConstCalculatorConfig::DTS,
