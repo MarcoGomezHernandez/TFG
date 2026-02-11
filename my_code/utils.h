@@ -45,6 +45,16 @@ struct HindmarshRoseState
     double z; // Slow adaptation current
 };
 
+// Prototypes for Hindmarsh-Rose utility functions
+template <typename NeuronType>
+void reset_hindmarsh_rose_state(NeuronType &neuron, const HindmarshRoseState &state);
+
+template <typename NeuronType>
+double get_hindmarsh_rose_voltage(const NeuronType &neuron);
+
+template <typename NeuronType>
+void set_hindmarsh_rose_voltage(NeuronType &neuron, double voltage);
+
 /*
  * Parameters for chemical synapse model
  */
