@@ -63,7 +63,7 @@ struct SignalStats
  * Fills the provided vector with data points from specified column
  */
 void read_csv_column(std::vector<double> &data, const std::string &csv_path, size_t column_index,
-                     double start_time, double use_time, double csv_step)
+                     size_t start_index, size_t num_points)
 {
     std::ifstream file(csv_path);
 
@@ -71,10 +71,6 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
     {
         throw std::runtime_error("Unable to open CSV file: " + csv_path);
     }
-
-    // Convert time parameters to array indices
-    const size_t start_index = static_cast<size_t>(start_time / csv_step);
-    const size_t num_points = static_cast<size_t>(use_time / csv_step);
 
     data.reserve(num_points);
 
@@ -86,7 +82,7 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
     size_t current_line = 0;
 
     // Parse CSV and extract target column
-    while (std::getline(file, line))
+    while (current_line < end_index && std::getline(file, line))
     {
         // Skip lines before start_index
         if (current_line >= start_index)
@@ -108,8 +104,6 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
         }
 
         current_line++;
-        if (current_line >= end_index)
-            break;
     }
 
     // Precalculate data size for efficiency
@@ -118,6 +112,7 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
     // Check if fewer points were read than expected and warn
     if (data_size < num_points)
     {
+        data.shrink_to_fit();
         std::cout << "Warning: Fewer data points read (" << data_size << ") than expected (" << num_points << ") from CSV file: " << csv_path << std::endl;
     }
 
@@ -129,7 +124,7 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
  * Uses hysteresis (th_up for rising edge, th_on for falling edge)
  * Returns period in same units as tiempo_observacion
  */
-double signal_period(double tiempo_observacion, const std::vector<double> &signal, size_t size,
+double signal_period(double tiempo_observacion, const std::vector<double> &signal, size_t obs_points,
                      double th_up, double th_on)
 {
     // Initial state based on first sample
@@ -137,7 +132,7 @@ double signal_period(double tiempo_observacion, const std::vector<double> &signa
     double changes = 0.0;
 
     // Count upward threshold crossings (burst onsets)
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < obs_points; i++)
     {
         double val = signal[i];
         if (!up && val > th_up)
@@ -307,15 +302,8 @@ ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_
  * Initialize signal statistics from observation window
  * Computes min/max, relative thresholds, and signal period
  */
-SignalStats ini_recibido(const std::vector<double> &signal, double observation_time, double csv_step)
+SignalStats ini_recibido(const std::vector<double> &signal, size_t obs_points, double csv_step)
 {
-    const size_t signal_size = signal.size();
-
-    // Limit observation to available data
-    size_t obs_points = static_cast<size_t>(observation_time / csv_step);
-    if (obs_points > signal_size)
-        obs_points = signal_size;
-
     const double observation_time_to_use = obs_points * csv_step;
 
     SignalStats stats;
@@ -377,17 +365,39 @@ ScaledSignalResult scale_signal(
     std::vector<double> &signal = result.signal;
     std::vector<double> &interpolated_points = result.interpolated_points;
 
-    // Read signal data from CSV file directly into result.signal
-    read_csv_column(signal, csv_path, column_index, start_time, use_time, csv_step);
+    // Calculate indices and points once
+    const size_t start_index = static_cast<size_t>(start_time / csv_step);
+    const size_t use_points = static_cast<size_t>(use_time / csv_step);
+    if (use_points == 0)
+    {
+        throw std::runtime_error("use_time is too short to read any points with given csv_step");
+    }
 
-    const size_t signal_size = signal.size();
+    const size_t obs_points = static_cast<size_t>(observation_time / csv_step);
+    if (obs_points == 0)
+    {
+        throw std::runtime_error("observation_time is too short to read any points with given csv_step");
+    }
+    const size_t read_points = std::max(use_points, obs_points);
+
+    // Read signal data from CSV file directly into result.signal
+    read_csv_column(signal, csv_path, column_index, start_index, read_points);
+
+    size_t signal_size = signal.size();
     if (signal_size == 0)
     {
         throw std::runtime_error("No data read from CSV file");
     }
 
     // Extract signal statistics from observation window
-    SignalStats stats = ini_recibido(signal, observation_time, csv_step);
+    SignalStats stats = ini_recibido(signal, obs_points, csv_step);
+
+    // Trim signal to the size for use_time after observation
+    if (signal_size > use_points)
+    {
+        signal.resize(use_points);
+        signal_size = use_points;
+    }
 
     // Calculate points per burst in external signal
     const double external_pts_per_burst = stats.period_signal / csv_step;
