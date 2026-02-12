@@ -4,6 +4,7 @@
 #include <iostream>
 #include "utils.h"
 #include "scaling.h"
+#include "fitness.h"
 #include <ChemicalSynapsis.h>
 
 /*
@@ -30,18 +31,6 @@ double inverse_normalization(double val, double min_val, double max_val)
 {
     return (max_val - val) / (max_val - min_val);
 }
-
-/*
- * Struct to hold precomputed signal statistics
- */
-struct ConstantSignalFitnessVals
-{
-    std::vector<bool> up_states;
-    double bursts_seen;
-    double norm_max_bursts_diff;
-    double min_val;
-    double max_val;
-};
 
 /*
  * Function to preprocess a signal and compute statistics
