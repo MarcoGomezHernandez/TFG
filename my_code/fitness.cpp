@@ -162,7 +162,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
  * Parameters: synapsis, neurons, params_individuals, scaled_result, initial_state, stats1, search_phase, buffers, reset_state_neur, get_v_neur, set_v_neur
  */
-template <typename Integrator, typename NeuronType, size_t N>
+template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
                     const std::array<ChemicalSynapsisParams, N> &params_individuals,
@@ -171,8 +171,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
                     std::array<double, N> &fitnesses_buffer,
-                    void (*reset_state_neur)(NeuronType &),
-                    double (*get_v_neur)(const NeuronType &))
+                    ResetStateFuncType reset_state_neur,
+                    GetVFuncType get_v_neur)
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 

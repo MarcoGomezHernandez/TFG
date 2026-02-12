@@ -5,6 +5,8 @@
 #include <limits>
 #include <array>
 #include <cstddef>
+#include <concepts>
+#include <type_traits>
 
 // NeuN Headers
 #include <DifferentialNeuronWrapper.h>
@@ -73,6 +75,16 @@ namespace SignalPublicConfig
     inline constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
     inline constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
 }
+
+// Concepts for function constraints
+template <typename F, typename NeuronType>
+concept CreateFunc = std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, NeuronType>;
+
+template <typename F, typename NeuronType>
+concept ResetStateFunc = std::invocable<F, NeuronType &>;
+
+template <typename F, typename NeuronType>
+concept GetVFunc = std::invocable<F, const NeuronType &> && std::convertible_to<std::invoke_result_t<F, const NeuronType &>, double>;
 
 /*
  * Reset the state of a Hindmarsh-Rose neuron using the provided StateType

@@ -83,11 +83,11 @@ struct PtsResult
  * Calculate model min and max values over observation time
  * Simulates neuron model with finest dt and analyzes output range
  */
-template <typename NeuronType>
+template <typename NeuronType, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
 MinMaxResult calculate_min_max(
-    NeuronType (*create_neur)(),
-    void (*reset_state_neur)(NeuronType &),
-    double (*get_v_neur)(const NeuronType &),
+    CreateFuncType create_neur,
+    ResetFuncType reset_state_neur,
+    GetVFuncType get_v_neur,
     double observation_time,
     double dt,
     double stabilization_time)
@@ -136,11 +136,11 @@ MinMaxResult calculate_min_max(
  * Calculate points per burst for each dt given min and max
  * Simulates neuron model with different time steps and analyzes bursting behavior
  */
-template <typename NeuronType, size_t N>
+template <typename NeuronType, size_t N, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
 PtsResult calculate_pts(
-    NeuronType (*create_neur)(),
-    void (*reset_state_neur)(NeuronType &),
-    double (*get_v_neur)(const NeuronType &),
+    CreateFuncType create_neur,
+    ResetFuncType reset_state_neur,
+    GetVFuncType get_v_neur,
     const std::array<double, N> &dts,
     double observation_time,
     double stabilization_time,
