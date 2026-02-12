@@ -51,9 +51,9 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
 {
     ConstantSignalFitnessVals result;
 
-    double range = max_val - min_val;
-    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
-    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
+    const double range = max_val - min_val;
+    const double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
+    const double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
 
     std::vector<bool> &up_states = result.up_states;
     up_states.reserve(signal.size());
@@ -89,7 +89,7 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
  */
 double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::vector<double> &signal2, bool search_phase)
 {
-    size_t signal_size = signal2.size();
+    const size_t signal_size = signal2.size();
 
     double min2 = GeneralConstants::DOUBLE_MAX;
     double max2 = GeneralConstants::DOUBLE_MIN;
@@ -103,13 +103,13 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     }
 
     // Calculate dynamic thresholds for signal2
-    double range2 = max2 - min2;
-    double th_on2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range2 + min2;
-    double th_up2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range2 + min2;
+    const double range2 = max2 - min2;
+    const double th_on2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range2 + min2;
+    const double th_up2 = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range2 + min2;
 
     // Compute minmax_score
-    double minmax_diff = std::abs(stats1.max_val - max2) + std::abs(stats1.min_val - min2);
-    double minmax_score = inverse_normalization(minmax_diff, 0.0, FitnessConstants::NORM_MAX_MINMAX_DIFF);
+    const double minmax_diff = std::abs(stats1.max_val - max2) + std::abs(stats1.min_val - min2);
+    const double minmax_score = inverse_normalization(minmax_diff, 0.0, FitnessConstants::NORM_MAX_MINMAX_DIFF);
 
     // State machine for signal2
     bool up2 = (signal2[0] > th_up2);
@@ -149,10 +149,10 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     }
 
     // Compute bursts_score using precomputed for signal1
-    double bursts_diff_score = inverse_normalization(std::abs(stats1.bursts_seen - bursts_seen_2), 0.0, stats1.norm_max_bursts_diff);
+    const double bursts_diff_score = inverse_normalization(std::abs(stats1.bursts_seen - bursts_seen_2), 0.0, stats1.norm_max_bursts_diff);
 
     // Compute final weighted score
-    double final_score = (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
+    const double final_score = (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
 
     return final_score;
 }

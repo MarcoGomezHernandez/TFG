@@ -73,12 +73,12 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
     }
 
     // Convert time parameters to array indices
-    size_t start_index = static_cast<size_t>(start_time / csv_step);
-    size_t num_points = static_cast<size_t>(use_time / csv_step);
+    const size_t start_index = static_cast<size_t>(start_time / csv_step);
+    const size_t num_points = static_cast<size_t>(use_time / csv_step);
 
     data.reserve(num_points);
 
-    size_t end_index = start_index + num_points;
+    const size_t end_index = start_index + num_points;
 
     std::string line;
     std::string val;
@@ -113,7 +113,7 @@ void read_csv_column(std::vector<double> &data, const std::string &csv_path, siz
     }
 
     // Precalculate data size for efficiency
-    size_t data_size = data.size();
+    const size_t data_size = data.size();
 
     // Check if fewer points were read than expected and warn
     if (data_size < num_points)
@@ -162,12 +162,12 @@ double signal_period(double tiempo_observacion, const std::vector<double> &signa
 ScalingFactors calcula_escala(double min_virtual, double max_virtual,
                               double min_viva, double max_viva)
 {
-    double rg_virtual = max_virtual - min_virtual;
-    double rg_viva = max_viva - min_viva;
+    const double rg_virtual = max_virtual - min_virtual;
+    const double rg_viva = max_viva - min_viva;
 
     ScalingFactors factors;
     // Calculate slope
-    double scale_real_to_virtual = rg_virtual / rg_viva;
+    const double scale_real_to_virtual = rg_virtual / rg_viva;
     factors.scale_real_to_virtual = scale_real_to_virtual; // Calculate offset to align minima
     // Calculate y-intercept
     factors.offset_real_to_virtual = min_virtual - (min_viva * scale_real_to_virtual);
@@ -253,12 +253,11 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
  */
 DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_live)
 {
-    DTSelection selection;
     if (model == NeuronModel::HINDMARSH_ROSE)
     {
         if (integrator == NumericIntegrator::RK4)
         {
-            selection = select_dt_neuron_model(HindmarshRose::DTS_RK4, HindmarshRose::PTS_RK4, pts_live);
+            return select_dt_neuron_model(HindmarshRose::DTS_RK4, HindmarshRose::PTS_RK4, pts_live);
         }
         else
         {
@@ -269,7 +268,6 @@ DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, doubl
     {
         throw std::runtime_error("Unsupported neuron model");
     }
-    return selection;
 }
 
 /*
@@ -311,14 +309,14 @@ ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_
  */
 SignalStats ini_recibido(const std::vector<double> &signal, double observation_time, double csv_step)
 {
-    size_t signal_size = signal.size();
+    const size_t signal_size = signal.size();
 
     // Limit observation to available data
     size_t obs_points = static_cast<size_t>(observation_time / csv_step);
     if (obs_points > signal_size)
         obs_points = signal_size;
 
-    double observation_time_to_use = obs_points * csv_step;
+    const double observation_time_to_use = obs_points * csv_step;
 
     SignalStats stats;
 
@@ -339,9 +337,9 @@ SignalStats ini_recibido(const std::vector<double> &signal, double observation_t
     stats.max_abs_real = max_abs;
 
     // Calculate relative thresholds (10% and 90% of range)
-    double range = max_abs - min_abs;
-    double min_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
-    double max_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
+    const double range = max_abs - min_abs;
+    const double min_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
+    const double max_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
     stats.min_rel_real = min_rel_real;
     stats.max_rel_real = max_rel_real;
 
@@ -382,7 +380,7 @@ ScaledSignalResult scale_signal(
     // Read signal data from CSV file directly into result.signal
     read_csv_column(signal, csv_path, column_index, start_time, use_time, csv_step);
 
-    size_t signal_size = signal.size();
+    const size_t signal_size = signal.size();
     if (signal_size == 0)
     {
         throw std::runtime_error("No data read from CSV file");
@@ -392,7 +390,7 @@ ScaledSignalResult scale_signal(
     SignalStats stats = ini_recibido(signal, observation_time, csv_step);
 
     // Calculate points per burst in external signal
-    double external_pts_per_burst = stats.period_signal / csv_step;
+    const double external_pts_per_burst = stats.period_signal / csv_step;
 
     // Select appropriate dt and get model parameters
     DTSelection selection;
@@ -441,7 +439,7 @@ ScaledSignalResult scale_signal(
         size_t drift_counter = 0;
         double max_window = GeneralConstants::DOUBLE_MIN;
         double min_window = GeneralConstants::DOUBLE_MAX;
-        double drift_aux_range = max_abs_real - min_abs_real;
+        const double drift_aux_range = max_abs_real - min_abs_real;
 
         for (size_t i = 0; i < signal_size; i++)
         {
@@ -490,7 +488,7 @@ ScaledSignalResult scale_signal(
 
     // Apply horizontal scaling (time interpolation)
     // Calculate output size: only the newly interpolated points between originals
-    size_t interpolated_size = (signal_size - 1) * (s_points - 1);
+    const size_t interpolated_size = (signal_size - 1) * (s_points - 1);
     interpolated_points.reserve(interpolated_size);
 
     for (size_t i = 0; i < signal_size - 1; i++)

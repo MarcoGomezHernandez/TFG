@@ -105,14 +105,14 @@ MinMaxResult calculate_min_max(
     reset_state_neur(neuron);
 
     // Run stabilization phase to remove transients
-    size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
+    const size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
     for (size_t i = 0; i < stabilization_steps; i++)
         neuron.step(dt);
 
     // Find absolute min/max over observation time using finest dt
     double min = GeneralConstants::DOUBLE_MAX;
     double max = GeneralConstants::DOUBLE_MIN;
-    size_t obs_steps = static_cast<size_t>(observation_time / dt);
+    const size_t obs_steps = static_cast<size_t>(observation_time / dt);
     for (size_t step = 0; step < obs_steps; step++)
     {
         neuron.step(dt);
@@ -153,9 +153,9 @@ PtsResult calculate_pts(
     PtsResult result;
 
     // Compute relative thresholds for burst detection (10% and 90% of range)
-    double range = max_val - min_val;
-    double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
-    double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
+    const double range = max_val - min_val;
+    const double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
+    const double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
 
     std::array<double, N> &pts = result.pts;
     std::vector<double> &invalid_dts = result.invalid_dts;
@@ -163,13 +163,13 @@ PtsResult calculate_pts(
     // Calculate points per burst for each dt in the array
     for (size_t i = 0; i < N; i++)
     {
-        double dt = dts[i];
+        const double dt = dts[i];
 
         // Reset neuron to initial state for this dt
         reset_state_neur(neuron);
 
         // Stabilization phase with current dt
-        size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
+        const size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
         for (size_t j = 0; j < stabilization_steps; j++)
             neuron.step(dt);
 
@@ -239,10 +239,10 @@ std::string integrator_to_string(NumericIntegrator integrator)
  */
 void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 {
-    std::string integrator_str = integrator_to_string(integrator);
+    const std::string integrator_str = integrator_to_string(integrator);
 
     // Output DTS array with formatting
-    size_t ds_size_minus_1 = DTS_SIZE - 1;
+    const size_t ds_size_minus_1 = DTS_SIZE - 1;
     std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> DTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
