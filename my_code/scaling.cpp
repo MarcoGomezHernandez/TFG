@@ -60,12 +60,11 @@ struct SignalStats
 
 /*
  * Read specific column from CSV file within time range
- * Returns vector containing data points from specified column
+ * Fills the provided vector with data points from specified column
  */
-std::vector<double> read_csv_column(const std::string &csv_path, size_t column_index,
-                                    double start_time, double use_time, double csv_step)
+void read_csv_column(std::vector<double> &data, const std::string &csv_path, size_t column_index,
+                     double start_time, double use_time, double csv_step)
 {
-    std::vector<double> data;
     std::ifstream file(csv_path);
 
     if (!file.is_open())
@@ -82,6 +81,8 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
     size_t end_index = start_index + num_points;
 
     std::string line;
+    std::string val;
+    std::stringstream ss;
     size_t current_line = 0;
 
     // Parse CSV and extract target column
@@ -90,8 +91,8 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
         // Skip lines before start_index
         if (current_line >= start_index)
         {
-            std::stringstream ss(line);
-            std::string val;
+            ss.str(line);
+            ss.clear();
             size_t current_col = 0;
 
             // Extract specified column
@@ -121,7 +122,6 @@ std::vector<double> read_csv_column(const std::string &csv_path, size_t column_i
     }
 
     file.close();
-    return data;
 }
 
 /*
@@ -167,9 +167,10 @@ ScalingFactors calcula_escala(double min_virtual, double max_virtual,
 
     ScalingFactors factors;
     // Calculate slope
-    factors.scale_real_to_virtual = rg_virtual / rg_viva;
+    double scale_real_to_virtual = rg_virtual / rg_viva;
+    factors.scale_real_to_virtual = scale_real_to_virtual; // Calculate offset to align minima
     // Calculate y-intercept
-    factors.offset_real_to_virtual = min_virtual - (min_viva * factors.scale_real_to_virtual);
+    factors.offset_real_to_virtual = min_virtual - (min_viva * scale_real_to_virtual);
 
     return factors;
 }
@@ -189,9 +190,8 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     double intpart, fractpart;
     bool flag = false;
 
-    DTSelection selection;
-    selection.dt = SignalConstants::INVALID_DT;
-    selection.pts_burst = SignalConstants::INVALID_PTS;
+    double dt_candidate = SignalConstants::INVALID_DT;
+    double pts_burst_candidate = SignalConstants::INVALID_PTS;
 
     // Search for matching dt by scaling pts_live
     while (aux < pts[0])
@@ -204,11 +204,11 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
         {
             if (pts[i] > aux)
             {
-                selection.dt = dts[i];
-                selection.pts_burst = pts[i];
+                dt_candidate = dts[i];
+                pts_burst_candidate = pts[i];
 
                 // Check if pts_burst is close to integer multiple of pts_live
-                fractpart = std::modf(selection.pts_burst / pts_live, &intpart);
+                fractpart = std::modf(pts_burst_candidate / pts_live, &intpart);
 
                 if (fractpart <= SignalPrivateConfig::DT_SELECTION_TOLERANCE * intpart)
                 {
@@ -219,7 +219,9 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
         }
 
         if (flag)
+        {
             break;
+        }
     }
 
     // If no good match found, use last candidate
@@ -229,14 +231,18 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
         {
             if (pts[i] > aux)
             {
-                selection.dt = dts[i];
-                selection.pts_burst = pts[i];
+                dt_candidate = dts[i];
+                pts_burst_candidate = pts[i];
                 break;
             }
         }
     }
 
-    selection.success = (selection.dt != SignalConstants::INVALID_DT);
+    DTSelection selection;
+
+    selection.success = (dt_candidate != SignalConstants::INVALID_DT);
+    selection.dt = dt_candidate;
+    selection.pts_burst = pts_burst_candidate;
 
     return selection;
 }
@@ -334,11 +340,13 @@ SignalStats ini_recibido(const std::vector<double> &signal, double observation_t
 
     // Calculate relative thresholds (10% and 90% of range)
     double range = max_abs - min_abs;
-    stats.min_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
-    stats.max_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
+    double min_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
+    double max_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
+    stats.min_rel_real = min_rel_real;
+    stats.max_rel_real = max_rel_real;
 
     // Calculate signal period using threshold crossings
-    stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, stats.max_rel_real, stats.min_rel_real);
+    stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, max_rel_real, min_rel_real);
 
     return stats;
 }
@@ -359,16 +367,20 @@ ScaledSignalResult scale_signal(
     NeuronModel model,
     bool check_drift)
 {
-    ScaledSignalResult result;
-
     // Validate all input parameters
     if (csv_step <= 0 || use_time <= 0 || observation_time <= 0 || start_time < 0 || column_index < 0 || csv_path.empty())
     {
         throw std::runtime_error("Invalid arguments: csv_step, use_time, observation_time must be positive, start_time and column_index non-negative, csv_path non-empty");
     }
 
-    // Read signal data from CSV file
-    std::vector<double> signal = read_csv_column(csv_path, column_index, start_time, use_time, csv_step);
+    ScaledSignalResult result;
+
+    // References to result members to avoid direct struct access
+    std::vector<double> &signal = result.signal;
+    std::vector<double> &interpolated_points = result.interpolated_points;
+
+    // Read signal data from CSV file directly into result.signal
+    read_csv_column(signal, csv_path, column_index, start_time, use_time, csv_step);
 
     size_t signal_size = signal.size();
     if (signal_size == 0)
@@ -400,6 +412,7 @@ ScaledSignalResult scale_signal(
     if (!selection.success)
     {
         result.success = false;
+        signal.clear();
         result.dt = SignalConstants::INVALID_DT;
         return result;
     }
@@ -411,8 +424,15 @@ ScaledSignalResult scale_signal(
     if (s_points == 0)
         s_points = 1;
 
+    result.points_factor = s_points;
+
+    double &min_abs_real = stats.min_abs_real;
+    double &max_abs_real = stats.max_abs_real;
+
     // Calculate initial vertical scaling factors
-    ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, stats.min_abs_real, stats.max_abs_real);
+    ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_abs_real, max_abs_real);
+    double scale_real_to_virtual = factors.scale_real_to_virtual;
+    double offset_real_to_virtual = factors.offset_real_to_virtual;
 
     // Apply vertical scaling (amplitude transformation)
     if (check_drift)
@@ -421,18 +441,18 @@ ScaledSignalResult scale_signal(
         size_t drift_counter = 0;
         double max_window = GeneralConstants::DOUBLE_MIN;
         double min_window = GeneralConstants::DOUBLE_MAX;
-        double drift_aux_range = stats.max_abs_real - stats.min_abs_real;
+        double drift_aux_range = max_abs_real - min_abs_real;
 
         for (size_t i = 0; i < signal_size; i++)
         {
             double val = signal[i];
 
             // Track windowed min/max within reasonable bounds
-            if ((min_window > val) && (val > (stats.min_abs_real - drift_aux_range)))
+            if ((min_window > val) && (val > (min_abs_real - drift_aux_range)))
             {
                 min_window = val;
             }
-            if ((max_window < val) && (val < (stats.max_abs_real + drift_aux_range)))
+            if ((max_window < val) && (val < (max_abs_real + drift_aux_range)))
             {
                 max_window = val;
             }
@@ -445,6 +465,8 @@ ScaledSignalResult scale_signal(
 
                 // Update scaling based on observed drift
                 factors = fix_drift(min_abs_model, max_abs_model, min_window, max_window, stats);
+                scale_real_to_virtual = factors.scale_real_to_virtual;
+                offset_real_to_virtual = factors.offset_real_to_virtual;
 
                 // Reset window trackers
                 max_window = GeneralConstants::DOUBLE_MIN;
@@ -454,7 +476,7 @@ ScaledSignalResult scale_signal(
             drift_counter++;
 
             // Apply vertical scaling transformation
-            signal[i] = val * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
+            signal[i] = val * scale_real_to_virtual + offset_real_to_virtual;
         }
     }
     else
@@ -462,19 +484,14 @@ ScaledSignalResult scale_signal(
         // Simple mode: apply constant scaling to all points
         for (size_t i = 0; i < signal_size; i++)
         {
-            signal[i] = signal[i] * factors.scale_real_to_virtual + factors.offset_real_to_virtual;
+            signal[i] = signal[i] * scale_real_to_virtual + offset_real_to_virtual;
         }
     }
-
-    // Store non-interpolated scaled signal
-    result.signal = signal;
-    result.points_factor = s_points;
 
     // Apply horizontal scaling (time interpolation)
     // Calculate output size: only the newly interpolated points between originals
     size_t interpolated_size = (signal_size - 1) * (s_points - 1);
-    std::vector<double> interpolated_signal;
-    interpolated_signal.reserve(interpolated_size);
+    interpolated_points.reserve(interpolated_size);
 
     for (size_t i = 0; i < signal_size - 1; i++)
     {
@@ -483,11 +500,10 @@ ScaledSignalResult scale_signal(
         {
             double alpha = j / s_points;
             double interp_val = signal[i] + (alpha * (signal[i + 1] - signal[i]));
-            interpolated_signal.push_back(interp_val);
+            interpolated_points.push_back(interp_val);
         }
     }
 
-    result.interpolated_points = interpolated_signal;
     result.success = true;
 
     return result;
