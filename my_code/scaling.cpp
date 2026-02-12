@@ -1,16 +1,5 @@
 // Signal scaling and transformation for neural model integration
-#include "scaling.h"
-#include "utils.h"
-#include <cmath>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include <limits>
-#include <cfloat>
-#include <array>
-#include <cstddef>
-#include <stdexcept>
-#include <iostream>
+#include "scaling.hpp"
 
 /*
  * Private configuration constants for signal processing algorithms

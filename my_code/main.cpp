@@ -2,9 +2,9 @@
 #include <string>
 #include <cstdlib>
 
-#include "genetic.h"
-#include "utils.h"
-#include "scaling.h"
+#include "genetic.hpp"
+#include "utils.hpp"
+#include "scaling.hpp"
 
 #include <RungeKutta4.h>
 #include <DifferentialNeuronWrapper.h>

@@ -1,4 +1,4 @@
-#include "genetic.h"
+#include "genetic.hpp"
 
 /*
  * Genetic algorithm configuration constants

@@ -4,6 +4,17 @@
 
 #include <vector>
 #include <string>
+#include <cmath>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <limits>
+#include <cfloat>
+#include <array>
+#include <cstddef>
+#include <stdexcept>
+#include <iostream>
+#include "utils.hpp"
 
 /*
  * Numeric integration methods

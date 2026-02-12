@@ -1,11 +1,4 @@
-#include <vector>
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include "utils.h"
-#include "scaling.h"
-#include "fitness.h"
-#include <ChemicalSynapsis.h>
+#include "fitness.hpp"
 
 /*
  * Configuration constants for fitness calculation

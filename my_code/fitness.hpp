@@ -3,8 +3,12 @@
 
 #include <vector>
 #include <array>
-#include "utils.h"
-#include "scaling.h"
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include "utils.hpp"
+#include "scaling.hpp"
+#include "fitness.hpp"
 #include <ChemicalSynapsis.h>
 
 /*

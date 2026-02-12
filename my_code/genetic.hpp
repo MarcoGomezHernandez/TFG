@@ -10,9 +10,9 @@
 #include <numeric>
 #include <cmath>
 
-#include "utils.h"
-#include "scaling.h"
-#include "fitness.h"
+#include "utils.hpp"
+#include "scaling.hpp"
+#include "fitness.hpp"
 #include <ChemicalSynapsis.h>
 
 /*
