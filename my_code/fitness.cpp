@@ -55,7 +55,8 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
     double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
     double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
 
-    result.up_states.reserve(signal.size());
+    std::vector<bool> &up_states = result.up_states;
+    up_states.reserve(signal.size());
     bool up = (signal[0] > th_up);
     double bursts_seen = 0;
 
@@ -70,7 +71,7 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
             up = false;
             bursts_seen++;
         }
-        result.up_states.push_back(up);
+        up_states.push_back(up);
     }
 
     result.bursts_seen = bursts_seen;
@@ -115,10 +116,11 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     double bursts_seen_2 = 0;
     double phase_score = 0.0;
 
+    const std::vector<bool> &up_states = stats1.up_states;
     for (size_t i = 0; i < signal_size; i++)
     {
         double val2 = signal2[i];
-        bool up1 = stats1.up_states[i];
+        bool up1 = up_states[i];
 
         // State machine for signal2
         if (!up2 && val2 > th_up2)
@@ -174,7 +176,11 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
-    size_t signal_size = scaled_result.signal.size();
+    const size_t signal_size = scaled_result.signal.size();
+    const size_t points_factor = scaled_result.points_factor;
+    const double dt = scaled_result.dt;
+    const double *signal_data = scaled_result.signal.data();
+    const double *interpolated_signal_data = scaled_result.interpolated_signal.data();
 
     for (size_t i = 0; i < N; i++)
     {
@@ -202,23 +208,23 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         size_t j = 0;
         for (; j < signal_size; j++)
         {
-            synapsis.step(scaled_result.dt, scaled_result.signal[j], get_v_neur(model_neur));
+            synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
-            model_neur.step(scaled_result.dt);
+            model_neur.step(dt);
             model_signal_buffer[j] = get_v_neur(model_neur);
 
-            for (size_t k = 1; k < scaled_result.points_factor; k++)
+            for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(scaled_result.dt, scaled_result.interpolated_signal[interp_signal_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
-                model_neur.step(scaled_result.dt);
+                model_neur.step(dt);
                 interp_signal_counter++;
             }
         }
 
-        synapsis.step(scaled_result.dt, scaled_result.signal[j], get_v_neur(model_neur));
+        synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
         model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
-        model_neur.step(scaled_result.dt);
+        model_neur.step(dt);
         model_signal_buffer[j] = get_v_neur(model_neur);
 
         // Compute fitness
