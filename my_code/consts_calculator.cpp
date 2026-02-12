@@ -157,6 +157,9 @@ PtsResult calculate_pts(
     double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
     double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
 
+    std::array<double, N> &pts = result.pts;
+    std::vector<double> &invalid_dts = result.invalid_dts;
+
     // Calculate points per burst for each dt in the array
     for (size_t i = 0; i < N; i++)
     {
@@ -205,12 +208,12 @@ PtsResult calculate_pts(
         // Store average points per burst, or mark as invalid
         if (bursts_seen <= 0)
         {
-            result.pts[i] = GeneralConstants::DOUBLE_MAX; // Sentinel for invalid
-            result.invalid_dts.push_back(dts[i]);
+            pts[i] = GeneralConstants::DOUBLE_MAX; // Sentinel for invalid
+            invalid_dts.push_back(dts[i]);
         }
         else
         {
-            result.pts[i] = total_steps / static_cast<double>(bursts_seen);
+            pts[i] = total_steps / static_cast<double>(bursts_seen);
         }
     }
 
@@ -252,22 +255,24 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
     std::cout << "};\n";
 
     // Output PTS array with formatting
+    const std::array<double, DTS_SIZE> &pts = pr.pts;
     std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> PTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
         if (i % 8 == 0)
             std::cout << "\n    ";
-        std::cout << pr.pts[i];
+        std::cout << pts[i];
         if (i < ds_size_minus_1)
             std::cout << ", ";
     }
     std::cout << "};\n";
 
     // Report any dts where burst detection failed
-    if (!pr.invalid_dts.empty())
+    const std::vector<double> &invalid_dts = pr.invalid_dts;
+    if (!invalid_dts.empty())
     {
         std::cout << "Invalid dts (no bursts detected): ";
-        for (double dt : pr.invalid_dts)
+        for (double dt : invalid_dts)
         {
             std::cout << dt << " ";
         }
