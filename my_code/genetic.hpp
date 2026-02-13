@@ -9,11 +9,19 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <utility>
+#include <stdexcept>
 
 #include "utils.hpp"
 #include "scaling.hpp"
 #include "fitness.hpp"
 #include <ChemicalSynapsis.h>
+
+struct BestResult
+{
+    double fitness;
+    ChemicalSynapsisParams params;
+};
 
 /*
  * Main genetic algorithm function template.
@@ -27,17 +35,17 @@ template <typename Integrator, typename NeuronType,
           CreateFunc<NeuronType> CreateFuncType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
-void genetic(const std::string &csv_path,
-             size_t column_index,
-             double csv_step,
-             double start_time,
-             double use_time,
-             NumericIntegrator integrator_enum,
-             NeuronModel model_enum,
-             bool search_phase,
-             bool check_drift,
-             CreateFuncType create_neuron,
-             ResetStateFuncType reset_state_neur,
-             GetVFuncType get_v_neur);
+BestResult genetic(const std::string &csv_path,
+                   size_t column_index,
+                   double csv_step,
+                   double start_time,
+                   double use_time,
+                   NumericIntegrator integrator_enum,
+                   NeuronModel model_enum,
+                   bool search_phase,
+                   bool check_drift,
+                   CreateFuncType create_neuron,
+                   ResetStateFuncType reset_state_neur,
+                   GetVFuncType get_v_neur);
 
 #endif // GENETIC_H

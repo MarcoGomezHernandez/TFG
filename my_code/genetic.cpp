@@ -127,24 +127,6 @@ inline size_t roulette_select(const std::vector<double> &fitnesses, double fitne
 }
 
 /*
- * Print a ChemicalSynapsisParams individual
- */
-inline void print_individual(const ChemicalSynapsisParams &p, double fitness)
-{
-    std::cout << "=== Best Individual ===" << std::endl;
-    std::cout << "Fitness: " << fitness << std::endl;
-    std::cout << "gfast:  " << p.gfast << std::endl;
-    std::cout << "Esyn:   " << p.Esyn << std::endl;
-    std::cout << "sfast:  " << p.sfast << std::endl;
-    std::cout << "Vfast:  " << p.Vfast << std::endl;
-    std::cout << "Vslow:  " << p.Vslow << std::endl;
-    std::cout << "gslow:  " << p.gslow << std::endl;
-    std::cout << "k1:     " << p.k1 << std::endl;
-    std::cout << "k2:     " << p.k2 << std::endl;
-    std::cout << "sslow:  " << p.sslow << std::endl;
-}
-
-/*
  * Main genetic algorithm function template.
  * NeuronType: the neuron wrapper type
  * Integrator: the numeric integrator type
@@ -156,18 +138,18 @@ template <typename Integrator, typename NeuronType,
           CreateFunc<NeuronType> CreateFuncType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
-void genetic(const std::string &csv_path,
-             size_t column_index,
-             double csv_step,
-             double start_time,
-             double use_time,
-             NumericIntegrator integrator_enum,
-             NeuronModel model,
-             bool search_phase,
-             bool check_drift,
-             CreateFuncType create_neuron,
-             ResetStateFuncType reset_state_neur,
-             GetVFuncType get_v_neur)
+BestResult genetic(const std::string &csv_path,
+                   size_t column_index,
+                   double csv_step,
+                   double start_time,
+                   double use_time,
+                   NumericIntegrator integrator_enum,
+                   NeuronModel model,
+                   bool search_phase,
+                   bool check_drift,
+                   CreateFuncType create_neuron,
+                   ResetStateFuncType reset_state_neur,
+                   GetVFuncType get_v_neur)
 {
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
@@ -183,14 +165,8 @@ void genetic(const std::string &csv_path,
 
     if (!scaled_result.success)
     {
-        std::cerr << "Error: Signal scaling failed." << std::endl;
-        return;
+        throw std::runtime_error("Signal scaling failed.");
     }
-
-    std::cout << "Signal scaled. dt=" << scaled_result.dt
-              << " points_factor=" << scaled_result.points_factor
-              << " signal_size=" << scaled_result.signal.size()
-              << " interpolated_size=" << scaled_result.interpolated_points.size() << std::endl;
 
     // --- Step 2: Create neuron and synapsis instances ---
     using SynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
@@ -211,8 +187,7 @@ void genetic(const std::string &csv_path,
     }
     else
     {
-        std::cerr << "Error: Unsupported model." << std::endl;
-        return;
+        throw std::runtime_error("Unsupported model.");
     }
 
     ConstantSignalFitnessVals stats1 = calc_const_signal_vals(scaled_result.signal, model_min, model_max);
@@ -341,15 +316,10 @@ void genetic(const std::string &csv_path,
         {
             fitnesses[e] = elite_fitnesses[e];
         }
-
-        // Print best fitness of this generation
-        double best_fit = *std::max_element(fitnesses.begin(), fitnesses.end());
-        std::cout << "Generation " << gen + 1 << "/" << GeneticConfig::NUM_GENERATIONS
-                  << " | Best fitness: " << best_fit << std::endl;
     }
 
-    // --- Step 8: Print final best individual ---
+    // --- Step 8: Return final best individual ---
     size_t best_idx = std::distance(fitnesses.begin(),
                                     std::max_element(fitnesses.begin(), fitnesses.end()));
-    print_individual(population[best_idx], fitnesses[best_idx]);
+    return {fitnesses[best_idx], population[best_idx]};
 }
