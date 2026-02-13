@@ -174,7 +174,9 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     double intpart, fractpart;
     bool flag = false;
 
-    double dt_candidate = SignalConstants::INVALID_DT;
+    constexpr double INVALID_DT = SignalConstants::INVALID_DT;
+
+    double dt_candidate = INVALID_DT;
     double pts_burst_candidate = SignalConstants::INVALID_PTS;
 
     // Search for matching dt by scaling pts_live
@@ -224,7 +226,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
 
     DTSelection selection;
 
-    selection.success = (dt_candidate != SignalConstants::INVALID_DT);
+    selection.success = (dt_candidate != INVALID_DT);
     selection.dt = dt_candidate;
     selection.pts_burst = pts_burst_candidate;
 
@@ -264,24 +266,27 @@ ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_
     // Recalculate scaling based on observed window
     ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
 
+    constexpr double DRIFT_PERCENTAGE_MIN = SignalPrivateConfig::DRIFT_PERCENTAGE_MIN;
+    constexpr double DRIFT_PERCENTAGE_MAX = SignalPrivateConfig::DRIFT_PERCENTAGE_MAX;
+
     // Adjust relative thresholds with drift margins
     // Add margin for positive values, subtract for negative
     if (min_window > 0)
     {
-        stats.min_rel_real = min_window + (min_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MIN);
+        stats.min_rel_real = min_window + (min_window * DRIFT_PERCENTAGE_MIN);
     }
     else
     {
-        stats.min_rel_real = min_window - (min_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MIN);
+        stats.min_rel_real = min_window - (min_window * DRIFT_PERCENTAGE_MIN);
     }
 
     if (max_window > 0)
     {
-        stats.max_rel_real = max_window - (max_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MAX);
+        stats.max_rel_real = max_window - (max_window * DRIFT_PERCENTAGE_MAX);
     }
     else
     {
-        stats.max_rel_real = max_window + (max_window * SignalPrivateConfig::DRIFT_PERCENTAGE_MAX);
+        stats.max_rel_real = max_window + (max_window * DRIFT_PERCENTAGE_MAX);
     }
 
     return factors;
@@ -436,8 +441,10 @@ ScaledSignalResult scale_signal(
     {
         // Drift checking mode: recalculate scaling periodically
         size_t drift_counter = 0;
-        double max_window = GeneralConstants::DOUBLE_MIN;
-        double min_window = GeneralConstants::DOUBLE_MAX;
+        constexpr double DOUBLE_MAX = GeneralConstants::DOUBLE_MAX;
+        constexpr double DOUBLE_MIN = GeneralConstants::DOUBLE_MIN;
+        double max_window = DOUBLE_MIN;
+        double min_window = DOUBLE_MAX;
         const double drift_aux_range = max_abs_real - min_abs_real;
 
         for (size_t i = 0; i < signal_size; i++)
@@ -456,7 +463,7 @@ ScaledSignalResult scale_signal(
 
             // Recalculate scaling factors every N bursts
             if (drift_counter >= (SignalPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
-                max_window != GeneralConstants::DOUBLE_MIN && min_window != GeneralConstants::DOUBLE_MAX)
+                max_window != DOUBLE_MIN && min_window != DOUBLE_MAX)
             {
                 drift_counter = 0;
 
@@ -466,8 +473,8 @@ ScaledSignalResult scale_signal(
                 offset_real_to_virtual = factors.offset_real_to_virtual;
 
                 // Reset window trackers
-                max_window = GeneralConstants::DOUBLE_MIN;
-                min_window = GeneralConstants::DOUBLE_MAX;
+                max_window = DOUBLE_MIN;
+                min_window = DOUBLE_MAX;
             }
 
             drift_counter++;

@@ -285,14 +285,17 @@ int main()
     using Integrator = RungeKutta4;
     using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
 
+    constexpr double OBSERVATION_TIME = ConstCalculatorConfig::OBSERVATION_TIME;
+    constexpr double STABILIZATION_TIME = ConstCalculatorConfig::STABILIZATION_TIME;
+
     // Calculate min and max for Hindmarsh-Rose model with RK4 integration
     MinMaxResult mmr = calculate_min_max<NeuronType>(
         &create_hindmarsh_rose<Integrator>,
         &reset_state_hindmarsh_rose<Integrator>,
         &get_v_hindmarsh_rose<Integrator>,
-        ConstCalculatorConfig::OBSERVATION_TIME,
+        OBSERVATION_TIME,
         ConstCalculatorConfig::MINMAX_DT,
-        ConstCalculatorConfig::STABILIZATION_TIME);
+        STABILIZATION_TIME);
 
     // Output results in C++ format for direct inclusion in code
     std::cout << std::fixed << std::setprecision(6);
@@ -306,8 +309,8 @@ int main()
         &reset_state_hindmarsh_rose<Integrator>,
         &get_v_hindmarsh_rose<Integrator>,
         ConstCalculatorConfig::DTS,
-        ConstCalculatorConfig::OBSERVATION_TIME,
-        ConstCalculatorConfig::STABILIZATION_TIME,
+        OBSERVATION_TIME,
+        STABILIZATION_TIME,
         mmr.min,
         mmr.max);
 

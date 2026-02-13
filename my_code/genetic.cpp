@@ -162,7 +162,7 @@ void genetic(const std::string &csv_path,
              double start_time,
              double use_time,
              NumericIntegrator integrator_enum,
-             NeuronModel model_enum,
+             NeuronModel model,
              bool search_phase,
              bool check_drift,
              CreateFuncType create_neuron,
@@ -179,7 +179,7 @@ void genetic(const std::string &csv_path,
     // --- Step 1: Scale the signal ---
     ScaledSignalResult scaled_result = scale_signal(
         csv_path, column_index, csv_step, start_time, use_time,
-        observation_time, integrator_enum, model_enum, check_drift);
+        observation_time, integrator_enum, model, check_drift);
 
     if (!scaled_result.success)
     {
@@ -204,7 +204,7 @@ void genetic(const std::string &csv_path,
 
     // --- Step 4: Precompute constant fitness values from the CSV signal ---
     double model_min, model_max;
-    if (model_enum == NeuronModel::HINDMARSH_ROSE)
+    if (model == NeuronModel::HINDMARSH_ROSE)
     {
         model_min = HindmarshRose::MIN;
         model_max = HindmarshRose::MAX;
