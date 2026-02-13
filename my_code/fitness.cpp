@@ -142,17 +142,16 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, params_individuals, scaled_result, initial_state, stats1, search_phase, buffers, reset_state_neur, get_v_neur, set_v_neur
+ * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
-                    const std::array<ChemicalSynapsisParams, N> &params_individuals,
+                    std::array<Individual, N> &individuals,
                     const ScaledSignalResult &scaled_result,
                     const ConstantSignalFitnessVals &stats1,
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
-                    std::array<double, N> &fitnesses_buffer,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur)
 {
@@ -166,7 +165,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
     for (size_t i = 0; i < N; i++)
     {
-        const ChemicalSynapsisParams &params = params_individuals[i];
+        const ChemicalSynapsisParams &params = individuals[i].params;
 
         // Set synapsis parameters
         synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
@@ -209,7 +208,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         model_neur.step(dt);
         model_signal_buffer[j] = get_v_neur(model_neur);
 
-        // Compute fitness
-        fitnesses_buffer[i] = fitness_from_signals(stats1, model_signal_buffer, search_phase);
+        // Compute fitness and store directly in individual
+        individuals[i].fitness = fitness_from_signals(stats1, model_signal_buffer, search_phase);
     }
 }

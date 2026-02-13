@@ -17,10 +17,14 @@
 #include "fitness.hpp"
 #include <ChemicalSynapsis.h>
 
-struct BestResult
+/*
+ * Individual in the genetic algorithm population
+ * Contains both parameters and fitness value
+ */
+struct Individual
 {
-    double fitness;
     ChemicalSynapsisParams params;
+    double fitness;
 };
 
 /*
@@ -35,7 +39,7 @@ template <typename Integrator, typename NeuronType,
           CreateFunc<NeuronType> CreateFuncType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
-BestResult genetic(const std::string &csv_path,
+Individual genetic(const std::string &csv_path,
                    size_t column_index,
                    double csv_step,
                    double start_time,

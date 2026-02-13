@@ -48,9 +48,9 @@ namespace GeneticConfig
 }
 
 /*
- * Generate a random ChemicalSynapsisParams within configured ranges
+ * Generate a random Individual within configured ranges
  */
-inline ChemicalSynapsisParams random_individual(std::mt19937 &rng)
+inline Individual random_individual(std::mt19937 &rng)
 {
     ChemicalSynapsisParams p;
     p.gfast = GeneticConfig::GFAST_FIXED;
@@ -72,58 +72,59 @@ inline ChemicalSynapsisParams random_individual(std::mt19937 &rng)
     p.k2 = dist_k2(rng);
     p.sslow = dist_sslow(rng);
 
-    return p;
+    return {p, 0.0};
 }
 
 /*
  * Arithmetic crossover: child = mean of two parents (per parameter), gfast/gslow stay fixed
  */
-inline ChemicalSynapsisParams crossover(const ChemicalSynapsisParams &a, const ChemicalSynapsisParams &b)
+inline Individual crossover(const Individual &a, const Individual &b)
 {
     ChemicalSynapsisParams child;
     child.gfast = GeneticConfig::GFAST_FIXED;
     child.gslow = GeneticConfig::GSLOW_FIXED;
-    child.Esyn = (a.Esyn + b.Esyn) / 2.0;
-    child.sfast = (a.sfast + b.sfast) / 2.0;
-    child.Vfast = (a.Vfast + b.Vfast) / 2.0;
-    child.Vslow = (a.Vslow + b.Vslow) / 2.0;
-    child.k1 = (a.k1 + b.k1) / 2.0;
-    child.k2 = (a.k2 + b.k2) / 2.0;
-    child.sslow = (a.sslow + b.sslow) / 2.0;
-    return child;
+    child.Esyn = (a.params.Esyn + b.params.Esyn) / 2.0;
+    child.sfast = (a.params.sfast + b.params.sfast) / 2.0;
+    child.Vfast = (a.params.Vfast + b.params.Vfast) / 2.0;
+    child.Vslow = (a.params.Vslow + b.params.Vslow) / 2.0;
+    child.k1 = (a.params.k1 + b.params.k1) / 2.0;
+    child.k2 = (a.params.k2 + b.params.k2) / 2.0;
+    child.sslow = (a.params.sslow + b.params.sslow) / 2.0;
+    return {child, 0.0};
 }
 
 /*
  * Mutate an individual with normal perturbation per parameter
  */
-inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist)
+inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist)
 {
     // gfast and gslow are never mutated
-    p.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
-    p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
-    p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
-    p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
-    p.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
-    p.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
-    p.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+    ind.params.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
+    ind.params.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+    ind.params.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
+    ind.params.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
+    ind.params.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+    ind.params.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+    ind.params.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
 }
 
 /*
  * Roulette wheel selection: returns index of selected individual
  * fitness_sum is precomputed sum of all fitnesses
  */
-inline size_t roulette_select(const std::vector<double> &fitnesses, double fitness_sum, std::mt19937 &rng)
+template <size_t N>
+inline size_t roulette_select(const std::array<Individual, N> &population, double fitness_sum, std::mt19937 &rng)
 {
     std::uniform_real_distribution<double> dist(0.0, fitness_sum);
     double pick = dist(rng);
     double cumulative = 0.0;
-    for (size_t i = 0; i < fitnesses.size(); i++)
+    for (size_t i = 0; i < N; i++)
     {
-        cumulative += fitnesses[i];
+        cumulative += population[i].fitness;
         if (cumulative >= pick)
             return i;
     }
-    return fitnesses.size() - 1;
+    return N - 1;
 }
 
 /*
@@ -138,7 +139,7 @@ template <typename Integrator, typename NeuronType,
           CreateFunc<NeuronType> CreateFuncType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
-BestResult genetic(const std::string &csv_path,
+Individual genetic(const std::string &csv_path,
                    size_t column_index,
                    double csv_step,
                    double start_time,
@@ -172,7 +173,7 @@ BestResult genetic(const std::string &csv_path,
     using SynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
     NeuronType model_neur = create_neuron();
-    SynapsisType synapsis; // no args, params will be overwritten
+    SynapsisType synapsis;
 
     // --- Step 3: Allocate buffers ---
     const size_t signal_size = scaled_result.signal.size();
@@ -196,33 +197,18 @@ BestResult genetic(const std::string &csv_path,
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    std::vector<ChemicalSynapsisParams> population(POP);
-    std::vector<double> fitnesses(POP, 0.0);
+    std::array<Individual, POP> population;
 
     for (size_t i = 0; i < POP; i++)
     {
         population[i] = random_individual(rng);
     }
 
-    // --- Step 6: Evaluate initial population (all individuals) ---
-    // We evaluate in batches of NON_ELITES using calc_fitnesses, but for the first
-    // generation we evaluate all POP. We'll do it in a simple loop reusing calc_fitnesses
-    // with array size 1 at a time for flexibility, or just batch the whole population.
-    // For simplicity, evaluate all POP initially:
-    {
-        std::array<ChemicalSynapsisParams, POP> params_arr;
-        std::array<double, POP> fit_arr;
-        for (size_t i = 0; i < POP; i++)
-            params_arr[i] = population[i];
-
-        calc_fitnesses<Integrator, NeuronType, POP>(
-            synapsis, model_neur, params_arr, scaled_result,
-            stats1, search_phase, model_signal_buffer, fit_arr,
-            reset_state_neur, get_v_neur);
-
-        for (size_t i = 0; i < POP; i++)
-            fitnesses[i] = fit_arr[i];
-    }
+    // --- Step 6: Evaluate initial population ---
+    calc_fitnesses<Integrator, NeuronType, POP>(
+        synapsis, model_neur, population, scaled_result,
+        stats1, search_phase, model_signal_buffer,
+        reset_state_neur, get_v_neur);
 
     // --- Step 7: Generation loop ---
     std::normal_distribution<double> ndist(0.0, 1.0);
@@ -230,44 +216,34 @@ BestResult genetic(const std::string &csv_path,
 
     for (size_t gen = 0; gen < GeneticConfig::NUM_GENERATIONS; gen++)
     {
-        // --- Elitism: find top ELITES individuals ---
-        // Get indices sorted by fitness descending
-        std::vector<size_t> sorted_indices(POP);
-        std::iota(sorted_indices.begin(), sorted_indices.end(), 0);
-        std::sort(sorted_indices.begin(), sorted_indices.end(),
-                  [&fitnesses](size_t a, size_t b)
-                  { return fitnesses[a] > fitnesses[b]; });
+        // --- Elitism: sort population by fitness descending ---
+        std::sort(population.begin(), population.end(),
+                  [](const Individual &a, const Individual &b)
+                  { return a.fitness > b.fitness; });
 
-        // Save elites (params and fitnesses)
-        std::array<ChemicalSynapsisParams, ELITES> elite_params;
-        std::array<double, ELITES> elite_fitnesses;
-        for (size_t e = 0; e < ELITES; e++)
-        {
-            elite_params[e] = population[sorted_indices[e]];
-            elite_fitnesses[e] = fitnesses[sorted_indices[e]];
-        }
+        // Top ELITES are already at the beginning after sorting
 
-        // --- Selection, crossover, mutation to produce NON_ELITES offspring ---
+        // --- Calculate fitness sum for roulette selection ---
         double fitness_sum = 0.0;
-        for (size_t i = 0; i < POP; i++)
-            fitness_sum += fitnesses[i];
+        for (const auto &ind : population)
+            fitness_sum += ind.fitness;
 
-        std::vector<ChemicalSynapsisParams> new_population(POP);
+        // --- Generate NON_ELITES offspring ---
+        std::array<Individual, POP> new_population;
 
-        // Place elites first (they keep their params and fitness, no recalculation)
+        // Keep elites
         for (size_t e = 0; e < ELITES; e++)
         {
-            new_population[e] = elite_params[e];
+            new_population[e] = population[e];
         }
 
-        // Generate NON_ELITES offspring
+        // Generate offspring
         for (size_t i = ELITES; i < POP; i++)
         {
-            // Roulette selection of two parents (with repetition, from full population including elites)
-            size_t p1 = roulette_select(fitnesses, fitness_sum, rng);
-            size_t p2 = roulette_select(fitnesses, fitness_sum, rng);
+            size_t p1 = roulette_select(population, fitness_sum, rng);
+            size_t p2 = roulette_select(population, fitness_sum, rng);
 
-            ChemicalSynapsisParams child;
+            Individual child;
 
             // Crossover
             if (prob_dist(rng) < GeneticConfig::CROSSOVER_PROBABILITY)
@@ -276,7 +252,6 @@ BestResult genetic(const std::string &csv_path,
             }
             else
             {
-                // No crossover: copy one parent
                 child = population[p1];
             }
 
@@ -287,8 +262,8 @@ BestResult genetic(const std::string &csv_path,
             }
 
             // Ensure gfast and gslow stay fixed
-            child.gfast = GeneticConfig::GFAST_FIXED;
-            child.gslow = GeneticConfig::GSLOW_FIXED;
+            child.params.gfast = GeneticConfig::GFAST_FIXED;
+            child.params.gslow = GeneticConfig::GSLOW_FIXED;
 
             new_population[i] = child;
         }
@@ -296,30 +271,22 @@ BestResult genetic(const std::string &csv_path,
         population = new_population;
 
         // --- Evaluate only NON_ELITES offspring ---
-        {
-            std::array<ChemicalSynapsisParams, NON_ELITES> ne_params;
-            std::array<double, NON_ELITES> ne_fitnesses;
-            for (size_t i = 0; i < NON_ELITES; i++)
-                ne_params[i] = population[ELITES + i];
+        std::array<Individual, NON_ELITES> ne_arr;
+        for (size_t i = 0; i < NON_ELITES; i++)
+            ne_arr[i] = population[ELITES + i];
 
-            calc_fitnesses<Integrator, NeuronType, NON_ELITES>(
-                synapsis, model_neur, ne_params, scaled_result,
-                stats1, search_phase, model_signal_buffer, ne_fitnesses,
-                reset_state_neur, get_v_neur);
+        calc_fitnesses<Integrator, NeuronType, NON_ELITES>(
+            synapsis, model_neur, ne_arr, scaled_result,
+            stats1, search_phase, model_signal_buffer,
+            reset_state_neur, get_v_neur);
 
-            for (size_t i = 0; i < NON_ELITES; i++)
-                fitnesses[ELITES + i] = ne_fitnesses[i];
-        }
-
-        // Restore elite fitnesses (not recalculated)
-        for (size_t e = 0; e < ELITES; e++)
-        {
-            fitnesses[e] = elite_fitnesses[e];
-        }
+        for (size_t i = 0; i < NON_ELITES; i++)
+            population[ELITES + i] = ne_arr[i];
     }
 
     // --- Step 8: Return final best individual ---
-    size_t best_idx = std::distance(fitnesses.begin(),
-                                    std::max_element(fitnesses.begin(), fitnesses.end()));
-    return {fitnesses[best_idx], population[best_idx]};
+    auto best_it = std::max_element(population.begin(), population.end(),
+                                    [](const Individual &a, const Individual &b)
+                                    { return a.fitness < b.fitness; });
+    return *best_it;
 }

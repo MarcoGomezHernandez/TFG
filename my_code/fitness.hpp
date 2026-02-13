@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include "scaling.hpp"
 #include "fitness.hpp"
+#include "genetic.hpp"
 #include <ChemicalSynapsis.h>
 
 /*
@@ -32,17 +33,16 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, params_individuals, scaled_result, initial_state, stats1, search_phase, buffers, reset_state_neur, get_v_neur, set_v_neur
+ * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
-                    const std::array<ChemicalSynapsisParams, N> &params_individuals,
+                    std::array<Individual, N> &individuals,
                     const ScaledSignalResult &scaled_result,
                     const ConstantSignalFitnessVals &stats1,
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
-                    std::array<double, N> &fitnesses_buffer,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur);
 
