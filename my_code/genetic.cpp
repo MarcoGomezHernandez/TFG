@@ -71,9 +71,9 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
 
     std::array<Individual, POP_SIZE> population;
 
-    for (size_t i = 0; i < POP_SIZE; i++)
+    for (Individual &ind : population)
     {
-        ChemicalSynapsisParams &p = population[i].params;
+        ChemicalSynapsisParams &p = ind.params;
         p.Esyn = dist_esyn(rng);
         p.sfast = dist_sfast(rng);
         p.Vfast = dist_vfast(rng);
@@ -81,7 +81,6 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
         p.k1 = dist_k1(rng);
         p.k2 = dist_k2(rng);
         p.sslow = dist_sslow(rng);
-        population[i].fitness = 0.0;
     }
 
     return population;
@@ -90,17 +89,16 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
 /*
  * Arithmetic crossover: child = mean of two parents (per parameter), gfast/gslow stay fixed
  */
-inline Individual crossover(const Individual &a, const Individual &b)
+inline void crossover(const Individual &a, const Individual &b, Individual &result)
 {
-    ChemicalSynapsisParams child;
-    child.Esyn = (a.params.Esyn + b.params.Esyn) / 2.0;
-    child.sfast = (a.params.sfast + b.params.sfast) / 2.0;
-    child.Vfast = (a.params.Vfast + b.params.Vfast) / 2.0;
-    child.Vslow = (a.params.Vslow + b.params.Vslow) / 2.0;
-    child.k1 = (a.params.k1 + b.params.k1) / 2.0;
-    child.k2 = (a.params.k2 + b.params.k2) / 2.0;
-    child.sslow = (a.params.sslow + b.params.sslow) / 2.0;
-    return {child, 0.0};
+    ChemicalSynapsisParams &p = result.params;
+    p.Esyn = (a.params.Esyn + b.params.Esyn) / 2.0;
+    p.sfast = (a.params.sfast + b.params.sfast) / 2.0;
+    p.Vfast = (a.params.Vfast + b.params.Vfast) / 2.0;
+    p.Vslow = (a.params.Vslow + b.params.Vslow) / 2.0;
+    p.k1 = (a.params.k1 + b.params.k1) / 2.0;
+    p.k2 = (a.params.k2 + b.params.k2) / 2.0;
+    p.sslow = (a.params.sslow + b.params.sslow) / 2.0;
 }
 
 /*
@@ -118,11 +116,11 @@ inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<
 }
 
 /*
- * Roulette wheel selection: returns index of selected individual
+ * Roulette wheel selection: returns reference to selected individual
  * fitness_sum is precomputed sum of all fitnesses
  */
 template <size_t N>
-inline size_t roulette_select(const std::array<Individual, N> &population, double fitness_sum, std::mt19937 &rng)
+inline const Individual &roulette_select(const std::array<Individual, N> &population, double fitness_sum, std::mt19937 &rng)
 {
     std::uniform_real_distribution<double> dist(0.0, fitness_sum);
     double pick = dist(rng);
@@ -131,9 +129,9 @@ inline size_t roulette_select(const std::array<Individual, N> &population, doubl
     {
         cumulative += population[i].fitness;
         if (cumulative >= pick)
-            return i;
+            return population[i];
     }
-    return N - 1;
+    return population[N - 1];
 }
 
 /*
@@ -248,19 +246,19 @@ Individual genetic(const std::string &csv_path,
         // Generate offspring
         for (size_t i = ELITES; i < POP; i++)
         {
-            size_t p1 = roulette_select(population, fitness_sum, rng);
-            size_t p2 = roulette_select(population, fitness_sum, rng);
+            const Individual &p1 = roulette_select(population, fitness_sum, rng);
 
-            Individual child;
+            Individual &child = new_population[i];
 
             // Crossover
             if (prob_dist(rng) < GeneticConfig::CROSSOVER_PROBABILITY)
             {
-                child = crossover(population[p1], population[p2]);
+                const Individual &p2 = roulette_select(population, fitness_sum, rng);
+                crossover(p1, p2, child);
             }
             else
             {
-                child = population[p1];
+                child = p1;
             }
 
             // Mutation
@@ -268,8 +266,6 @@ Individual genetic(const std::string &csv_path,
             {
                 mutate(child, rng, ndist);
             }
-
-            new_population[i] = child;
         }
 
         population = new_population;
