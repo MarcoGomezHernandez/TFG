@@ -142,7 +142,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur
+ * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur, start_index
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
@@ -153,7 +153,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
                     ResetStateFuncType reset_state_neur,
-                    GetVFuncType get_v_neur)
+                    GetVFuncType get_v_neur,
+                    size_t start_index)
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
@@ -163,7 +164,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const double *signal_data = scaled_result.signal.data();
     const double *interpolated_signal_data = scaled_result.interpolated_signal.data();
 
-    for (size_t i = 0; i < N; i++)
+    for (size_t i = start_index; i < N; i++)
     {
         const ChemicalSynapsisParams &params = individuals[i].params;
 

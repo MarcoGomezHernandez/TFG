@@ -48,6 +48,14 @@ namespace GeneticConfig
 }
 
 /*
+ * Comparator for descending fitness order (higher fitness first)
+ */
+static bool fitness_descending(const Individual &a, const Individual &b)
+{
+    return a.fitness > b.fitness;
+}
+
+/*
  * Generate initial population with random individuals
  */
 template <size_t POP_SIZE>
@@ -196,7 +204,6 @@ Individual genetic(const std::string &csv_path,
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
-    constexpr size_t NON_ELITES = POP - ELITES;
 
     // --- Step 5: Initialize population ---
     std::random_device rd;
@@ -208,28 +215,30 @@ Individual genetic(const std::string &csv_path,
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, population, scaled_result,
         stats1, search_phase, model_signal_buffer,
-        reset_state_neur, get_v_neur);
+        reset_state_neur, get_v_neur, 0);
 
     // --- Step 7: Generation loop ---
     std::normal_distribution<double> ndist(0.0, 1.0);
     std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
 
+    typename std::array<Individual, POP>::iterator pop_begin = population.begin();
+    typename std::array<Individual, POP>::iterator pop_end = population.end();
+    typename std::array<Individual, POP>::iterator pop_elites_end = pop_begin + ELITES;
+
+    std::array<Individual, POP> new_population;
+
     for (size_t gen = 0; gen < GeneticConfig::NUM_GENERATIONS; gen++)
     {
-        // --- Elitism: sort population by fitness descending ---
-        std::sort(population.begin(), population.end(),
-                  [](const Individual &a, const Individual &b)
-                  { return a.fitness > b.fitness; });
+        // --- Elitism: use nth_element to get top ELITES ---
+        std::nth_element(pop_begin, pop_elites_end, pop_end,
+                         fitness_descending);
 
-        // Top ELITES are already at the beginning after sorting
+        // Top ELITES are now at the beginning (not fully sorted)
 
         // --- Calculate fitness sum for roulette selection ---
         double fitness_sum = 0.0;
-        for (const auto &ind : population)
+        for (const Individual &ind : population)
             fitness_sum += ind.fitness;
-
-        // --- Generate NON_ELITES offspring ---
-        std::array<Individual, POP> new_population;
 
         // Keep elites
         for (size_t e = 0; e < ELITES; e++)
@@ -270,23 +279,15 @@ Individual genetic(const std::string &csv_path,
 
         population = new_population;
 
-        // --- Evaluate only NON_ELITES offspring ---
-        std::array<Individual, NON_ELITES> ne_arr;
-        for (size_t i = 0; i < NON_ELITES; i++)
-            ne_arr[i] = population[ELITES + i];
-
-        calc_fitnesses<Integrator, NeuronType, NON_ELITES>(
-            synapsis, model_neur, ne_arr, scaled_result,
+        // --- Evaluate only non elites offspring ---
+        calc_fitnesses<Integrator, NeuronType, POP>(
+            synapsis, model_neur, population, scaled_result,
             stats1, search_phase, model_signal_buffer,
-            reset_state_neur, get_v_neur);
-
-        for (size_t i = 0; i < NON_ELITES; i++)
-            population[ELITES + i] = ne_arr[i];
+            reset_state_neur, get_v_neur, ELITES);
     }
 
     // --- Step 8: Return final best individual ---
-    auto best_it = std::max_element(population.begin(), population.end(),
-                                    [](const Individual &a, const Individual &b)
-                                    { return a.fitness < b.fitness; });
+    typename std::array<Individual, POP>::iterator best_it = std::min_element(pop_begin, pop_end,
+                                                                              fitness_descending);
     return *best_it;
 }

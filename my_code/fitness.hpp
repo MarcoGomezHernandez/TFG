@@ -33,7 +33,7 @@ ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &sign
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur
+ * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur, start_index
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
@@ -44,6 +44,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
                     ResetStateFuncType reset_state_neur,
-                    GetVFuncType get_v_neur);
+                    GetVFuncType get_v_neur,
+                    size_t start_index);
 
 #endif
