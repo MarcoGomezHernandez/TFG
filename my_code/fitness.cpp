@@ -20,7 +20,7 @@ namespace FitnessConstants
 /*
  * Compute an inverse normalization that maps a value to a score between 0 and 1, with score=1 at val=min_val and score=0 at val=max_val, clamped to [0,1].
  */
-double inverse_normalization(double val, double min_val, double max_val)
+inline double inverse_normalization(double val, double min_val, double max_val)
 {
     return (max_val - val) / (max_val - min_val);
 }

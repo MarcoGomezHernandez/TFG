@@ -223,7 +223,7 @@ PtsResult calculate_pts(
 /*
  * Convert NumericIntegrator enum to string
  */
-std::string integrator_to_string(NumericIntegrator integrator)
+inline std::string integrator_to_string(NumericIntegrator integrator)
 {
     switch (integrator)
     {

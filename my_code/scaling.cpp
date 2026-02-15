@@ -237,7 +237,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
  * Dispatch dt selection based on integration method
  * Currently only supports RK4
  */
-DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_live)
+inline DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_live)
 {
     if (model == NeuronModel::HINDMARSH_ROSE)
     {
@@ -261,7 +261,7 @@ DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, doubl
  * Recalculates scaling based on recent min/max window
  * Updates relative thresholds with safety margins
  */
-ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SignalStats &stats)
+inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SignalStats &stats)
 {
     // Recalculate scaling based on observed window
     ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
