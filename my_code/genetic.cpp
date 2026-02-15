@@ -48,14 +48,11 @@ namespace GeneticConfig
 }
 
 /*
- * Generate a random Individual within configured ranges
+ * Generate initial population with random individuals
  */
-inline Individual random_individual(std::mt19937 &rng)
+template <size_t POP_SIZE>
+inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
 {
-    ChemicalSynapsisParams p;
-    p.gfast = GeneticConfig::GFAST_FIXED;
-    p.gslow = GeneticConfig::GSLOW_FIXED;
-
     std::uniform_real_distribution<double> dist_esyn(GeneticConfig::ESYN_MIN, GeneticConfig::ESYN_MAX);
     std::uniform_real_distribution<double> dist_sfast(GeneticConfig::SFAST_MIN, GeneticConfig::SFAST_MAX);
     std::uniform_real_distribution<double> dist_vfast(GeneticConfig::VFAST_MIN, GeneticConfig::VFAST_MAX);
@@ -64,15 +61,24 @@ inline Individual random_individual(std::mt19937 &rng)
     std::uniform_real_distribution<double> dist_k2(GeneticConfig::K2_MIN, GeneticConfig::K2_MAX);
     std::uniform_real_distribution<double> dist_sslow(GeneticConfig::SSLOW_MIN, GeneticConfig::SSLOW_MAX);
 
-    p.Esyn = dist_esyn(rng);
-    p.sfast = dist_sfast(rng);
-    p.Vfast = dist_vfast(rng);
-    p.Vslow = dist_vslow(rng);
-    p.k1 = dist_k1(rng);
-    p.k2 = dist_k2(rng);
-    p.sslow = dist_sslow(rng);
+    std::array<Individual, POP_SIZE> population;
 
-    return {p, 0.0};
+    for (size_t i = 0; i < POP_SIZE; i++)
+    {
+        ChemicalSynapsisParams &p = population[i].params;
+        p.gfast = GeneticConfig::GFAST_FIXED;
+        p.gslow = GeneticConfig::GSLOW_FIXED;
+        p.Esyn = dist_esyn(rng);
+        p.sfast = dist_sfast(rng);
+        p.Vfast = dist_vfast(rng);
+        p.Vslow = dist_vslow(rng);
+        p.k1 = dist_k1(rng);
+        p.k2 = dist_k2(rng);
+        p.sslow = dist_sslow(rng);
+        population[i].fitness = 0.0;
+    }
+
+    return population;
 }
 
 /*
@@ -144,7 +150,7 @@ Individual genetic(const std::string &csv_path,
                    double csv_step,
                    double start_time,
                    double use_time,
-                   NumericIntegrator integrator_enum,
+                   NumericIntegrator integrator,
                    NeuronModel model,
                    bool search_phase,
                    bool check_drift,
@@ -152,17 +158,13 @@ Individual genetic(const std::string &csv_path,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur)
 {
-    constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
-    constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
-    constexpr size_t NON_ELITES = POP - ELITES;
-
     // Calculate observation time
     const double observation_time = use_time / GeneticConfig::OBSERVATION_TIME_DIVISOR;
 
     // --- Step 1: Scale the signal ---
     ScaledSignalResult scaled_result = scale_signal(
         csv_path, column_index, csv_step, start_time, use_time,
-        observation_time, integrator_enum, model, check_drift);
+        observation_time, integrator, model, check_drift);
 
     if (!scaled_result.success)
     {
@@ -170,14 +172,13 @@ Individual genetic(const std::string &csv_path,
     }
 
     // --- Step 2: Create neuron and synapsis instances ---
-    using SynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
-
     NeuronType model_neur = create_neuron();
-    SynapsisType synapsis;
+    ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> synapsis;
 
     // --- Step 3: Allocate buffers ---
     const size_t signal_size = scaled_result.signal.size();
-    std::vector<double> model_signal_buffer(signal_size);
+    std::vector<double> model_signal_buffer;
+    model_signal_buffer.reserve(signal_size);
 
     // --- Step 4: Precompute constant fitness values from the CSV signal ---
     double model_min, model_max;
@@ -193,16 +194,15 @@ Individual genetic(const std::string &csv_path,
 
     ConstantSignalFitnessVals stats1 = calc_const_signal_vals(scaled_result.signal, model_min, model_max);
 
+    constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
+    constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
+    constexpr size_t NON_ELITES = POP - ELITES;
+
     // --- Step 5: Initialize population ---
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    std::array<Individual, POP> population;
-
-    for (size_t i = 0; i < POP; i++)
-    {
-        population[i] = random_individual(rng);
-    }
+    std::array<Individual, POP> population = initialize_population<POP>(rng);
 
     // --- Step 6: Evaluate initial population ---
     calc_fitnesses<Integrator, NeuronType, POP>(
