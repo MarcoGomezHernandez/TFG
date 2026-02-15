@@ -133,12 +133,10 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose()
  */
 struct ChemicalSynapsisParams
 {
-    double gfast; // Fast synaptic conductance
     double Esyn;  // Synaptic reversal potential
     double sfast; // Fast synaptic gating variable
     double Vfast; // Fast voltage threshold
     double Vslow; // Slow voltage threshold
-    double gslow; // Slow synaptic conductance
     double k1;    // Forward rate constant
     double k2;    // Backward rate constant
     double sslow; // Slow synaptic gating variable

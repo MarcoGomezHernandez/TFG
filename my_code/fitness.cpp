@@ -169,12 +169,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         const ChemicalSynapsisParams &params = individuals[i].params;
 
         // Set synapsis parameters
-        synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
         synapsis.set(ChemicalSynapsisType::Esyn, params.Esyn);
         synapsis.set(ChemicalSynapsisType::sfast, params.sfast);
         synapsis.set(ChemicalSynapsisType::Vfast, params.Vfast);
         synapsis.set(ChemicalSynapsisType::Vslow, params.Vslow);
-        synapsis.set(ChemicalSynapsisType::gslow, params.gslow);
         synapsis.set(ChemicalSynapsisType::k1, params.k1);
         synapsis.set(ChemicalSynapsisType::k2, params.k2);
         synapsis.set(ChemicalSynapsisType::sslow, params.sslow);

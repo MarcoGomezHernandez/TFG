@@ -74,8 +74,6 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
     for (size_t i = 0; i < POP_SIZE; i++)
     {
         ChemicalSynapsisParams &p = population[i].params;
-        p.gfast = GeneticConfig::GFAST_FIXED;
-        p.gslow = GeneticConfig::GSLOW_FIXED;
         p.Esyn = dist_esyn(rng);
         p.sfast = dist_sfast(rng);
         p.Vfast = dist_vfast(rng);
@@ -95,8 +93,6 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
 inline Individual crossover(const Individual &a, const Individual &b)
 {
     ChemicalSynapsisParams child;
-    child.gfast = GeneticConfig::GFAST_FIXED;
-    child.gslow = GeneticConfig::GSLOW_FIXED;
     child.Esyn = (a.params.Esyn + b.params.Esyn) / 2.0;
     child.sfast = (a.params.sfast + b.params.sfast) / 2.0;
     child.Vfast = (a.params.Vfast + b.params.Vfast) / 2.0;
@@ -112,7 +108,6 @@ inline Individual crossover(const Individual &a, const Individual &b)
  */
 inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist)
 {
-    // gfast and gslow are never mutated
     ind.params.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
     ind.params.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
     ind.params.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
@@ -181,7 +176,11 @@ Individual genetic(const std::string &csv_path,
 
     // --- Step 2: Create neuron and synapsis instances ---
     NeuronType model_neur = create_neuron();
-    ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> synapsis;
+    using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
+    ChemicalSynapsisType synapsis;
+    // Set fixed synapsis parameters once
+    synapsis.set(ChemicalSynapsisType::gfast, GeneticConfig::GFAST_FIXED);
+    synapsis.set(ChemicalSynapsisType::gslow, GeneticConfig::GSLOW_FIXED);
 
     // --- Step 3: Allocate buffers ---
     const size_t signal_size = scaled_result.signal.size();
@@ -269,10 +268,6 @@ Individual genetic(const std::string &csv_path,
             {
                 mutate(child, rng, ndist);
             }
-
-            // Ensure gfast and gslow stay fixed
-            child.params.gfast = GeneticConfig::GFAST_FIXED;
-            child.params.gslow = GeneticConfig::GSLOW_FIXED;
 
             new_population[i] = child;
         }
