@@ -127,19 +127,23 @@ inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<
 /*
  * Roulette wheel selection: returns reference to selected individual
  * roulette_dist is precomputed with range [0, fitness_sum]
+ * ignore_ind: pointer to individual to skip during selection (nullptr to ignore none)
  */
 template <size_t N>
-inline const Individual &roulette_select(const std::array<Individual, N> &population, std::uniform_real_distribution<double> &roulette_dist, std::mt19937 &rng)
+inline const Individual &roulette_select(const std::array<Individual, N> &population, std::uniform_real_distribution<double> &roulette_dist, std::mt19937 &rng, const Individual *ignore_ind = nullptr)
 {
     double pick = roulette_dist(rng);
     double cumulative = 0.0;
     for (const Individual &ind : population)
     {
+        if (&ind == ignore_ind)
+            continue;
         cumulative += ind.fitness;
         if (cumulative >= pick)
             return ind;
     }
-    return population.back();
+    // Fallback: return last individual if it's not the ignored one, otherwise second to last
+    return (&population.back() == ignore_ind) ? population[N - 2] : population.back();
 }
 
 /*
@@ -262,7 +266,8 @@ Individual genetic(const std::string &csv_path,
             // Crossover
             if (prob_dist(rng) < GeneticConfig::CROSSOVER_PROBABILITY)
             {
-                const Individual &p2 = roulette_select(population, roulette_dist, rng);
+                // Select p2 different from p1 to avoid hermaphroditism
+                const Individual &p2 = roulette_select(population, roulette_dist, rng, &p1);
                 crossover(p1, p2, child);
             }
             else

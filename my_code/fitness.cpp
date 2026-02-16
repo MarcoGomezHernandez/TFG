@@ -136,6 +136,10 @@ double fitness_from_signals(const ConstantSignalFitnessVals &stats1, const std::
     // Compute final weighted score
     const double final_score = (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score);
 
+    if (final_score < 0.0)
+    {
+        return 0.0;
+    }
     return final_score;
 }
 
