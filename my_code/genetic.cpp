@@ -1,9 +1,9 @@
 #include "genetic.hpp"
 
 /*
- * Genetic algorithm configuration constants
+ * Genetic algorithm configuration constants (private)
  */
-namespace GeneticConfig
+namespace GeneticPrivateConfig
 {
     // Population and generations
     static constexpr size_t POPULATION_SIZE = 50;
@@ -16,10 +16,6 @@ namespace GeneticConfig
     // Crossover and mutation probabilities
     static constexpr double CROSSOVER_PROBABILITY = 0.8;
     static constexpr double MUTATION_PROBABILITY = 0.1;
-
-    // Fixed values for gfast and gslow
-    static constexpr double GFAST_FIXED = 0.1;
-    static constexpr double GSLOW_FIXED = 0.01;
 
     // Random initialization ranges [min, max] for each mutable parameter
     static constexpr double ESYN_MIN = -2.0;
@@ -61,13 +57,13 @@ static bool fitness_descending(const Individual &a, const Individual &b)
 template <size_t POP_SIZE>
 inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
 {
-    std::uniform_real_distribution<double> dist_esyn(GeneticConfig::ESYN_MIN, GeneticConfig::ESYN_MAX);
-    std::uniform_real_distribution<double> dist_sfast(GeneticConfig::SFAST_MIN, GeneticConfig::SFAST_MAX);
-    std::uniform_real_distribution<double> dist_vfast(GeneticConfig::VFAST_MIN, GeneticConfig::VFAST_MAX);
-    std::uniform_real_distribution<double> dist_vslow(GeneticConfig::VSLOW_MIN, GeneticConfig::VSLOW_MAX);
-    std::uniform_real_distribution<double> dist_k1(GeneticConfig::K1_MIN, GeneticConfig::K1_MAX);
-    std::uniform_real_distribution<double> dist_k2(GeneticConfig::K2_MIN, GeneticConfig::K2_MAX);
-    std::uniform_real_distribution<double> dist_sslow(GeneticConfig::SSLOW_MIN, GeneticConfig::SSLOW_MAX);
+    std::uniform_real_distribution<double> dist_esyn(GeneticPrivateConfig::ESYN_MIN, GeneticPrivateConfig::ESYN_MAX);
+    std::uniform_real_distribution<double> dist_sfast(GeneticPrivateConfig::SFAST_MIN, GeneticPrivateConfig::SFAST_MAX);
+    std::uniform_real_distribution<double> dist_vfast(GeneticPrivateConfig::VFAST_MIN, GeneticPrivateConfig::VFAST_MAX);
+    std::uniform_real_distribution<double> dist_vslow(GeneticPrivateConfig::VSLOW_MIN, GeneticPrivateConfig::VSLOW_MAX);
+    std::uniform_real_distribution<double> dist_k1(GeneticPrivateConfig::K1_MIN, GeneticPrivateConfig::K1_MAX);
+    std::uniform_real_distribution<double> dist_k2(GeneticPrivateConfig::K2_MIN, GeneticPrivateConfig::K2_MAX);
+    std::uniform_real_distribution<double> dist_sslow(GeneticPrivateConfig::SSLOW_MIN, GeneticPrivateConfig::SSLOW_MAX);
 
     std::array<Individual, POP_SIZE> population;
 
@@ -106,22 +102,22 @@ inline void crossover(const Individual &a, const Individual &b, Individual &resu
  */
 inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist)
 {
-    constexpr double MUTATION_PROBABILITY = GeneticConfig::MUTATION_PROBABILITY;
+    constexpr double MUTATION_PROBABILITY = GeneticPrivateConfig::MUTATION_PROBABILITY;
     ChemicalSynapsisParams &p = ind.params;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
+        p.Esyn += ndist(rng) * GeneticPrivateConfig::ESYN_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+        p.sfast += ndist(rng) * GeneticPrivateConfig::SFAST_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
+        p.Vfast += ndist(rng) * GeneticPrivateConfig::VFAST_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
+        p.Vslow += ndist(rng) * GeneticPrivateConfig::VSLOW_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+        p.k1 += ndist(rng) * GeneticPrivateConfig::K1_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+        p.k2 += ndist(rng) * GeneticPrivateConfig::K2_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+        p.sslow += ndist(rng) * GeneticPrivateConfig::SSLOW_MUT_FACTOR;
 }
 
 /*
@@ -172,7 +168,7 @@ Individual genetic(const std::string &csv_path,
                    GetVFuncType get_v_neur)
 {
     // Calculate observation time
-    const double observation_time = use_time / GeneticConfig::OBSERVATION_TIME_DIVISOR;
+    const double observation_time = use_time / GeneticPrivateConfig::OBSERVATION_TIME_DIVISOR;
 
     // --- Step 1: Scale the signal ---
     ScaledSignalResult scaled_result = scale_signal(
@@ -189,8 +185,8 @@ Individual genetic(const std::string &csv_path,
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
     ChemicalSynapsisType synapsis;
     // Set fixed synapsis parameters once
-    synapsis.set(ChemicalSynapsisType::gfast, GeneticConfig::GFAST_FIXED);
-    synapsis.set(ChemicalSynapsisType::gslow, GeneticConfig::GSLOW_FIXED);
+    synapsis.set(ChemicalSynapsisType::gfast, GeneticPublicConfig::GFAST_FIXED);
+    synapsis.set(ChemicalSynapsisType::gslow, GeneticPublicConfig::GSLOW_FIXED);
 
     // --- Step 3: Allocate buffers ---
     const size_t signal_size = scaled_result.signal.size();
@@ -211,8 +207,8 @@ Individual genetic(const std::string &csv_path,
 
     ConstantSignalFitnessVals stats1 = calc_const_signal_vals(scaled_result.signal, model_min, model_max);
 
-    constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
-    constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
+    constexpr size_t POP = GeneticPrivateConfig::POPULATION_SIZE;
+    constexpr size_t ELITES = GeneticPrivateConfig::NUM_ELITES;
     constexpr size_t ELITES_SIZE = ELITES * sizeof(Individual);
 
     // --- Step 5: Initialize population ---
@@ -237,7 +233,7 @@ Individual genetic(const std::string &csv_path,
     typename std::array<Individual, POP>::iterator pop_end = population.end();
     typename std::array<Individual, POP>::iterator pop_elites_end = pop_begin + ELITES;
 
-    for (size_t gen = 0; gen < GeneticConfig::NUM_GENERATIONS; gen++)
+    for (size_t gen = 0; gen < GeneticPrivateConfig::NUM_GENERATIONS; gen++)
     {
         // --- Elitism: use nth_element to get top ELITES ---
         std::nth_element(pop_begin, pop_elites_end, pop_end,
@@ -264,7 +260,7 @@ Individual genetic(const std::string &csv_path,
             Individual &child = new_population[i];
 
             // Crossover
-            if (prob_dist(rng) < GeneticConfig::CROSSOVER_PROBABILITY)
+            if (prob_dist(rng) < GeneticPrivateConfig::CROSSOVER_PROBABILITY)
             {
                 // Select p2 different from p1 to avoid hermaphroditism
                 const Individual &p2 = roulette_select(population, roulette_dist, rng, &p1);

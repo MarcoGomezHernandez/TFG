@@ -13,12 +13,15 @@
 #include <HindmarshRoseModel.h>
 #include <ChemicalSynapsis.h>
 
+typedef RungeKutta4 Integrator;
+typedef HindmarshRoseNeuron<Integrator> NeuronType;
+
 int main(int argc, char *argv[])
 {
-    if (argc < 6)
+    if (argc < 8)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> [search_phase=1] [check_drift=0]"
+                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <search_phase> <check_drift>"
                   << std::endl;
         return 1;
     }
@@ -28,15 +31,12 @@ int main(int argc, char *argv[])
     const double csv_step = std::atof(argv[3]);
     const double start_time = std::atof(argv[4]);
     const double use_time = std::atof(argv[5]);
-    const bool search_phase = (argc > 6) ? (std::atoi(argv[6]) != 0) : true;
-    const bool check_drift = (argc > 7) ? (std::atoi(argv[7]) != 0) : false;
-
-    typedef RungeKutta4 Integrator;
-    typedef HindmarshRoseNeuron<Integrator> NeuronType;
+    const bool search_phase = (std::atoi(argv[6]) != 0);
+    const bool check_drift = (std::atoi(argv[7]) != 0);
 
     try
     {
-        Individual best = genetic<Integrator, NeuronType>(
+        const Individual &best = genetic<Integrator, NeuronType>(
             csv_path, column_index, csv_step, start_time, use_time,
             NumericIntegrator::RK4,
             NeuronModel::HINDMARSH_ROSE,
@@ -46,17 +46,19 @@ int main(int argc, char *argv[])
             reset_state_hindmarsh_rose<Integrator>,
             get_v_hindmarsh_rose<Integrator>);
 
+        const ChemicalSynapsisParams &params = best.params;
+
         std::cout << "=== Best Individual ===" << std::endl;
         std::cout << "Fitness: " << best.fitness << std::endl;
-        std::cout << "gfast:  " << best.params.gfast << std::endl;
-        std::cout << "Esyn:   " << best.params.Esyn << std::endl;
-        std::cout << "sfast:  " << best.params.sfast << std::endl;
-        std::cout << "Vfast:  " << best.params.Vfast << std::endl;
-        std::cout << "Vslow:  " << best.params.Vslow << std::endl;
-        std::cout << "gslow:  " << best.params.gslow << std::endl;
-        std::cout << "k1:     " << best.params.k1 << std::endl;
-        std::cout << "k2:     " << best.params.k2 << std::endl;
-        std::cout << "sslow:  " << best.params.sslow << std::endl;
+        std::cout << "gfast:  " << GeneticPublicConfig::GFAST_FIXED << " (fixed)" << std::endl;
+        std::cout << "Esyn:   " << params.Esyn << std::endl;
+        std::cout << "sfast:  " << params.sfast << std::endl;
+        std::cout << "Vfast:  " << params.Vfast << std::endl;
+        std::cout << "Vslow:  " << params.Vslow << std::endl;
+        std::cout << "gslow:  " << GeneticPublicConfig::GSLOW_FIXED << " (fixed)" << std::endl;
+        std::cout << "k1:     " << params.k1 << std::endl;
+        std::cout << "k2:     " << params.k2 << std::endl;
+        std::cout << "sslow:  " << params.sslow << std::endl;
     }
     catch (const std::runtime_error &e)
     {

@@ -19,6 +19,16 @@
 #include <ChemicalSynapsis.h>
 
 /*
+ * Public genetic algorithm configuration constants
+ */
+namespace GeneticPublicConfig
+{
+    // Fixed values for gfast and gslow
+    inline constexpr double GFAST_FIXED = 0.1;
+    inline constexpr double GSLOW_FIXED = 0.01;
+}
+
+/*
  * Individual in the genetic algorithm population
  * Contains both parameters and fitness value
  */
