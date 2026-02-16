@@ -83,27 +83,26 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
 }
 
 /*
- * Arithmetic crossover: child = mean of two parents (per parameter), gfast/gslow stay fixed
+ * Arithmetic crossover: operate directly on ChemicalSynapsisParams (child = mean of two parents)
  */
-inline void crossover(const Individual &a, const Individual &b, Individual &result)
+inline void crossover(const ChemicalSynapsisParams &a, const ChemicalSynapsisParams &b, ChemicalSynapsisParams &result)
 {
-    ChemicalSynapsisParams &p = result.params;
-    p.Esyn = (a.params.Esyn + b.params.Esyn) / 2.0;
-    p.sfast = (a.params.sfast + b.params.sfast) / 2.0;
-    p.Vfast = (a.params.Vfast + b.params.Vfast) / 2.0;
-    p.Vslow = (a.params.Vslow + b.params.Vslow) / 2.0;
-    p.k1 = (a.params.k1 + b.params.k1) / 2.0;
-    p.k2 = (a.params.k2 + b.params.k2) / 2.0;
-    p.sslow = (a.params.sslow + b.params.sslow) / 2.0;
+    result.Esyn = (a.Esyn + b.Esyn) / 2.0;
+    result.sfast = (a.sfast + b.sfast) / 2.0;
+    result.Vfast = (a.Vfast + b.Vfast) / 2.0;
+    result.Vslow = (a.Vslow + b.Vslow) / 2.0;
+    result.k1 = (a.k1 + b.k1) / 2.0;
+    result.k2 = (a.k2 + b.k2) / 2.0;
+    result.sslow = (a.sslow + b.sslow) / 2.0;
 }
 
 /*
- * Mutate an individual with normal perturbation per parameter, each with independent mutation probability
+ * Mutate: recibe directamente los parámetros de la sinapsis (params) y aplica
+ * perturbaciones normales por cada campo con su probabilidad independiente.
  */
-inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist)
+inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist)
 {
     constexpr double MUTATION_PROBABILITY = GeneticPrivateConfig::MUTATION_PROBABILITY;
-    ChemicalSynapsisParams &p = ind.params;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
         p.Esyn += ndist(rng) * GeneticPrivateConfig::ESYN_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
@@ -126,20 +125,50 @@ inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<
  * ignore_ind: pointer to individual to skip during selection (nullptr to ignore none)
  */
 template <size_t N>
-inline const Individual &roulette_select(const std::array<Individual, N> &population, std::uniform_real_distribution<double> &roulette_dist, std::mt19937 &rng, const Individual *ignore_ind = nullptr)
+inline const Individual &roulette_select_one(const std::array<Individual, N> &population,
+                                             std::uniform_real_distribution<double> &roulette_dist,
+                                             std::mt19937 &rng)
 {
     double pick = roulette_dist(rng);
     double cumulative = 0.0;
     for (const Individual &ind : population)
     {
-        if (&ind == ignore_ind)
+        cumulative += ind.fitness;
+        if (cumulative >= pick)
+            return ind;
+    }
+    // Fallback sencillo: devolver el último individuo
+    return population.back();
+}
+
+/*
+ * Roulette wheel selection excluding a specific individual
+ * Uses the same distribution but skips the ignored individual during accumulation
+ */
+template <size_t N>
+inline const Individual &roulette_select_second_no_rep(const std::array<Individual, N> &population,
+                                                       const Individual &ignore_ind,
+                                                       std::uniform_real_distribution<double> &roulette_dist,
+                                                       std::mt19937 &rng)
+{
+    double pick = roulette_dist(rng);
+    double cumulative = 0.0;
+    for (const Individual &ind : population)
+    {
+        if (&ind == &ignore_ind)
             continue;
         cumulative += ind.fitness;
         if (cumulative >= pick)
             return ind;
     }
-    // Fallback: return last individual if it's not the ignored one, otherwise second to last
-    return (&population.back() == ignore_ind) ? population[N - 2] : population.back();
+
+    // Fallback: return first individual that is not the ignored one
+    for (const Individual &ind : population)
+    {
+        if (&ind != &ignore_ind)
+            return ind;
+    }
+    return population.back();
 }
 
 /*
@@ -255,16 +284,18 @@ Individual genetic(const std::string &csv_path,
         // Generate offspring
         for (size_t i = ELITES; i < POP; i++)
         {
-            const Individual &p1 = roulette_select(population, roulette_dist, rng);
+            const Individual &p1 = roulette_select_one(population, roulette_dist, rng);
 
             Individual &child = new_population[i];
 
             // Crossover
             if (prob_dist(rng) < GeneticPrivateConfig::CROSSOVER_PROBABILITY)
             {
-                // Select p2 different from p1 to avoid hermaphroditism
-                const Individual &p2 = roulette_select(population, roulette_dist, rng, &p1);
-                crossover(p1, p2, child);
+                // Select p2 different from p1 using the new function
+                const Individual &p2 = roulette_select_second_no_rep(population, p1, roulette_dist, rng);
+
+                // Crossover on params directly
+                crossover(p1.params, p2.params, child.params);
             }
             else
             {
@@ -272,7 +303,7 @@ Individual genetic(const std::string &csv_path,
             }
 
             // Mutation (always attempt, per gene)
-            mutate(child, rng, ndist, prob_dist);
+            mutate(child.params, rng, ndist, prob_dist);
         }
 
         std::swap(population, new_population);
