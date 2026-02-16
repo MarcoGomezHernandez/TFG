@@ -11,6 +11,7 @@
 #include <cmath>
 #include <utility>
 #include <stdexcept>
+#include <cstring>
 
 #include "utils.hpp"
 #include "scaling.hpp"

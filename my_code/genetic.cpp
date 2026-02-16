@@ -102,36 +102,44 @@ inline void crossover(const Individual &a, const Individual &b, Individual &resu
 }
 
 /*
- * Mutate an individual with normal perturbation per parameter
+ * Mutate an individual with normal perturbation per parameter, each with independent mutation probability
  */
-inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist)
+inline void mutate(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist)
 {
-    ind.params.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
-    ind.params.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
-    ind.params.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
-    ind.params.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
-    ind.params.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
-    ind.params.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
-    ind.params.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+    constexpr double MUTATION_PROBABILITY = GeneticConfig::MUTATION_PROBABILITY;
+    ChemicalSynapsisParams &p = ind.params;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+    if (prob_dist(rng) < MUTATION_PROBABILITY)
+        p.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
 }
 
 /*
  * Roulette wheel selection: returns reference to selected individual
- * fitness_sum is precomputed sum of all fitnesses
+ * roulette_dist is precomputed with range [0, fitness_sum]
  */
 template <size_t N>
-inline const Individual &roulette_select(const std::array<Individual, N> &population, double fitness_sum, std::mt19937 &rng)
+inline const Individual &roulette_select(const std::array<Individual, N> &population, std::uniform_real_distribution<double> &roulette_dist, std::mt19937 &rng)
 {
-    std::uniform_real_distribution<double> dist(0.0, fitness_sum);
-    double pick = dist(rng);
+    double pick = roulette_dist(rng);
     double cumulative = 0.0;
-    for (size_t i = 0; i < N; i++)
+    for (const Individual &ind : population)
     {
-        cumulative += population[i].fitness;
+        cumulative += ind.fitness;
         if (cumulative >= pick)
-            return population[i];
+            return ind;
     }
-    return population[N - 1];
+    return population.back();
 }
 
 /*
@@ -201,12 +209,14 @@ Individual genetic(const std::string &csv_path,
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
+    constexpr size_t ELITES_SIZE = ELITES * sizeof(Individual);
 
     // --- Step 5: Initialize population ---
     std::random_device rd;
     std::mt19937 rng(rd());
 
     std::array<Individual, POP> population = initialize_population<POP>(rng);
+    std::array<Individual, POP> new_population;
 
     // --- Step 6: Evaluate initial population ---
     calc_fitnesses<Integrator, NeuronType, POP>(
@@ -217,12 +227,11 @@ Individual genetic(const std::string &csv_path,
     // --- Step 7: Generation loop ---
     std::normal_distribution<double> ndist(0.0, 1.0);
     std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
+    std::uniform_real_distribution<double> roulette_dist;
 
     typename std::array<Individual, POP>::iterator pop_begin = population.begin();
     typename std::array<Individual, POP>::iterator pop_end = population.end();
     typename std::array<Individual, POP>::iterator pop_elites_end = pop_begin + ELITES;
-
-    std::array<Individual, POP> new_population;
 
     for (size_t gen = 0; gen < GeneticConfig::NUM_GENERATIONS; gen++)
     {
@@ -237,23 +246,23 @@ Individual genetic(const std::string &csv_path,
         for (const Individual &ind : population)
             fitness_sum += ind.fitness;
 
+        // Assign distribution for this generation
+        roulette_dist = std::uniform_real_distribution<double>(0.0, fitness_sum);
+
         // Keep elites
-        for (size_t e = 0; e < ELITES; e++)
-        {
-            new_population[e] = population[e];
-        }
+        std::memcpy(&(new_population[0]), &(population[0]), ELITES_SIZE);
 
         // Generate offspring
         for (size_t i = ELITES; i < POP; i++)
         {
-            const Individual &p1 = roulette_select(population, fitness_sum, rng);
+            const Individual &p1 = roulette_select(population, roulette_dist, rng);
 
             Individual &child = new_population[i];
 
             // Crossover
             if (prob_dist(rng) < GeneticConfig::CROSSOVER_PROBABILITY)
             {
-                const Individual &p2 = roulette_select(population, fitness_sum, rng);
+                const Individual &p2 = roulette_select(population, roulette_dist, rng);
                 crossover(p1, p2, child);
             }
             else
@@ -261,14 +270,11 @@ Individual genetic(const std::string &csv_path,
                 child = p1;
             }
 
-            // Mutation
-            if (prob_dist(rng) < GeneticConfig::MUTATION_PROBABILITY)
-            {
-                mutate(child, rng, ndist);
-            }
+            // Mutation (always attempt, per gene)
+            mutate(child, rng, ndist, prob_dist);
         }
 
-        population = new_population;
+        std::swap(population, new_population);
 
         // --- Evaluate only non elites offspring ---
         calc_fitnesses<Integrator, NeuronType, POP>(
@@ -278,7 +284,5 @@ Individual genetic(const std::string &csv_path,
     }
 
     // --- Step 8: Return final best individual ---
-    typename std::array<Individual, POP>::iterator best_it = std::min_element(pop_begin, pop_end,
-                                                                              fitness_descending);
-    return *best_it;
+    return *std::min_element(pop_begin, pop_end, fitness_descending);
 }
