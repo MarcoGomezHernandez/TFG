@@ -14,8 +14,8 @@
 #include <HindmarshRoseModel.h>
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
-#include "scaling.h"
-#include "utils.h"
+#include "scaling.hpp"
+#include "utils.hpp"
 
 /*
  * Algorithm constants for burst detection
@@ -280,19 +280,25 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
     }
 }
 
+typedef RungeKutta4 Integrator;
+typedef HindmarshRoseNeuron<Integrator> NeuronType;
+
 int main()
 {
-    using Integrator = RungeKutta4;
-    using NeuronType = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
+    NumericIntegrator integrator = RK4;
+
+    // Variables para almacenar los punteros a función
+    CreateFunc<NeuronType> auto create_func = &create_hindmarsh_rose<Integrator>;
+    ResetStateFunc<NeuronType> auto reset_func = &reset_state_hindmarsh_rose<Integrator>;
+    GetVFunc<NeuronType> auto get_v_func = &get_v_hindmarsh_rose<Integrator>;
 
     constexpr double OBSERVATION_TIME = ConstCalculatorConfig::OBSERVATION_TIME;
     constexpr double STABILIZATION_TIME = ConstCalculatorConfig::STABILIZATION_TIME;
 
-    // Calculate min and max for Hindmarsh-Rose model with RK4 integration
     MinMaxResult mmr = calculate_min_max<NeuronType>(
-        &create_hindmarsh_rose<Integrator>,
-        &reset_state_hindmarsh_rose<Integrator>,
-        &get_v_hindmarsh_rose<Integrator>,
+        create_func,
+        reset_func,
+        get_v_func,
         OBSERVATION_TIME,
         ConstCalculatorConfig::MINMAX_DT,
         STABILIZATION_TIME);
@@ -303,11 +309,10 @@ int main()
     std::cout << "inline constexpr double MIN = " << mmr.min << ";\n";
     std::cout << "inline constexpr double MAX = " << mmr.max << ";\n";
 
-    // Calculate pts for Hindmarsh-Rose model with RK4 integration
     PtsResult pr = calculate_pts<NeuronType>(
-        &create_hindmarsh_rose<Integrator>,
-        &reset_state_hindmarsh_rose<Integrator>,
-        &get_v_hindmarsh_rose<Integrator>,
+        create_func,
+        reset_func,
+        get_v_func,
         ConstCalculatorConfig::DTS,
         OBSERVATION_TIME,
         STABILIZATION_TIME,
@@ -315,7 +320,7 @@ int main()
         mmr.max);
 
     // Print DTS, PTS, and invalid dts using the new function
-    print_tables(pr, NumericIntegrator::RK4);
+    print_tables(pr, integrator);
 
     return 0;
 }
