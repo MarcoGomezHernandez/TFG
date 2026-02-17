@@ -166,7 +166,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const size_t points_factor = scaled_result.points_factor;
     const double dt = scaled_result.dt;
     const double *signal_data = scaled_result.signal.data();
-    const double *interpolated_signal_data = scaled_result.interpolated_signal.data();
+    const double *interpolated_signal_data = scaled_result.interpolated_points.data();
 
     for (size_t i = start_index; i < N; i++)
     {
