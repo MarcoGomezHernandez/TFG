@@ -1,6 +1,10 @@
 #ifndef GENETIC_H
 #define GENETIC_H
 
+#include <string>
+#include "utils.hpp"
+#include "fitness.hpp"
+
 /*
  * Public genetic algorithm configuration constants
  */
@@ -34,7 +38,9 @@ Individual genetic(const std::string &csv_path,
                    bool check_drift,
                    CreateFuncType create_neuron,
                    ResetStateFuncType reset_state_neur,
-                   GetVFuncType get_v_neur);
+                   GetVFuncType get_v_neur,
+                   typename NeuronType::VarType neuron_state_var,
+                   int steps);
 
 #include "genetic.tpp"
 

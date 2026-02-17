@@ -1,6 +1,12 @@
 #ifndef FITNESS_H
 #define FITNESS_H
 
+#include <vector>
+#include <array>
+#include <ChemicalSynapsis.h>
+#include "utils.hpp"
+#include "scaling.hpp"
+
 /*
  * Individual in the genetic algorithm population
  * Contains both parameters and fitness value

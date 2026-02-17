@@ -1,4 +1,3 @@
-#include <string>
 #include <array>
 #include <vector>
 #include <random>
@@ -9,9 +8,7 @@
 #include <utility>
 #include <stdexcept>
 #include <cstring>
-#include "utils.hpp"
 #include "scaling.hpp"
-#include "fitness.hpp"
 #include <ChemicalSynapsis.h>
 
 /*
@@ -217,7 +214,9 @@ Individual genetic(const std::string &csv_path,
                    bool check_drift,
                    CreateFuncType create_neuron,
                    ResetStateFuncType reset_state_neur,
-                   GetVFuncType get_v_neur)
+                   GetVFuncType get_v_neur,
+                   typename NeuronType::VarType neuron_state_var,
+                   int steps)
 {
     // Calculate observation time
     const double observation_time = use_time / GeneticPrivateConfig::OBSERVATION_TIME_DIVISOR;
@@ -233,9 +232,10 @@ Individual genetic(const std::string &csv_path,
     }
 
     // --- Step 2: Create neuron and synapsis instances ---
-    NeuronType model_neur = create_neuron();
+    NeuronType model_neur = create_neuron(false);
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
-    ChemicalSynapsisType synapsis;
+    ChemicalSynapsisType::ConstructorArgs syn_args;
+    ChemicalSynapsisType synapsis(create_neuron(true), neuron_state_var, model_neur, neuron_state_var, syn_args, steps);
     // Set fixed synapsis parameters once
     synapsis.set(ChemicalSynapsisType::gfast, GeneticPublicConfig::GFAST_FIXED);
     synapsis.set(ChemicalSynapsisType::gslow, GeneticPublicConfig::GSLOW_FIXED);

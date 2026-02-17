@@ -18,10 +18,10 @@ typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main(int argc, char *argv[])
 {
-    if (argc < 8)
+    if (argc < 9)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <search_phase> <check_drift>"
+                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <search_phase> <check_drift> <steps>"
                   << std::endl;
         return 1;
     }
@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
     const double use_time = std::atof(argv[5]);
     const bool search_phase = (std::atoi(argv[6]) != 0);
     const bool check_drift = (std::atoi(argv[7]) != 0);
+    const int steps = std::atoi(argv[8]);
 
     try
     {
@@ -44,7 +45,9 @@ int main(int argc, char *argv[])
             check_drift,
             create_hindmarsh_rose<Integrator>,
             reset_state_hindmarsh_rose<Integrator>,
-            get_v_hindmarsh_rose<Integrator>);
+            get_v_hindmarsh_rose<Integrator>,
+            NeuronType::x,
+            steps);
 
         const ChemicalSynapsisParams &params = best.params;
 

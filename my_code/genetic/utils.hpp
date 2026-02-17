@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <concepts>
 #include <type_traits>
+#include <vector>
 
 // NeuN Headers
 #include <DifferentialNeuronWrapper.h>
@@ -78,7 +79,7 @@ namespace SignalPublicConfig
 
 // Concepts for function constraints
 template <typename F, typename NeuronType>
-concept CreateFunc = std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, NeuronType>;
+concept CreateFunc = std::invocable<F, bool> && std::convertible_to<std::invoke_result_t<F, bool>, NeuronType>;
 
 template <typename F, typename NeuronType>
 concept ResetStateFunc = std::invocable<F, NeuronType &>;
@@ -110,21 +111,26 @@ inline double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron
 
 /*
  * Create a Hindmarsh-Rose neuron with the specified integrator and parameters
+ * @param empty If true, creates an empty neuron without initialized parameters
  */
 template <typename Integrator>
-inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose()
+inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 {
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     typename NeuronType::ConstructorArgs args;
-    args.params[NeuronType::e] = HindmarshRoseParams::e;
-    args.params[NeuronType::mu] = HindmarshRoseParams::mu;
-    args.params[NeuronType::S] = HindmarshRoseParams::S;
-    args.params[NeuronType::a] = HindmarshRoseParams::a;
-    args.params[NeuronType::b] = HindmarshRoseParams::b;
-    args.params[NeuronType::c] = HindmarshRoseParams::c;
-    args.params[NeuronType::d] = HindmarshRoseParams::d;
-    args.params[NeuronType::xr] = HindmarshRoseParams::xr;
-    args.params[NeuronType::vh] = HindmarshRoseParams::vh;
+    
+    if (!empty) {
+        args.params[NeuronType::e] = HindmarshRoseParams::e;
+        args.params[NeuronType::mu] = HindmarshRoseParams::mu;
+        args.params[NeuronType::S] = HindmarshRoseParams::S;
+        args.params[NeuronType::a] = HindmarshRoseParams::a;
+        args.params[NeuronType::b] = HindmarshRoseParams::b;
+        args.params[NeuronType::c] = HindmarshRoseParams::c;
+        args.params[NeuronType::d] = HindmarshRoseParams::d;
+        args.params[NeuronType::xr] = HindmarshRoseParams::xr;
+        args.params[NeuronType::vh] = HindmarshRoseParams::vh;
+    }
+    
     return NeuronType(args);
 }
 
