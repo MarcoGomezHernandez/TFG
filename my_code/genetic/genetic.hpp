@@ -1,23 +1,6 @@
 #ifndef GENETIC_H
 #define GENETIC_H
 
-#include <string>
-#include <array>
-#include <vector>
-#include <random>
-#include <iostream>
-#include <algorithm>
-#include <numeric>
-#include <cmath>
-#include <utility>
-#include <stdexcept>
-#include <cstring>
-
-#include "utils.hpp"
-#include "scaling.hpp"
-#include "fitness.hpp"
-#include <ChemicalSynapsis.h>
-
 /*
  * Public genetic algorithm configuration constants
  */
@@ -52,5 +35,7 @@ Individual genetic(const std::string &csv_path,
                    CreateFuncType create_neuron,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur);
+
+#include "genetic.tpp"
 
 #endif // GENETIC_H

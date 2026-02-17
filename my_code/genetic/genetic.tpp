@@ -1,4 +1,18 @@
-#include "genetic.hpp"
+#include <string>
+#include <array>
+#include <vector>
+#include <random>
+#include <iostream>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <utility>
+#include <stdexcept>
+#include <cstring>
+#include "utils.hpp"
+#include "scaling.hpp"
+#include "fitness.hpp"
+#include <ChemicalSynapsis.h>
 
 /*
  * Genetic algorithm configuration constants (private)

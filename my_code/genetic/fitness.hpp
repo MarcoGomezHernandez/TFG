@@ -1,16 +1,6 @@
 #ifndef FITNESS_H
 #define FITNESS_H
 
-#include <vector>
-#include <array>
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include "utils.hpp"
-#include "scaling.hpp"
-#include "fitness.hpp"
-#include <ChemicalSynapsis.h>
-
 /*
  * Individual in the genetic algorithm population
  * Contains both parameters and fitness value
@@ -55,5 +45,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
                     size_t start_index);
+
+#include "fitness.tpp"
 
 #endif

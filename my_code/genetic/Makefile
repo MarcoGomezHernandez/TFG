@@ -7,7 +7,7 @@ GENETIC = genetic
 
 # Source files
 CONSTS_SRCS = consts_calculator.cpp scaling.cpp
-GENETIC_SRCS = main.cpp genetic.cpp fitness.cpp scaling.cpp
+GENETIC_SRCS = main.cpp scaling.cpp
 
 # Default target: build both executables
 all: $(CONSTS_CALCULATOR) $(GENETIC)
