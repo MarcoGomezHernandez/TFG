@@ -9,8 +9,8 @@ GENETIC = genetic
 CONSTS_SRCS = consts_calculator.cpp scaling.cpp
 GENETIC_SRCS = main.cpp scaling.cpp
 
-# Default target: build both executables
-all: $(CONSTS_CALCULATOR) $(GENETIC)
+# Default target: build both executables (run clean first)
+all: clean $(CONSTS_CALCULATOR) $(GENETIC)
 
 # Build consts_calculator directly from sources (no .o)
 $(CONSTS_CALCULATOR): $(CONSTS_SRCS)
