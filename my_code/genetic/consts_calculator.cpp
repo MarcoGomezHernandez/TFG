@@ -99,7 +99,7 @@ MinMaxResult calculate_min_max(
     }
 
     // Create neuron model with provided parameters
-    NeuronType neuron = create_neur();
+    NeuronType neuron = create_neur(false);
 
     // Initialize neuron to specified state
     reset_state_neur(neuron);
@@ -148,7 +148,7 @@ PtsResult calculate_pts(
     double max_val)
 {
     // Create neuron model with provided parameters
-    NeuronType neuron = create_neur();
+    NeuronType neuron = create_neur(false);
 
     PtsResult result;
 

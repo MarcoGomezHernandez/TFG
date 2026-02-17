@@ -36,10 +36,10 @@ Individual genetic(const std::string &csv_path,
                    NeuronModel model,
                    bool search_phase,
                    bool check_drift,
-                   CreateFuncType create_neuron,
+                   CreateFuncType create_neur,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur,
-                   typename NeuronType::VarType neuron_state_var,
+                   typename NeuronType::VarType neur_state_var,
                    int steps);
 
 #include "genetic.tpp"

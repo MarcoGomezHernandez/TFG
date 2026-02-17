@@ -212,10 +212,10 @@ Individual genetic(const std::string &csv_path,
                    NeuronModel model,
                    bool search_phase,
                    bool check_drift,
-                   CreateFuncType create_neuron,
+                   CreateFuncType create_neur,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur,
-                   typename NeuronType::VarType neuron_state_var,
+                   typename NeuronType::VarType neur_state_var,
                    int steps)
 {
     // Calculate observation time
@@ -232,10 +232,10 @@ Individual genetic(const std::string &csv_path,
     }
 
     // --- Step 2: Create neuron and synapsis instances ---
-    NeuronType model_neur = create_neuron(false);
+    NeuronType model_neur = create_neur(false);
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
     ChemicalSynapsisType::ConstructorArgs syn_args;
-    ChemicalSynapsisType synapsis(create_neuron(true), neuron_state_var, model_neur, neuron_state_var, syn_args, steps);
+    ChemicalSynapsisType synapsis(create_neur(true), neur_state_var, model_neur, neur_state_var, syn_args, steps);
     // Set fixed synapsis parameters once
     synapsis.set(ChemicalSynapsisType::gfast, GeneticPublicConfig::GFAST_FIXED);
     synapsis.set(ChemicalSynapsisType::gslow, GeneticPublicConfig::GSLOW_FIXED);
