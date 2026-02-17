@@ -87,13 +87,13 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
  */
 inline void crossover(const ChemicalSynapsisParams &a, const ChemicalSynapsisParams &b, ChemicalSynapsisParams &result)
 {
-    result.Esyn = (a.Esyn + b.Esyn) / 2.0;
-    result.sfast = (a.sfast + b.sfast) / 2.0;
-    result.Vfast = (a.Vfast + b.Vfast) / 2.0;
-    result.Vslow = (a.Vslow + b.Vslow) / 2.0;
-    result.k1 = (a.k1 + b.k1) / 2.0;
-    result.k2 = (a.k2 + b.k2) / 2.0;
-    result.sslow = (a.sslow + b.sslow) / 2.0;
+    result.Esyn = (a.Esyn + b.Esyn) * 0.5;
+    result.sfast = (a.sfast + b.sfast) * 0.5;
+    result.Vfast = (a.Vfast + b.Vfast) * 0.5;
+    result.Vslow = (a.Vslow + b.Vslow) * 0.5;
+    result.k1 = (a.k1 + b.k1) * 0.5;
+    result.k2 = (a.k2 + b.k2) * 0.5;
+    result.sslow = (a.sslow + b.sslow) * 0.5;
 }
 
 /*
@@ -129,7 +129,7 @@ inline const Individual &roulette_select_one(const std::array<Individual, N> &po
                                              std::uniform_real_distribution<double> &roulette_dist,
                                              std::mt19937 &rng)
 {
-    double pick = roulette_dist(rng);
+    const double pick = roulette_dist(rng);
     double cumulative = 0.0;
     for (const Individual &ind : population)
     {
@@ -151,7 +151,7 @@ inline const Individual &roulette_select_second_no_rep(const std::array<Individu
                                                        std::uniform_real_distribution<double> &roulette_dist,
                                                        std::mt19937 &rng)
 {
-    double pick = roulette_dist(rng);
+    const double pick = roulette_dist(rng);
     double cumulative = 0.0;
     for (const Individual &ind : population)
     {
@@ -234,7 +234,7 @@ Individual genetic(const std::string &csv_path,
         throw std::runtime_error("Unsupported model.");
     }
 
-    ConstantSignalFitnessVals stats1 = calc_const_signal_vals(scaled_result.signal, model_min, model_max);
+    const ConstantSignalFitnessVals stats1 = calc_const_signal_vals(scaled_result.signal, model_min, model_max);
 
     constexpr size_t POP = GeneticPrivateConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticPrivateConfig::NUM_ELITES;
@@ -244,12 +244,15 @@ Individual genetic(const std::string &csv_path,
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    std::array<Individual, POP> population = initialize_population<POP>(rng);
-    std::array<Individual, POP> new_population;
+    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng);
+    std::array<Individual, POP> buffer2;
+
+    std::array<Individual, POP> *population_ptr = &buffer1;
+    std::array<Individual, POP> *new_population_ptr = &buffer2;
 
     // --- Step 6: Evaluate initial population ---
     calc_fitnesses<Integrator, NeuronType, POP>(
-        synapsis, model_neur, population, scaled_result,
+        synapsis, model_neur, *population_ptr, scaled_result,
         stats1, search_phase, model_signal_buffer,
         reset_state_neur, get_v_neur, 0);
 
@@ -258,14 +261,14 @@ Individual genetic(const std::string &csv_path,
     std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
     std::uniform_real_distribution<double> roulette_dist;
 
-    typename std::array<Individual, POP>::iterator pop_begin = population.begin();
-    typename std::array<Individual, POP>::iterator pop_end = population.end();
-    typename std::array<Individual, POP>::iterator pop_elites_end = pop_begin + ELITES;
-
     for (size_t gen = 0; gen < GeneticPrivateConfig::NUM_GENERATIONS; gen++)
     {
+        std::array<Individual, POP> &population = *population_ptr;
+        std::array<Individual, POP> &new_population = *new_population_ptr;
+
         // --- Elitism: use nth_element to get top ELITES ---
-        std::nth_element(pop_begin, pop_elites_end, pop_end,
+        typename std::array<Individual, POP>::iterator const pop_begin = population.begin();
+        std::nth_element(pop_begin, pop_begin + ELITES, population.end(),
                          fitness_descending);
 
         // Top ELITES are now at the beginning (not fully sorted)
@@ -306,15 +309,16 @@ Individual genetic(const std::string &csv_path,
             mutate(child.params, rng, ndist, prob_dist);
         }
 
-        std::swap(population, new_population);
+        std::swap(population_ptr, new_population_ptr);
 
         // --- Evaluate only non elites offspring ---
         calc_fitnesses<Integrator, NeuronType, POP>(
-            synapsis, model_neur, population, scaled_result,
+            synapsis, model_neur, *population_ptr, scaled_result,
             stats1, search_phase, model_signal_buffer,
             reset_state_neur, get_v_neur, ELITES);
     }
 
     // --- Step 8: Return final best individual ---
-    return *std::min_element(pop_begin, pop_end, fitness_descending);
+    std::array<Individual, POP> &population = *population_ptr;
+    return *std::min_element(population.begin(), population.end(), fitness_descending);
 }
