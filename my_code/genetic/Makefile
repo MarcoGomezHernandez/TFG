@@ -9,35 +9,27 @@ GENETIC = genetic
 CONSTS_SRCS = consts_calculator.cpp scaling.cpp
 GENETIC_SRCS = main.cpp genetic.cpp fitness.cpp scaling.cpp
 
-# Object files
-CONSTS_OBJS = $(CONSTS_SRCS:.cpp=.o)
-GENETIC_OBJS = $(GENETIC_SRCS:.cpp=.o)
-
 # Default target: build both executables
 all: $(CONSTS_CALCULATOR) $(GENETIC)
 
-# Build consts_calculator
-$(CONSTS_CALCULATOR): $(CONSTS_OBJS)
-	$(CXX) $(CXXFLAGS) $(CONSTS_OBJS) -o $(CONSTS_CALCULATOR) $(LDLIBS)
+# Build consts_calculator directly from sources (no .o)
+$(CONSTS_CALCULATOR): $(CONSTS_SRCS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
 
-# Build genetic
-$(GENETIC): $(GENETIC_OBJS)
-	$(CXX) $(CXXFLAGS) $(GENETIC_OBJS) -o $(GENETIC) $(LDLIBS)
-
-# Pattern rule for object files
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Build genetic directly from sources (no .o)
+$(GENETIC): $(GENETIC_SRCS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
 
 # Clean specific target
 clean-consts:
-	rm -f $(CONSTS_CALCULATOR) $(CONSTS_OBJS)
+	rm -f $(CONSTS_CALCULATOR)
 
 clean-genetic:
-	rm -f $(GENETIC) $(GENETIC_OBJS)
+	rm -f $(GENETIC)
 
 # Clean everything
 clean:
-	rm -f $(CONSTS_CALCULATOR) $(GENETIC) *.o
+	rm -f $(CONSTS_CALCULATOR) $(GENETIC)
 
 # Phony targets
 .PHONY: all clean clean-consts clean-genetic
