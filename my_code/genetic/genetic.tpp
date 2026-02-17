@@ -242,8 +242,7 @@ Individual genetic(const std::string &csv_path,
 
     // --- Step 3: Allocate buffers ---
     const size_t signal_size = scaled_result.signal.size();
-    std::vector<double> model_signal_buffer;
-    model_signal_buffer.reserve(signal_size);
+    std::vector<double> model_signal_buffer(signal_size);
 
     // --- Step 4: Precompute constant fitness values from the CSV signal ---
     double model_min, model_max;
