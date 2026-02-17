@@ -143,7 +143,7 @@ inline const Individual &roulette_select_one(const std::array<Individual, N> &po
 
 /*
  * Roulette wheel selection excluding a specific individual
- * Uses the same distribution but skips the ignored individual during accumulation
+ * Uses a distribution with fitness sum excluding the ignored individual
  */
 template <size_t N>
 inline const Individual &roulette_select_second_no_rep(const std::array<Individual, N> &population,
@@ -260,6 +260,7 @@ Individual genetic(const std::string &csv_path,
     std::normal_distribution<double> ndist(0.0, 1.0);
     std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
     std::uniform_real_distribution<double> roulette_dist;
+    std::uniform_real_distribution<double> roulette_dist_no_p1;
 
     for (size_t gen = 0; gen < GeneticPrivateConfig::NUM_GENERATIONS; gen++)
     {
@@ -294,8 +295,10 @@ Individual genetic(const std::string &csv_path,
             // Crossover
             if (prob_dist(rng) < GeneticPrivateConfig::CROSSOVER_PROBABILITY)
             {
-                // Select p2 different from p1 using the new function
-                const Individual &p2 = roulette_select_second_no_rep(population, p1, roulette_dist, rng);
+                // Calculate fitness sum excluding p1 and assign new distribution
+                // Select p2 different from p1
+                roulette_dist_no_p1 = std::uniform_real_distribution<double>(0.0, fitness_sum - p1.fitness);
+                const Individual &p2 = roulette_select_second_no_rep(population, p1, roulette_dist_no_p1, rng);
 
                 // Crossover on params directly
                 crossover(p1.params, p2.params, child.params);
