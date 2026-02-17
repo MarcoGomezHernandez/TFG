@@ -262,13 +262,15 @@ Individual genetic(const std::string &csv_path,
     std::uniform_real_distribution<double> roulette_dist;
     std::uniform_real_distribution<double> roulette_dist_no_p1;
 
+    typename std::array<Individual, POP>::iterator pop_begin;
+
     for (size_t gen = 0; gen < GeneticPrivateConfig::NUM_GENERATIONS; gen++)
     {
         std::array<Individual, POP> &population = *population_ptr;
         std::array<Individual, POP> &new_population = *new_population_ptr;
 
         // --- Elitism: use nth_element to get top ELITES ---
-        typename std::array<Individual, POP>::iterator const pop_begin = population.begin();
+        pop_begin = population.begin();
         std::nth_element(pop_begin, pop_begin + ELITES, population.end(),
                          fitness_descending);
 
