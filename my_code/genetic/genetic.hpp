@@ -29,16 +29,6 @@ namespace GeneticPublicConfig
 }
 
 /*
- * Individual in the genetic algorithm population
- * Contains both parameters and fitness value
- */
-struct Individual
-{
-    ChemicalSynapsisParams params;
-    double fitness;
-};
-
-/*
  * Main genetic algorithm function template.
  * NeuronType: the neuron wrapper type
  * Integrator: the numeric integrator type

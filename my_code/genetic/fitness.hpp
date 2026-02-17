@@ -9,8 +9,17 @@
 #include "utils.hpp"
 #include "scaling.hpp"
 #include "fitness.hpp"
-#include "genetic.hpp"
 #include <ChemicalSynapsis.h>
+
+/*
+ * Individual in the genetic algorithm population
+ * Contains both parameters and fitness value
+ */
+struct Individual
+{
+    ChemicalSynapsisParams params;
+    double fitness;
+};
 
 /*
  * Struct to hold precomputed signal statistics
