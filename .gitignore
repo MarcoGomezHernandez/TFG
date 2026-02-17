@@ -8,6 +8,7 @@ build/*
 *.asc
 
 consts_calculator
+genetic
 programa
 
 *.xdy
