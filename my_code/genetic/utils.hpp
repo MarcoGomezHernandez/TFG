@@ -118,8 +118,9 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 {
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     typename NeuronType::ConstructorArgs args;
-    
-    if (!empty) {
+
+    if (!empty)
+    {
         args.params[NeuronType::e] = HindmarshRoseParams::e;
         args.params[NeuronType::mu] = HindmarshRoseParams::mu;
         args.params[NeuronType::S] = HindmarshRoseParams::S;
@@ -130,7 +131,7 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
         args.params[NeuronType::xr] = HindmarshRoseParams::xr;
         args.params[NeuronType::vh] = HindmarshRoseParams::vh;
     }
-    
+
     return NeuronType(args);
 }
 
@@ -139,6 +140,8 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
  */
 struct ChemicalSynapsisParams
 {
+    double gfast; // Fast synaptic conductance
+    double gslow; // Slow synaptic conductance
     double Esyn;  // Synaptic reversal potential
     double sfast; // Fast synaptic gating variable
     double Vfast; // Fast voltage threshold

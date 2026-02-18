@@ -6,16 +6,6 @@
 #include "fitness.hpp"
 
 /*
- * Public genetic algorithm configuration constants
- */
-namespace GeneticPublicConfig
-{
-    // Fixed values for gfast and gslow
-    inline constexpr double GFAST_FIXED = 0.046;
-    inline constexpr double GSLOW_FIXED = 0.0;
-}
-
-/*
  * Main genetic algorithm function template.
  * NeuronType: the neuron wrapper type
  * Integrator: the numeric integrator type

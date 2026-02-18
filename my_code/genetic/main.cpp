@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 
         // Fitness arriba, luego parámetros en formato array-style pedido
         std::cout << "Fitness: " << best.fitness << std::endl;
-        std::cout << "gfast_values = [" << GeneticPublicConfig::GFAST_FIXED << "]" << std::endl;
-        std::cout << "gslow_values = [" << GeneticPublicConfig::GSLOW_FIXED << "]" << std::endl;
+        std::cout << "gfast_values = [" << params.gfast << "]" << std::endl;
+        std::cout << "gslow_values = [" << params.gslow << "]" << std::endl;
         std::cout << "Esyn_values = [" << params.Esyn << "]" << std::endl;
         std::cout << "Vfast_values = [" << params.Vfast << "]" << std::endl;
         std::cout << "Vslow_values = [" << params.Vslow << "]" << std::endl;
