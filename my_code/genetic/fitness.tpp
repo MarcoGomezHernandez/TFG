@@ -170,7 +170,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_stats, const
         bio_sim_dist += std::abs(living_norm_signal[i] - norm_syn_val);
     }
     // Normalize: max possible accumulated distance is 1.0 * signal_size (both signals in [0,1])
-    const double bio_sim_score = bio_sim_dist / signal_size;
+    const double bio_sim_score = 1.0 - (bio_sim_dist / signal_size);
 
     // Compute final weighted score
     const double final_score = (FitnessConfig::BURSTS_DIFF_WEIGHT * bursts_diff_score) + (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::MINMAX_WEIGHT * minmax_score) + (FitnessConfig::BIOLOGICAL_SIMILARITY_WEIGHT * bio_sim_score);
