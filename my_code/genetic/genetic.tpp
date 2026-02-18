@@ -19,7 +19,7 @@ namespace GeneticConfig
     // Population and generations
     static constexpr size_t POPULATION_SIZE = 50;
     static constexpr size_t NUM_GENERATIONS = 100;
-    static constexpr size_t NUM_ELITES = 3;
+    static constexpr size_t NUM_ELITES = 2;
 
     // Observation time is use_time / this divisor
     static constexpr double OBSERVATION_TIME_DIVISOR = 3.0;
