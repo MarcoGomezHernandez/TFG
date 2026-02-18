@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
     const double csv_step = std::atof(argv[3]);
     const double start_time = std::atof(argv[4]);
     const double use_time = std::atof(argv[5]);
-    const bool search_phase = (std::atoi(argv[6]) != 0);
-    const bool check_drift = (std::atoi(argv[7]) != 0);
+    const bool search_phase = (std::atoi(argv[6]) == 1);
+    const bool check_drift = (std::atoi(argv[7]) == 1);
     const int syn_model_step_factor = std::atoi(argv[8]);
 
     try

@@ -17,44 +17,44 @@
 namespace GeneticConfig
 {
     // Population and generations
-    static constexpr size_t POPULATION_SIZE = 20;
-    static constexpr size_t NUM_GENERATIONS = 60;
-    static constexpr size_t NUM_ELITES = 2;
+    static constexpr size_t POPULATION_SIZE = 50;
+    static constexpr size_t NUM_GENERATIONS = 100;
+    static constexpr size_t NUM_ELITES = 3;
 
     // Observation time is use_time / this divisor
     static constexpr double OBSERVATION_TIME_DIVISOR = 3.0;
 
     // Crossover and mutation probabilities
-    static constexpr double CROSSOVER_PROBABILITY = 0.8;
+    static constexpr double CROSSOVER_PROBABILITY = 0.9;
     static constexpr double MUTATION_PROBABILITY = 0.1;
 
     // Mutation scale factor (η): percentage of parameter range
-    static constexpr double ETA = 0.05;
+    static constexpr double ETA = 0.2;
 
     // Random initialization ranges [min, max] for each mutable parameter
-    static constexpr double ESYN_MIN = -3.0;
-    static constexpr double ESYN_MAX = 3.0;
+    static constexpr double ESYN_MIN = -2.5;
+    static constexpr double ESYN_MAX = 2.0;
 
     static constexpr double SFAST_MIN = 0.1;
-    static constexpr double SFAST_MAX = 3.0;
+    static constexpr double SFAST_MAX = 5.0;
 
     static constexpr double SSLOW_MIN = 0.1;
-    static constexpr double SSLOW_MAX = 3.0;
+    static constexpr double SSLOW_MAX = 5.0;
 
-    static constexpr double VFAST_MIN = -2.0;
+    static constexpr double VFAST_MIN = -1.8;
     static constexpr double VFAST_MAX = -0.5;
 
-    static constexpr double VSLOW_MIN = -2.0;
+    static constexpr double VSLOW_MIN = -1.8;
     static constexpr double VSLOW_MAX = -0.5;
 
-    static constexpr double K1_MIN = 0.01;
-    static constexpr double K1_MAX = 1.5;
+    static constexpr double K1_MIN = 0.1;
+    static constexpr double K1_MAX = 2.0;
 
     static constexpr double K2_MIN = 0.001;
     static constexpr double K2_MAX = 0.1;
 
-    static constexpr double GFAST_MIN = 0.001;
-    static constexpr double GFAST_MAX = 0.2;
+    static constexpr double GFAST_MIN = 0.01;
+    static constexpr double GFAST_MAX = 1.5;
 
     static constexpr double GSLOW_MIN = 0.0;
     static constexpr double GSLOW_MAX = 0.0;
