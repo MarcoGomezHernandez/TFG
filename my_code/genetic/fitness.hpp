@@ -22,7 +22,8 @@ struct Individual
  */
 struct ConstantSignalFitnessVals
 {
-    std::vector<bool> up_states;
+    std::vector<bool> model_up_states;
+    std::vector<double> normalized_signal; // Normalized (and possibly inverted for antiphase) reference signal
     double bursts_seen;
     double norm_max_bursts_diff;
     double min_val;
@@ -31,9 +32,10 @@ struct ConstantSignalFitnessVals
 
 /*
  * Function to preprocess a signal and compute statistics
- * Returns ConstantSignalFitnessVals containing up_states, bursts_seen, and norm_max_bursts_diff
+ * Returns ConstantSignalFitnessVals containing model_up_states, normalized_signal, bursts_seen, and norm_max_bursts_diff
+ * search_phase: true for phase (normalized as-is), false for antiphase (normalized and y-inverted)
  */
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val);
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase);
 
 /*
  * Template function to calculate fitnesses for multiple parameter sets
@@ -48,6 +50,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     const ConstantSignalFitnessVals &stats1,
                     bool search_phase,
                     std::vector<double> &model_signal_buffer,
+                    std::vector<double> &synapsis_signal_buffer,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
                     size_t start_index);

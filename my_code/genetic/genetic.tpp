@@ -17,8 +17,8 @@
 namespace GeneticConfig
 {
     // Population and generations
-    static constexpr size_t POPULATION_SIZE = 25;
-    static constexpr size_t NUM_GENERATIONS = 200;
+    static constexpr size_t POPULATION_SIZE = 20;
+    static constexpr size_t NUM_GENERATIONS = 60;
     static constexpr size_t NUM_ELITES = 2;
 
     // Observation time is use_time / this divisor
@@ -57,7 +57,7 @@ namespace GeneticConfig
     static constexpr double GFAST_MAX = 0.2;
 
     static constexpr double GSLOW_MIN = 0.0;
-    static constexpr double GSLOW_MAX = 0.1;
+    static constexpr double GSLOW_MAX = 0.0;
 
     // Mutation perturbation factors: σ_p = η × (p_max - p_min)
     static constexpr double ESYN_MUT_FACTOR = ETA * (ESYN_MAX - ESYN_MIN);
@@ -258,6 +258,7 @@ Individual genetic(const std::string &csv_path,
     // --- Step 3: Allocate buffers ---
     const size_t signal_size = scaled_result.signal.size();
     std::vector<double> model_signal_buffer(signal_size);
+    std::vector<double> synapsis_signal_buffer(signal_size);
 
     // --- Step 4: Precompute constant fitness values from the CSV signal ---
     double model_min, model_max;
@@ -271,7 +272,7 @@ Individual genetic(const std::string &csv_path,
         throw std::runtime_error("Unsupported model.");
     }
 
-    const ConstantSignalFitnessVals stats1 = calc_const_signal_fitness_vals(scaled_result.signal, model_min, model_max);
+    const ConstantSignalFitnessVals stats1 = calc_const_signal_fitness_vals(scaled_result.signal, model_min, model_max, search_phase);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
@@ -290,7 +291,7 @@ Individual genetic(const std::string &csv_path,
     // --- Step 6: Evaluate initial population ---
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, *population_ptr, scaled_result,
-        stats1, search_phase, model_signal_buffer,
+        stats1, search_phase, model_signal_buffer, synapsis_signal_buffer,
         reset_state_neur, get_v_neur, 0);
 
     // --- Step 7: Generation loop ---
@@ -356,7 +357,7 @@ Individual genetic(const std::string &csv_path,
         // --- Evaluate only non elites offspring ---
         calc_fitnesses<Integrator, NeuronType, POP>(
             synapsis, model_neur, *population_ptr, scaled_result,
-            stats1, search_phase, model_signal_buffer,
+            stats1, search_phase, model_signal_buffer, synapsis_signal_buffer,
             reset_state_neur, get_v_neur, ELITES);
     }
 
