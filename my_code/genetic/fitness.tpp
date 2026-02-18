@@ -9,10 +9,10 @@
 namespace FitnessConfig
 {
     // Weights for score components (must sum to 1.0)
-    static constexpr double BURSTS_DIFF_WEIGHT = 0.1;
-    static constexpr double PHASE_WEIGHT = 0.4;
-    static constexpr double MINMAX_WEIGHT = 0.1;
-    static constexpr double BIOLOGICAL_SIMILARITY_WEIGHT = 0.4;
+    static constexpr double BURSTS_DIFF_WEIGHT = 0.0;
+    static constexpr double PHASE_WEIGHT = 0.0;
+    static constexpr double MINMAX_WEIGHT = 0.0;
+    static constexpr double BIOLOGICAL_SIMILARITY_WEIGHT = 1.0;
 }
 
 namespace FitnessConstants
@@ -44,8 +44,9 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
 
     std::vector<bool> &up_states = result.model_up_states;
     std::vector<double> &normalized_signal = result.normalized_signal;
-    up_states.reserve(signal.size());
-    normalized_signal.reserve(signal.size());
+    const size_t signal_size = signal.size();
+    up_states.reserve(signal_size);
+    normalized_signal.reserve(signal_size);
     bool up = (signal[0] > th_up);
     double bursts_seen = 0;
 
