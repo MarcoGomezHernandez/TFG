@@ -33,7 +33,7 @@ struct ConstantSignalFitnessVals
  * Function to preprocess a signal and compute statistics
  * Returns ConstantSignalFitnessVals containing up_states, bursts_seen, and norm_max_bursts_diff
  */
-ConstantSignalFitnessVals calc_const_signal_vals(const std::vector<double> &signal, double min_val, double max_val);
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val);
 
 /*
  * Template function to calculate fitnesses for multiple parameter sets
