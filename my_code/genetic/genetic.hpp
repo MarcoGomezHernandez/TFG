@@ -12,7 +12,7 @@ namespace GeneticPublicConfig
 {
     // Fixed values for gfast and gslow
     inline constexpr double GFAST_FIXED = 0.046;
-    inline constexpr double GSLOW_FIXED = 0.208;
+    inline constexpr double GSLOW_FIXED = 0.0;
 }
 
 /*

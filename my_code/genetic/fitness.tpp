@@ -9,9 +9,9 @@
 namespace FitnessConfig
 {
     // Weights for score components
-    static constexpr double BURSTS_DIFF_WEIGHT = 0.3;
-    static constexpr double PHASE_WEIGHT = 0.4;
-    static constexpr double MINMAX_WEIGHT = 0.3;
+    static constexpr double BURSTS_DIFF_WEIGHT = 0.15;
+    static constexpr double PHASE_WEIGHT = 0.7;
+    static constexpr double MINMAX_WEIGHT = 0.15;
 }
 
 namespace FitnessConstants

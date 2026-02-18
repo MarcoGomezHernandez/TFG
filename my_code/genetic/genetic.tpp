@@ -17,8 +17,8 @@
 namespace GeneticPrivateConfig
 {
     // Population and generations
-    static constexpr size_t POPULATION_SIZE = 10;
-    static constexpr size_t NUM_GENERATIONS = 50;
+    static constexpr size_t POPULATION_SIZE = 25;
+    static constexpr size_t NUM_GENERATIONS = 200;
     static constexpr size_t NUM_ELITES = 2;
 
     // Observation time is use_time / this divisor
@@ -36,10 +36,10 @@ namespace GeneticPrivateConfig
     static constexpr double ESYN_MAX = 3.0;
 
     static constexpr double SFAST_MIN = 0.1;
-    static constexpr double SFAST_MAX = 10.0;
+    static constexpr double SFAST_MAX = 3.0;
 
     static constexpr double SSLOW_MIN = 0.1;
-    static constexpr double SSLOW_MAX = 10.0;
+    static constexpr double SSLOW_MAX = 3.0;
 
     static constexpr double VFAST_MIN = -2.0;
     static constexpr double VFAST_MAX = -0.5;

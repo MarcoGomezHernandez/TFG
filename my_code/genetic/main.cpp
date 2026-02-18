@@ -51,17 +51,17 @@ int main(int argc, char *argv[])
 
         const ChemicalSynapsisParams &params = best.params;
 
-        std::cout << "=== Best Individual ===" << std::endl;
+        // Fitness arriba, luego parámetros en formato array-style pedido
         std::cout << "Fitness: " << best.fitness << std::endl;
-        std::cout << "gfast:  " << GeneticPublicConfig::GFAST_FIXED << " (fixed)" << std::endl;
-        std::cout << "Esyn:   " << params.Esyn << std::endl;
-        std::cout << "sfast:  " << params.sfast << std::endl;
-        std::cout << "Vfast:  " << params.Vfast << std::endl;
-        std::cout << "Vslow:  " << params.Vslow << std::endl;
-        std::cout << "gslow:  " << GeneticPublicConfig::GSLOW_FIXED << " (fixed)" << std::endl;
-        std::cout << "k1:     " << params.k1 << std::endl;
-        std::cout << "k2:     " << params.k2 << std::endl;
-        std::cout << "sslow:  " << params.sslow << std::endl;
+        std::cout << "gfast_values = [" << GeneticPublicConfig::GFAST_FIXED << "]" << std::endl;
+        std::cout << "gslow_values = [" << GeneticPublicConfig::GSLOW_FIXED << "]" << std::endl;
+        std::cout << "Esyn_values = [" << params.Esyn << "]" << std::endl;
+        std::cout << "Vfast_values = [" << params.Vfast << "]" << std::endl;
+        std::cout << "Vslow_values = [" << params.Vslow << "]" << std::endl;
+        std::cout << "sfast_values = [" << params.sfast << "]" << std::endl;
+        std::cout << "sslow_values = [" << params.sslow << "]" << std::endl;
+        std::cout << "k1_values = [" << params.k1 << "]" << std::endl;
+        std::cout << "k2_values = [" << params.k2 << "]" << std::endl;
     }
     catch (const std::runtime_error &e)
     {
