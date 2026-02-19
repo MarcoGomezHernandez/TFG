@@ -17,9 +17,9 @@
 namespace GeneticConfig
 {
     // Population and generations
-    static constexpr size_t POPULATION_SIZE = 50;
-    static constexpr size_t NUM_GENERATIONS = 100;
-    static constexpr size_t NUM_ELITES = 2;
+    static constexpr size_t POPULATION_SIZE = 40;
+    static constexpr size_t NUM_GENERATIONS = 80;
+    static constexpr size_t NUM_ELITES = 3;
 
     // Observation time is use_time / this divisor
     static constexpr double OBSERVATION_TIME_DIVISOR = 3.0;
@@ -272,7 +272,13 @@ Individual genetic(const std::string &csv_path,
         throw std::runtime_error("Unsupported model.");
     }
 
-    const ConstantSignalFitnessVals stats1 = calc_const_signal_fitness_vals(scaled_result.signal, model_min, model_max, search_phase);
+    constexpr size_t MIN_AVG_SMOOTH_POINTS = FitnessConstants::MIN_AVG_SMOOTH_POINTS;
+
+    const ConstantSignalFitnessVals living_const_signal_fitness_vals = calc_const_signal_fitness_vals(scaled_result.signal, model_min, model_max, search_phase,
+                                                                                                      std::max(MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION * scaled_result.pts_burst_real)));
+
+    // Smoothing window for the model signal (pts_burst_model = pts_burst_real * points_factor)
+    const size_t avg_smooth_points_model = std::max(MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION * scaled_result.pts_burst_real * scaled_result.points_factor));
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
@@ -291,8 +297,8 @@ Individual genetic(const std::string &csv_path,
     // --- Step 6: Evaluate initial population ---
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, *population_ptr, scaled_result,
-        stats1, search_phase, model_signal_buffer, synapsis_signal_buffer,
-        reset_state_neur, get_v_neur, 0);
+        living_const_signal_fitness_vals, search_phase, model_signal_buffer, synapsis_signal_buffer,
+        reset_state_neur, get_v_neur, 0, avg_smooth_points_model);
 
     // --- Step 7: Generation loop ---
     std::normal_distribution<double> ndist(0.0, 1.0);
@@ -357,8 +363,8 @@ Individual genetic(const std::string &csv_path,
         // --- Evaluate only non elites offspring ---
         calc_fitnesses<Integrator, NeuronType, POP>(
             synapsis, model_neur, *population_ptr, scaled_result,
-            stats1, search_phase, model_signal_buffer, synapsis_signal_buffer,
-            reset_state_neur, get_v_neur, ELITES);
+            living_const_signal_fitness_vals, search_phase, model_signal_buffer, synapsis_signal_buffer,
+            reset_state_neur, get_v_neur, ELITES, avg_smooth_points_model);
     }
 
     // --- Step 8: Return final best individual ---

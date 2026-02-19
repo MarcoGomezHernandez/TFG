@@ -41,6 +41,7 @@ struct ScaledSignalResult
     std::vector<double> interpolated_points; // Interpolated points (new points only)
     size_t points_factor;                    // Horizontal scaling factor
     double dt;
+    double pts_burst_real;                   // Points per burst in the external (real) signal
     bool success;
 };
 

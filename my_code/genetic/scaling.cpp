@@ -420,6 +420,7 @@ ScaledSignalResult scale_signal(
     }
 
     result.dt = selection.dt;
+    result.pts_burst_real = external_pts_per_burst;
 
     // Calculate horizontal scaling factor (time interpolation)
     size_t s_points = static_cast<size_t>(selection.pts_burst / external_pts_per_burst);
