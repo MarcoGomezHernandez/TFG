@@ -393,7 +393,7 @@ Individual genetic(const std::string &csv_path,
     {
         if (verbose)
         {
-            std::cout << "\rIter " << (gen + 1) << "/" << GeneticConfig::NUM_GENERATIONS << std::flush;
+            std::cout << "\rGeneration " << (gen + 1) << "/" << GeneticConfig::NUM_GENERATIONS << std::flush;
         }
 
         std::array<Individual, POP> &population = *population_ptr;
