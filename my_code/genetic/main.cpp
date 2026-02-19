@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdlib>
 #include <stdexcept>
+#include <chrono>
 
 #include "genetic.hpp"
 #include "utils.hpp"
@@ -37,6 +38,8 @@ int main(int argc, char *argv[])
     const int syn_model_step_factor = std::atoi(argv[8]);
     const SynComponent syn_component = static_cast<SynComponent>(std::atoi(argv[9]));
 
+    const auto t_start = std::chrono::steady_clock::now();
+
     try
     {
         genetic<Integrator, NeuronType>(
@@ -54,10 +57,16 @@ int main(int argc, char *argv[])
             true);
 
         // Output moved to `genetic()` when verbose is enabled.
+        const auto t_end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed = t_end - t_start;
+        std::cout << "Genetic execution time: " << elapsed.count() << " s" << std::endl;
     }
     catch (const std::runtime_error &e)
     {
+        const auto t_end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed = t_end - t_start;
         std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Genetic execution time (until error): " << elapsed.count() << " s" << std::endl;
         return 1;
     }
 
