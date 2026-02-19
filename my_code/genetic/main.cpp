@@ -47,21 +47,10 @@ int main(int argc, char *argv[])
             reset_state_hindmarsh_rose<Integrator>,
             get_v_hindmarsh_rose<Integrator>,
             NeuronType::x,
-            syn_model_step_factor);
+            syn_model_step_factor,
+            true);
 
-        const ChemicalSynapsisParams &params = best.params;
-
-        // Fitness arriba, luego parámetros en formato array-style pedido
-        std::cout << "Fitness: " << best.fitness << std::endl;
-        std::cout << "gfast_values = [" << params.gfast << "]" << std::endl;
-        std::cout << "gslow_values = [" << params.gslow << "]" << std::endl;
-        std::cout << "Esyn_values = [" << params.Esyn << "]" << std::endl;
-        std::cout << "Vfast_values = [" << params.Vfast << "]" << std::endl;
-        std::cout << "Vslow_values = [" << params.Vslow << "]" << std::endl;
-        std::cout << "sfast_values = [" << params.sfast << "]" << std::endl;
-        std::cout << "sslow_values = [" << params.sslow << "]" << std::endl;
-        std::cout << "k1_values = [" << params.k1 << "]" << std::endl;
-        std::cout << "k2_values = [" << params.k2 << "]" << std::endl;
+        // Output moved to `genetic()` when verbose is enabled.
     }
     catch (const std::runtime_error &e)
     {

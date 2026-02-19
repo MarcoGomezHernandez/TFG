@@ -30,7 +30,8 @@ Individual genetic(const std::string &csv_path,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur,
                    typename NeuronType::VarType neur_state_var,
-                   int syn_model_step_factor);
+                   int syn_model_step_factor,
+                   bool verbose);
 
 #include "genetic.tpp"
 

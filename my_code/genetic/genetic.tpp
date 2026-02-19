@@ -29,38 +29,43 @@ namespace GeneticConfig
     static constexpr double MUTATION_PROBABILITY = 0.1;
 
     // Mutation scale factor (η): percentage of parameter range
-    static constexpr double ETA = 0.2;
+    static constexpr double ETA = 0.1;
 
     // Random initialization ranges [min, max] for each mutable parameter
-    static constexpr double ESYN_MIN = -2.5;
-    static constexpr double ESYN_MAX = 2.0;
+    // ESyn tiene rangos distintos según estemos buscando en fase (search_phase = true)
+    // o en antifase (search_phase = false). PDF usa -1.92 para red asimétrica.
+    static constexpr double ESYN_MIN_PHASE = 0.0;
+    static constexpr double ESYN_MAX_PHASE = 2.0;
+    static constexpr double ESYN_MIN_ANTIPHASE = -2.5;
+    static constexpr double ESYN_MAX_ANTIPHASE = -1.0;
 
     static constexpr double SFAST_MIN = 0.1;
-    static constexpr double SFAST_MAX = 5.0;
+    static constexpr double SFAST_MAX = 2.0;
 
     static constexpr double SSLOW_MIN = 0.1;
-    static constexpr double SSLOW_MAX = 5.0;
+    static constexpr double SSLOW_MAX = 2.0;
 
-    static constexpr double VFAST_MIN = -1.8;
-    static constexpr double VFAST_MAX = -0.5;
+    static constexpr double VFAST_MIN = -1.9;
+    static constexpr double VFAST_MAX = -1.0;
 
-    static constexpr double VSLOW_MIN = -1.8;
-    static constexpr double VSLOW_MAX = -0.5;
+    static constexpr double VSLOW_MIN = -1.9;
+    static constexpr double VSLOW_MAX = -1.0;
 
     static constexpr double K1_MIN = 0.1;
     static constexpr double K1_MAX = 2.0;
 
     static constexpr double K2_MIN = 0.001;
-    static constexpr double K2_MAX = 0.1;
+    static constexpr double K2_MAX = 0.05;
 
-    static constexpr double GFAST_MIN = 0.01;
-    static constexpr double GFAST_MAX = 1.5;
+    static constexpr double GFAST_MIN = 0.0;
+    static constexpr double GFAST_MAX = 1.0;
 
     static constexpr double GSLOW_MIN = 0.0;
-    static constexpr double GSLOW_MAX = 0.0;
+    static constexpr double GSLOW_MAX = 1.0;
 
     // Mutation perturbation factors: σ_p = η × (p_max - p_min)
-    static constexpr double ESYN_MUT_FACTOR = ETA * (ESYN_MAX - ESYN_MIN);
+    static constexpr double ESYN_MUT_FACTOR_PHASE = ETA * (ESYN_MAX_PHASE - ESYN_MIN_PHASE);
+    static constexpr double ESYN_MUT_FACTOR_ANTIPHASE = ETA * (ESYN_MAX_ANTIPHASE - ESYN_MIN_ANTIPHASE);
     static constexpr double SFAST_MUT_FACTOR = ETA * (SFAST_MAX - SFAST_MIN);
     static constexpr double VFAST_MUT_FACTOR = ETA * (VFAST_MAX - VFAST_MIN);
     static constexpr double VSLOW_MUT_FACTOR = ETA * (VSLOW_MAX - VSLOW_MIN);
@@ -83,9 +88,20 @@ static bool fitness_descending(const Individual &a, const Individual &b)
  * Generate initial population with random individuals
  */
 template <size_t POP_SIZE>
-inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng)
+inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng, bool search_phase)
 {
-    std::uniform_real_distribution<double> dist_esyn(GeneticConfig::ESYN_MIN, GeneticConfig::ESYN_MAX);
+    double esyn_min, esyn_max;
+    if (search_phase)
+    {
+        esyn_min = GeneticConfig::ESYN_MIN_PHASE;
+        esyn_max = GeneticConfig::ESYN_MAX_PHASE;
+    }
+    else
+    {
+        esyn_min = GeneticConfig::ESYN_MIN_ANTIPHASE;
+        esyn_max = GeneticConfig::ESYN_MAX_ANTIPHASE;
+    }
+    std::uniform_real_distribution<double> dist_esyn(esyn_min, esyn_max);
     std::uniform_real_distribution<double> dist_sfast(GeneticConfig::SFAST_MIN, GeneticConfig::SFAST_MAX);
     std::uniform_real_distribution<double> dist_vfast(GeneticConfig::VFAST_MIN, GeneticConfig::VFAST_MAX);
     std::uniform_real_distribution<double> dist_vslow(GeneticConfig::VSLOW_MIN, GeneticConfig::VSLOW_MAX);
@@ -134,7 +150,7 @@ inline void crossover(const ChemicalSynapsisParams &a, const ChemicalSynapsisPar
  * Mutate: recibe directamente los parámetros de la sinapsis (params) y aplica
  * perturbaciones normales por cada campo con su probabilidad independiente.
  */
-inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist)
+inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double esyn_mut_factor)
 {
     constexpr double MUTATION_PROBABILITY = GeneticConfig::MUTATION_PROBABILITY;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
@@ -142,7 +158,7 @@ inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_dis
     if (prob_dist(rng) < MUTATION_PROBABILITY)
         p.gslow += ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.Esyn += ndist(rng) * GeneticConfig::ESYN_MUT_FACTOR;
+        p.Esyn += ndist(rng) * esyn_mut_factor;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
         p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
     if (prob_dist(rng) < MUTATION_PROBABILITY)
@@ -234,7 +250,8 @@ Individual genetic(const std::string &csv_path,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur,
                    typename NeuronType::variable neur_v_var,
-                   int syn_model_step_factor)
+                   int syn_model_step_factor,
+                   bool verbose)
 {
     // Calculate observation time
     const double observation_time = use_time / GeneticConfig::OBSERVATION_TIME_DIVISOR;
@@ -288,7 +305,17 @@ Individual genetic(const std::string &csv_path,
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng);
+    double esyn_mut_factor;
+    if (search_phase)
+    {
+        esyn_mut_factor = GeneticConfig::ESYN_MUT_FACTOR_PHASE;
+    }
+    else
+    {
+        esyn_mut_factor = GeneticConfig::ESYN_MUT_FACTOR_ANTIPHASE;
+    }
+
+    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng, search_phase);
     std::array<Individual, POP> buffer2;
 
     std::array<Individual, POP> *population_ptr = &buffer1;
@@ -310,6 +337,11 @@ Individual genetic(const std::string &csv_path,
 
     for (size_t gen = 0; gen < GeneticConfig::NUM_GENERATIONS; gen++)
     {
+        if (verbose)
+        {
+            std::cout << "\rIter " << (gen + 1) << "/" << GeneticConfig::NUM_GENERATIONS << std::flush;
+        }
+
         std::array<Individual, POP> &population = *population_ptr;
         std::array<Individual, POP> &new_population = *new_population_ptr;
 
@@ -355,7 +387,7 @@ Individual genetic(const std::string &csv_path,
             }
 
             // Mutation (always attempt, per gene)
-            mutate(child.params, rng, ndist, prob_dist);
+            mutate(child.params, rng, ndist, prob_dist, esyn_mut_factor);
         }
 
         std::swap(population_ptr, new_population_ptr);
@@ -369,5 +401,23 @@ Individual genetic(const std::string &csv_path,
 
     // --- Step 8: Return final best individual ---
     std::array<Individual, POP> &population = *population_ptr;
-    return *std::min_element(population.begin(), population.end(), fitness_descending);
+    const Individual &best = *std::min_element(population.begin(), population.end(), fitness_descending);
+
+    if (verbose)
+    {
+        std::cout << std::endl;
+        const ChemicalSynapsisParams &params = best.params;
+        std::cout << "Fitness: " << best.fitness << std::endl;
+        std::cout << "gfast_values = [" << params.gfast << "]" << std::endl;
+        std::cout << "gslow_values = [" << params.gslow << "]" << std::endl;
+        std::cout << "Esyn_values = [" << params.Esyn << "]" << std::endl;
+        std::cout << "Vfast_values = [" << params.Vfast << "]" << std::endl;
+        std::cout << "Vslow_values = [" << params.Vslow << "]" << std::endl;
+        std::cout << "sfast_values = [" << params.sfast << "]" << std::endl;
+        std::cout << "sslow_values = [" << params.sslow << "]" << std::endl;
+        std::cout << "k1_values = [" << params.k1 << "]" << std::endl;
+        std::cout << "k2_values = [" << params.k2 << "]" << std::endl;
+    }
+
+    return best;
 }
