@@ -75,8 +75,10 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
         if (smoothed_val > smoothed_max_val)
             smoothed_max_val = smoothed_val;
     }
-    result.min_smoothed_val = smoothed_min_val;
-    result.max_smoothed_val = smoothed_max_val;
+
+    // Precompute maximum possible phase distance for normalization:
+    //   max_phase_distance = signal_size * (max_smoothed_val - min_smoothed_val)
+    result.max_phase_distance = signal_size * (smoothed_max_val - smoothed_min_val);
 
     // Pass 2 (antiphase only): flip both signals
     if (!search_phase)
@@ -124,7 +126,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
         const double smoothed_val = running_sum / avg_smooth_points_model;
         phase_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
     }
-    const double phase_score = 1.0 - (phase_dist / (signal_size * (living_const_signal_fitness_vals.max_smoothed_val - living_const_signal_fitness_vals.min_smoothed_val))); // Normalize: max possible distance is (max-min)*signal_size
+    const double phase_score = 1.0 - (phase_dist / living_smoothed_signal_to_fit.max_phase_distance); // Normalize: max possible distance is (max-min)*signal_size
 
     // Compute biological_similarity_score: normalized distance between synapsis signal and reference signal_to_fit
     double syn_min = GeneralConstants::DOUBLE_MAX;

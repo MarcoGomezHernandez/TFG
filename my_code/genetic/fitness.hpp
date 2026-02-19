@@ -24,8 +24,7 @@ struct ConstantSignalFitnessVals
 {
     std::vector<double> normalized_signal_to_fit; // Normalized (and possibly flipped for antiphase) reference signal
     std::vector<double> smoothed_signal_to_fit;   // Smoothed signal (possibly flipped for antiphase)
-    double min_smoothed_val;                      // Minimum value of the smoothed signal
-    double max_smoothed_val;                      // Maximum value of the smoothed signal
+    double max_phase_distance;              // Precomputed: signal_size * (max_smoothed_val - min_smoothed_val)
 };
 
 /*
