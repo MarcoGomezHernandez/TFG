@@ -88,7 +88,7 @@ static bool fitness_descending(const Individual &a, const Individual &b)
  * Generate initial population with random individuals
  */
 template <size_t POP_SIZE>
-inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng, bool search_phase)
+inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng, bool search_phase, SynComponent syn_component)
 {
     double esyn_min, esyn_max;
     if (search_phase)
@@ -101,30 +101,74 @@ inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng,
         esyn_min = GeneticConfig::ESYN_MIN_ANTIPHASE;
         esyn_max = GeneticConfig::ESYN_MAX_ANTIPHASE;
     }
+    // Always needed
     std::uniform_real_distribution<double> dist_esyn(esyn_min, esyn_max);
-    std::uniform_real_distribution<double> dist_sfast(GeneticConfig::SFAST_MIN, GeneticConfig::SFAST_MAX);
-    std::uniform_real_distribution<double> dist_vfast(GeneticConfig::VFAST_MIN, GeneticConfig::VFAST_MAX);
-    std::uniform_real_distribution<double> dist_vslow(GeneticConfig::VSLOW_MIN, GeneticConfig::VSLOW_MAX);
-    std::uniform_real_distribution<double> dist_k1(GeneticConfig::K1_MIN, GeneticConfig::K1_MAX);
-    std::uniform_real_distribution<double> dist_k2(GeneticConfig::K2_MIN, GeneticConfig::K2_MAX);
-    std::uniform_real_distribution<double> dist_sslow(GeneticConfig::SSLOW_MIN, GeneticConfig::SSLOW_MAX);
-    std::uniform_real_distribution<double> dist_gfast(GeneticConfig::GFAST_MIN, GeneticConfig::GFAST_MAX);
-    std::uniform_real_distribution<double> dist_gslow(GeneticConfig::GSLOW_MIN, GeneticConfig::GSLOW_MAX);
+
+    // Declare all distributions (required), but only initialize those we'll use.
+    std::uniform_real_distribution<double> dist_sfast;
+    std::uniform_real_distribution<double> dist_vfast;
+    std::uniform_real_distribution<double> dist_vslow;
+    std::uniform_real_distribution<double> dist_k1;
+    std::uniform_real_distribution<double> dist_k2;
+    std::uniform_real_distribution<double> dist_sslow;
+    std::uniform_real_distribution<double> dist_gfast;
+    std::uniform_real_distribution<double> dist_gslow;
+
+    // Initialize only the distributions required by the requested syn_component
+    if (syn_component != SynComponent::ISLOW) // using IFAST or BOTH
+    {
+        dist_sfast = std::uniform_real_distribution<double>(GeneticConfig::SFAST_MIN, GeneticConfig::SFAST_MAX);
+        dist_vfast = std::uniform_real_distribution<double>(GeneticConfig::VFAST_MIN, GeneticConfig::VFAST_MAX);
+        dist_gfast = std::uniform_real_distribution<double>(GeneticConfig::GFAST_MIN, GeneticConfig::GFAST_MAX);
+    }
+
+    if (syn_component != SynComponent::IFAST) // using ISLOW or BOTH
+    {
+        dist_vslow = std::uniform_real_distribution<double>(GeneticConfig::VSLOW_MIN, GeneticConfig::VSLOW_MAX);
+        dist_k1 = std::uniform_real_distribution<double>(GeneticConfig::K1_MIN, GeneticConfig::K1_MAX);
+        dist_k2 = std::uniform_real_distribution<double>(GeneticConfig::K2_MIN, GeneticConfig::K2_MAX);
+        dist_sslow = std::uniform_real_distribution<double>(GeneticConfig::SSLOW_MIN, GeneticConfig::SSLOW_MAX);
+        dist_gslow = std::uniform_real_distribution<double>(GeneticConfig::GSLOW_MIN, GeneticConfig::GSLOW_MAX);
+    }
+
+    const bool use_ifast = (syn_component != SynComponent::ISLOW);
+    const bool use_islow = (syn_component != SynComponent::IFAST);
 
     std::array<Individual, POP_SIZE> population;
 
     for (Individual &ind : population)
     {
         ChemicalSynapsisParams &p = ind.params;
-        p.gfast = dist_gfast(rng);
-        p.gslow = dist_gslow(rng);
         p.Esyn = dist_esyn(rng);
-        p.sfast = dist_sfast(rng);
-        p.Vfast = dist_vfast(rng);
-        p.Vslow = dist_vslow(rng);
-        p.k1 = dist_k1(rng);
-        p.k2 = dist_k2(rng);
-        p.sslow = dist_sslow(rng);
+        if (use_ifast)
+        {
+            p.gfast = dist_gfast(rng);
+            p.sfast = dist_sfast(rng);
+            p.Vfast = dist_vfast(rng);
+        }
+        else
+        {
+            p.gfast = 0.0;
+            p.sfast = 0.0;
+            p.Vfast = 0.0;
+        }
+
+        if (use_islow)
+        {
+            p.gslow = dist_gslow(rng);
+            p.Vslow = dist_vslow(rng);
+            p.k1 = dist_k1(rng);
+            p.k2 = dist_k2(rng);
+            p.sslow = dist_sslow(rng);
+        }
+        else
+        {
+            p.gslow = 0.0;
+            p.Vslow = 0.0;
+            p.k1 = 0.0;
+            p.k2 = 0.0;
+            p.sslow = 0.0;
+        }
     }
 
     return population;
@@ -150,27 +194,36 @@ inline void crossover(const ChemicalSynapsisParams &a, const ChemicalSynapsisPar
  * Mutate: recibe directamente los parámetros de la sinapsis (params) y aplica
  * perturbaciones normales por cada campo con su probabilidad independiente.
  */
-inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double esyn_mut_factor)
+inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double esyn_mut_factor, SynComponent syn_component)
 {
     constexpr double MUTATION_PROBABILITY = GeneticConfig::MUTATION_PROBABILITY;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.gfast += ndist(rng) * GeneticConfig::GFAST_MUT_FACTOR;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.gslow += ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
+    // Esyn is shared by both components
     if (prob_dist(rng) < MUTATION_PROBABILITY)
         p.Esyn += ndist(rng) * esyn_mut_factor;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
-    if (prob_dist(rng) < MUTATION_PROBABILITY)
-        p.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+    // ifast params
+    if (syn_component != SynComponent::ISLOW)
+    {
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.gfast += ndist(rng) * GeneticConfig::GFAST_MUT_FACTOR;
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
+    }
+    // islow params
+    if (syn_component != SynComponent::IFAST)
+    {
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.gslow += ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+        if (prob_dist(rng) < MUTATION_PROBABILITY)
+            p.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+    }
 }
 
 /*
@@ -246,6 +299,7 @@ Individual genetic(const std::string &csv_path,
                    NeuronModel model,
                    bool search_phase,
                    bool check_drift,
+                   SynComponent syn_component,
                    CreateFuncType create_neur,
                    ResetStateFuncType reset_state_neur,
                    GetVFuncType get_v_neur,
@@ -315,7 +369,7 @@ Individual genetic(const std::string &csv_path,
         esyn_mut_factor = GeneticConfig::ESYN_MUT_FACTOR_ANTIPHASE;
     }
 
-    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng, search_phase);
+    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng, search_phase, syn_component);
     std::array<Individual, POP> buffer2;
 
     std::array<Individual, POP> *population_ptr = &buffer1;
@@ -387,7 +441,7 @@ Individual genetic(const std::string &csv_path,
             }
 
             // Mutation (always attempt, per gene)
-            mutate(child.params, rng, ndist, prob_dist, esyn_mut_factor);
+            mutate(child.params, rng, ndist, prob_dist, esyn_mut_factor, syn_component);
         }
 
         std::swap(population_ptr, new_population_ptr);

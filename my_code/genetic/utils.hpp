@@ -48,6 +48,19 @@ template <typename Integrator>
 using HindmarshRoseNeuron = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
 
 /*
+ * Synaptic component to optimise in the genetic algorithm
+ * IFAST (0): only fast-current params (Esyn, gfast, sfast, Vfast)
+ * ISLOW (1): only slow-current params (Esyn, gslow, sslow, Vslow, k1, k2)
+ * BOTH  (2): all parameters
+ */
+enum SynComponent
+{
+    IFAST = 0,
+    ISLOW = 1,
+    BOTH  = 2
+};
+
+/*
  * General constants
  */
 namespace GeneralConstants

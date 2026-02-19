@@ -18,11 +18,12 @@ typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main(int argc, char *argv[])
 {
-    if (argc < 9)
+    if (argc < 10)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <search_phase> <check_drift> <syn_model_step_factor>"
+                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
                   << std::endl;
+        std::cerr << "  syn_component: 0=ifast  1=islow  2=both" << std::endl;
         return 1;
     }
 
@@ -34,6 +35,7 @@ int main(int argc, char *argv[])
     const bool search_phase = (std::atoi(argv[6]) == 1);
     const bool check_drift = (std::atoi(argv[7]) == 1);
     const int syn_model_step_factor = std::atoi(argv[8]);
+    const SynComponent syn_component = static_cast<SynComponent>(std::atoi(argv[9]));
 
     try
     {
@@ -43,6 +45,7 @@ int main(int argc, char *argv[])
             NeuronModel::HINDMARSH_ROSE,
             search_phase,
             check_drift,
+            syn_component,
             create_hindmarsh_rose<Integrator>,
             reset_state_hindmarsh_rose<Integrator>,
             get_v_hindmarsh_rose<Integrator>,
