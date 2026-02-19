@@ -13,7 +13,7 @@ namespace FitnessConfig
     static constexpr double VPRE_I_COMP_WEIGHT = 0.5;
 
     // Fraction of points-per-burst used as the smoothing window
-    static constexpr double AVG_SMOOTH_POINTS_BURST_FRACTION = 0.004;
+    static constexpr double AVG_SMOOTH_POINTS_BURST_FRACTION = 0.01;
 }
 
 namespace FitnessConstants

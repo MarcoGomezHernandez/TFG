@@ -29,14 +29,14 @@ namespace GeneticConfig
     static constexpr double MUTATION_PROBABILITY = 0.1;
 
     // Mutation scale factor (η): percentage of parameter range
-    static constexpr double ETA = 0.1;
+    static constexpr double ETA = 0.4;
 
     // Random initialization ranges [min, max] for each mutable parameter
     // ESyn tiene rangos distintos según estemos buscando en fase (search_phase = true)
     // o en antifase (search_phase = false). PDF usa -1.92 para red asimétrica.
     static constexpr double ESYN_MIN_PHASE = 0.0;
-    static constexpr double ESYN_MAX_PHASE = 2.0;
-    static constexpr double ESYN_MIN_ANTIPHASE = -2.5;
+    static constexpr double ESYN_MAX_PHASE = 3.0;
+    static constexpr double ESYN_MIN_ANTIPHASE = -3.5;
     static constexpr double ESYN_MAX_ANTIPHASE = -1.0;
 
     static constexpr double SFAST_MIN = 0.1;
@@ -203,26 +203,48 @@ inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_dis
     // ifast params
     if (syn_component != SynComponent::ISLOW)
     {
+        double &gfast = p.gfast;
+        double &sfast = p.sfast;
+
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            p.gfast += ndist(rng) * GeneticConfig::GFAST_MUT_FACTOR;
+            gfast += ndist(rng) * GeneticConfig::GFAST_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            p.sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+            sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
             p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
+
+        if (gfast < 0)
+            gfast = 0.0;
+        if (sfast < 0)
+            sfast = 0.0;
     }
     // islow params
     if (syn_component != SynComponent::IFAST)
     {
+        double &gslow = p.gslow;
+        double &k1 = p.k1;
+        double &k2 = p.k2;
+        double &sslow = p.sslow;
+
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            p.gslow += ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
+            gslow += ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
             p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            p.k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+            k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            p.k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+            k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            p.sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+            sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+
+        if (gslow < 0)
+            gslow = 0.0;
+        if (k1 < 0)
+            k1 = 0.0;
+        if (k2 < 0)
+            k2 = 0.0;
+        if (sslow < 0)
+            sslow = 0.0;
     }
 }
 
