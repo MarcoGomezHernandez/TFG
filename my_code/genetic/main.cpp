@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        const Individual &best = genetic<Integrator, NeuronType>(
+        genetic<Integrator, NeuronType>(
             csv_path, column_index, csv_step, start_time, use_time,
             NumericIntegrator::RK4,
             NeuronModel::HINDMARSH_ROSE,
