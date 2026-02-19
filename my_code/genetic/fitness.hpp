@@ -24,12 +24,12 @@ struct ConstantSignalFitnessVals
 {
     std::vector<double> normalized_signal_to_fit; // Normalized (and possibly flipped for antiphase) reference signal
     std::vector<double> smoothed_signal_to_fit;   // Smoothed signal (possibly flipped for antiphase)
-    double max_phase_distance;              // Precomputed: signal_size * (max_smoothed_val - min_smoothed_val)
+    double max_v_comp_distance;              // Precomputed: signal_size * (max_smoothed_val - min_smoothed_val)
 };
 
 /*
  * Compute fitness score for a single individual's synapsis signal against precomputed reference signal
- * Combines phase similarity and biological similarity into a weighted score
+ * Combines v_comp and vpre_i_comp into a weighted score
  * Parameters: signal, min_val, max_val, search_phase, avg_smooth_points
  */
 ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points);

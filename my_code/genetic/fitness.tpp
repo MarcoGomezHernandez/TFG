@@ -9,8 +9,8 @@
 namespace FitnessConfig
 {
     // Weights for score components (must sum to 1.0)
-    static constexpr double PHASE_WEIGHT = 0.5;
-    static constexpr double BIOLOGICAL_SIMILARITY_WEIGHT = 0.5;
+    static constexpr double V_COMP_WEIGHT = 0.5;
+    static constexpr double VPRE_I_COMP_WEIGHT = 0.5;
 
     // Fraction of points-per-burst used as the smoothing window
     static constexpr double AVG_SMOOTH_POINTS_BURST_FRACTION = 0.004;
@@ -27,7 +27,7 @@ namespace FitnessConstants
 /*
  * Function to preprocess a signal and compute statistics
  * Returns ConstantSignalFitnessVals containing normalized_signal_to_fit and smoothed_signal_to_fit
- * search_phase: true for phase (signal as-is), false for antiphase (signal flipped around min/max)
+ * search_phase: true for v_comp (signal as-is), false for antiphase (signal flipped around min/max)
  * avg_smooth_points: number of points to average for smoothing (1 = no smoothing)
  * Pass 1: causal running-average smooth + compute min/max of smoothed signal.
  * Pass 2 (antiphase only): flip smoothed signal around [min, max].
@@ -49,7 +49,7 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
     double running_sum = 0.0;
     double smoothed_min_val = GeneralConstants::DOUBLE_MAX;
     double smoothed_max_val = GeneralConstants::DOUBLE_MIN;
-    // First sub-loop: warm-up phase (window grows, no subtraction needed)
+    // First sub-loop: warm-up v_comp (window grows, no subtraction needed)
     const size_t warm_up = std::min(avg_smooth_points, signal_size);
     for (size_t i = 0; i < warm_up; i++)
     {
@@ -62,7 +62,7 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
         if (smoothed_val > smoothed_max_val)
             smoothed_max_val = smoothed_val;
     }
-    // Second sub-loop: steady phase (window = avg_smooth_points, subtract oldest)
+    // Second sub-loop: steady v_comp (window = avg_smooth_points, subtract oldest)
     for (size_t i = warm_up; i < signal_size; i++)
     {
         running_sum += signal[i];
@@ -76,9 +76,9 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
             smoothed_max_val = smoothed_val;
     }
 
-    // Precompute maximum possible phase distance for normalization:
-    //   max_phase_distance = signal_size * (max_smoothed_val - min_smoothed_val)
-    result.max_phase_distance = signal_size * (smoothed_max_val - smoothed_min_val);
+    // Precompute maximum possible v_comp distance for normalization:
+    //   max_v_comp_distance = signal_size * (max_smoothed_val - min_smoothed_val)
+    result.max_v_comp_distance = signal_size * (smoothed_max_val - smoothed_min_val);
 
     // Pass 2 (antiphase only): flip both signals
     if (!search_phase)
@@ -106,9 +106,9 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
 {
     const size_t signal_size = model_signal.size();
 
-    // Compute phase_score on-the-fly using a causal running average of the model signal
-    // First sub-loop: warm-up phase (window grows, no subtraction needed)
-    double phase_dist = 0.0;
+    // Compute v_comp_score on-the-fly using a causal running average of the model signal
+    // First sub-loop: warm-up v_comp (window grows, no subtraction needed)
+    double v_comp_dist = 0.0;
     double running_sum = 0.0;
     const std::vector<double> &living_smoothed_signal_to_fit = living_const_signal_fitness_vals.smoothed_signal_to_fit;
     const size_t warm_up = std::min(avg_smooth_points_model, signal_size);
@@ -116,19 +116,19 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
     {
         running_sum += model_signal[i];
         const double smoothed_val = running_sum / (i + 1);
-        phase_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
+        v_comp_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
     }
-    // Second sub-loop: steady phase (window = avg_smooth_points_model, subtract oldest)
+    // Second sub-loop: steady v_comp (window = avg_smooth_points_model, subtract oldest)
     for (size_t i = warm_up; i < signal_size; i++)
     {
         running_sum += model_signal[i];
         running_sum -= model_signal[i - avg_smooth_points_model];
         const double smoothed_val = running_sum / avg_smooth_points_model;
-        phase_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
+        v_comp_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
     }
-    const double phase_score = 1.0 - (phase_dist / living_smoothed_signal_to_fit.max_phase_distance); // Normalize: max possible distance is (max-min)*signal_size
+    const double v_comp_score = 1.0 - (v_comp_dist / living_const_signal_fitness_vals.max_v_comp_distance); // Normalize: max possible distance is (max-min)*signal_size
 
-    // Compute biological_similarity_score: normalized distance between synapsis signal and reference signal_to_fit
+    // Compute vpre_i_comp_score: normalized distance between synapsis signal and reference signal_to_fit
     double syn_min = GeneralConstants::DOUBLE_MAX;
     double syn_max = GeneralConstants::DOUBLE_MIN;
     for (double syn_val : synapsis_signal)
@@ -141,17 +141,17 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
 
     const std::vector<double> &living_norm_signal_to_fit = living_const_signal_fitness_vals.normalized_signal_to_fit;
     const double syn_range = syn_max - syn_min;
-    double bio_sim_dist = 0.0;
+    double vpre_i_comp_dist = 0.0;
     for (size_t i = 0; i < signal_size; i++)
     {
         const double norm_syn_val = (synapsis_signal[i] - syn_min) / syn_range;
-        bio_sim_dist += std::abs(living_norm_signal_to_fit[i] - norm_syn_val);
+        vpre_i_comp_dist += std::abs(living_norm_signal_to_fit[i] - norm_syn_val);
     }
     // Normalize: max possible accumulated distance is 1.0 * signal_size (both signals in [0,1])
-    const double bio_sim_score = 1.0 - (bio_sim_dist / signal_size);
+    const double vpre_i_comp_score = 1.0 - (vpre_i_comp_dist / signal_size);
 
     // Compute final weighted score
-    return (FitnessConfig::PHASE_WEIGHT * phase_score) + (FitnessConfig::BIOLOGICAL_SIMILARITY_WEIGHT * bio_sim_score);
+    return (FitnessConfig::V_COMP_WEIGHT * v_comp_score) + (FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score);
 }
 
 /*
