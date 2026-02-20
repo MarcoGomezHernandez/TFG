@@ -34,10 +34,10 @@ namespace GeneticConfig
     // Random initialization ranges [min, max] for each mutable parameter
     // ESyn tiene rangos distintos según estemos buscando en fase (search_phase = true)
     // o en antifase (search_phase = false). PDF usa -1.92 para red asimétrica.
-    static constexpr double ESYN_MIN_PHASE = 0.0;
+    static constexpr double ESYN_MIN_PHASE = -5.0;
     static constexpr double ESYN_MAX_PHASE = 5.0;
     static constexpr double ESYN_MIN_ANTIPHASE = -5.0;
-    static constexpr double ESYN_MAX_ANTIPHASE = -0.5;
+    static constexpr double ESYN_MAX_ANTIPHASE = 5.0;
 
     static constexpr double SFAST_MIN = 0.01;
     static constexpr double SFAST_MAX = 10.0;
