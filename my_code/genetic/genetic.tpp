@@ -215,16 +215,31 @@ inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_dis
         double &sfast = p.sfast;
 
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            gfast += ndist(rng) * GeneticConfig::GFAST_MUT_FACTOR;
+        {
+            double delta = ndist(rng) * GeneticConfig::GFAST_MUT_FACTOR;
+            if (gfast == GFAST_MIN && delta < 0)
+                gfast -= delta;
+            else
+            {
+                gfast += delta;
+                if (gfast < GFAST_MIN)
+                    gfast = GFAST_MIN;
+            }
+        }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            sfast += ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+        {
+            double delta = ndist(rng) * GeneticConfig::SFAST_MUT_FACTOR;
+            if (sfast == SFAST_MIN && delta < 0)
+                sfast -= delta;
+            else
+            {
+                sfast += delta;
+                if (sfast < SFAST_MIN)
+                    sfast = SFAST_MIN;
+            }
+        }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
             p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
-
-        if (gfast < GFAST_MIN)
-            gfast = GFAST_MIN;
-        if (sfast < SFAST_MIN)
-            sfast = SFAST_MIN;
     }
     // islow params
     if (syn_component != SynComponent::IFAST)
@@ -235,24 +250,55 @@ inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_dis
         double &sslow = p.sslow;
 
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            gslow += ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
+        {
+            double delta = ndist(rng) * GeneticConfig::GSLOW_MUT_FACTOR;
+            if (gslow == GSLOW_MIN && delta < 0)
+                gslow -= delta;
+            else
+            {
+                gslow += delta;
+                if (gslow < GSLOW_MIN)
+                    gslow = GSLOW_MIN;
+            }
+        }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
             p.Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            k1 += ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+        {
+            double delta = ndist(rng) * GeneticConfig::K1_MUT_FACTOR;
+            if (k1 == K1_MIN && delta < 0)
+                k1 -= delta;
+            else
+            {
+                k1 += delta;
+                if (k1 < K1_MIN)
+                    k1 = K1_MIN;
+            }
+        }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            k2 += ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+        {
+            double delta = ndist(rng) * GeneticConfig::K2_MUT_FACTOR;
+            if (k2 == K2_MIN && delta < 0)
+                k2 -= delta;
+            else
+            {
+                k2 += delta;
+                if (k2 < K2_MIN)
+                    k2 = K2_MIN;
+            }
+        }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
-            sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
-
-        if (gslow < GSLOW_MIN)
-            gslow = GSLOW_MIN;
-        if (k1 < K1_MIN)
-            k1 = K1_MIN;
-        if (k2 < K2_MIN)
-            k2 = K2_MIN;
-        if (sslow < SSLOW_MIN)
-            sslow = SSLOW_MIN;
+        {
+            double delta = ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
+            if (sslow == SSLOW_MIN && delta < 0)
+                sslow -= delta;
+            else
+            {
+                sslow += delta;
+                if (sslow < SSLOW_MIN)
+                    sslow = SSLOW_MIN;
+            }
+        }
     }
 }
 
