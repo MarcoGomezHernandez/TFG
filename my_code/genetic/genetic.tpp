@@ -420,7 +420,7 @@ Individual genetic(const std::string &csv_path,
     }
 
     const size_t avg_smooth_points_living = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(scaled_result.pts_burst_real * FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION));
-    const size_t avg_smooth_points_model = avg_smoothing_points_living * scaled_result.points_factor;
+    const size_t avg_smooth_points_model = avg_smooth_points_living * scaled_result.points_factor;
 
     const ConstantSignalFitnessVals living_const_signal_fitness_vals = calc_const_signal_fitness_vals(scaled_result.signal, model_min, model_max, search_phase,
                                                                                                       avg_smooth_points_living);
