@@ -66,7 +66,7 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
     for (size_t i = warm_up; i < signal_size; i++)
     {
         running_sum += signal[i];
-        running_sum -= smoothed_signal_to_fit[i - avg_smooth_points];
+        running_sum -= signal[i - avg_smooth_points];
         const double smoothed_val = running_sum / avg_smooth_points;
         smoothed_signal_to_fit[i] = smoothed_val;
         normalized_signal_to_fit[i] = (signal[i] - min_val) / range;
