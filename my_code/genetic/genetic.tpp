@@ -29,39 +29,39 @@ namespace GeneticConfig
     static constexpr double MUTATION_PROBABILITY = 0.1;
 
     // Mutation scale factor (η): percentage of parameter range
-    static constexpr double ETA = 0.4;
+    static constexpr double ETA = 0.2;
 
     // Random initialization ranges [min, max] for each mutable parameter
     // ESyn tiene rangos distintos según estemos buscando en fase (search_phase = true)
     // o en antifase (search_phase = false). PDF usa -1.92 para red asimétrica.
     static constexpr double ESYN_MIN_PHASE = 0.0;
-    static constexpr double ESYN_MAX_PHASE = 3.0;
-    static constexpr double ESYN_MIN_ANTIPHASE = -3.5;
-    static constexpr double ESYN_MAX_ANTIPHASE = -1.0;
+    static constexpr double ESYN_MAX_PHASE = 5.0;
+    static constexpr double ESYN_MIN_ANTIPHASE = -5.0;
+    static constexpr double ESYN_MAX_ANTIPHASE = -0.5;
 
-    static constexpr double SFAST_MIN = 0.1;
-    static constexpr double SFAST_MAX = 2.0;
+    static constexpr double SFAST_MIN = 0.01;
+    static constexpr double SFAST_MAX = 10.0;
 
-    static constexpr double SSLOW_MIN = 0.1;
-    static constexpr double SSLOW_MAX = 2.0;
+    static constexpr double SSLOW_MIN = 0.01;
+    static constexpr double SSLOW_MAX = 10.0;
 
-    static constexpr double VFAST_MIN = -1.9;
-    static constexpr double VFAST_MAX = -1.0;
+    static constexpr double VFAST_MIN = -3.0;
+    static constexpr double VFAST_MAX = 3.0;
 
-    static constexpr double VSLOW_MIN = -1.9;
-    static constexpr double VSLOW_MAX = -1.0;
+    static constexpr double VSLOW_MIN = -3.0;
+    static constexpr double VSLOW_MAX = 3.0;
 
-    static constexpr double K1_MIN = 0.1;
-    static constexpr double K1_MAX = 2.0;
+    static constexpr double K1_MIN = 0.001;
+    static constexpr double K1_MAX = 10.0;
 
-    static constexpr double K2_MIN = 0.001;
-    static constexpr double K2_MAX = 0.05;
+    static constexpr double K2_MIN = 0.0001;
+    static constexpr double K2_MAX = 1.0;
 
-    static constexpr double GFAST_MIN = 0.0;
-    static constexpr double GFAST_MAX = 1.0;
+    static constexpr double GFAST_MIN = 1e-3;
+    static constexpr double GFAST_MAX = 5.0;
 
-    static constexpr double GSLOW_MIN = 0.0;
-    static constexpr double GSLOW_MAX = 1.0;
+    static constexpr double GSLOW_MIN = 1e-3;
+    static constexpr double GSLOW_MAX = 5.0;
 
     // Mutation perturbation factors: σ_p = η × (p_max - p_min)
     static constexpr double ESYN_MUT_FACTOR_PHASE = ETA * (ESYN_MAX_PHASE - ESYN_MIN_PHASE);
@@ -197,6 +197,14 @@ inline void crossover(const ChemicalSynapsisParams &a, const ChemicalSynapsisPar
 inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double esyn_mut_factor, SynComponent syn_component)
 {
     constexpr double MUTATION_PROBABILITY = GeneticConfig::MUTATION_PROBABILITY;
+    // Precomputed local aliases for GeneticConfig minima used multiple times
+    constexpr double GFAST_MIN = GeneticConfig::GFAST_MIN;
+    constexpr double SFAST_MIN = GeneticConfig::SFAST_MIN;
+    constexpr double GSLOW_MIN = GeneticConfig::GSLOW_MIN;
+    constexpr double K1_MIN = GeneticConfig::K1_MIN;
+    constexpr double K2_MIN = GeneticConfig::K2_MIN;
+    constexpr double SSLOW_MIN = GeneticConfig::SSLOW_MIN;
+
     // Esyn is shared by both components
     if (prob_dist(rng) < MUTATION_PROBABILITY)
         p.Esyn += ndist(rng) * esyn_mut_factor;
@@ -213,10 +221,10 @@ inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_dis
         if (prob_dist(rng) < MUTATION_PROBABILITY)
             p.Vfast += ndist(rng) * GeneticConfig::VFAST_MUT_FACTOR;
 
-        if (gfast < 0)
-            gfast = 0.0;
-        if (sfast < 0)
-            sfast = 0.0;
+        if (gfast < GFAST_MIN)
+            gfast = GFAST_MIN;
+        if (sfast < SFAST_MIN)
+            sfast = SFAST_MIN;
     }
     // islow params
     if (syn_component != SynComponent::IFAST)
@@ -237,14 +245,14 @@ inline void mutate(ChemicalSynapsisParams &p, std::mt19937 &rng, std::normal_dis
         if (prob_dist(rng) < MUTATION_PROBABILITY)
             sslow += ndist(rng) * GeneticConfig::SSLOW_MUT_FACTOR;
 
-        if (gslow < 0)
-            gslow = 0.0;
-        if (k1 < 0)
-            k1 = 0.0;
-        if (k2 < 0)
-            k2 = 0.0;
-        if (sslow < 0)
-            sslow = 0.0;
+        if (gslow < GSLOW_MIN)
+            gslow = GSLOW_MIN;
+        if (k1 < K1_MIN)
+            k1 = K1_MIN;
+        if (k2 < K2_MIN)
+            k2 = K2_MIN;
+        if (sslow < SSLOW_MIN)
+            sslow = SSLOW_MIN;
     }
 }
 
