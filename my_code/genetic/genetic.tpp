@@ -415,20 +415,19 @@ Individual genetic(const std::string &csv_path,
         throw std::runtime_error("Unsupported model.");
     }
 
-    const size_t avg_smooth_points_living = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(scaled_result.pts_burst_real * FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION));
-    const size_t avg_smooth_points_model = avg_smooth_points_living * scaled_result.points_factor;
+    const size_t avg_smooth_points = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(scaled_result.pts_burst_real / FitnessConfig::AVG_SMOOTH_POINTS_BURST_DIVISOR));
 
     const size_t total_signal_size = scaled_result.signal.size();
-    const size_t stabilization_points_living = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points_living);
-    const size_t use_signal_size = total_signal_size - stabilization_points_living;
+    const size_t stabilization_points = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points);
+    const size_t use_signal_size = total_signal_size - stabilization_points;
 
-    std::vector<double> model_signal_buffer(avg_smooth_points_model + use_signal_size);
+    std::vector<double> model_signal_buffer(avg_smooth_points + use_signal_size);
     std::vector<double> synapsis_signal_buffer(use_signal_size);
 
     // --- Step 5: Precompute constant fitness values from the CSV signal ---
     const ConstantSignalFitnessVals living_const_signal_fitness_vals = calc_const_signal_fitness_vals(
         scaled_result.signal, model_min, model_max, search_phase,
-        avg_smooth_points_living, stabilization_points_living);
+        avg_smooth_points, stabilization_points);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
@@ -458,7 +457,7 @@ Individual genetic(const std::string &csv_path,
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, *population_ptr, scaled_result,
         living_const_signal_fitness_vals, search_phase, model_signal_buffer, synapsis_signal_buffer,
-        reset_state_neur, get_v_neur, 0, stabilization_points_living, avg_smooth_points_model);
+        reset_state_neur, get_v_neur, 0, stabilization_points, avg_smooth_points);
 
     // --- Step 8: Generation loop ---
     std::normal_distribution<double> ndist(0.0, 1.0);
@@ -529,7 +528,7 @@ Individual genetic(const std::string &csv_path,
         calc_fitnesses<Integrator, NeuronType, POP>(
             synapsis, model_neur, *population_ptr, scaled_result,
             living_const_signal_fitness_vals, search_phase, model_signal_buffer, synapsis_signal_buffer,
-            reset_state_neur, get_v_neur, ELITES, stabilization_points_living, avg_smooth_points_model);
+            reset_state_neur, get_v_neur, ELITES, stabilization_points, avg_smooth_points);
     }
 
     // --- Step 9: Return final best individual ---

@@ -13,7 +13,7 @@ namespace FitnessConfig
     static constexpr double VPRE_I_COMP_WEIGHT = 0.5;
 
     // Fraction of points-per-burst used as the smoothing window
-    static constexpr double AVG_SMOOTH_POINTS_BURST_FRACTION = 0.01;
+    static constexpr double AVG_SMOOTH_POINTS_BURST_DIVISOR = 100;
 }
 
 namespace FitnessConstants
@@ -95,19 +95,13 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
 }
 
 /*
- * Calculate fitness as distance-based scores between model/synapsis signals and the reference signal
- * Takes precomputed vals for the reference signal, raw model_signal, synapsis_signal
- * model_signal layout: [avg_smooth_points_model seed values | use_size model voltages]
- *   The seed is the last avg_smooth_points_model outer-loop model voltages from the stabilization
- *   phase (chronologically ordered by calc_fitnesses). This pre-fills the rolling-average window
- *   so that the comparison loop runs entirely in steady state (no warm-up sub-loop needed).
  * Returns the computed fitness score
  */
-double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, const std::vector<double> &model_signal, bool search_phase, const std::vector<double> &synapsis_signal, size_t avg_smooth_points_model)
+double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, const std::vector<double> &model_signal, bool search_phase, const std::vector<double> &synapsis_signal, size_t avg_smooth_points)
 {
     // Initialize running_sum from the seed prefix (chronologically ordered stab tail)
     double running_sum = 0.0;
-    for (size_t i = 0; i < avg_smooth_points_model; i++)
+    for (size_t i = 0; i < avg_smooth_points; i++)
         running_sum += model_signal[i];
 
     const size_t use_size = synapsis_signal.size();
@@ -117,9 +111,9 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
     const std::vector<double> &living_smoothed_signal_to_fit = living_const_signal_fitness_vals.smoothed_signal_to_fit;
     for (size_t i = 0; i < use_size; i++)
     {
-        running_sum += model_signal[i + avg_smooth_points_model];
+        running_sum += model_signal[i + avg_smooth_points];
         running_sum -= model_signal[i];
-        const double smoothed_val = running_sum / avg_smooth_points_model;
+        const double smoothed_val = running_sum / avg_smooth_points;
         v_comp_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
     }
     const double v_comp_score = 1.0 - (v_comp_dist / living_const_signal_fitness_vals.max_v_comp_distance); // Normalize: max possible distance is (max-min)*use_size
@@ -159,7 +153,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed vals
- * Parameters: synapsis, neurons, individuals, scaled_result, living_const_signal_fitness_vals, search_phase, buffers, reset_state_neur, get_v_neur, ind_start_index, signal_start_index, avg_smooth_points_model
+ * Parameters: synapsis, neurons, individuals, scaled_result, living_const_signal_fitness_vals, search_phase, buffers, reset_state_neur, get_v_neur, ind_start_index, signal_start_index, avg_smooth_points
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
@@ -174,7 +168,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     GetVFuncType get_v_neur,
                     size_t ind_start_index,
                     size_t signal_start_index,
-                    size_t avg_smooth_points_model)
+                    size_t avg_smooth_points)
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
@@ -184,7 +178,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const double *signal_data = scaled_result.signal.data();
     const double *interpolated_signal_data = scaled_result.interpolated_points.data();
 
-    const size_t sig_start_minus_smoothed_avg_pts = signal_start_index - avg_smooth_points_model;
+    const size_t sig_start_minus_smoothed_avg_pts = signal_start_index - avg_smooth_points;
 
     for (size_t i = ind_start_index; i < N; i++)
     {
@@ -267,6 +261,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         synapsis_signal_buffer[syn_sig_i] = synapsis.get(ChemicalSynapsisType::i);
 
         // Compute fitness and store directly in individual
-        individuals[i].fitness = fitness_from_signals(living_const_signal_fitness_vals, model_signal_buffer, search_phase, synapsis_signal_buffer, avg_smooth_points_model);
+        individuals[i].fitness = fitness_from_signals(living_const_signal_fitness_vals, model_signal_buffer, search_phase, synapsis_signal_buffer, avg_smooth_points);
     }
 }
