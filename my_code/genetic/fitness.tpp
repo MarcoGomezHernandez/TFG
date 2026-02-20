@@ -185,7 +185,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
-    const size_t signal_size = scaled_result.signal.size();
+    const size_t total_size = scaled_result.signal.size();
     const size_t points_factor = scaled_result.points_factor;
     const double dt = scaled_result.dt;
     const double *signal_data = scaled_result.signal.data();
@@ -216,11 +216,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
         // Simulate and collect neur signal and synapsis current
         size_t interp_signal_counter = 0;
-        size_t j = 0;
-
-        for (; j < sig_start_minus_smoothed_avg_pts; j++)
+        size_t sig_i = 0;
+        for (; sig_i < sig_start_minus_smoothed_avg_pts; sig_i++)
         {
-            synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
+            synapsis.step(dt, signal_data[sig_i], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
@@ -232,11 +231,12 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             }
         }
 
-        for (; j < signal_start_index; j++)
+        size_t model_sig_i = 0;
+        for (; sig_i < signal_start_index; sig_i++, model_sig_i++)
         {
             const double v_neur = get_v_neur(model_neur);
-            model_signal_buffer[j] = v_neur;
-            synapsis.step(dt, signal_data[j], v_neur);
+            model_signal_buffer[model_sig_i] = v_neur;
+            synapsis.step(dt, signal_data[sig_i], v_neur);
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
@@ -248,14 +248,15 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             }
         }
 
-        for (; j < signal_size - 1; j++)
+        size_t syn_sig_i = 0;
+        for (; sig_i < total_size - 1; sig_i++, model_sig_i++, syn_sig_i++)
         {
             const double v_neur = get_v_neur(model_neur);
-            model_signal_buffer[j] = v_neur;
-            synapsis.step(dt, signal_data[j], v_neur);
+            model_signal_buffer[model_sig_i] = v_neur;
+            synapsis.step(dt, signal_data[sig_i], v_neur);
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(dt);
-            synapsis_signal_buffer[j] = synapsis.get(ChemicalSynapsisType::i);
+            synapsis_signal_buffer[syn_sig_i] = synapsis.get(ChemicalSynapsisType::i);
             for (size_t k = 1; k < points_factor; k++)
             {
                 synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
@@ -266,11 +267,11 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         }
 
         const double v_neur = get_v_neur(model_neur);
-        model_signal_buffer[j] = v_neur;
-        synapsis.step(dt, signal_data[j], v_neur);
+        model_signal_buffer[model_sig_i] = v_neur;
+        synapsis.step(dt, signal_data[sig_i], v_neur);
         model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
         model_neur.step(dt);
-        synapsis_signal_buffer[j] = synapsis.get(ChemicalSynapsisType::i);
+        synapsis_signal_buffer[syn_sig_i] = synapsis.get(ChemicalSynapsisType::i);
 
         // Compute fitness and store directly in individual
         individuals[i].fitness = fitness_from_signals(living_const_signal_fitness_vals, model_signal_buffer, search_phase, synapsis_signal_buffer, avg_smooth_points_model);
