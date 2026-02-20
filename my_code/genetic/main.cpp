@@ -19,10 +19,10 @@ typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main(int argc, char *argv[])
 {
-    if (argc < 10)
+    if (argc < 11)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
+                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <stabilization_time> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
                   << std::endl;
         std::cerr << "  syn_component: 0=ifast  1=islow  2=both" << std::endl;
         return 1;
@@ -33,17 +33,18 @@ int main(int argc, char *argv[])
     const double csv_step = std::atof(argv[3]);
     const double start_time = std::atof(argv[4]);
     const double use_time = std::atof(argv[5]);
-    const bool search_phase = (std::atoi(argv[6]) == 1);
-    const bool check_drift = (std::atoi(argv[7]) == 1);
-    const int syn_model_step_factor = std::atoi(argv[8]);
-    const SynComponent syn_component = static_cast<SynComponent>(std::atoi(argv[9]));
+    const double stabilization_time = std::atof(argv[6]);
+    const bool search_phase = (std::atoi(argv[7]) == 1);
+    const bool check_drift = (std::atoi(argv[8]) == 1);
+    const int syn_model_step_factor = std::atoi(argv[9]);
+    const SynComponent syn_component = static_cast<SynComponent>(std::atoi(argv[10]));
 
     const auto t_start = std::chrono::steady_clock::now();
 
     try
     {
         genetic<Integrator, NeuronType>(
-            csv_path, column_index, csv_step, start_time, use_time,
+            csv_path, column_index, csv_step, start_time, use_time, stabilization_time,
             NumericIntegrator::RK4,
             NeuronModel::HINDMARSH_ROSE,
             search_phase,

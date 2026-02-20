@@ -30,14 +30,19 @@ struct ConstantSignalFitnessVals
 /*
  * Compute fitness score for a single individual's synapsis signal against precomputed reference signal
  * Combines v_comp and vpre_i_comp into a weighted score
- * Parameters: signal, min_val, max_val, search_phase, avg_smooth_points
+ * Parameters: signal, min_val, max_val, search_phase, avg_smooth_points, start_index
+ * start_index: number of leading points used only for rolling-average warm-up (not stored in output).
+ *   Must satisfy start_index >= avg_smooth_points so that the window is already full at start_index.
  */
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points);
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index);
 
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur, start_index, avg_smooth_points_model
+ * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur, start_index, signal_start_index, avg_smooth_points_model
+ * signal_start_index: number of leading outer-loop (CSV-sample) steps to run as stabilization
+ *   (model and synapse run but outputs are not stored; model_signal_buffer is seeded from last
+ *    avg_smooth_points_model of those steps via a circular buffer).
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
@@ -51,6 +56,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
                     size_t start_index,
+                    size_t signal_start_index,
                     size_t avg_smooth_points_model);
 
 #include "fitness.tpp"
