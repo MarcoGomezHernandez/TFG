@@ -232,7 +232,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                 interp_signal_counter++;
             }
         }
-
         model_signal_buffer[j] = get_v_neur(model_neur);
         synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
         model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
