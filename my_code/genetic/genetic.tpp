@@ -373,13 +373,11 @@ Individual genetic(const std::string &csv_path,
         throw std::runtime_error("Unsupported model.");
     }
 
-    constexpr size_t MIN_AVG_SMOOTH_POINTS = FitnessConstants::MIN_AVG_SMOOTH_POINTS;
+    const size_t avg_smooth_points_living = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(scaled_result.pts_burst_real * FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION));
+    const size_t avg_smooth_points_model = avg_smoothing_points_living * scaled_result.points_factor;
 
     const ConstantSignalFitnessVals living_const_signal_fitness_vals = calc_const_signal_fitness_vals(scaled_result.signal, model_min, model_max, search_phase,
-                                                                                                      std::max(MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION * scaled_result.pts_burst_real)));
-
-    // Smoothing window for the model signal (pts_burst_model = pts_burst_real * points_factor)
-    const size_t avg_smooth_points_model = std::max(MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(FitnessConfig::AVG_SMOOTH_POINTS_BURST_FRACTION * scaled_result.pts_burst_real * scaled_result.points_factor));
+                                                                                                      avg_smooth_points_living);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;

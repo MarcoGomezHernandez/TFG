@@ -151,7 +151,13 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
     const double vpre_i_comp_score = 1.0 - (vpre_i_comp_dist / signal_size);
 
     // Compute final weighted score
-    return (FitnessConfig::V_COMP_WEIGHT * v_comp_score) + (FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score);
+    const double final_score = (FitnessConfig::V_COMP_WEIGHT * v_comp_score) + (FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score);
+
+    // If the computed fitness is NaN, return 0.0 instead
+    if (std::isnan(final_score))
+        return 0.0;
+
+    return final_score;
 }
 
 /*
