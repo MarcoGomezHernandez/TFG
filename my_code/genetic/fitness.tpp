@@ -142,7 +142,6 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
             syn_max = syn_val;
     }
 
-    const size_t use_size = synapsis_signal.size();
     const std::vector<double> &living_norm_signal_to_fit = living_const_signal_fitness_vals.normalized_signal_to_fit;
     const double syn_range = syn_max - syn_min;
     double vpre_i_comp_dist = 0.0;
