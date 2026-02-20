@@ -154,7 +154,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
     const double final_score = (FitnessConfig::V_COMP_WEIGHT * v_comp_score) + (FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score);
 
     // If the computed fitness is NaN, return 0.0 instead
-    if (std::isnan(final_score))
+    if (final_score < 0.0)
         return 0.0;
 
     return final_score;
@@ -211,7 +211,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         // Simulate and collect neur signal and synapsis current
         size_t interp_signal_counter = 0;
         size_t j = 0;
-        for (; j < signal_size; j++)
+        for (; j < signal_size - 1; j++)
         {
             model_signal_buffer[j] = get_v_neur(model_neur);
             synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
