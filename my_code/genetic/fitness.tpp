@@ -40,18 +40,13 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
 {
     ConstantSignalFitnessVals result;
 
-    const size_t total_size = signal.size();
-    const size_t use_size = total_size - start_index;
+    const size_t use_size = signal.size() - start_index;
 
     std::vector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
     std::vector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
     normalized_signal_to_fit.resize(use_size);
 
-    // Pass 1: run rolling-average over stabilization prefix [0..start_index-1] without storing,
-    //         then compute smoothed+normalized over use portion [start_index..total_size-1].
-    // Since start_index >= avg_smooth_points, the window is full by start_index, so no warm-up
-    // sub-loop is needed inside the recorded portion.
     const double range = max_val - min_val;
     double running_sum = 0.0;
     double smoothed_min_val = GeneralConstants::DOUBLE_MAX;
@@ -62,18 +57,16 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
     for (size_t i = start_index - avg_smooth_points; i < start_index; i++)
         running_sum += signal[i];
 
-    // Main loop: record use portion [start_index..total_size-1] in steady state (no warm-up)
-    for (size_t i = start_index; i < total_size; i++)
+    for (size_t sig_i = start_index, res_i = 0; res_i < use_size; sig_i++, res_i++)
     {
-        const double sig_val = signal[i];
+        const double sig_val = signal[sig_i];
 
         running_sum += sig_val;
-        running_sum -= signal[i - avg_smooth_points];
+        running_sum -= signal[sig_i - avg_smooth_points];
         const double smoothed_val = running_sum / avg_smooth_points;
-        const size_t i_0_start = i - start_index;
-        smoothed_signal_to_fit[i_0_start] = smoothed_val;
+        smoothed_signal_to_fit[res_i] = smoothed_val;
 
-        normalized_signal_to_fit[i_0_start] = (sig_val - min_val) / range;
+        normalized_signal_to_fit[res_i] = (sig_val - min_val) / range;
 
         if (smoothed_val < smoothed_min_val)
             smoothed_min_val = smoothed_val;
