@@ -192,6 +192,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const double *signal_data = scaled_result.signal.data();
     const double *interpolated_signal_data = scaled_result.interpolated_points.data();
 
+    const size_t sig_start_minus_smoothed_avg_pts = signal_start_index - avg_smooth_points_model;
+
     for (size_t i = ind_start_index; i < N; i++)
     {
         const ChemicalSynapsisParams &params = individuals[i].params;
@@ -216,14 +218,12 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         // Simulate and collect neur signal and synapsis current
         size_t interp_signal_counter = 0;
         size_t j = 0;
-        for (; j < signal_size - 1; j++)
+
+        for (; j < sig_start_minus_smoothed_avg_pts; j++)
         {
-            model_signal_buffer[j] = get_v_neur(model_neur);
             synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
             model_neur.step(dt);
-            synapsis_signal_buffer[j] = synapsis.get(ChemicalSynapsisType::i);
-
             for (size_t k = 1; k < points_factor; k++)
             {
                 synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
@@ -232,8 +232,43 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                 interp_signal_counter++;
             }
         }
-        model_signal_buffer[j] = get_v_neur(model_neur);
-        synapsis.step(dt, signal_data[j], get_v_neur(model_neur));
+
+        for (; j < signal_start_index; j++)
+        {
+            const double v_neur = get_v_neur(model_neur);
+            model_signal_buffer[j] = v_neur;
+            synapsis.step(dt, signal_data[j], v_neur);
+            model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
+            model_neur.step(dt);
+            for (size_t k = 1; k < points_factor; k++)
+            {
+                synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
+                model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
+                model_neur.step(dt);
+                interp_signal_counter++;
+            }
+        }
+
+        for (; j < signal_size - 1; j++)
+        {
+            const double v_neur = get_v_neur(model_neur);
+            model_signal_buffer[j] = v_neur;
+            synapsis.step(dt, signal_data[j], v_neur);
+            model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
+            model_neur.step(dt);
+            synapsis_signal_buffer[j] = synapsis.get(ChemicalSynapsisType::i);
+            for (size_t k = 1; k < points_factor; k++)
+            {
+                synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
+                model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
+                model_neur.step(dt);
+                interp_signal_counter++;
+            }
+        }
+
+        const double v_neur = get_v_neur(model_neur);
+        model_signal_buffer[j] = v_neur;
+        synapsis.step(dt, signal_data[j], v_neur);
         model_neur.add_synaptic_input(synapsis.get(ChemicalSynapsisType::i));
         model_neur.step(dt);
         synapsis_signal_buffer[j] = synapsis.get(ChemicalSynapsisType::i);
