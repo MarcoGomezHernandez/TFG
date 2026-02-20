@@ -29,47 +29,52 @@ namespace FitnessConstants
  * Returns ConstantSignalFitnessVals containing normalized_signal_to_fit and smoothed_signal_to_fit
  * search_phase: true for v_comp (signal as-is), false for antiphase (signal flipped around min/max)
  * avg_smooth_points: number of points to average for smoothing (1 = no smoothing)
+ * start_index: leading points used only for rolling-average warm-up (not stored in output).
+ *   Must satisfy start_index >= avg_smooth_points so the window is already full at start_index,
+ *   allowing the recorded portion to start directly in steady-state (no warm-up sub-loop needed).
  * Pass 1: causal running-average smooth + compute min/max of smoothed signal.
  * Pass 2 (antiphase only): flip smoothed signal around [min, max].
  * Pass 3: normalize.
  */
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points)
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index)
 {
     ConstantSignalFitnessVals result;
 
-    const size_t signal_size = signal.size();
+    const size_t total_size = signal.size();
+    const size_t use_size = total_size - start_index;
 
     std::vector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
-    smoothed_signal_to_fit.resize(signal_size);
+    smoothed_signal_to_fit.resize(use_size);
     std::vector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
-    normalized_signal_to_fit.resize(signal_size);
+    normalized_signal_to_fit.resize(use_size);
 
-    // Pass 1: causal running-average smooth + normalize using known [min_val, max_val]
+    // Pass 1: run rolling-average over stabilization prefix [0..start_index-1] without storing,
+    //         then compute smoothed+normalized over use portion [start_index..total_size-1].
+    // Since start_index >= avg_smooth_points, the window is full by start_index, so no warm-up
+    // sub-loop is needed inside the recorded portion.
     const double range = max_val - min_val;
     double running_sum = 0.0;
     double smoothed_min_val = GeneralConstants::DOUBLE_MAX;
     double smoothed_max_val = GeneralConstants::DOUBLE_MIN;
-    // First sub-loop: warm-up v_comp (window grows, no subtraction needed)
-    const size_t warm_up = std::min(avg_smooth_points, signal_size);
-    for (size_t i = 0; i < warm_up; i++)
-    {
+
+    // Pre-fill window: sum the avg_smooth_points values immediately before start_index.
+    // (Guaranteed valid since start_index >= avg_smooth_points.)
+    for (size_t i = start_index - avg_smooth_points; i < start_index; i++)
         running_sum += signal[i];
-        const double smoothed_val = running_sum / (i + 1);
-        smoothed_signal_to_fit[i] = smoothed_val;
-        normalized_signal_to_fit[i] = (signal[i] - min_val) / range;
-        if (smoothed_val < smoothed_min_val)
-            smoothed_min_val = smoothed_val;
-        if (smoothed_val > smoothed_max_val)
-            smoothed_max_val = smoothed_val;
-    }
-    // Second sub-loop: steady v_comp (window = avg_smooth_points, subtract oldest)
-    for (size_t i = warm_up; i < signal_size; i++)
+
+    // Main loop: record use portion [start_index..total_size-1] in steady state (no warm-up)
+    for (size_t i = start_index; i < total_size; i++)
     {
-        running_sum += signal[i];
+        const double sig_val = signal[i];
+
+        running_sum += sig_val;
         running_sum -= signal[i - avg_smooth_points];
         const double smoothed_val = running_sum / avg_smooth_points;
-        smoothed_signal_to_fit[i] = smoothed_val;
-        normalized_signal_to_fit[i] = (signal[i] - min_val) / range;
+        const size_t i_0_start = i - start_index;
+        smoothed_signal_to_fit[i_0_start] = smoothed_val;
+
+        normalized_signal_to_fit[i_0_start] = (sig_val - min_val) / range;
+
         if (smoothed_val < smoothed_min_val)
             smoothed_min_val = smoothed_val;
         if (smoothed_val > smoothed_max_val)
@@ -77,8 +82,8 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
     }
 
     // Precompute maximum possible v_comp distance for normalization:
-    //   max_v_comp_distance = signal_size * (max_smoothed_val - min_smoothed_val)
-    result.max_v_comp_distance = signal_size * (smoothed_max_val - smoothed_min_val);
+    //   max_v_comp_distance = use_size * (max_smoothed_val - min_smoothed_val)
+    result.max_v_comp_distance = use_size * (smoothed_max_val - smoothed_min_val);
 
     // Pass 2 (antiphase only): flip both signals
     if (!search_phase)
@@ -99,34 +104,32 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<doubl
 /*
  * Calculate fitness as distance-based scores between model/synapsis signals and the reference signal
  * Takes precomputed vals for the reference signal, raw model_signal, synapsis_signal
- * avg_smooth_points_model: smoothing window for the model signal (1 = no smoothing)
+ * model_signal layout: [avg_smooth_points_model seed values | use_size model voltages]
+ *   The seed is the last avg_smooth_points_model outer-loop model voltages from the stabilization
+ *   phase (chronologically ordered by calc_fitnesses). This pre-fills the rolling-average window
+ *   so that the comparison loop runs entirely in steady state (no warm-up sub-loop needed).
  * Returns the computed fitness score
  */
 double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, const std::vector<double> &model_signal, bool search_phase, const std::vector<double> &synapsis_signal, size_t avg_smooth_points_model)
 {
-    const size_t signal_size = model_signal.size();
-
-    // Compute v_comp_score on-the-fly using a causal running average of the model signal
-    // First sub-loop: warm-up v_comp (window grows, no subtraction needed)
-    double v_comp_dist = 0.0;
+    // Initialize running_sum from the seed prefix (chronologically ordered stab tail)
     double running_sum = 0.0;
+    for (size_t i = 0; i < avg_smooth_points_model; i++)
+        running_sum += model_signal[i];
+
+    const size_t use_size = synapsis_signal.size();
+
+    // Compute v_comp_score on-the-fly: steady loop, no warm-up needed
+    double v_comp_dist = 0.0;
     const std::vector<double> &living_smoothed_signal_to_fit = living_const_signal_fitness_vals.smoothed_signal_to_fit;
-    const size_t warm_up = std::min(avg_smooth_points_model, signal_size);
-    for (size_t i = 0; i < warm_up; i++)
+    for (size_t i = 0; i < use_size; i++)
     {
-        running_sum += model_signal[i];
-        const double smoothed_val = running_sum / (i + 1);
-        v_comp_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
-    }
-    // Second sub-loop: steady v_comp (window = avg_smooth_points_model, subtract oldest)
-    for (size_t i = warm_up; i < signal_size; i++)
-    {
-        running_sum += model_signal[i];
-        running_sum -= model_signal[i - avg_smooth_points_model];
+        running_sum += model_signal[i + avg_smooth_points_model];
+        running_sum -= model_signal[i];
         const double smoothed_val = running_sum / avg_smooth_points_model;
         v_comp_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
     }
-    const double v_comp_score = 1.0 - (v_comp_dist / living_const_signal_fitness_vals.max_v_comp_distance); // Normalize: max possible distance is (max-min)*signal_size
+    const double v_comp_score = 1.0 - (v_comp_dist / living_const_signal_fitness_vals.max_v_comp_distance); // Normalize: max possible distance is (max-min)*use_size
 
     // Compute vpre_i_comp_score: normalized distance between synapsis signal and reference signal_to_fit
     double syn_min = GeneralConstants::DOUBLE_MAX;
@@ -139,16 +142,17 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
             syn_max = syn_val;
     }
 
+    const size_t use_size = synapsis_signal.size();
     const std::vector<double> &living_norm_signal_to_fit = living_const_signal_fitness_vals.normalized_signal_to_fit;
     const double syn_range = syn_max - syn_min;
     double vpre_i_comp_dist = 0.0;
-    for (size_t i = 0; i < signal_size; i++)
+    for (size_t i = 0; i < use_size; i++)
     {
         const double norm_syn_val = (synapsis_signal[i] - syn_min) / syn_range;
         vpre_i_comp_dist += std::abs(living_norm_signal_to_fit[i] - norm_syn_val);
     }
-    // Normalize: max possible accumulated distance is 1.0 * signal_size (both signals in [0,1])
-    const double vpre_i_comp_score = 1.0 - (vpre_i_comp_dist / signal_size);
+    // Normalize: max possible accumulated distance is 1.0 * use_size (both signals in [0,1])
+    const double vpre_i_comp_score = 1.0 - (vpre_i_comp_dist / use_size);
 
     // Compute final weighted score
     const double final_score = (FitnessConfig::V_COMP_WEIGHT * v_comp_score) + (FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score);
@@ -163,7 +167,7 @@ double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal
 /*
  * Template function to calculate fitnesses for multiple parameter sets
  * Simulates the neural model with given parameters and computes fitness against precomputed vals
- * Parameters: synapsis, neurons, individuals, scaled_result, living_const_signal_fitness_vals, search_phase, buffers, reset_state_neur, get_v_neur, start_index, avg_smooth_points_model
+ * Parameters: synapsis, neurons, individuals, scaled_result, living_const_signal_fitness_vals, search_phase, buffers, reset_state_neur, get_v_neur, ind_start_index, signal_start_index, avg_smooth_points_model
  */
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
@@ -176,7 +180,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     std::vector<double> &synapsis_signal_buffer,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
-                    size_t start_index,
+                    size_t ind_start_index,
+                    size_t signal_start_index,
                     size_t avg_smooth_points_model)
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
@@ -187,7 +192,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const double *signal_data = scaled_result.signal.data();
     const double *interpolated_signal_data = scaled_result.interpolated_points.data();
 
-    for (size_t i = start_index; i < N; i++)
+    for (size_t i = ind_start_index; i < N; i++)
     {
         const ChemicalSynapsisParams &params = individuals[i].params;
 

@@ -55,7 +55,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     std::vector<double> &synapsis_signal_buffer,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
-                    size_t start_index,
+                    size_t ind_start_index,
                     size_t signal_start_index,
                     size_t avg_smooth_points_model);
 
