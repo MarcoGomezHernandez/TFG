@@ -13,10 +13,10 @@ namespace FitnessConfig
     static constexpr double VPOST_ISLOW_COMP_WEIGHT = 0.5;
 
     static constexpr double AVG_SMOOTH_POINTS_BURST_DIVISOR = 100;
+    static constexpr double FILTER_FC_POINTS_BURST_DIVISOR = 100;
 
     static constexpr size_t FILTER_PAD_LEN = 1000;
     static constexpr int BUTTERWORTH_ORDER = 4;
-    static constexpr double FILTER_FC_BURST_FRACTION = 0.5;
 }
 
 namespace FitnessConstants
@@ -26,7 +26,17 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_i, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow)
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(
+    const univector<double> &signal,
+    double min_val,
+    double max_val,
+    bool search_phase,
+    size_t avg_smooth_points,
+    size_t start_i,
+    double pts_burst_real,
+    SignalBuffers &buffers,
+    bool use_ifast,
+    bool use_islow)
 {
     ConstantSignalFitnessVals result;
 
@@ -59,7 +69,7 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double>
     result.max_v_comp_distance = use_size * (smoothed_max_val - smoothed_min_val);
 
     calc_ifast_islow_ref_signals(signal.slice(start_i, use_size),
-                                 result, fs, fc, buffers, use_ifast, use_islow);
+                                 result, pts_burst_real, buffers, use_ifast, use_islow);
 
     if (!search_phase)
     {
@@ -102,15 +112,18 @@ static double compute_norm_component_score_inplace(univector<double> &signal,
 
 static void calc_ifast_islow_ref_signals(const univector<double> &signal,
                                          ConstantSignalFitnessVals &result,
-                                         double fs, double fc,
+                                         double pts_burst_real,
                                          SignalBuffers &buffers,
                                          bool use_ifast, bool use_islow)
 {
+    const size_t use_size = signal.size();
+    const double fs = 1.0 / pts_burst_real;
+    const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
+
     univector<double> &padded = buffers.kfr_padded;
 
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
-    const size_t use_size = signal.size();
     const auto padded_seg_begin = padded.begin() + FILTER_PAD_LEN;
     const auto signal_begin = signal.cbegin();
     const auto signal_end = signal.cend();

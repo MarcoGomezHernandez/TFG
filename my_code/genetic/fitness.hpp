@@ -33,7 +33,16 @@ struct SignalBuffers
     univector<double> kfr_padded;
 };
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_i, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow);
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal,
+                                                         double min_val,
+                                                         double max_val,
+                                                         bool search_phase,
+                                                         size_t avg_smooth_points,
+                                                         size_t start_i,
+                                                         double pts_burst_real,
+                                                         SignalBuffers &buffers,
+                                                         bool use_ifast,
+                                                         bool use_islow);
 
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,

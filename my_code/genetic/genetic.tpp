@@ -366,9 +366,6 @@ Individual genetic(const std::string &csv_path,
     const size_t stabilization_points = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points);
     const size_t use_signal_size = total_signal_size - stabilization_points;
 
-    const double filter_fs = 1.0 / (scaled_result.dt * scaled_result.points_factor);
-    const double filter_fc = FitnessConfig::FILTER_FC_BURST_FRACTION * filter_fs / scaled_result.pts_burst_real;
-
     SignalBuffers buffers;
     buffers.model_signal.resize(avg_smooth_points + use_signal_size);
     buffers.synapsis_signal.resize(use_signal_size);
@@ -382,7 +379,7 @@ Individual genetic(const std::string &csv_path,
 
     const ConstantSignalFitnessVals living_const_signal_fitness_vals = calc_const_signal_fitness_vals(
         scaled_result.signal, model_min, model_max, search_phase,
-        avg_smooth_points, stabilization_points, filter_fs, filter_fc, buffers, use_ifast, use_islow);
+        avg_smooth_points, stabilization_points, scaled_result.pts_burst_real, buffers, use_ifast, use_islow);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
