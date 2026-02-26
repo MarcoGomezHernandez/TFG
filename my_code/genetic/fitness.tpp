@@ -40,22 +40,19 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(
 {
     ConstantSignalFitnessVals result;
 
-    const size_t use_size = signal.size() - start_i;
+    const size_t signal_size = signal.size();
+    const size_t use_size = signal_size - start_i;
 
     univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
 
-    const univector<double> signal_seg = signal.slice(start_i, use_size);
-
     double running_sum = sum(signal.slice(start_i - avg_smooth_points, avg_smooth_points));
 
-    for (size_t sig_i = start_i, res_i = 0; res_i < use_size; res_i++, sig_i++)
+    for (size_t i = start_i; i < signal_size; i++)
     {
-        const double sig_val = signal[sig_i];
-        running_sum += sig_val;
-        running_sum -= signal[sig_i - avg_smooth_points];
-        const double smoothed_val = running_sum / avg_smooth_points;
-        smoothed_signal_to_fit[res_i] = smoothed_val;
+        running_sum += signal[i];
+        running_sum -= signal[i - avg_smooth_points];
+        smoothed_signal_to_fit[i - start_i] = running_sum / avg_smooth_points;
     }
 
     double smoothed_min = minof(smoothed_signal_to_fit);
@@ -63,22 +60,24 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(
 
     result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
 
-    calc_ifast_islow_ref_signals(signal.slice(start_i, use_size),
-                                 result, pts_burst_real, buffers, use_ifast, use_islow);
+    const univector<double> signal_seg = signal.slice(start_i, use_size);
 
-    univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
+    univector<double> &norm_signal_to_fit = result.norm_signal_to_fit;
     if (use_ifast && use_islow)
     {
-        normalized_signal_to_fit.resize(use_size);
-        normalized_signal_to_fit = (signal_seg - min) / (max - min);
+        norm_signal_to_fit.resize(use_size);
+        norm_signal_to_fit = (signal_seg - min) / (max - min);
     }
+
+    calc_ifast_islow_ref_signals(signal_seg,
+                                 result, pts_burst_real, buffers, use_ifast, use_islow);
 
     if (!search_phase)
     {
         smoothed_signal_to_fit = smoothed_min + smoothed_max - smoothed_signal_to_fit;
 
         if (use_ifast && use_islow)
-            normalized_signal_to_fit = 1.0 - normalized_signal_to_fit;
+            norm_signal_to_fit = 1.0 - norm_signal_to_fit;
 
         if (use_islow)
         {
@@ -186,7 +185,7 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
     if (use_ifast && use_islow)
     {
         const univector<double> &living_norm_signal_to_fit =
-            living_const_signal_fitness_vals.normalized_signal_to_fit;
+            living_const_signal_fitness_vals.norm_signal_to_fit;
         const double vpre_i_comp_score =
             compute_norm_component_score_inplace(synapsis_signal,
                                                  living_norm_signal_to_fit);

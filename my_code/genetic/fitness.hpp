@@ -16,7 +16,7 @@ struct Individual
 
 struct ConstantSignalFitnessVals
 {
-    univector<double> normalized_signal_to_fit;
+    univector<double> norm_signal_to_fit;
     univector<double> smoothed_signal_to_fit;
     univector<double> norm_signal_to_fit_ifast;
     univector<double> norm_signal_to_fit_islow;
