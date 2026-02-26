@@ -84,15 +84,14 @@ void read_csv_column(kfr::univector<double> &data, const std::string &csv_path, 
     file.close();
 }
 
-double signal_period(double tiempo_observacion, const kfr::univector<double> &signal, size_t obs_points,
+double signal_period(double tiempo_observacion, const kfr::univector<double> &signal,
                      double th_up, double th_on)
 {
-    bool up = (signal[0] > th_up);
+    bool up = (signal.front() > th_up);
     double changes = 0.0;
 
-    for (size_t i = 0; i < obs_points; i++)
+    for (const double val : signal)
     {
-        double val = signal[i];
         if (!up && val > th_up)
         {
             changes++;
@@ -239,17 +238,9 @@ SignalStats ini_recibido(const kfr::univector<double> &signal, size_t obs_points
 
     SignalStats stats;
 
-    double max_abs = -DBL_MAX;
-    double min_abs = DBL_MAX;
-
-    for (size_t i = 0; i < obs_points; i++)
-    {
-        double val = signal[i];
-        if (val > max_abs)
-            max_abs = val;
-        if (val < min_abs)
-            min_abs = val;
-    }
+    const kfr::univector<double> obs_signal = signal.slice(0, obs_points);
+    const double max_abs = kfr::maxof(obs_signal);
+    const double min_abs = kfr::minof(obs_signal);
 
     stats.min_abs_real = min_abs;
     stats.max_abs_real = max_abs;
@@ -260,7 +251,7 @@ SignalStats ini_recibido(const kfr::univector<double> &signal, size_t obs_points
     stats.min_rel_real = min_rel_real;
     stats.max_rel_real = max_rel_real;
 
-    stats.period_signal = signal_period(observation_time_to_use, signal, obs_points, max_rel_real, min_rel_real);
+    stats.period_signal = signal_period(observation_time_to_use, obs_signal, max_rel_real, min_rel_real);
 
     return stats;
 }
@@ -364,10 +355,8 @@ ScaledSignalResult scale_signal(
         double min_window = DOUBLE_MAX;
         const double drift_aux_range = max_abs_real - min_abs_real;
 
-        for (size_t i = 0; i < signal_size; i++)
+        for (double &val : signal)
         {
-            double val = signal[i];
-
             if ((min_window > val) && (val > (min_abs_real - drift_aux_range)))
             {
                 min_window = val;
@@ -392,15 +381,12 @@ ScaledSignalResult scale_signal(
 
             drift_counter++;
 
-            signal[i] = val * scale_real_to_virtual + offset_real_to_virtual;
+            val = val * scale_real_to_virtual + offset_real_to_virtual;
         }
     }
     else
     {
-        for (size_t i = 0; i < signal_size; i++)
-        {
-            signal[i] = signal[i] * scale_real_to_virtual + offset_real_to_virtual;
-        }
+        signal = signal * scale_real_to_virtual + offset_real_to_virtual;
     }
 
     const size_t interpolated_size = (signal_size - 1) * (s_points - 1);
