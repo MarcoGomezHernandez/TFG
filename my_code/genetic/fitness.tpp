@@ -28,8 +28,8 @@ namespace FitnessConstants
 
 ConstantSignalFitnessVals calc_const_signal_fitness_vals(
     const univector<double> &signal,
-    double min_val,
-    double max_val,
+    double min,
+    double max,
     bool search_phase,
     size_t avg_smooth_points,
     size_t start_i,
@@ -44,13 +44,10 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(
 
     univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
-    univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
-    normalized_signal_to_fit.resize(use_size);
 
     const univector<double> signal_seg = signal.slice(start_i, use_size);
-    const univector<double> prefix_seg = signal.slice(start_i - avg_smooth_points, avg_smooth_points);
 
-    double running_sum = sum(prefix_seg);
+    double running_sum = sum(signal.slice(start_i - avg_smooth_points, avg_smooth_points));
 
     for (size_t sig_i = start_i, res_i = 0; res_i < use_size; res_i++, sig_i++)
     {
@@ -61,22 +58,27 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(
         smoothed_signal_to_fit[res_i] = smoothed_val;
     }
 
-    double smoothed_min_val = minof(smoothed_signal_to_fit);
-    double smoothed_max_val = maxof(smoothed_signal_to_fit);
+    double smoothed_min = minof(smoothed_signal_to_fit);
+    double smoothed_max = maxof(smoothed_signal_to_fit);
 
-    normalized_signal_to_fit = (signal_seg - min_val) / (max_val - min_val);
-
-    result.max_v_comp_distance = use_size * (smoothed_max_val - smoothed_min_val);
+    result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
 
     calc_ifast_islow_ref_signals(signal.slice(start_i, use_size),
                                  result, pts_burst_real, buffers, use_ifast, use_islow);
 
+    univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
+    if (use_ifast && use_islow)
+    {
+        normalized_signal_to_fit.resize(use_size);
+        normalized_signal_to_fit = (signal_seg - min) / (max - min);
+    }
+
     if (!search_phase)
     {
-        const double smoothed_flip_offset = smoothed_min_val + smoothed_max_val;
-        smoothed_signal_to_fit = smoothed_flip_offset - smoothed_signal_to_fit;
+        smoothed_signal_to_fit = smoothed_min + smoothed_max - smoothed_signal_to_fit;
 
-        normalized_signal_to_fit = 1.0 - normalized_signal_to_fit;
+        if (use_ifast && use_islow)
+            normalized_signal_to_fit = 1.0 - normalized_signal_to_fit;
 
         if (use_islow)
         {
