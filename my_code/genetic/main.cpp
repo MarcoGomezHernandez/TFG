@@ -22,14 +22,14 @@ int main(int argc, char *argv[])
     if (argc < 11)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_index> <csv_step> <start_time> <use_time> <stabilization_time> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
+                  << " <csv_path> <column_i> <csv_step> <start_time> <use_time> <stabilization_time> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
                   << std::endl;
         std::cerr << "  syn_component: 0=ifast  1=islow  2=both" << std::endl;
         return 1;
     }
 
     const std::string csv_path = argv[1];
-    const size_t column_index = static_cast<size_t>(std::atoi(argv[2]));
+    const size_t column_i = static_cast<size_t>(std::atoi(argv[2]));
     const double csv_step = std::atof(argv[3]);
     const double start_time = std::atof(argv[4]);
     const double use_time = std::atof(argv[5]);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     try
     {
         genetic<Integrator, NeuronType>(
-            csv_path, column_index, csv_step, start_time, use_time, stabilization_time,
+            csv_path, column_i, csv_step, start_time, use_time, stabilization_time,
             NumericIntegrator::RK4,
             NeuronModel::HINDMARSH_ROSE,
             search_phase,

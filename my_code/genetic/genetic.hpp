@@ -10,7 +10,7 @@ template <typename Integrator, typename NeuronType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
 Individual genetic(const std::string &csv_path,
-                   size_t column_index,
+                   size_t column_i,
                    double csv_step,
                    double start_time,
                    double use_time,

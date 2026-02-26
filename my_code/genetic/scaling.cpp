@@ -33,8 +33,8 @@ struct SignalStats
     double period_signal;
 };
 
-void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_index,
-                     size_t start_index, size_t num_points)
+void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_i,
+                     size_t start_i, size_t num_points)
 {
     std::ifstream file(csv_path);
 
@@ -45,16 +45,16 @@ void read_csv_column(univector<double> &data, const std::string &csv_path, size_
 
     data.reserve(num_points);
 
-    const size_t end_index = start_index + num_points;
+    const size_t end_i = start_i + num_points;
 
     std::string line;
     std::string val;
     std::stringstream ss;
     size_t current_line = 0;
 
-    while (current_line < end_index && std::getline(file, line))
+    while (current_line < end_i && std::getline(file, line))
     {
-        if (current_line >= start_index)
+        if (current_line >= start_i)
         {
             ss.str(line);
             ss.clear();
@@ -62,7 +62,7 @@ void read_csv_column(univector<double> &data, const std::string &csv_path, size_
 
             while (std::getline(ss, val, ','))
             {
-                if (current_col == column_index)
+                if (current_col == column_i)
                 {
                     data.push_back(std::stod(val));
                     break;
@@ -259,7 +259,7 @@ SignalStats ini_recibido(const univector<double> &signal, size_t obs_points, dou
 
 ScaledSignalResult scale_signal(
     const std::string &csv_path,
-    size_t column_index,
+    size_t column_i,
     double csv_step,
     double start_time,
     double use_time,
@@ -268,9 +268,9 @@ ScaledSignalResult scale_signal(
     NeuronModel model,
     bool check_drift)
 {
-    if (csv_step <= 0 || use_time <= 0 || observation_time <= 0 || start_time < 0 || column_index < 0 || csv_path.empty())
+    if (csv_step <= 0 || use_time <= 0 || observation_time <= 0 || start_time < 0 || column_i < 0 || csv_path.empty())
     {
-        throw std::runtime_error("Invalid arguments: csv_step, use_time, observation_time must be positive, start_time and column_index non-negative, csv_path non-empty");
+        throw std::runtime_error("Invalid arguments: csv_step, use_time, observation_time must be positive, start_time and column_i non-negative, csv_path non-empty");
     }
 
     ScaledSignalResult result;
@@ -278,7 +278,7 @@ ScaledSignalResult scale_signal(
     univector<double> &signal = result.signal;
     univector<double> &interpolated_points = result.interpolated_points;
 
-    const size_t start_index = static_cast<size_t>(start_time / csv_step);
+    const size_t start_i = static_cast<size_t>(start_time / csv_step);
     const size_t use_points = static_cast<size_t>(use_time / csv_step);
     if (use_points == 0)
     {
@@ -292,7 +292,7 @@ ScaledSignalResult scale_signal(
     }
     const size_t read_points = std::max(use_points, obs_points);
 
-    read_csv_column(signal, csv_path, column_index, start_index, read_points);
+    read_csv_column(signal, csv_path, column_i, start_i, read_points);
 
     size_t signal_size = signal.size();
     if (signal_size == 0)

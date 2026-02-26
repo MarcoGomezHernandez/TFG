@@ -316,7 +316,7 @@ template <typename Integrator, typename NeuronType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
 Individual genetic(const std::string &csv_path,
-                   size_t column_index,
+                   size_t column_i,
                    double csv_step,
                    double start_time,
                    double use_time,
@@ -336,7 +336,7 @@ Individual genetic(const std::string &csv_path,
     const double observation_time = use_time / GeneticConfig::OBSERVATION_TIME_DIVISOR;
 
     ScaledSignalResult scaled_result = scale_signal(
-        csv_path, column_index, csv_step, start_time, use_time + stabilization_time,
+        csv_path, column_i, csv_step, start_time, use_time + stabilization_time,
         observation_time, integrator, model, check_drift);
 
     if (!scaled_result.success)

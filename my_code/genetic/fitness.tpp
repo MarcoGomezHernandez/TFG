@@ -26,24 +26,24 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow)
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_i, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow)
 {
     ConstantSignalFitnessVals result;
 
-    const size_t use_size = signal.size() - start_index;
-    const size_t end_index = start_index + use_size;
+    const size_t use_size = signal.size() - start_i;
+    const size_t end_i = start_i + use_size;
 
     univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
     univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
     normalized_signal_to_fit.resize(use_size);
 
-    const univector<double> signal_seg = signal.slice(start_index, end_index);
-    const univector<double> prefix_seg = signal.slice(start_index - avg_smooth_points, start_index);
+    const univector<double> signal_seg = signal.slice(start_i, end_i);
+    const univector<double> prefix_seg = signal.slice(start_i - avg_smooth_points, start_i);
 
     double running_sum = sum(prefix_seg);
 
-    for (size_t sig_i = start_index, res_i = 0; res_i < use_size; res_i++, sig_i++)
+    for (size_t sig_i = start_i, res_i = 0; res_i < use_size; res_i++, sig_i++)
     {
         const double sig_val = signal[sig_i];
         running_sum += sig_val;
@@ -59,7 +59,7 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double>
 
     result.max_v_comp_distance = use_size * (smoothed_max_val - smoothed_min_val);
 
-    calc_ifast_islow_ref_signals(signal.slice(start_index, end_index),
+    calc_ifast_islow_ref_signals(signal.slice(start_i, end_i),
                                  result, fs, fc, buffers, use_ifast, use_islow);
 
     if (!search_phase)
@@ -219,8 +219,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     SignalBuffers &buffers,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
-                    size_t ind_start_index,
-                    size_t signal_start_index,
+                    size_t ind_start_i,
+                    size_t signal_start_i,
                     size_t avg_smooth_points,
                     bool use_ifast,
                     bool use_islow)
@@ -242,9 +242,9 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const double *signal_data = scaled_result.signal.data();
     const double *interpolated_signal_data = scaled_result.interpolated_points.data();
 
-    const size_t sig_start_minus_smoothed_avg_pts = signal_start_index - avg_smooth_points;
+    const size_t sig_start_minus_smoothed_avg_pts = signal_start_i - avg_smooth_points;
 
-    for (size_t i = ind_start_index; i < N; i++)
+    for (size_t i = ind_start_i; i < N; i++)
     {
         const ChemicalSynapsisParams &params = individuals[i].params;
 
@@ -279,7 +279,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         }
 
         size_t model_sig_i = 0;
-        for (; sig_i < signal_start_index; sig_i++, model_sig_i++)
+        for (; sig_i < signal_start_i; sig_i++, model_sig_i++)
         {
             const double v_neur = get_v_neur(model_neur);
             model_signal_buffer[model_sig_i] = v_neur;
