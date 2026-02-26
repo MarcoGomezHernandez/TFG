@@ -157,7 +157,7 @@ static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
     }
 }
 
-static double fitness_from_sigs(const ConstantSigFitnessVals &living_const_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
+static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
     const univector<double> &vpost_sig = buffers.vpost_sig;
     univector<double> &i_sig = buffers.i_sig;
@@ -169,26 +169,26 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &living_const_sig_f
     const size_t use_size = i_sig.size();
 
     double v_comp_dist = 0.0;
-    const univector<double> &living_smoothed_vpre_sig_to_fit = living_const_sig_fitness_vals.smoothed_vpre_sig_to_fit;
+    const univector<double> &smoothed_vpre_sig_to_fit = const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit;
     for (size_t i = 0; i < use_size; i++)
     {
         running_sum += vpost_sig[i + avg_smooth_points];
         running_sum -= vpost_sig[i];
         const double smoothed_val = running_sum / avg_smooth_points;
-        v_comp_dist += std::abs(living_smoothed_vpre_sig_to_fit[i] - smoothed_val);
+        v_comp_dist += std::abs(smoothed_vpre_sig_to_fit[i] - smoothed_val);
     }
-    const double v_comp_score = 1.0 - (v_comp_dist / living_const_sig_fitness_vals.max_v_comp_distance);
+    const double v_comp_score = 1.0 - (v_comp_dist / const_vpre_sig_fitness_vals.max_v_comp_distance);
 
     double weighted_sum = FitnessConfig::V_COMP_WEIGHT * v_comp_score;
     double total_weight = FitnessConfig::V_COMP_WEIGHT;
 
     if (use_ifast && use_islow)
     {
-        const univector<double> &living_norm_vpre_sig_to_fit =
-            living_const_sig_fitness_vals.norm_vpre_sig_to_fit;
+        const univector<double> &norm_vpre_sig_to_fit =
+            const_vpre_sig_fitness_vals.norm_vpre_sig_to_fit;
         const double vpre_i_comp_score =
             compute_norm_component_score_inplace(i_sig,
-                                                 living_norm_vpre_sig_to_fit);
+                                                 norm_vpre_sig_to_fit);
 
         weighted_sum += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
         total_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
@@ -198,7 +198,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &living_const_sig_f
     {
         const double vpost_ifast_comp_score =
             compute_norm_component_score_inplace(buffers.ifast_sig,
-                                                 living_const_sig_fitness_vals.norm_ifast_sig_to_fit);
+                                                 const_vpre_sig_fitness_vals.norm_ifast_sig_to_fit);
         weighted_sum += FitnessConfig::VPOST_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
         total_weight += FitnessConfig::VPOST_IFAST_COMP_WEIGHT;
     }
@@ -207,7 +207,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &living_const_sig_f
     {
         const double vpost_islow_comp_score =
             compute_norm_component_score_inplace(buffers.islow_sig,
-                                                 living_const_sig_fitness_vals.norm_islow_sig_to_fit);
+                                                 const_vpre_sig_fitness_vals.norm_islow_sig_to_fit);
         weighted_sum += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
         total_weight += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT;
     }
@@ -225,7 +225,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     NeuronType &model_neur,
                     std::array<Individual, N> &individuals,
                     const ScaledSigResult &scaled_result,
-                    const ConstantSigFitnessVals &living_const_sig_fitness_vals,
+                    const ConstantSigFitnessVals &const_vpre_sig_fitness_vals,
                     bool search_phase,
                     SigBuffers &buffers,
                     ResetStateFuncType reset_state_neur,
@@ -339,6 +339,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         if (use_islow)
             islow_sig_buffer[syn_sig_i] = synapsis.get(islow_enum);
 
-        individuals[i].fitness = fitness_from_sigs(living_const_sig_fitness_vals, search_phase, avg_smooth_points, use_ifast, use_islow, buffers);
+        individuals[i].fitness = fitness_from_sigs(const_vpre_sig_fitness_vals, search_phase, avg_smooth_points, use_ifast, use_islow, buffers);
     }
 }

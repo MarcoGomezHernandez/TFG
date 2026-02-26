@@ -233,15 +233,15 @@ inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, doub
     return factors;
 }
 
-SigStats ini_recibido(const univector<double> &vpre_sig, size_t obs_points, double csv_step)
+SigStats ini_recibido(const univector<double> &sig, size_t obs_points, double csv_step)
 {
     const double observation_time_to_use = obs_points * csv_step;
 
     SigStats stats;
 
-    const univector<double> obs_vpre_sig = vpre_sig.slice(0, obs_points);
-    const double max_abs = maxof(obs_vpre_sig);
-    const double min_abs = minof(obs_vpre_sig);
+    const univector<double> obs_sig = sig.slice(0, obs_points);
+    const double max_abs = maxof(obs_sig);
+    const double min_abs = minof(obs_sig);
 
     stats.min_abs_real = min_abs;
     stats.max_abs_real = max_abs;
@@ -252,7 +252,7 @@ SigStats ini_recibido(const univector<double> &vpre_sig, size_t obs_points, doub
     stats.min_rel_real = min_rel_real;
     stats.max_rel_real = max_rel_real;
 
-    stats.period_sig = sig_period(observation_time_to_use, obs_vpre_sig, max_rel_real, min_rel_real);
+    stats.period_sig = sig_period(observation_time_to_use, obs_sig, max_rel_real, min_rel_real);
 
     return stats;
 }
@@ -275,7 +275,7 @@ ScaledSigResult scale_sig(
 
     ScaledSigResult result;
 
-    univector<double> &vpre_sig = result.vpre_sig;
+    univector<double> &sig = result.sig;
     univector<double> &interpolated_points = result.interpolated_points;
 
     const size_t start_i = static_cast<size_t>(start_time / csv_step);
@@ -292,20 +292,20 @@ ScaledSigResult scale_sig(
     }
     const size_t read_points = std::max(use_points, obs_points);
 
-    read_csv_column(vpre_sig, csv_path, column_i, start_i, read_points);
+    read_csv_column(sig, csv_path, column_i, start_i, read_points);
 
-    size_t vpre_sig_size = vpre_sig.size();
-    if (vpre_sig_size == 0)
+    size_t sig_size = sig.size();
+    if (sig_size == 0)
     {
         throw std::runtime_error("No data read from CSV file");
     }
 
-    SigStats stats = ini_recibido(vpre_sig, obs_points, csv_step);
+    SigStats stats = ini_recibido(sig, obs_points, csv_step);
 
-    if (vpre_sig_size > use_points)
+    if (sig_size > use_points)
     {
-        vpre_sig.resize(use_points);
-        vpre_sig_size = use_points;
+        sig.resize(use_points);
+        sig_size = use_points;
     }
 
     const double external_pts_per_burst = stats.period_sig / csv_step;
@@ -326,7 +326,7 @@ ScaledSigResult scale_sig(
     if (!selection.success)
     {
         result.success = false;
-        vpre_sig.clear();
+        sig.clear();
         result.dt = SigConstants::INVALID_DT;
         return result;
     }
@@ -356,7 +356,7 @@ ScaledSigResult scale_sig(
         double min_window = DOUBLE_MAX;
         const double drift_aux_range = max_abs_real - min_abs_real;
 
-        for (double &val : vpre_sig)
+        for (double &val : sig)
         {
             if ((min_window > val) && (val > (min_abs_real - drift_aux_range)))
             {
@@ -387,18 +387,18 @@ ScaledSigResult scale_sig(
     }
     else
     {
-        vpre_sig = vpre_sig * scale_real_to_virtual + offset_real_to_virtual;
+        sig = sig * scale_real_to_virtual + offset_real_to_virtual;
     }
 
-    const size_t interpolated_size = (vpre_sig_size - 1) * (s_points - 1);
+    const size_t interpolated_size = (sig_size - 1) * (s_points - 1);
     interpolated_points.reserve(interpolated_size);
 
-    for (size_t i = 0; i < vpre_sig_size - 1; i++)
+    for (size_t i = 0; i < sig_size - 1; i++)
     {
         for (double j = 1.0; j < s_points; j++)
         {
             double alpha = j / s_points;
-            double interp_val = vpre_sig[i] + (alpha * (vpre_sig[i + 1] - vpre_sig[i]));
+            double interp_val = sig[i] + (alpha * (sig[i + 1] - sig[i]));
             interpolated_points.push_back(interp_val);
         }
     }

@@ -28,7 +28,7 @@ enum NeuronModel
 
 struct ScaledSigResult
 {
-    univector<double> vpre_sig;
+    univector<double> sig;
     univector<double> interpolated_points;
     size_t points_factor;
     double dt;

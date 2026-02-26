@@ -377,7 +377,7 @@ Individual genetic(const std::string &csv_path,
         buffers.islow_sig.resize(use_vpre_sig_size);
     buffers.kfr_padded.resize(use_vpre_sig_size + 2 * FitnessConfig::FILTER_PAD_LEN);
 
-    const ConstantSigFitnessVals living_const_sig_fitness_vals = calc_const_sig_fitness_vals(
+    const ConstantSigFitnessVals const_vpre_sig_fitness_vals = calc_const_sig_fitness_vals(
         scaled_result.vpre_sig, model_min, model_max, search_phase,
         avg_smooth_points, stabilization_points, scaled_result.pts_burst_real, buffers, use_ifast, use_islow);
 
@@ -406,7 +406,7 @@ Individual genetic(const std::string &csv_path,
 
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, *population_ptr, scaled_result,
-        living_const_sig_fitness_vals, search_phase, buffers,
+        const_vpre_sig_fitness_vals, search_phase, buffers,
         reset_state_neur, get_v_neur, 0, stabilization_points, avg_smooth_points,
         use_ifast, use_islow);
 
@@ -464,7 +464,7 @@ Individual genetic(const std::string &csv_path,
 
         calc_fitnesses<Integrator, NeuronType, POP>(
             synapsis, model_neur, *population_ptr, scaled_result,
-            living_const_sig_fitness_vals, search_phase, buffers,
+            const_vpre_sig_fitness_vals, search_phase, buffers,
             reset_state_neur, get_v_neur, ELITES, stabilization_points, avg_smooth_points,
             use_ifast, use_islow);
     }
