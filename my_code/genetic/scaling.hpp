@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <kfr/all.hpp>
+using namespace kfr;
 #include "utils.hpp"
 
 enum NumericIntegrator
@@ -27,8 +28,8 @@ enum NeuronModel
 
 struct ScaledSignalResult
 {
-    kfr::univector<double> signal;
-    kfr::univector<double> interpolated_points;
+    univector<double> signal;
+    univector<double> interpolated_points;
     size_t points_factor;
     double dt;
     double pts_burst_real;

@@ -1,5 +1,6 @@
 #include "scaling.hpp"
 #include <kfr/all.hpp>
+using namespace kfr;
 
 namespace SignalPrivateConfig
 {
@@ -32,7 +33,7 @@ struct SignalStats
     double period_signal;
 };
 
-void read_csv_column(kfr::univector<double> &data, const std::string &csv_path, size_t column_index,
+void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_index,
                      size_t start_index, size_t num_points)
 {
     std::ifstream file(csv_path);
@@ -84,7 +85,7 @@ void read_csv_column(kfr::univector<double> &data, const std::string &csv_path, 
     file.close();
 }
 
-double signal_period(double tiempo_observacion, const kfr::univector<double> &signal,
+double signal_period(double tiempo_observacion, const univector<double> &signal,
                      double th_up, double th_on)
 {
     bool up = (signal.front() > th_up);
@@ -232,15 +233,15 @@ inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, doub
     return factors;
 }
 
-SignalStats ini_recibido(const kfr::univector<double> &signal, size_t obs_points, double csv_step)
+SignalStats ini_recibido(const univector<double> &signal, size_t obs_points, double csv_step)
 {
     const double observation_time_to_use = obs_points * csv_step;
 
     SignalStats stats;
 
-    const kfr::univector<double> obs_signal = signal.slice(0, obs_points);
-    const double max_abs = kfr::maxof(obs_signal);
-    const double min_abs = kfr::minof(obs_signal);
+    const univector<double> obs_signal = signal.slice(0, obs_points);
+    const double max_abs = maxof(obs_signal);
+    const double min_abs = minof(obs_signal);
 
     stats.min_abs_real = min_abs;
     stats.max_abs_real = max_abs;
@@ -274,8 +275,8 @@ ScaledSignalResult scale_signal(
 
     ScaledSignalResult result;
 
-    kfr::univector<double> &signal = result.signal;
-    kfr::univector<double> &interpolated_points = result.interpolated_points;
+    univector<double> &signal = result.signal;
+    univector<double> &interpolated_points = result.interpolated_points;
 
     const size_t start_index = static_cast<size_t>(start_time / csv_step);
     const size_t use_points = static_cast<size_t>(use_time / csv_step);

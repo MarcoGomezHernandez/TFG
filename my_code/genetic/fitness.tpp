@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <kfr/all.hpp>
+using namespace kfr;
 
 namespace FitnessConfig
 {
@@ -25,25 +26,25 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const kfr::univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow)
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow)
 {
     ConstantSignalFitnessVals result;
 
     const size_t use_size = signal.size() - start_index;
 
-    kfr::univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
+    univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
-    kfr::univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
+    univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
     normalized_signal_to_fit.resize(use_size);
 
     double running_sum = 0.0;
     double smoothed_min_val = GeneralConstants::DOUBLE_MAX;
     double smoothed_max_val = GeneralConstants::DOUBLE_MIN;
 
-    const kfr::univector<double> signal_seg = signal.slice(start_index, start_index + use_size);
-    const kfr::univector<double> prefix_seg = signal.slice(start_index - avg_smooth_points, start_index);
+    const univector<double> signal_seg = signal.slice(start_index, start_index + use_size);
+    const univector<double> prefix_seg = signal.slice(start_index - avg_smooth_points, start_index);
 
-    running_sum = kfr::sum(prefix_seg);
+    running_sum = sum(prefix_seg);
 
     for (size_t sig_i = start_index, res_i = 0; res_i < use_size; res_i++, sig_i++)
     {
@@ -54,8 +55,8 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const kfr::univector<do
         smoothed_signal_to_fit[res_i] = smoothed_val;
     }
 
-    smoothed_min_val = kfr::minof(smoothed_signal_to_fit);
-    smoothed_max_val = kfr::maxof(smoothed_signal_to_fit);
+    smoothed_min_val = minof(smoothed_signal_to_fit);
+    smoothed_max_val = maxof(smoothed_signal_to_fit);
 
     normalized_signal_to_fit = (signal_seg - min_val) / (max_val - min_val);
 
@@ -72,12 +73,12 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const kfr::univector<do
 
         if (use_islow)
         {
-            kfr::univector<double> &norm_signal_to_fit_islow = result.norm_signal_to_fit_islow;
+            univector<double> &norm_signal_to_fit_islow = result.norm_signal_to_fit_islow;
             norm_signal_to_fit_islow = 1.0 - norm_signal_to_fit_islow;
         }
         if (use_ifast)
         {
-            kfr::univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
+            univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
             norm_signal_to_fit_ifast = 1.0 - norm_signal_to_fit_ifast;
         }
     }
@@ -85,37 +86,37 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const kfr::univector<do
     return result;
 }
 
-static void normalize_inplace(kfr::univector<double> &signal)
+static void normalize_inplace(univector<double> &signal)
 {
-    const double sig_min = kfr::minof(signal);
-    const double sig_max = kfr::maxof(signal);
+    const double sig_min = minof(signal);
+    const double sig_max = maxof(signal);
 
     signal = (signal - sig_min) / (sig_max - sig_min);
 }
 
-static double compute_norm_component_score(const kfr::univector<double> &signal,
-                                           const kfr::univector<double> &ref_norm)
+static double compute_norm_component_score(const univector<double> &signal,
+                                           const univector<double> &ref_norm)
 {
     const size_t use_size = signal.size();
 
-    const double min_val = kfr::minof(signal);
-    const double max_val = kfr::maxof(signal);
+    const double min_val = minof(signal);
+    const double max_val = maxof(signal);
 
-    kfr::univector<double> norm = (signal - min_val) / (max_val - min_val);
+    univector<double> norm = (signal - min_val) / (max_val - min_val);
 
-    const double comp_dist = kfr::sum(kfr::abs(ref_norm - norm));
+    const double comp_dist = sum(abs(ref_norm - norm));
 
     return 1.0 - (comp_dist / use_size);
 }
 
-static void calc_ifast_islow_ref_signals(const kfr::univector<double> &signal,
+static void calc_ifast_islow_ref_signals(const univector<double> &signal,
                                          size_t start_index, size_t use_size,
                                          ConstantSignalFitnessVals &result,
                                          double fs, double fc,
                                          SignalBuffers &buffers,
                                          bool use_ifast, bool use_islow)
 {
-    kfr::univector<double> &padded = buffers.kfr_padded;
+    univector<double> &padded = buffers.kfr_padded;
 
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
@@ -130,12 +131,12 @@ static void calc_ifast_islow_ref_signals(const kfr::univector<double> &signal,
         padded[use_size + FILTER_PAD_LEN + i] = signal_seg_begin[use_size - 2 - i];
     }
 
-    kfr::filtfilt(padded, kfr::to_sos<double>(kfr::iir_lowpass(
-                              kfr::butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
+    filtfilt(padded, to_sos<double>(iir_lowpass(
+                              butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
 
     if (use_islow)
     {
-        kfr::univector<double> &norm_signal_to_fit_islow = result.norm_signal_to_fit_islow;
+        univector<double> &norm_signal_to_fit_islow = result.norm_signal_to_fit_islow;
         norm_signal_to_fit_islow.resize(use_size);
         std::copy(padded_seg_begin, padded_seg_begin + use_size, norm_signal_to_fit_islow.begin());
         normalize_inplace(norm_signal_to_fit_islow);
@@ -143,7 +144,7 @@ static void calc_ifast_islow_ref_signals(const kfr::univector<double> &signal,
 
     if (use_ifast)
     {
-        kfr::univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
+        univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
         norm_signal_to_fit_ifast.resize(use_size);
         std::copy(signal_seg_begin, signal_seg_end, norm_signal_to_fit_ifast.begin());
         norm_signal_to_fit_ifast -= padded.slice(FILTER_PAD_LEN, FILTER_PAD_LEN + use_size);
@@ -153,8 +154,8 @@ static void calc_ifast_islow_ref_signals(const kfr::univector<double> &signal,
 
 static double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, const SignalBuffers &buffers)
 {
-    const kfr::univector<double> &model_signal = buffers.model_signal;
-    const kfr::univector<double> &synapsis_signal = buffers.synapsis_signal;
+    const univector<double> &model_signal = buffers.model_signal;
+    const univector<double> &synapsis_signal = buffers.synapsis_signal;
 
     double running_sum = 0.0;
     for (size_t i = 0; i < avg_smooth_points; i++)
@@ -163,7 +164,7 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
     const size_t use_size = synapsis_signal.size();
 
     double v_comp_dist = 0.0;
-    const kfr::univector<double> &living_smoothed_signal_to_fit = living_const_signal_fitness_vals.smoothed_signal_to_fit;
+    const univector<double> &living_smoothed_signal_to_fit = living_const_signal_fitness_vals.smoothed_signal_to_fit;
     for (size_t i = 0; i < use_size; i++)
     {
         running_sum += model_signal[i + avg_smooth_points];
@@ -178,7 +179,7 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
 
     if (use_ifast && use_islow)
     {
-        const kfr::univector<double> &living_norm_signal_to_fit =
+        const univector<double> &living_norm_signal_to_fit =
             living_const_signal_fitness_vals.normalized_signal_to_fit;
         const double vpre_i_comp_score =
             compute_norm_component_score(buffers.synapsis_signal,
@@ -236,10 +237,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     constexpr auto ifast_enum = ChemicalSynapsisType::ifast;
     constexpr auto islow_enum = ChemicalSynapsisType::islow;
 
-    kfr::univector<double> &model_signal_buffer = buffers.model_signal;
-    kfr::univector<double> &synapsis_signal_buffer = buffers.synapsis_signal;
-    kfr::univector<double> &ifast_signal_buffer = buffers.ifast_signal;
-    kfr::univector<double> &islow_signal_buffer = buffers.islow_signal;
+    univector<double> &model_signal_buffer = buffers.model_signal;
+    univector<double> &synapsis_signal_buffer = buffers.synapsis_signal;
+    univector<double> &ifast_signal_buffer = buffers.ifast_signal;
+    univector<double> &islow_signal_buffer = buffers.islow_signal;
 
     const size_t total_size = scaled_result.signal.size();
     const size_t points_factor = scaled_result.points_factor;

@@ -3,6 +3,7 @@
 
 #include <array>
 #include <kfr/all.hpp>
+using namespace kfr;
 #include <ChemicalSynapsis.h>
 #include "utils.hpp"
 #include "scaling.hpp"
@@ -15,24 +16,24 @@ struct Individual
 
 struct ConstantSignalFitnessVals
 {
-    kfr::univector<double> normalized_signal_to_fit;
-    kfr::univector<double> smoothed_signal_to_fit;
-    kfr::univector<double> norm_signal_to_fit_ifast;
-    kfr::univector<double> norm_signal_to_fit_islow;
+    univector<double> normalized_signal_to_fit;
+    univector<double> smoothed_signal_to_fit;
+    univector<double> norm_signal_to_fit_ifast;
+    univector<double> norm_signal_to_fit_islow;
     double max_v_comp_distance;
 };
 
 struct SignalBuffers
 {
-    kfr::univector<double> model_signal;
-    kfr::univector<double> synapsis_signal;
-    kfr::univector<double> ifast_signal;
-    kfr::univector<double> islow_signal;
+    univector<double> model_signal;
+    univector<double> synapsis_signal;
+    univector<double> ifast_signal;
+    univector<double> islow_signal;
 
-    kfr::univector<double> kfr_padded;
+    univector<double> kfr_padded;
 };
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const kfr::univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow);
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow);
 
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
