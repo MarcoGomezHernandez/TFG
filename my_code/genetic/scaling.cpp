@@ -2,7 +2,7 @@
 #include <kfr/all.hpp>
 using namespace kfr;
 
-namespace SignalPrivateConfig
+namespace SigPrivateConfig
 {
     static constexpr double DT_SELECTION_TOLERANCE = 0.1;
 
@@ -24,13 +24,13 @@ struct DTSelection
     bool success;
 };
 
-struct SignalStats
+struct SigStats
 {
     double min_abs_real;
     double max_abs_real;
     double min_rel_real;
     double max_rel_real;
-    double period_signal;
+    double period_sig;
 };
 
 void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_i,
@@ -85,13 +85,13 @@ void read_csv_column(univector<double> &data, const std::string &csv_path, size_
     file.close();
 }
 
-double signal_period(double tiempo_observacion, const univector<double> &signal,
+double sig_period(double tiempo_observacion, const univector<double> &sig,
                      double th_up, double th_on)
 {
-    bool up = (signal.front() > th_up);
+    bool up = (sig.front() > th_up);
     double changes = 0.0;
 
-    for (const double val : signal)
+    for (const double val : sig)
     {
         if (!up && val > th_up)
         {
@@ -131,10 +131,10 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     double intpart, fractpart;
     bool flag = false;
 
-    constexpr double INVALID_DT = SignalConstants::INVALID_DT;
+    constexpr double INVALID_DT = SigConstants::INVALID_DT;
 
     double dt_candidate = INVALID_DT;
-    double pts_burst_candidate = SignalConstants::INVALID_PTS;
+    double pts_burst_candidate = SigConstants::INVALID_PTS;
 
     while (aux < pts[0])
     {
@@ -150,7 +150,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
 
                 fractpart = std::modf(pts_burst_candidate / pts_live, &intpart);
 
-                if (fractpart <= SignalPrivateConfig::DT_SELECTION_TOLERANCE * intpart)
+                if (fractpart <= SigPrivateConfig::DT_SELECTION_TOLERANCE * intpart)
                 {
                     flag = true;
                 }
@@ -205,12 +205,12 @@ inline DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator
     }
 }
 
-inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SignalStats &stats)
+inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SigStats &stats)
 {
     ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
 
-    constexpr double DRIFT_PERCENTAGE_MIN = SignalPrivateConfig::DRIFT_PERCENTAGE_MIN;
-    constexpr double DRIFT_PERCENTAGE_MAX = SignalPrivateConfig::DRIFT_PERCENTAGE_MAX;
+    constexpr double DRIFT_PERCENTAGE_MIN = SigPrivateConfig::DRIFT_PERCENTAGE_MIN;
+    constexpr double DRIFT_PERCENTAGE_MAX = SigPrivateConfig::DRIFT_PERCENTAGE_MAX;
 
     if (min_window > 0)
     {
@@ -233,31 +233,31 @@ inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, doub
     return factors;
 }
 
-SignalStats ini_recibido(const univector<double> &signal, size_t obs_points, double csv_step)
+SigStats ini_recibido(const univector<double> &vpre_sig, size_t obs_points, double csv_step)
 {
     const double observation_time_to_use = obs_points * csv_step;
 
-    SignalStats stats;
+    SigStats stats;
 
-    const univector<double> obs_signal = signal.slice(0, obs_points);
-    const double max_abs = maxof(obs_signal);
-    const double min_abs = minof(obs_signal);
+    const univector<double> obs_vpre_sig = vpre_sig.slice(0, obs_points);
+    const double max_abs = maxof(obs_vpre_sig);
+    const double min_abs = minof(obs_vpre_sig);
 
     stats.min_abs_real = min_abs;
     stats.max_abs_real = max_abs;
 
     const double range = max_abs - min_abs;
-    const double min_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_abs;
-    const double max_rel_real = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_abs;
+    const double min_rel_real = SigPublicConfig::SIG_PERCENTAGE_MIN * range + min_abs;
+    const double max_rel_real = SigPublicConfig::SIG_PERCENTAGE_MAX * range + min_abs;
     stats.min_rel_real = min_rel_real;
     stats.max_rel_real = max_rel_real;
 
-    stats.period_signal = signal_period(observation_time_to_use, obs_signal, max_rel_real, min_rel_real);
+    stats.period_sig = sig_period(observation_time_to_use, obs_vpre_sig, max_rel_real, min_rel_real);
 
     return stats;
 }
 
-ScaledSignalResult scale_signal(
+ScaledSigResult scale_sig(
     const std::string &csv_path,
     size_t column_i,
     double csv_step,
@@ -273,9 +273,9 @@ ScaledSignalResult scale_signal(
         throw std::runtime_error("Invalid arguments: csv_step, use_time, observation_time must be positive, start_time and column_i non-negative, csv_path non-empty");
     }
 
-    ScaledSignalResult result;
+    ScaledSigResult result;
 
-    univector<double> &signal = result.signal;
+    univector<double> &vpre_sig = result.vpre_sig;
     univector<double> &interpolated_points = result.interpolated_points;
 
     const size_t start_i = static_cast<size_t>(start_time / csv_step);
@@ -292,23 +292,23 @@ ScaledSignalResult scale_signal(
     }
     const size_t read_points = std::max(use_points, obs_points);
 
-    read_csv_column(signal, csv_path, column_i, start_i, read_points);
+    read_csv_column(vpre_sig, csv_path, column_i, start_i, read_points);
 
-    size_t signal_size = signal.size();
-    if (signal_size == 0)
+    size_t vpre_sig_size = vpre_sig.size();
+    if (vpre_sig_size == 0)
     {
         throw std::runtime_error("No data read from CSV file");
     }
 
-    SignalStats stats = ini_recibido(signal, obs_points, csv_step);
+    SigStats stats = ini_recibido(vpre_sig, obs_points, csv_step);
 
-    if (signal_size > use_points)
+    if (vpre_sig_size > use_points)
     {
-        signal.resize(use_points);
-        signal_size = use_points;
+        vpre_sig.resize(use_points);
+        vpre_sig_size = use_points;
     }
 
-    const double external_pts_per_burst = stats.period_signal / csv_step;
+    const double external_pts_per_burst = stats.period_sig / csv_step;
 
     DTSelection selection;
     double min_abs_model, max_abs_model;
@@ -326,8 +326,8 @@ ScaledSignalResult scale_signal(
     if (!selection.success)
     {
         result.success = false;
-        signal.clear();
-        result.dt = SignalConstants::INVALID_DT;
+        vpre_sig.clear();
+        result.dt = SigConstants::INVALID_DT;
         return result;
     }
 
@@ -356,7 +356,7 @@ ScaledSignalResult scale_signal(
         double min_window = DOUBLE_MAX;
         const double drift_aux_range = max_abs_real - min_abs_real;
 
-        for (double &val : signal)
+        for (double &val : vpre_sig)
         {
             if ((min_window > val) && (val > (min_abs_real - drift_aux_range)))
             {
@@ -367,7 +367,7 @@ ScaledSignalResult scale_signal(
                 max_window = val;
             }
 
-            if (drift_counter >= (SignalPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
+            if (drift_counter >= (SigPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
                 max_window != DOUBLE_MIN && min_window != DOUBLE_MAX)
             {
                 drift_counter = 0;
@@ -387,18 +387,18 @@ ScaledSignalResult scale_signal(
     }
     else
     {
-        signal = signal * scale_real_to_virtual + offset_real_to_virtual;
+        vpre_sig = vpre_sig * scale_real_to_virtual + offset_real_to_virtual;
     }
 
-    const size_t interpolated_size = (signal_size - 1) * (s_points - 1);
+    const size_t interpolated_size = (vpre_sig_size - 1) * (s_points - 1);
     interpolated_points.reserve(interpolated_size);
 
-    for (size_t i = 0; i < signal_size - 1; i++)
+    for (size_t i = 0; i < vpre_sig_size - 1; i++)
     {
         for (double j = 1.0; j < s_points; j++)
         {
             double alpha = j / s_points;
-            double interp_val = signal[i] + (alpha * (signal[i + 1] - signal[i]));
+            double interp_val = vpre_sig[i] + (alpha * (vpre_sig[i + 1] - vpre_sig[i]));
             interpolated_points.push_back(interp_val);
         }
     }

@@ -26,9 +26,9 @@ enum NeuronModel
     HINDMARSH_ROSE
 };
 
-struct ScaledSignalResult
+struct ScaledSigResult
 {
-    univector<double> signal;
+    univector<double> vpre_sig;
     univector<double> interpolated_points;
     size_t points_factor;
     double dt;
@@ -36,7 +36,7 @@ struct ScaledSignalResult
     bool success;
 };
 
-ScaledSignalResult scale_signal(
+ScaledSigResult scale_sig(
     const std::string &csv_path,
     size_t column_i,
     double csv_step,

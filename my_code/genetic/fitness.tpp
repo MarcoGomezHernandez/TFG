@@ -26,98 +26,98 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(
-    const univector<double> &signal,
+ConstantSigFitnessVals calc_const_sig_fitness_vals(
+    const univector<double> &vpre_sig,
     double min,
     double max,
     bool search_phase,
     size_t avg_smooth_points,
     size_t start_i,
     double pts_burst_real,
-    SignalBuffers &buffers,
+    SigBuffers &buffers,
     bool use_ifast,
     bool use_islow)
 {
-    ConstantSignalFitnessVals result;
+    ConstantSigFitnessVals result;
 
-    const size_t signal_size = signal.size();
-    const size_t use_size = signal_size - start_i;
+    const size_t vpre_sig_size = vpre_sig.size();
+    const size_t use_size = vpre_sig_size - start_i;
 
-    univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
-    smoothed_signal_to_fit.resize(use_size);
+    univector<double> &smoothed_vpre_sig_to_fit = result.smoothed_vpre_sig_to_fit;
+    smoothed_vpre_sig_to_fit.resize(use_size);
 
-    double running_sum = sum(signal.slice(start_i - avg_smooth_points, avg_smooth_points));
+    double running_sum = sum(vpre_sig.slice(start_i - avg_smooth_points, avg_smooth_points));
 
-    for (size_t i = start_i; i < signal_size; i++)
+    for (size_t i = start_i; i < vpre_sig_size; i++)
     {
-        running_sum += signal[i];
-        running_sum -= signal[i - avg_smooth_points];
-        smoothed_signal_to_fit[i - start_i] = running_sum / avg_smooth_points;
+        running_sum += vpre_sig[i];
+        running_sum -= vpre_sig[i - avg_smooth_points];
+        smoothed_vpre_sig_to_fit[i - start_i] = running_sum / avg_smooth_points;
     }
 
-    double smoothed_min = minof(smoothed_signal_to_fit);
-    double smoothed_max = maxof(smoothed_signal_to_fit);
+    double smoothed_min = minof(smoothed_vpre_sig_to_fit);
+    double smoothed_max = maxof(smoothed_vpre_sig_to_fit);
 
     result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
 
-    const univector<double> signal_seg = signal.slice(start_i, use_size);
+    const univector<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
 
-    univector<double> &norm_signal_to_fit = result.norm_signal_to_fit;
+    univector<double> &norm_vpre_sig_to_fit = result.norm_vpre_sig_to_fit;
     if (use_ifast && use_islow)
     {
-        norm_signal_to_fit.resize(use_size);
-        norm_signal_to_fit = (signal_seg - min) / (max - min);
+        norm_vpre_sig_to_fit.resize(use_size);
+        norm_vpre_sig_to_fit = (vpre_sig_seg - min) / (max - min);
     }
 
-    calc_ifast_islow_ref_signals(signal_seg,
+    calc_ifast_islow_ref_sigs(vpre_sig_seg,
                                  result, pts_burst_real, buffers, use_ifast, use_islow);
 
     if (!search_phase)
     {
-        smoothed_signal_to_fit = smoothed_min + smoothed_max - smoothed_signal_to_fit;
+        smoothed_vpre_sig_to_fit = smoothed_min + smoothed_max - smoothed_vpre_sig_to_fit;
 
         if (use_ifast && use_islow)
-            norm_signal_to_fit = 1.0 - norm_signal_to_fit;
+            norm_vpre_sig_to_fit = 1.0 - norm_vpre_sig_to_fit;
 
         if (use_islow)
         {
-            univector<double> &norm_signal_to_fit_islow = result.norm_signal_to_fit_islow;
-            norm_signal_to_fit_islow = 1.0 - norm_signal_to_fit_islow;
+            univector<double> &norm_islow_sig_to_fit = result.norm_islow_sig_to_fit;
+            norm_islow_sig_to_fit = 1.0 - norm_islow_sig_to_fit;
         }
         if (use_ifast)
         {
-            univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
-            norm_signal_to_fit_ifast = 1.0 - norm_signal_to_fit_ifast;
+            univector<double> &norm_ifast_sig_to_fit = result.norm_ifast_sig_to_fit;
+            norm_ifast_sig_to_fit = 1.0 - norm_ifast_sig_to_fit;
         }
     }
 
     return result;
 }
 
-static void normalize_inplace(univector<double> &signal)
+static void normalize_inplace(univector<double> &sig)
 {
-    const double sig_min = minof(signal);
-    const double sig_max = maxof(signal);
+    const double sig_min = minof(sig);
+    const double sig_max = maxof(sig);
 
-    signal = (signal - sig_min) / (sig_max - sig_min);
+    sig = (sig - sig_min) / (sig_max - sig_min);
 }
 
-static double compute_norm_component_score_inplace(univector<double> &signal,
+static double compute_norm_component_score_inplace(univector<double> &sig,
                                                    const univector<double> &ref_norm)
 {
-    normalize_inplace(signal);
+    normalize_inplace(sig);
 
-    const double comp_dist = sum(abs(ref_norm - signal));
-    return 1.0 - (comp_dist / signal.size());
+    const double comp_dist = sum(abs(ref_norm - sig));
+    return 1.0 - (comp_dist / sig.size());
 }
 
-static void calc_ifast_islow_ref_signals(const univector<double> &signal,
-                                         ConstantSignalFitnessVals &result,
+static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
+                                         ConstantSigFitnessVals &result,
                                          double pts_burst_real,
-                                         SignalBuffers &buffers,
+                                         SigBuffers &buffers,
                                          bool use_ifast, bool use_islow)
 {
-    const size_t use_size = signal.size();
+    const size_t use_size = vpre_sig.size();
     const double fs = 1.0 / pts_burst_real;
     const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
 
@@ -126,14 +126,14 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
     const auto padded_seg_begin = padded.begin() + FILTER_PAD_LEN;
-    const auto signal_begin = signal.cbegin();
-    const auto signal_end = signal.cend();
+    const auto vpre_sig_begin = vpre_sig.cbegin();
+    const auto vpre_sig_end = vpre_sig.cend();
 
-    std::copy(signal_begin, signal_end, padded_seg_begin);
+    std::copy(vpre_sig_begin, vpre_sig_end, padded_seg_begin);
     for (size_t i = 0; i < FILTER_PAD_LEN; i++)
     {
-        padded[FILTER_PAD_LEN - 1 - i] = signal[i + 1];
-        padded[use_size + FILTER_PAD_LEN + i] = signal[use_size - 2 - i];
+        padded[FILTER_PAD_LEN - 1 - i] = vpre_sig[i + 1];
+        padded[use_size + FILTER_PAD_LEN + i] = vpre_sig[use_size - 2 - i];
     }
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
@@ -141,54 +141,54 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
 
     if (use_islow)
     {
-        univector<double> &norm_signal_to_fit_islow = result.norm_signal_to_fit_islow;
-        norm_signal_to_fit_islow.resize(use_size);
-        std::copy(padded_seg_begin, padded_seg_begin + use_size, norm_signal_to_fit_islow.begin());
-        normalize_inplace(norm_signal_to_fit_islow);
+        univector<double> &norm_islow_sig_to_fit = result.norm_islow_sig_to_fit;
+        norm_islow_sig_to_fit.resize(use_size);
+        std::copy(padded_seg_begin, padded_seg_begin + use_size, norm_islow_sig_to_fit.begin());
+        normalize_inplace(norm_islow_sig_to_fit);
     }
 
     if (use_ifast)
     {
-        univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
-        norm_signal_to_fit_ifast.resize(use_size);
-        std::copy(signal_begin, signal_end, norm_signal_to_fit_ifast.begin());
-        norm_signal_to_fit_ifast -= padded.slice(FILTER_PAD_LEN, use_size);
-        normalize_inplace(norm_signal_to_fit_ifast);
+        univector<double> &norm_ifast_sig_to_fit = result.norm_ifast_sig_to_fit;
+        norm_ifast_sig_to_fit.resize(use_size);
+        std::copy(vpre_sig_begin, vpre_sig_end, norm_ifast_sig_to_fit.begin());
+        norm_ifast_sig_to_fit -= padded.slice(FILTER_PAD_LEN, use_size);
+        normalize_inplace(norm_ifast_sig_to_fit);
     }
 }
 
-static double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SignalBuffers &buffers)
+static double fitness_from_sigs(const ConstantSigFitnessVals &living_const_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
-    const univector<double> &model_signal = buffers.model_signal;
-    univector<double> &synapsis_signal = buffers.synapsis_signal;
+    const univector<double> &vpost_sig = buffers.vpost_sig;
+    univector<double> &i_sig = buffers.i_sig;
 
     double running_sum = 0.0;
     for (size_t i = 0; i < avg_smooth_points; i++)
-        running_sum += model_signal[i];
+        running_sum += vpost_sig[i];
 
-    const size_t use_size = synapsis_signal.size();
+    const size_t use_size = i_sig.size();
 
     double v_comp_dist = 0.0;
-    const univector<double> &living_smoothed_signal_to_fit = living_const_signal_fitness_vals.smoothed_signal_to_fit;
+    const univector<double> &living_smoothed_vpre_sig_to_fit = living_const_sig_fitness_vals.smoothed_vpre_sig_to_fit;
     for (size_t i = 0; i < use_size; i++)
     {
-        running_sum += model_signal[i + avg_smooth_points];
-        running_sum -= model_signal[i];
+        running_sum += vpost_sig[i + avg_smooth_points];
+        running_sum -= vpost_sig[i];
         const double smoothed_val = running_sum / avg_smooth_points;
-        v_comp_dist += std::abs(living_smoothed_signal_to_fit[i] - smoothed_val);
+        v_comp_dist += std::abs(living_smoothed_vpre_sig_to_fit[i] - smoothed_val);
     }
-    const double v_comp_score = 1.0 - (v_comp_dist / living_const_signal_fitness_vals.max_v_comp_distance);
+    const double v_comp_score = 1.0 - (v_comp_dist / living_const_sig_fitness_vals.max_v_comp_distance);
 
     double weighted_sum = FitnessConfig::V_COMP_WEIGHT * v_comp_score;
     double total_weight = FitnessConfig::V_COMP_WEIGHT;
 
     if (use_ifast && use_islow)
     {
-        const univector<double> &living_norm_signal_to_fit =
-            living_const_signal_fitness_vals.norm_signal_to_fit;
+        const univector<double> &living_norm_vpre_sig_to_fit =
+            living_const_sig_fitness_vals.norm_vpre_sig_to_fit;
         const double vpre_i_comp_score =
-            compute_norm_component_score_inplace(synapsis_signal,
-                                                 living_norm_signal_to_fit);
+            compute_norm_component_score_inplace(i_sig,
+                                                 living_norm_vpre_sig_to_fit);
 
         weighted_sum += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
         total_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
@@ -197,8 +197,8 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
     if (use_ifast)
     {
         const double vpost_ifast_comp_score =
-            compute_norm_component_score_inplace(buffers.ifast_signal,
-                                                 living_const_signal_fitness_vals.norm_signal_to_fit_ifast);
+            compute_norm_component_score_inplace(buffers.ifast_sig,
+                                                 living_const_sig_fitness_vals.norm_ifast_sig_to_fit);
         weighted_sum += FitnessConfig::VPOST_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
         total_weight += FitnessConfig::VPOST_IFAST_COMP_WEIGHT;
     }
@@ -206,8 +206,8 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
     if (use_islow)
     {
         const double vpost_islow_comp_score =
-            compute_norm_component_score_inplace(buffers.islow_signal,
-                                                 living_const_signal_fitness_vals.norm_signal_to_fit_islow);
+            compute_norm_component_score_inplace(buffers.islow_sig,
+                                                 living_const_sig_fitness_vals.norm_islow_sig_to_fit);
         weighted_sum += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
         total_weight += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT;
     }
@@ -224,14 +224,14 @@ template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<Neu
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
                     std::array<Individual, N> &individuals,
-                    const ScaledSignalResult &scaled_result,
-                    const ConstantSignalFitnessVals &living_const_signal_fitness_vals,
+                    const ScaledSigResult &scaled_result,
+                    const ConstantSigFitnessVals &living_const_sig_fitness_vals,
                     bool search_phase,
-                    SignalBuffers &buffers,
+                    SigBuffers &buffers,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
                     size_t ind_start_i,
-                    size_t signal_start_i,
+                    size_t vpre_sig_start_i,
                     size_t avg_smooth_points,
                     bool use_ifast,
                     bool use_islow)
@@ -242,18 +242,18 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     constexpr auto ifast_enum = ChemicalSynapsisType::ifast;
     constexpr auto islow_enum = ChemicalSynapsisType::islow;
 
-    univector<double> &model_signal_buffer = buffers.model_signal;
-    univector<double> &synapsis_signal_buffer = buffers.synapsis_signal;
-    univector<double> &ifast_signal_buffer = buffers.ifast_signal;
-    univector<double> &islow_signal_buffer = buffers.islow_signal;
+    univector<double> &vpost_sig_buffer = buffers.vpost_sig;
+    univector<double> &i_sig_buffer = buffers.i_sig;
+    univector<double> &ifast_sig_buffer = buffers.ifast_sig;
+    univector<double> &islow_sig_buffer = buffers.islow_sig;
 
-    const size_t total_size = scaled_result.signal.size();
+    const size_t total_size = scaled_result.vpre_sig.size();
     const size_t points_factor = scaled_result.points_factor;
     const double dt = scaled_result.dt;
-    const double *signal_data = scaled_result.signal.data();
-    const double *interpolated_signal_data = scaled_result.interpolated_points.data();
+    const double *vpre_sig_data = scaled_result.vpre_sig.data();
+    const double *interpolated_pts_data = scaled_result.interpolated_points.data();
 
-    const size_t sig_start_minus_smoothed_avg_pts = signal_start_i - avg_smooth_points;
+    const size_t vpre_sig_start_minus_avg_pts = vpre_sig_start_i - avg_smooth_points;
 
     for (size_t i = ind_start_i; i < N; i++)
     {
@@ -273,36 +273,36 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
         reset_state_neur(model_neur);
 
-        size_t interp_signal_counter = 0;
+        size_t interp_pts_counter = 0;
         size_t sig_i = 0;
-        for (; sig_i < sig_start_minus_smoothed_avg_pts; sig_i++)
+        for (; sig_i < vpre_sig_start_minus_avg_pts; sig_i++)
         {
-            synapsis.step(dt, signal_data[sig_i], get_v_neur(model_neur));
+            synapsis.step(dt, vpre_sig_data[sig_i], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_pts_data[interp_pts_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(i_enum));
                 model_neur.step(dt);
-                interp_signal_counter++;
+                interp_pts_counter++;
             }
         }
 
         size_t model_sig_i = 0;
-        for (; sig_i < signal_start_i; sig_i++, model_sig_i++)
+        for (; sig_i < vpre_sig_start_i; sig_i++, model_sig_i++)
         {
             const double v_neur = get_v_neur(model_neur);
-            model_signal_buffer[model_sig_i] = v_neur;
-            synapsis.step(dt, signal_data[sig_i], v_neur);
+            vpost_sig_buffer[model_sig_i] = v_neur;
+            synapsis.step(dt, vpre_sig_data[sig_i], v_neur);
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_pts_data[interp_pts_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(i_enum));
                 model_neur.step(dt);
-                interp_signal_counter++;
+                interp_pts_counter++;
             }
         }
 
@@ -310,35 +310,35 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         for (; sig_i < total_size - 1; sig_i++, model_sig_i++, syn_sig_i++)
         {
             const double v_neur = get_v_neur(model_neur);
-            model_signal_buffer[model_sig_i] = v_neur;
-            synapsis.step(dt, signal_data[sig_i], v_neur);
+            vpost_sig_buffer[model_sig_i] = v_neur;
+            synapsis.step(dt, vpre_sig_data[sig_i], v_neur);
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
-            synapsis_signal_buffer[syn_sig_i] = synapsis.get(i_enum);
+            i_sig_buffer[syn_sig_i] = synapsis.get(i_enum);
             if (use_ifast)
-                ifast_signal_buffer[syn_sig_i] = synapsis.get(ifast_enum);
+                ifast_sig_buffer[syn_sig_i] = synapsis.get(ifast_enum);
             if (use_islow)
-                islow_signal_buffer[syn_sig_i] = synapsis.get(islow_enum);
+                islow_sig_buffer[syn_sig_i] = synapsis.get(islow_enum);
             for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(dt, interpolated_signal_data[interp_signal_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_pts_data[interp_pts_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(i_enum));
                 model_neur.step(dt);
-                interp_signal_counter++;
+                interp_pts_counter++;
             }
         }
 
         const double v_neur = get_v_neur(model_neur);
-        model_signal_buffer[model_sig_i] = v_neur;
-        synapsis.step(dt, signal_data[sig_i], v_neur);
+        vpost_sig_buffer[model_sig_i] = v_neur;
+        synapsis.step(dt, vpre_sig_data[sig_i], v_neur);
         model_neur.add_synaptic_input(synapsis.get(i_enum));
         model_neur.step(dt);
-        synapsis_signal_buffer[syn_sig_i] = synapsis.get(i_enum);
+        i_sig_buffer[syn_sig_i] = synapsis.get(i_enum);
         if (use_ifast)
-            ifast_signal_buffer[syn_sig_i] = synapsis.get(ifast_enum);
+            ifast_sig_buffer[syn_sig_i] = synapsis.get(ifast_enum);
         if (use_islow)
-            islow_signal_buffer[syn_sig_i] = synapsis.get(islow_enum);
+            islow_sig_buffer[syn_sig_i] = synapsis.get(islow_enum);
 
-        individuals[i].fitness = fitness_from_signals(living_const_signal_fitness_vals, search_phase, avg_smooth_points, use_ifast, use_islow, buffers);
+        individuals[i].fitness = fitness_from_sigs(living_const_sig_fitness_vals, search_phase, avg_smooth_points, use_ifast, use_islow, buffers);
     }
 }

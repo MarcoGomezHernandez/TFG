@@ -14,33 +14,33 @@ struct Individual
     double fitness;
 };
 
-struct ConstantSignalFitnessVals
+struct ConstantSigFitnessVals
 {
-    univector<double> norm_signal_to_fit;
-    univector<double> smoothed_signal_to_fit;
-    univector<double> norm_signal_to_fit_ifast;
-    univector<double> norm_signal_to_fit_islow;
+    univector<double> norm_vpre_sig_to_fit;
+    univector<double> smoothed_vpre_sig_to_fit;
+    univector<double> norm_ifast_sig_to_fit;
+    univector<double> norm_islow_sig_to_fit;
     double max_v_comp_distance;
 };
 
-struct SignalBuffers
+struct SigBuffers
 {
-    univector<double> model_signal;
-    univector<double> synapsis_signal;
-    univector<double> ifast_signal;
-    univector<double> islow_signal;
+    univector<double> vpost_sig;
+    univector<double> i_sig;
+    univector<double> ifast_sig;
+    univector<double> islow_sig;
 
     univector<double> kfr_padded;
 };
 
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double> &signal,
+ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector<double> &vpre_sig,
                                                          double min_val,
                                                          double max_val,
                                                          bool search_phase,
                                                          size_t avg_smooth_points,
                                                          size_t start_i,
                                                          double pts_burst_real,
-                                                         SignalBuffers &buffers,
+                                                         SigBuffers &buffers,
                                                          bool use_ifast,
                                                          bool use_islow);
 
@@ -48,14 +48,14 @@ template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<Neu
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
                     std::array<Individual, N> &individuals,
-                    const ScaledSignalResult &scaled_result,
-                    const ConstantSignalFitnessVals &stats1,
+                    const ScaledSigResult &scaled_result,
+                    const ConstantSigFitnessVals &stats1,
                     bool search_phase,
-                    SignalBuffers &buffers,
+                    SigBuffers &buffers,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
                     size_t ind_start_i,
-                    size_t signal_start_i,
+                    size_t vpre_sig_start_i,
                     size_t avg_smooth_points_model,
                     bool use_ifast,
                     bool use_islow);

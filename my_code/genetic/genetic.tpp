@@ -335,7 +335,7 @@ Individual genetic(const std::string &csv_path,
 {
     const double observation_time = use_time / GeneticConfig::OBSERVATION_TIME_DIVISOR;
 
-    ScaledSignalResult scaled_result = scale_signal(
+    ScaledSigResult scaled_result = scale_sig(
         csv_path, column_i, csv_step, start_time, use_time + stabilization_time,
         observation_time, integrator, model, check_drift);
 
@@ -362,23 +362,23 @@ Individual genetic(const std::string &csv_path,
 
     const size_t avg_smooth_points = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(scaled_result.pts_burst_real / FitnessConfig::AVG_SMOOTH_POINTS_BURST_DIVISOR));
 
-    const size_t total_signal_size = scaled_result.signal.size();
+    const size_t total_vpre_sig_size = scaled_result.vpre_sig.size();
     const size_t stabilization_points = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points);
-    const size_t use_signal_size = total_signal_size - stabilization_points;
+    const size_t use_vpre_sig_size = total_vpre_sig_size - stabilization_points;
 
-    SignalBuffers buffers;
-    buffers.model_signal.resize(avg_smooth_points + use_signal_size);
-    buffers.synapsis_signal.resize(use_signal_size);
+    SigBuffers buffers;
+    buffers.vpost_sig.resize(avg_smooth_points + use_vpre_sig_size);
+    buffers.i_sig.resize(use_vpre_sig_size);
     const bool use_ifast = (syn_component != SynComponent::ISLOW);
     const bool use_islow = (syn_component != SynComponent::IFAST);
     if (use_ifast)
-        buffers.ifast_signal.resize(use_signal_size);
+        buffers.ifast_sig.resize(use_vpre_sig_size);
     if (use_islow)
-        buffers.islow_signal.resize(use_signal_size);
-    buffers.kfr_padded.resize(use_signal_size + 2 * FitnessConfig::FILTER_PAD_LEN);
+        buffers.islow_sig.resize(use_vpre_sig_size);
+    buffers.kfr_padded.resize(use_vpre_sig_size + 2 * FitnessConfig::FILTER_PAD_LEN);
 
-    const ConstantSignalFitnessVals living_const_signal_fitness_vals = calc_const_signal_fitness_vals(
-        scaled_result.signal, model_min, model_max, search_phase,
+    const ConstantSigFitnessVals living_const_sig_fitness_vals = calc_const_sig_fitness_vals(
+        scaled_result.vpre_sig, model_min, model_max, search_phase,
         avg_smooth_points, stabilization_points, scaled_result.pts_burst_real, buffers, use_ifast, use_islow);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
@@ -406,7 +406,7 @@ Individual genetic(const std::string &csv_path,
 
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, *population_ptr, scaled_result,
-        living_const_signal_fitness_vals, search_phase, buffers,
+        living_const_sig_fitness_vals, search_phase, buffers,
         reset_state_neur, get_v_neur, 0, stabilization_points, avg_smooth_points,
         use_ifast, use_islow);
 
@@ -464,7 +464,7 @@ Individual genetic(const std::string &csv_path,
 
         calc_fitnesses<Integrator, NeuronType, POP>(
             synapsis, model_neur, *population_ptr, scaled_result,
-            living_const_signal_fitness_vals, search_phase, buffers,
+            living_const_sig_fitness_vals, search_phase, buffers,
             reset_state_neur, get_v_neur, ELITES, stabilization_points, avg_smooth_points,
             use_ifast, use_islow);
     }

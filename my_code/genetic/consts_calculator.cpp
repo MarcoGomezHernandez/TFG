@@ -121,8 +121,8 @@ PtsResult calculate_pts(
     PtsResult result;
 
     const double range = max_val - min_val;
-    const double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
-    const double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
+    const double th_on = SigPublicConfig::SIG_PERCENTAGE_MIN * range + min_val;
+    const double th_up = SigPublicConfig::SIG_PERCENTAGE_MAX * range + min_val;
 
     std::array<double, N> &pts = result.pts;
     std::vector<double> &invalid_dts = result.invalid_dts;

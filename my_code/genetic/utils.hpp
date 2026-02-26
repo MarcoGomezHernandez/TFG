@@ -49,16 +49,16 @@ namespace GeneralConstants
     inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 }
 
-namespace SignalConstants
+namespace SigConstants
 {
     inline constexpr double INVALID_DT = -1.0;
     inline constexpr double INVALID_PTS = -1.0;
 }
 
-namespace SignalPublicConfig
+namespace SigPublicConfig
 {
-    inline constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
-    inline constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
+    inline constexpr double SIG_PERCENTAGE_MIN = 0.10;
+    inline constexpr double SIG_PERCENTAGE_MAX = 0.90;
 }
 
 template <typename F, typename NeuronType>
