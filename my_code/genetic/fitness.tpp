@@ -31,15 +31,14 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double>
     ConstantSignalFitnessVals result;
 
     const size_t use_size = signal.size() - start_i;
-    const size_t end_i = start_i + use_size;
 
     univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
     univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
     normalized_signal_to_fit.resize(use_size);
 
-    const univector<double> signal_seg = signal.slice(start_i, end_i);
-    const univector<double> prefix_seg = signal.slice(start_i - avg_smooth_points, start_i);
+    const univector<double> signal_seg = signal.slice(start_i, use_size);
+    const univector<double> prefix_seg = signal.slice(start_i - avg_smooth_points, avg_smooth_points);
 
     double running_sum = sum(prefix_seg);
 
@@ -59,7 +58,7 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double>
 
     result.max_v_comp_distance = use_size * (smoothed_max_val - smoothed_min_val);
 
-    calc_ifast_islow_ref_signals(signal.slice(start_i, end_i),
+    calc_ifast_islow_ref_signals(signal.slice(start_i, use_size),
                                  result, fs, fc, buffers, use_ifast, use_islow);
 
     if (!search_phase)
@@ -95,12 +94,10 @@ static void normalize_inplace(univector<double> &signal)
 static double compute_norm_component_score_inplace(univector<double> &signal,
                                                    const univector<double> &ref_norm)
 {
-    const size_t use_size = signal.size();
-
     normalize_inplace(signal);
 
     const double comp_dist = sum(abs(ref_norm - signal));
-    return 1.0 - (comp_dist / use_size);
+    return 1.0 - (comp_dist / signal.size());
 }
 
 static void calc_ifast_islow_ref_signals(const univector<double> &signal,
@@ -115,14 +112,14 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
 
     const size_t use_size = signal.size();
     const auto padded_seg_begin = padded.begin() + FILTER_PAD_LEN;
-    const auto signal_seg_begin = signal.cbegin();
-    const auto signal_seg_end = signal_seg_begin + use_size;
+    const auto signal_begin = signal.cbegin();
+    const auto signal_end = signal.cend();
 
-    std::copy(signal_seg_begin, signal_seg_end, padded_seg_begin);
+    std::copy(signal_begin, signal_end, padded_seg_begin);
     for (size_t i = 0; i < FILTER_PAD_LEN; i++)
     {
-        padded[FILTER_PAD_LEN - 1 - i] = signal_seg_begin[i + 1];
-        padded[use_size + FILTER_PAD_LEN + i] = signal_seg_begin[use_size - 2 - i];
+        padded[FILTER_PAD_LEN - 1 - i] = signal[i + 1];
+        padded[use_size + FILTER_PAD_LEN + i] = signal[use_size - 2 - i];
     }
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
@@ -140,8 +137,8 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
     {
         univector<double> &norm_signal_to_fit_ifast = result.norm_signal_to_fit_ifast;
         norm_signal_to_fit_ifast.resize(use_size);
-        std::copy(signal_seg_begin, signal_seg_end, norm_signal_to_fit_ifast.begin());
-        norm_signal_to_fit_ifast -= padded.slice(FILTER_PAD_LEN, FILTER_PAD_LEN + use_size);
+        std::copy(signal_begin, signal_end, norm_signal_to_fit_ifast.begin());
+        norm_signal_to_fit_ifast -= padded.slice(FILTER_PAD_LEN, use_size);
         normalize_inplace(norm_signal_to_fit_ifast);
     }
 }
