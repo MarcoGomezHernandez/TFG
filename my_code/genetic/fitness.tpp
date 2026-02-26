@@ -94,18 +94,14 @@ static void normalize_inplace(univector<double> &signal)
     signal = (signal - sig_min) / (sig_max - sig_min);
 }
 
-static double compute_norm_component_score(const univector<double> &signal,
-                                           const univector<double> &ref_norm)
+static double compute_norm_component_score_inplace(univector<double> &signal,
+                                                   const univector<double> &ref_norm)
 {
     const size_t use_size = signal.size();
 
-    const double min_val = minof(signal);
-    const double max_val = maxof(signal);
+    normalize_inplace(signal);
 
-    univector<double> norm = (signal - min_val) / (max_val - min_val);
-
-    const double comp_dist = sum(abs(ref_norm - norm));
-
+    const double comp_dist = sum(abs(ref_norm - signal));
     return 1.0 - (comp_dist / use_size);
 }
 
@@ -132,7 +128,7 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
     }
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
-                              butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
+                         butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
 
     if (use_islow)
     {
@@ -152,10 +148,10 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
     }
 }
 
-static double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, const SignalBuffers &buffers)
+static double fitness_from_signals(const ConstantSignalFitnessVals &living_const_signal_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SignalBuffers &buffers)
 {
     const univector<double> &model_signal = buffers.model_signal;
-    const univector<double> &synapsis_signal = buffers.synapsis_signal;
+    univector<double> &synapsis_signal = buffers.synapsis_signal;
 
     double running_sum = 0.0;
     for (size_t i = 0; i < avg_smooth_points; i++)
@@ -182,8 +178,8 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
         const univector<double> &living_norm_signal_to_fit =
             living_const_signal_fitness_vals.normalized_signal_to_fit;
         const double vpre_i_comp_score =
-            compute_norm_component_score(buffers.synapsis_signal,
-                                         living_norm_signal_to_fit);
+            compute_norm_component_score_inplace(synapsis_signal,
+                                                 living_norm_signal_to_fit);
 
         weighted_sum += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
         total_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
@@ -192,8 +188,8 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
     if (use_ifast)
     {
         const double vpost_ifast_comp_score =
-            compute_norm_component_score(buffers.ifast_signal,
-                                         living_const_signal_fitness_vals.norm_signal_to_fit_ifast);
+            compute_norm_component_score_inplace(buffers.ifast_signal,
+                                                 living_const_signal_fitness_vals.norm_signal_to_fit_ifast);
         weighted_sum += FitnessConfig::VPOST_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
         total_weight += FitnessConfig::VPOST_IFAST_COMP_WEIGHT;
     }
@@ -201,8 +197,8 @@ static double fitness_from_signals(const ConstantSignalFitnessVals &living_const
     if (use_islow)
     {
         const double vpost_islow_comp_score =
-            compute_norm_component_score(buffers.islow_signal,
-                                         living_const_signal_fitness_vals.norm_signal_to_fit_islow);
+            compute_norm_component_score_inplace(buffers.islow_signal,
+                                                 living_const_signal_fitness_vals.norm_signal_to_fit_islow);
         weighted_sum += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
         total_weight += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT;
     }
