@@ -31,20 +31,17 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double>
     ConstantSignalFitnessVals result;
 
     const size_t use_size = signal.size() - start_index;
+    const size_t end_index = start_index + use_size;
 
     univector<double> &smoothed_signal_to_fit = result.smoothed_signal_to_fit;
     smoothed_signal_to_fit.resize(use_size);
     univector<double> &normalized_signal_to_fit = result.normalized_signal_to_fit;
     normalized_signal_to_fit.resize(use_size);
 
-    double running_sum = 0.0;
-    double smoothed_min_val = GeneralConstants::DOUBLE_MAX;
-    double smoothed_max_val = GeneralConstants::DOUBLE_MIN;
-
-    const univector<double> signal_seg = signal.slice(start_index, start_index + use_size);
+    const univector<double> signal_seg = signal.slice(start_index, end_index);
     const univector<double> prefix_seg = signal.slice(start_index - avg_smooth_points, start_index);
 
-    running_sum = sum(prefix_seg);
+    double running_sum = sum(prefix_seg);
 
     for (size_t sig_i = start_index, res_i = 0; res_i < use_size; res_i++, sig_i++)
     {
@@ -55,14 +52,15 @@ ConstantSignalFitnessVals calc_const_signal_fitness_vals(const univector<double>
         smoothed_signal_to_fit[res_i] = smoothed_val;
     }
 
-    smoothed_min_val = minof(smoothed_signal_to_fit);
-    smoothed_max_val = maxof(smoothed_signal_to_fit);
+    double smoothed_min_val = minof(smoothed_signal_to_fit);
+    double smoothed_max_val = maxof(smoothed_signal_to_fit);
 
     normalized_signal_to_fit = (signal_seg - min_val) / (max_val - min_val);
 
     result.max_v_comp_distance = use_size * (smoothed_max_val - smoothed_min_val);
 
-    calc_ifast_islow_ref_signals(signal, start_index, use_size, result, fs, fc, buffers, use_ifast, use_islow);
+    calc_ifast_islow_ref_signals(signal.slice(start_index, end_index),
+                                 result, fs, fc, buffers, use_ifast, use_islow);
 
     if (!search_phase)
     {
@@ -106,7 +104,6 @@ static double compute_norm_component_score_inplace(univector<double> &signal,
 }
 
 static void calc_ifast_islow_ref_signals(const univector<double> &signal,
-                                         size_t start_index, size_t use_size,
                                          ConstantSignalFitnessVals &result,
                                          double fs, double fc,
                                          SignalBuffers &buffers,
@@ -116,8 +113,9 @@ static void calc_ifast_islow_ref_signals(const univector<double> &signal,
 
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
+    const size_t use_size = signal.size();
     const auto padded_seg_begin = padded.begin() + FILTER_PAD_LEN;
-    const auto signal_seg_begin = signal.cbegin() + start_index;
+    const auto signal_seg_begin = signal.cbegin();
     const auto signal_seg_end = signal_seg_begin + use_size;
 
     std::copy(signal_seg_begin, signal_seg_end, padded_seg_begin);
