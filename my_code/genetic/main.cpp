@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
             syn_model_step_factor,
             true);
 
-        // Output moved to `genetic()` when verbose is enabled.
         const auto t_end = std::chrono::steady_clock::now();
         std::chrono::duration<double> elapsed = t_end - t_start;
         std::cout << "Genetic execution time: " << elapsed.count() << " s" << std::endl;

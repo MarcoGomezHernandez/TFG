@@ -1,4 +1,3 @@
-// Shared constants and configuration for signal scaling
 #ifndef SCALING_UTILS_H
 #define SCALING_UTILS_H
 
@@ -9,18 +8,13 @@
 #include <type_traits>
 #include <vector>
 
-// NeuN Headers
 #include <DifferentialNeuronWrapper.h>
 #include <HindmarshRoseModel.h>
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
 
-/*
- * Para for the hindmarsh-rose model
- */
 namespace HindmarshRoseParams
 {
-    // Parameters for the Hindmarsh-Rose neuron model
     inline constexpr double e = 2.281;
     inline constexpr double mu = 0.0021;
     inline constexpr double S = 1.0;
@@ -32,65 +26,41 @@ namespace HindmarshRoseParams
     inline constexpr double vh = 0.1;
 }
 
-/*
- * Initial state for the hindmarsh-rose model
- */
 namespace HindmarshRoseInitialState
 {
-    // Initial state values for the Hindmarsh-Rose neuron variables (x, y, z)
     inline constexpr double x = -0.712841;
     inline constexpr double y = -1.93688;
     inline constexpr double z = 3.16568;
 }
 
-// Alias for Hindmarsh-Rose neuron type
 template <typename Integrator>
 using HindmarshRoseNeuron = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
 
-/*
- * Synaptic component to optimise in the genetic algorithm
- * IFAST (0): only fast-current params (Esyn, gfast, sfast, Vfast)
- * ISLOW (1): only slow-current params (Esyn, gslow, sslow, Vslow, k1, k2)
- * BOTH  (2): all parameters
- */
 enum SynComponent
 {
     IFAST = 0,
     ISLOW = 1,
-    BOTH  = 2
+    BOTH = 2
 };
 
-/*
- * General constants
- */
 namespace GeneralConstants
 {
-    // Maximum and minimum double values for boundary checks
     inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
     inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 }
 
-/*
- * Sentinel and invalid values used throughout signal processing
- */
 namespace SignalConstants
 {
-    // Invalid/uninitialized values
     inline constexpr double INVALID_DT = -1.0;
     inline constexpr double INVALID_PTS = -1.0;
 }
 
-/*
- * Public configuration for signal processing
- */
 namespace SignalPublicConfig
 {
-    // Relative thresholds for period detection (10%-90% of signal range)
     inline constexpr double SIGNAL_PERCENTAGE_MIN = 0.10;
     inline constexpr double SIGNAL_PERCENTAGE_MAX = 0.90;
 }
 
-// Concepts for function constraints
 template <typename F, typename NeuronType>
 concept CreateFunc = std::invocable<F, bool> && std::convertible_to<std::invoke_result_t<F, bool>, NeuronType>;
 
@@ -100,9 +70,6 @@ concept ResetStateFunc = std::invocable<F, NeuronType &>;
 template <typename F, typename NeuronType>
 concept GetVFunc = std::invocable<F, const NeuronType &> && std::convertible_to<std::invoke_result_t<F, const NeuronType &>, double>;
 
-/*
- * Reset the state of a Hindmarsh-Rose neuron using the provided StateType
- */
 template <typename Integrator>
 inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
 {
@@ -113,19 +80,12 @@ inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
     neuron.reset_synaptic_input();
 }
 
-/*
- * Get the voltage (membrane potential) from a Hindmarsh-Rose neuron
- */
 template <typename Integrator>
 inline double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron)
 {
     return neuron.get(HindmarshRoseNeuron<Integrator>::x);
 }
 
-/*
- * Create a Hindmarsh-Rose neuron with the specified integrator and parameters
- * @param empty If true, creates an empty neuron without initialized parameters
- */
 template <typename Integrator>
 inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 {
@@ -148,28 +108,19 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
     return NeuronType(args);
 }
 
-/*
- * Parameters for chemical synapse model
- */
 struct ChemicalSynapsisParams
 {
-    double gfast; // Fast synaptic conductance
-    double gslow; // Slow synaptic conductance
-    double Esyn;  // Synaptic reversal potential
-    double sfast; // Fast synaptic gating variable
-    double Vfast; // Fast voltage threshold
-    double Vslow; // Slow voltage threshold
-    double k1;    // Forward rate constant
-    double k2;    // Backward rate constant
-    double sslow; // Slow synaptic gating variable
+    double gfast;
+    double gslow;
+    double Esyn;
+    double sfast;
+    double Vfast;
+    double Vslow;
+    double k1;
+    double k2;
+    double sslow;
 };
 
-/*
- * Hindmarsh-Rose model constants and precomputed lookup tables
- * MIN/MAX: Range of model output
- * DTS: Available time steps for integration
- * PTS: Points per burst for each corresponding dt
- */
 namespace HindmarshRose
 {
     inline constexpr double MIN = -1.668473;
@@ -214,4 +165,4 @@ namespace HindmarshRose
         10571.500000, 10263.000000, 9960.500000, 9652.500000, 9353.000000, 9052.000000, 8751.500000, 8444.500000};
 };
 
-#endif // SCALING_UTILS_H
+#endif

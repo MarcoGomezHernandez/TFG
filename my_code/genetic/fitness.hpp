@@ -1,49 +1,39 @@
 #ifndef FITNESS_H
 #define FITNESS_H
 
-#include <vector>
 #include <array>
+#include <kfr/all.hpp>
 #include <ChemicalSynapsis.h>
 #include "utils.hpp"
 #include "scaling.hpp"
 
-/*
- * Individual in the genetic algorithm population
- * Contains both parameters and fitness value
- */
 struct Individual
 {
     ChemicalSynapsisParams params;
     double fitness;
 };
 
-/*
- * Struct to hold precomputed signal statistics
- */
 struct ConstantSignalFitnessVals
 {
-    std::vector<double> normalized_signal_to_fit; // Normalized (and possibly flipped for antiphase) reference signal
-    std::vector<double> smoothed_signal_to_fit;   // Smoothed signal (possibly flipped for antiphase)
-    double max_v_comp_distance;              // Precomputed: signal_size * (max_smoothed_val - min_smoothed_val)
+    kfr::univector<double> normalized_signal_to_fit;
+    kfr::univector<double> smoothed_signal_to_fit;
+    kfr::univector<double> norm_signal_to_fit_ifast;
+    kfr::univector<double> norm_signal_to_fit_islow;
+    double max_v_comp_distance;
 };
 
-/*
- * Compute fitness score for a single individual's synapsis signal against precomputed reference signal
- * Combines v_comp and vpre_i_comp into a weighted score
- * Parameters: signal, min_val, max_val, search_phase, avg_smooth_points, start_index
- * start_index: number of leading points used only for rolling-average warm-up (not stored in output).
- *   Must satisfy start_index >= avg_smooth_points so that the window is already full at start_index.
- */
-ConstantSignalFitnessVals calc_const_signal_fitness_vals(const std::vector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index);
+struct SignalBuffers
+{
+    kfr::univector<double> model_signal;
+    kfr::univector<double> synapsis_signal;
+    kfr::univector<double> ifast_signal;
+    kfr::univector<double> islow_signal;
 
-/*
- * Template function to calculate fitnesses for multiple parameter sets
- * Simulates the neural model with given parameters and computes fitness against precomputed stats
- * Parameters: synapsis, neurons, individuals, scaled_result, stats1, search_phase, buffers, reset_state_neur, get_v_neur, start_index, signal_start_index, avg_smooth_points_model
- * signal_start_index: number of leading outer-loop (CSV-sample) steps to run as stabilization
- *   (model and synapse run but outputs are not stored; model_signal_buffer is seeded from last
- *    avg_smooth_points_model of those steps via a circular buffer).
- */
+    kfr::univector<double> kfr_padded;
+};
+
+ConstantSignalFitnessVals calc_const_signal_fitness_vals(const kfr::univector<double> &signal, double min_val, double max_val, bool search_phase, size_t avg_smooth_points, size_t start_index, double fs, double fc, SignalBuffers &buffers, bool use_ifast, bool use_islow);
+
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
@@ -51,13 +41,14 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     const ScaledSignalResult &scaled_result,
                     const ConstantSignalFitnessVals &stats1,
                     bool search_phase,
-                    std::vector<double> &model_signal_buffer,
-                    std::vector<double> &synapsis_signal_buffer,
+                    SignalBuffers &buffers,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
                     size_t ind_start_index,
                     size_t signal_start_index,
-                    size_t avg_smooth_points_model);
+                    size_t avg_smooth_points_model,
+                    bool use_ifast,
+                    bool use_islow);
 
 #include "fitness.tpp"
 

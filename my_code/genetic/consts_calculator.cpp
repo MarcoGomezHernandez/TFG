@@ -1,4 +1,3 @@
-// Calculate normalization constants (pts, min, max) for neural models
 #include <iostream>
 #include <vector>
 #include <array>
@@ -9,7 +8,6 @@
 #include <stdexcept>
 #include <variant>
 
-// NeuN Headers
 #include <DifferentialNeuronWrapper.h>
 #include <HindmarshRoseModel.h>
 #include <SystemWrapper.h>
@@ -17,22 +15,13 @@
 #include "scaling.hpp"
 #include "utils.hpp"
 
-/*
- * Algorithm constants for burst detection
- */
 namespace ConstCalculatorConstants
 {
-    // Number of bursts to average for accurate pts calculation
     static constexpr int BURSTS_TO_AVERAGE = 20;
 }
 
-/*
- * Configuration values for constant calculation
- * Contains dt array, model parameters, and simulation settings
- */
 namespace ConstCalculatorConfig
 {
-    // Array of time steps to test
     static constexpr std::array<double, 144> DTS = {
         0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
         0.001300, 0.001400, 0.001500, 0.001600, 0.001800, 0.002000, 0.002200, 0.002500,
@@ -53,36 +42,25 @@ namespace ConstCalculatorConfig
         0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700,
         0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
 
-    // Simulation time parameters
-    static constexpr double OBSERVATION_TIME = 2000.0;   // Time to observe bursts
-    static constexpr double MINMAX_DT = DTS[0];          // Finest dt for min/max calculation
-    static constexpr double STABILIZATION_TIME = 2000.0; // Transient settling time
+    static constexpr double OBSERVATION_TIME = 2000.0;
+    static constexpr double MINMAX_DT = DTS[0];
+    static constexpr double STABILIZATION_TIME = 2000.0;
 }
 
 static constexpr size_t DTS_SIZE = ConstCalculatorConfig::DTS.size();
 
-/*
- * Result structure for min and max values
- */
 struct MinMaxResult
 {
-    double min; // Minimum model output value
-    double max; // Maximum model output value
+    double min;
+    double max;
 };
 
-/*
- * Result structure for points per burst and invalid dts
- */
 struct PtsResult
 {
-    std::array<double, DTS_SIZE> pts; // Points per burst for each dt
-    std::vector<double> invalid_dts;  // dts where no bursts were detected
+    std::array<double, DTS_SIZE> pts;
+    std::vector<double> invalid_dts;
 };
 
-/*
- * Calculate model min and max values over observation time
- * Simulates neuron model with finest dt and analyzes output range
- */
 template <typename NeuronType, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
 MinMaxResult calculate_min_max(
     CreateFuncType create_neur,
@@ -92,24 +70,19 @@ MinMaxResult calculate_min_max(
     double dt,
     double stabilization_time)
 {
-    // Validate time parameters
     if (observation_time <= 0 || dt <= 0 || stabilization_time < 0)
     {
         throw std::runtime_error("observation_time and dt must be positive, stabilization_time non-negative");
     }
 
-    // Create neuron model with provided parameters
     NeuronType neuron = create_neur(false);
 
-    // Initialize neuron to specified state
     reset_state_neur(neuron);
 
-    // Run stabilization phase to remove transients
     const size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
     for (size_t i = 0; i < stabilization_steps; i++)
         neuron.step(dt);
 
-    // Find absolute min/max over observation time using finest dt
     double min = GeneralConstants::DOUBLE_MAX;
     double max = GeneralConstants::DOUBLE_MIN;
     const size_t obs_steps = static_cast<size_t>(observation_time / dt);
@@ -132,10 +105,6 @@ MinMaxResult calculate_min_max(
     return result;
 }
 
-/*
- * Calculate points per burst for each dt given min and max
- * Simulates neuron model with different time steps and analyzes bursting behavior
- */
 template <typename NeuronType, size_t N, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
 PtsResult calculate_pts(
     CreateFuncType create_neur,
@@ -147,12 +116,10 @@ PtsResult calculate_pts(
     double min_val,
     double max_val)
 {
-    // Create neuron model with provided parameters
     NeuronType neuron = create_neur(false);
 
     PtsResult result;
 
-    // Compute relative thresholds for burst detection (10% and 90% of range)
     const double range = max_val - min_val;
     const double th_on = SignalPublicConfig::SIGNAL_PERCENTAGE_MIN * range + min_val;
     const double th_up = SignalPublicConfig::SIGNAL_PERCENTAGE_MAX * range + min_val;
@@ -160,27 +127,22 @@ PtsResult calculate_pts(
     std::array<double, N> &pts = result.pts;
     std::vector<double> &invalid_dts = result.invalid_dts;
 
-    // Calculate points per burst for each dt in the array
     for (size_t i = 0; i < N; i++)
     {
         const double dt = dts[i];
 
-        // Reset neuron to initial state for this dt
         reset_state_neur(neuron);
 
-        // Stabilization phase with current dt
         const size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
         for (size_t j = 0; j < stabilization_steps; j++)
             neuron.step(dt);
 
-        // Detect bursts using threshold crossings
         bool up = (get_v_neur(neuron) > th_up);
         double total_steps = 0;
-        int bursts_seen = -1; // Start at -1 to skip partial first burst
+        int bursts_seen = -1;
         size_t steps_in_current_burst = 0;
         double act_time = 0.0;
 
-        // Count steps per burst over observation period
         while (bursts_seen < ConstCalculatorConstants::BURSTS_TO_AVERAGE && act_time < observation_time)
         {
             neuron.step(dt);
@@ -188,7 +150,6 @@ PtsResult calculate_pts(
 
             double val = get_v_neur(neuron);
 
-            // Detect burst onset (rising edge)
             if (!up && val > th_up)
             {
                 up = true;
@@ -196,7 +157,6 @@ PtsResult calculate_pts(
                 total_steps += steps_in_current_burst;
                 steps_in_current_burst = 0;
             }
-            // Detect burst end (falling edge)
             else if (up && val < th_on)
             {
                 up = false;
@@ -205,10 +165,9 @@ PtsResult calculate_pts(
             steps_in_current_burst++;
         }
 
-        // Store average points per burst, or mark as invalid
         if (bursts_seen <= 0)
         {
-            pts[i] = GeneralConstants::DOUBLE_MAX; // Sentinel for invalid
+            pts[i] = GeneralConstants::DOUBLE_MAX;
             invalid_dts.push_back(dts[i]);
         }
         else
@@ -220,9 +179,6 @@ PtsResult calculate_pts(
     return result;
 }
 
-/*
- * Convert NumericIntegrator enum to string
- */
 inline std::string integrator_to_string(NumericIntegrator integrator)
 {
     switch (integrator)
@@ -234,14 +190,10 @@ inline std::string integrator_to_string(NumericIntegrator integrator)
     }
 }
 
-/*
- * Print DTS array, PTS array, and invalid dts from PtsResult
- */
 void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 {
     const std::string integrator_str = integrator_to_string(integrator);
 
-    // Output DTS array with formatting
     const size_t ds_size_minus_1 = DTS_SIZE - 1;
     std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> DTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
@@ -254,7 +206,6 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
     }
     std::cout << "};\n";
 
-    // Output PTS array with formatting
     const std::array<double, DTS_SIZE> &pts = pr.pts;
     std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> PTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
@@ -267,7 +218,6 @@ void print_tables(const PtsResult &pr, NumericIntegrator integrator)
     }
     std::cout << "};\n";
 
-    // Report any dts where burst detection failed
     const std::vector<double> &invalid_dts = pr.invalid_dts;
     if (!invalid_dts.empty())
     {
@@ -287,7 +237,6 @@ int main()
 {
     NumericIntegrator integrator = RK4;
 
-    // Variables para almacenar los punteros a función
     CreateFunc<NeuronType> auto create_func = &create_hindmarsh_rose<Integrator>;
     ResetStateFunc<NeuronType> auto reset_func = &reset_state_hindmarsh_rose<Integrator>;
     GetVFunc<NeuronType> auto get_v_func = &get_v_hindmarsh_rose<Integrator>;
@@ -303,7 +252,6 @@ int main()
         ConstCalculatorConfig::MINMAX_DT,
         STABILIZATION_TIME);
 
-    // Output results in C++ format for direct inclusion in code
     std::cout << std::fixed << std::setprecision(6);
 
     std::cout << "inline constexpr double MIN = " << mmr.min << ";\n";
@@ -319,7 +267,6 @@ int main()
         mmr.min,
         mmr.max);
 
-    // Print DTS, PTS, and invalid dts using the new function
     print_tables(pr, integrator);
 
     return 0;
