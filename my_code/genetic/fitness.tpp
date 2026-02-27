@@ -34,7 +34,6 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     double max,
     bool search_phase,
     size_t avg_smooth_points,
-    size_t start_i,
     double pts_burst_real,
     SigBuffers &buffers,
     bool use_ifast,
@@ -43,15 +42,15 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     ConstantSigFitnessVals result;
 
     const size_t vpre_sig_size = vpre_sig.size();
-    const size_t use_size = vpre_sig_size - start_i;
+    const size_t use_size = vpre_sig_size - avg_smooth_points;
 
     univector<double> &smoothed_vpre_sig_to_fit = result.smoothed_vpre_sig_to_fit;
     smoothed_vpre_sig_to_fit.reserve(use_size);
 
-    double running_sum = sum(vpre_sig.slice(start_i - avg_smooth_points, avg_smooth_points));
+    double running_sum = sum(vpre_sig.slice(0, avg_smooth_points));
 
     const double *vpre_sig_ptr = vpre_sig.data();
-    for (size_t i = start_i; i < vpre_sig_size; i++)
+    for (size_t i = avg_smooth_points; i < vpre_sig_size; i++)
     {
         running_sum += vpre_sig_ptr[i];
         running_sum -= vpre_sig_ptr[i - avg_smooth_points];
@@ -63,7 +62,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
 
-    const univector_ref<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
+    const univector_ref<double> vpre_sig_seg = vpre_sig.slice(avg_smooth_points, use_size);
 
     calc_syn_ref_sigs(vpre_sig_seg,
                       result,
