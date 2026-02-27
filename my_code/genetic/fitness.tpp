@@ -64,14 +64,14 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     const univector<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
 
-    calc_ifast_islow_ref_sigs(vpre_sig_seg,
-                              result,
-                              pts_burst_real,
-                              buffers,
-                              use_ifast,
-                              use_islow,
-                              min,
-                              max);
+    calc_syn_ref_sigs(vpre_sig_seg,
+                      result,
+                      pts_burst_real,
+                      buffers,
+                      use_ifast,
+                      use_islow,
+                      min,
+                      max);
 
     if (!search_phase)
     {
@@ -115,12 +115,12 @@ static double compute_norm_component_score_inplace(univector<double> &sig,
     return 1.0 - (comp_dist / sig.size());
 }
 
-static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
-                                      ConstantSigFitnessVals &result,
-                                      double pts_burst_real,
-                                      SigBuffers &buffers,
-                                      bool use_ifast, bool use_islow,
-                                      double min, double max)
+static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
+                              ConstantSigFitnessVals &result,
+                              double pts_burst_real,
+                              SigBuffers &buffers,
+                              bool use_ifast, bool use_islow,
+                              double min, double max)
 {
     const size_t use_size = vpre_sig.size();
     const double fs = 1.0 / pts_burst_real;
