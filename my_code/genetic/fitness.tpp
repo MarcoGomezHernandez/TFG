@@ -60,7 +60,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     const double smoothed_min = minof(smoothed_vpre_sig_to_fit);
     const double smoothed_max = maxof(smoothed_vpre_sig_to_fit);
 
-    result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
+    result.max_v_comp_distance = smoothed_max - smoothed_min;
 
     const univector_ref<double> vpre_sig_seg = vpre_sig.slice(avg_smooth_points, use_size);
 
@@ -178,8 +178,8 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         running_sum -= vpost_sig_ptr[i - avg_smooth_points];
         vpost_sig_ptr[i] = running_sum / avg_smooth_points;
     }
-    const double v_comp_dist = sum(abs(const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit - vpost_sig.slice(avg_smooth_points, vpost_sig_size - avg_smooth_points)));
-    const double v_comp_score = 1.0 - (v_comp_dist / const_vpre_sig_fitness_vals.max_v_comp_distance);
+    const double v_comp_RMSE = std::sqrt(sum(sqr(vpost_sig - const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit)) / vpost_sig_size);
+    const double v_comp_score = 1.0 - (v_comp_RMSE / const_vpre_sig_fitness_vals.max_v_comp_distance);
 
     double vpre_syn_comp_score = 0.0;
     double vpre_syn_comp_weight = 0.0;
