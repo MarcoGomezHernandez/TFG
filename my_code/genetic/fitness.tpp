@@ -291,9 +291,9 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         size_t vpost_sig_i = 0;
         for (; vpre_sig_i < vpre_sig_start_i; vpre_sig_i++, vpost_sig_i++)
         {
-            const double v_neur = get_v_neur(model_neur);
-            vpost_sig_ptr[vpost_sig_i] = v_neur;
-            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_neur);
+            const double v_post = get_v_neur(model_neur);
+            vpost_sig_ptr[vpost_sig_i] = v_post;
+            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
@@ -308,9 +308,9 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         size_t syn_sig_i = 0;
         for (; vpre_sig_i < total_size - 1; vpre_sig_i++, vpost_sig_i++, syn_sig_i++)
         {
-            const double v_neur = get_v_neur(model_neur);
-            vpost_sig_ptr[vpost_sig_i] = v_neur;
-            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_neur);
+            const double v_post = get_v_neur(model_neur);
+            vpost_sig_ptr[vpost_sig_i] = v_post;
+            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             i_sig_ptr[syn_sig_i] = synapsis.get(i_enum);
@@ -327,9 +327,9 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             }
         }
 
-        const double v_neur = get_v_neur(model_neur);
-        vpost_sig_ptr[vpost_sig_i] = v_neur;
-        synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_neur);
+        const double v_post = get_v_neur(model_neur);
+        vpost_sig_ptr[vpost_sig_i] = v_post;
+        synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
         model_neur.add_synaptic_input(synapsis.get(i_enum));
         model_neur.step(dt);
         i_sig_ptr[syn_sig_i] = synapsis.get(i_enum);
