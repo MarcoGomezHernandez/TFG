@@ -79,21 +79,11 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     return result;
 }
 
-static void normalize_inplace(univector<double> &sig)
+static double pearson_correlation(const univector<double> &sig,
+                                  const univector<double> &ref_sig_centered,
+                                  double ref_sig_stddev)
 {
-    const double sig_min = minof(sig);
-    const double sig_max = maxof(sig);
-
-    sig = (sig - sig_min) / (sig_max - sig_min);
-}
-
-static double compute_norm_component_score_inplace(univector<double> &sig,
-                                                   const univector<double> &ref_norm)
-{
-    normalize_inplace(sig);
-
-    const double comp_dist = sum(abs(ref_norm - sig));
-    return 1.0 - (comp_dist / sig.size());
+    return sum((sig - mean(sig)) * ref_sig_centered) / (stddev(sig) * ref_sig_stddev);
 }
 
 static void calc_syn_ref_vals(const univector_ref<double> &vpre_sig,
@@ -168,8 +158,9 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
     if (use_ifast && use_islow)
     {
         const double vpre_i_comp_score =
-            compute_norm_component_score_inplace(buffers.i_sig,
-                                                 const_vpre_sig_fitness_vals.norm_i_sig_to_fit);
+            pearson_correlation(buffers.i_sig,
+                                const_vpre_sig_fitness_vals.i_sig_centered_to_fit,
+                                const_vpre_sig_fitness_vals.i_sig_stddev_to_fit);
         vpre_syn_comp_score += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
         vpre_syn_comp_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
     }
@@ -177,8 +168,9 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
     if (use_ifast)
     {
         const double vpost_ifast_comp_score =
-            compute_norm_component_score_inplace(buffers.ifast_sig,
-                                                 const_vpre_sig_fitness_vals.norm_ifast_sig_to_fit);
+            pearson_correlation(buffers.ifast_sig,
+                                const_vpre_sig_fitness_vals.ifast_sig_centered_to_fit,
+                                const_vpre_sig_fitness_vals.ifast_sig_stddev_to_fit);
         vpre_syn_comp_score += FitnessConfig::VPRE_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
         vpre_syn_comp_weight += FitnessConfig::VPRE_IFAST_COMP_WEIGHT;
     }
@@ -186,8 +178,9 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
     if (use_islow)
     {
         const double vpost_islow_comp_score =
-            compute_norm_component_score_inplace(buffers.islow_sig,
-                                                 const_vpre_sig_fitness_vals.norm_islow_sig_to_fit);
+            pearson_correlation(buffers.islow_sig,
+                                const_vpre_sig_fitness_vals.islow_sig_centered_to_fit,
+                                const_vpre_sig_fitness_vals.islow_sig_stddev_to_fit);
         vpre_syn_comp_score += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
         vpre_syn_comp_weight += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT;
     }
