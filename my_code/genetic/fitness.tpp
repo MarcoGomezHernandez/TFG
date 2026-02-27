@@ -60,11 +60,14 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     const double smoothed_min = minof(smoothed_vpre_sig_to_fit);
     const double smoothed_max = maxof(smoothed_vpre_sig_to_fit);
 
+    if (!search_phase)
+    {
+        smoothed_vpre_sig_to_fit = smoothed_min + smoothed_max - smoothed_vpre_sig_to_fit;
+    }
+
     result.max_v_comp_distance = smoothed_max - smoothed_min;
 
-    const univector_ref<double> vpre_sig_seg = vpre_sig.slice(avg_smooth_points, use_size);
-
-    calc_syn_ref_sigs(vpre_sig_seg,
+    calc_syn_ref_vals(vpre_sig.slice(avg_smooth_points, use_size),
                       result,
                       pts_burst_real,
                       buffers,
@@ -72,28 +75,6 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
                       use_islow,
                       min,
                       max);
-
-    if (!search_phase)
-    {
-        smoothed_vpre_sig_to_fit = smoothed_min + smoothed_max - smoothed_vpre_sig_to_fit;
-
-        if (use_ifast && use_islow)
-        {
-            univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
-            norm_i_sig_to_fit = 1.0 - norm_i_sig_to_fit;
-        }
-
-        if (use_islow)
-        {
-            univector<double> &norm_islow_sig_to_fit = result.norm_islow_sig_to_fit;
-            norm_islow_sig_to_fit = 1.0 - norm_islow_sig_to_fit;
-        }
-        if (use_ifast)
-        {
-            univector<double> &norm_ifast_sig_to_fit = result.norm_ifast_sig_to_fit;
-            norm_ifast_sig_to_fit = 1.0 - norm_ifast_sig_to_fit;
-        }
-    }
 
     return result;
 }
@@ -115,7 +96,7 @@ static double compute_norm_component_score_inplace(univector<double> &sig,
     return 1.0 - (comp_dist / sig.size());
 }
 
-static void calc_syn_ref_sigs(const univector_ref<double> &vpre_sig,
+static void calc_syn_ref_vals(const univector_ref<double> &vpre_sig,
                               ConstantSigFitnessVals &result,
                               double pts_burst_real,
                               SigBuffers &buffers,
@@ -146,21 +127,21 @@ static void calc_syn_ref_sigs(const univector_ref<double> &vpre_sig,
 
     if (use_ifast && use_islow)
     {
-        result.norm_i_sig_to_fit = (vpre_sig - min) / (max - min);
+        result.i_sig_mean = mean(vpre_sig);
+        result.i_sig_stddev = stddev(vpre_sig);
     }
 
     if (use_islow)
     {
-        univector<double> &norm_islow_sig_to_fit = result.norm_islow_sig_to_fit;
-        norm_islow_sig_to_fit = padded_seg;
-        normalize_inplace(norm_islow_sig_to_fit);
+        result.islow_sig_mean = mean(padded_seg);
+        result.islow_sig_stddev = stddev(padded_seg);
     }
 
     if (use_ifast)
     {
-        univector<double> &norm_ifast_sig_to_fit = result.norm_ifast_sig_to_fit;
-        norm_ifast_sig_to_fit = vpre_sig - padded_seg;
-        normalize_inplace(norm_ifast_sig_to_fit);
+        univector<double> ifast_sig = vpre_sig - padded_seg;
+        result.ifast_sig_mean = mean(ifast_sig);
+        result.ifast_sig_stddev = stddev(ifast_sig);
     }
 }
 
