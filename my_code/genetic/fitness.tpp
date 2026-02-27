@@ -256,8 +256,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const double *vpre_sig_data = scaled_result.vpre_sig.data();
     const double *interpolated_pts_data = scaled_result.interpolated_points.data();
 
-    const size_t vpre_sig_start_minus_avg_pts = vpre_sig_start_i - avg_smooth_points;
-
     for (size_t i = ind_start_i; i < N; i++)
     {
         const ChemicalSynapsisParams &params = individuals[i].params;
@@ -278,7 +276,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
         size_t interp_pts_counter = 0;
         size_t vpre_sig_i = 0;
-        for (; vpre_sig_i < vpre_sig_start_minus_avg_pts; vpre_sig_i++)
+        for (; vpre_sig_i < vpre_sig_start_i - avg_smooth_points; vpre_sig_i++)
         {
             synapsis.step(dt, vpre_sig_data[vpre_sig_i], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(i_enum));
