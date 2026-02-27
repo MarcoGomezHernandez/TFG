@@ -392,13 +392,14 @@ ScaledSigResult scale_sig(
 
     const size_t interpolated_size = (sig_size - 1) * (s_points - 1);
     interpolated_points.reserve(interpolated_size);
+    const double *sig_ptr = sig.data();
 
     for (size_t i = 0; i < sig_size - 1; i++)
     {
         for (double j = 1.0; j < s_points; j++)
         {
             double alpha = j / s_points;
-            double interp_val = sig[i] + (alpha * (sig[i + 1] - sig[i]));
+            double interp_val = sig_ptr[i] + (alpha * (sig_ptr[i + 1] - sig_ptr[i]));
             interpolated_points.push_back(interp_val);
         }
     }

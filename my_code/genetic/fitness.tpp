@@ -50,10 +50,11 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     double running_sum = sum(vpre_sig.slice(start_i - avg_smooth_points, avg_smooth_points));
 
+    const double *vpre_sig_ptr = vpre_sig.data();
     for (size_t i = start_i; i < vpre_sig_size; i++)
     {
-        running_sum += vpre_sig[i];
-        running_sum -= vpre_sig[i - avg_smooth_points];
+        running_sum += vpre_sig_ptr[i];
+        running_sum -= vpre_sig_ptr[i - avg_smooth_points];
         smoothed_vpre_sig_to_fit.push_back(running_sum / avg_smooth_points);
     }
 
@@ -133,10 +134,12 @@ static void calc_syn_ref_sigs(const univector_ref<double> &vpre_sig,
     univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
     process(padded_seg, vpre_sig);
 
+    double *padded_ptr = padded.data();
+    const double *vpre_sig_ptr = vpre_sig.data();
     for (size_t i = 0; i < FILTER_PAD_LEN; i++)
     {
-        padded[FILTER_PAD_LEN - 1 - i] = vpre_sig[i + 1];
-        padded[use_size + FILTER_PAD_LEN + i] = vpre_sig[use_size - 2 - i];
+        padded_ptr[FILTER_PAD_LEN - 1 - i] = vpre_sig_ptr[i + 1];
+        padded_ptr[use_size + FILTER_PAD_LEN + i] = vpre_sig_ptr[use_size - 2 - i];
     }
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
@@ -168,11 +171,13 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
     const size_t vpost_sig_size = vpost_sig.size();
 
     double running_sum = sum(vpost_sig.slice(0, avg_smooth_points));
+
+    double *vpost_sig_ptr = vpost_sig.data();
     for (size_t i = avg_smooth_points; i < vpost_sig_size; i++)
     {
-        running_sum += vpost_sig[i];
-        running_sum -= vpost_sig[i - avg_smooth_points];
-        vpost_sig[i] = running_sum / avg_smooth_points;
+        running_sum += vpost_sig_ptr[i];
+        running_sum -= vpost_sig_ptr[i - avg_smooth_points];
+        vpost_sig_ptr[i] = running_sum / avg_smooth_points;
     }
     const double v_comp_dist = sum(abs(const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit - vpost_sig.slice(avg_smooth_points, vpost_sig_size - avg_smooth_points)));
     const double v_comp_score = 1.0 - (v_comp_dist / const_vpre_sig_fitness_vals.max_v_comp_distance);
