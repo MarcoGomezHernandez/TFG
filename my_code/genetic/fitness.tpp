@@ -64,22 +64,24 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     const univector<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
 
-    univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
-    if (use_ifast && use_islow)
-    {
-        norm_i_sig_to_fit.resize(use_size);
-        norm_i_sig_to_fit = (vpre_sig_seg - min) / (max - min);
-    }
-
     calc_ifast_islow_ref_sigs(vpre_sig_seg,
-                              result, pts_burst_real, buffers, use_ifast, use_islow);
+                              result,
+                              pts_burst_real,
+                              buffers,
+                              use_ifast,
+                              use_islow,
+                              min,
+                              max);
 
     if (!search_phase)
     {
         smoothed_vpre_sig_to_fit = smoothed_min + smoothed_max - smoothed_vpre_sig_to_fit;
 
         if (use_ifast && use_islow)
+        {
+            univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
             norm_i_sig_to_fit = 1.0 - norm_i_sig_to_fit;
+        }
 
         if (use_islow)
         {
@@ -117,7 +119,8 @@ static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
                                       ConstantSigFitnessVals &result,
                                       double pts_burst_real,
                                       SigBuffers &buffers,
-                                      bool use_ifast, bool use_islow)
+                                      bool use_ifast, bool use_islow,
+                                      double min, double max)
 {
     const size_t use_size = vpre_sig.size();
     const double fs = 1.0 / pts_burst_real;
@@ -140,6 +143,13 @@ static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
                          butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
+
+    if (use_ifast && use_islow)
+    {
+        univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
+        norm_i_sig_to_fit.resize(use_size);
+        norm_i_sig_to_fit = (vpre_sig - min) / (max - min);
+    }
 
     if (use_islow)
     {
