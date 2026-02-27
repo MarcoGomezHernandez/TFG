@@ -16,12 +16,12 @@ struct Individual
 
 struct ConstantSigFitnessVals
 {
-    double i_sig_mean;
-    double i_sig_stddev;
-    double ifast_sig_mean;
-    double ifast_sig_stddev;
-    double islow_sig_mean;
-    double islow_sig_stddev;
+    univector<double> i_sig_centered_to_fit;
+    double i_sig_stddev_to_fit;
+    univector<double> ifast_sig_centered_to_fit;
+    double ifast_sig_stddev_to_fit;
+    univector<double> islow_sig_centered_to_fit;
+    double islow_sig_stddev_to_fit;
     univector<double> smoothed_vpre_sig_to_fit;
     double max_v_comp_distance;
 };

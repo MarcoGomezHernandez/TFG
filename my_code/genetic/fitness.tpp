@@ -127,21 +127,21 @@ static void calc_syn_ref_vals(const univector_ref<double> &vpre_sig,
 
     if (use_ifast && use_islow)
     {
-        result.i_sig_mean = mean(vpre_sig);
-        result.i_sig_stddev = stddev(vpre_sig);
+        result.i_sig_centered_to_fit = vpre_sig - mean(vpre_sig);
+        result.i_sig_stddev_to_fit = stddev(vpre_sig);
     }
 
     if (use_islow)
     {
-        result.islow_sig_mean = mean(padded_seg);
-        result.islow_sig_stddev = stddev(padded_seg);
+        result.islow_sig_centered_to_fit = padded_seg - mean(padded_seg);
+        result.islow_sig_stddev_to_fit = stddev(padded_seg);
     }
 
     if (use_ifast)
     {
         univector<double> ifast_sig = vpre_sig - padded_seg;
-        result.ifast_sig_mean = mean(ifast_sig);
-        result.ifast_sig_stddev = stddev(ifast_sig);
+        result.ifast_sig_centered_to_fit = ifast_sig - mean(ifast_sig);
+        result.ifast_sig_stddev_to_fit = stddev(ifast_sig);
     }
 }
 
