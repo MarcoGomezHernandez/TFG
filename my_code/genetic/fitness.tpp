@@ -8,9 +8,11 @@ using namespace kfr;
 namespace FitnessConfig
 {
     static constexpr double V_COMP_WEIGHT = 0.5;
-    static constexpr double VPRE_I_COMP_WEIGHT = 0.5;
-    static constexpr double VPOST_IFAST_COMP_WEIGHT = 0.5;
-    static constexpr double VPOST_ISLOW_COMP_WEIGHT = 0.5;
+    static constexpr double VPRE_SYN_COMP_WEIGHT = 0.5;
+
+    static constexpr double VPRE_I_COMP_WEIGHT = 0.4;
+    static constexpr double VPRE_IFAST_COMP_WEIGHT = 0.3;
+    static constexpr double VPRE_ISLOW_COMP_WEIGHT = 0.3;
 
     static constexpr double AVG_SMOOTH_POINTS_BURST_DIVISOR = 100;
     static constexpr double FILTER_FC_POINTS_BURST_DIVISOR = 100;
@@ -70,7 +72,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     }
 
     calc_ifast_islow_ref_sigs(vpre_sig_seg,
-                                 result, pts_burst_real, buffers, use_ifast, use_islow);
+                              result, pts_burst_real, buffers, use_ifast, use_islow);
 
     if (!search_phase)
     {
@@ -112,10 +114,10 @@ static double compute_norm_component_score_inplace(univector<double> &sig,
 }
 
 static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
-                                         ConstantSigFitnessVals &result,
-                                         double pts_burst_real,
-                                         SigBuffers &buffers,
-                                         bool use_ifast, bool use_islow)
+                                      ConstantSigFitnessVals &result,
+                                      double pts_burst_real,
+                                      SigBuffers &buffers,
+                                      bool use_ifast, bool use_islow)
 {
     const size_t use_size = vpre_sig.size();
     const double fs = 1.0 / pts_burst_real;
@@ -159,39 +161,29 @@ static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
 
 static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
-    const univector<double> &vpost_sig = buffers.vpost_sig;
-    univector<double> &i_sig = buffers.i_sig;
+    univector<double> &vpost_sig = buffers.vpost_sig;
+    const size_t vpost_sig_size = vpost_sig.size();
 
-    double running_sum = 0.0;
-    for (size_t i = 0; i < avg_smooth_points; i++)
-        running_sum += vpost_sig[i];
-
-    const size_t use_size = i_sig.size();
-
-    double v_comp_dist = 0.0;
-    const univector<double> &smoothed_vpre_sig_to_fit = const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit;
-    for (size_t i = 0; i < use_size; i++)
+    double running_sum = sum(vpost_sig.slice(0, avg_smooth_points));
+    for (size_t i = avg_smooth_points; i < vpost_sig_size; i++)
     {
-        running_sum += vpost_sig[i + avg_smooth_points];
-        running_sum -= vpost_sig[i];
-        const double smoothed_val = running_sum / avg_smooth_points;
-        v_comp_dist += std::abs(smoothed_vpre_sig_to_fit[i] - smoothed_val);
+        running_sum += vpost_sig[i];
+        running_sum -= vpost_sig[i - avg_smooth_points];
+        vpost_sig[i] = running_sum / avg_smooth_points;
     }
+    const double v_comp_dist = sum(abs(const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit - vpost_sig.slice(avg_smooth_points, vpost_sig_size - avg_smooth_points)));
     const double v_comp_score = 1.0 - (v_comp_dist / const_vpre_sig_fitness_vals.max_v_comp_distance);
 
-    double weighted_sum = FitnessConfig::V_COMP_WEIGHT * v_comp_score;
-    double total_weight = FitnessConfig::V_COMP_WEIGHT;
+    double vpre_syn_comp_score = 0.0;
+    double vpre_syn_comp_weight = 0.0;
 
     if (use_ifast && use_islow)
     {
-        const univector<double> &norm_i_sig_to_fit =
-            const_vpre_sig_fitness_vals.norm_i_sig_to_fit;
         const double vpre_i_comp_score =
-            compute_norm_component_score_inplace(i_sig,
-                                                 norm_i_sig_to_fit);
-
-        weighted_sum += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
-        total_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
+            compute_norm_component_score_inplace(buffers.i_sig,
+                                                 const_vpre_sig_fitness_vals.norm_i_sig_to_fit);
+        vpre_syn_comp_score += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
+        vpre_syn_comp_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
     }
 
     if (use_ifast)
@@ -199,8 +191,8 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         const double vpost_ifast_comp_score =
             compute_norm_component_score_inplace(buffers.ifast_sig,
                                                  const_vpre_sig_fitness_vals.norm_ifast_sig_to_fit);
-        weighted_sum += FitnessConfig::VPOST_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
-        total_weight += FitnessConfig::VPOST_IFAST_COMP_WEIGHT;
+        vpre_syn_comp_score += FitnessConfig::VPRE_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
+        vpre_syn_comp_weight += FitnessConfig::VPRE_IFAST_COMP_WEIGHT;
     }
 
     if (use_islow)
@@ -208,11 +200,12 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         const double vpost_islow_comp_score =
             compute_norm_component_score_inplace(buffers.islow_sig,
                                                  const_vpre_sig_fitness_vals.norm_islow_sig_to_fit);
-        weighted_sum += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
-        total_weight += FitnessConfig::VPOST_ISLOW_COMP_WEIGHT;
+        vpre_syn_comp_score += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
+        vpre_syn_comp_weight += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT;
     }
 
-    const double final_score = weighted_sum / total_weight;
+    const double final_score = (FitnessConfig::V_COMP_WEIGHT * v_comp_score) +
+                               (FitnessConfig::VPRE_SYN_COMP_WEIGHT * (vpre_syn_comp_score / vpre_syn_comp_weight));
 
     if (std::isnan(final_score) || final_score < 0.0)
         return 0.0;
