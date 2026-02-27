@@ -256,7 +256,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
     for (size_t i = ind_start_i; i < N; i++)
     {
-        const ChemicalSynapsisParams &params = individuals[i].params;
+        Individual ind = individuals[i];
+        const ChemicalSynapsisParams &params = ind.params;
 
         synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
         synapsis.set(ChemicalSynapsisType::gslow, params.gslow);
@@ -338,6 +339,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         if (use_islow)
             islow_sig_ptr[syn_sig_i] = synapsis.get(islow_enum);
 
-        individuals[i].fitness = fitness_from_sigs(const_vpre_sig_fitness_vals, search_phase, avg_smooth_points, use_ifast, use_islow, buffers);
+        ind.fitness = fitness_from_sigs(const_vpre_sig_fitness_vals, search_phase, avg_smooth_points, use_ifast, use_islow, buffers);
     }
 }
