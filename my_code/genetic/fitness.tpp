@@ -46,7 +46,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     const size_t use_size = vpre_sig_size - start_i;
 
     univector<double> &smoothed_vpre_sig_to_fit = result.smoothed_vpre_sig_to_fit;
-    smoothed_vpre_sig_to_fit.resize(use_size);
+    smoothed_vpre_sig_to_fit.reserve(use_size);
 
     double running_sum = sum(vpre_sig.slice(start_i - avg_smooth_points, avg_smooth_points));
 
@@ -54,7 +54,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     {
         running_sum += vpre_sig[i];
         running_sum -= vpre_sig[i - avg_smooth_points];
-        smoothed_vpre_sig_to_fit[i - start_i] = running_sum / avg_smooth_points;
+        smoothed_vpre_sig_to_fit.push_back(running_sum / avg_smooth_points);
     }
 
     const double smoothed_min = minof(smoothed_vpre_sig_to_fit);
@@ -147,7 +147,6 @@ static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
     if (use_ifast && use_islow)
     {
         univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
-        norm_i_sig_to_fit.resize(use_size);
         norm_i_sig_to_fit = (vpre_sig - min) / (max - min);
     }
 
@@ -162,9 +161,7 @@ static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
     if (use_ifast)
     {
         univector<double> &norm_ifast_sig_to_fit = result.norm_ifast_sig_to_fit;
-        norm_ifast_sig_to_fit.resize(use_size);
-        std::copy(vpre_sig_begin, vpre_sig_end, norm_ifast_sig_to_fit.begin());
-        norm_ifast_sig_to_fit -= padded.slice(FILTER_PAD_LEN, use_size);
+        norm_ifast_sig_to_fit = vpre_sig - padded.slice(FILTER_PAD_LEN, use_size);
         normalize_inplace(norm_ifast_sig_to_fit);
     }
 }
