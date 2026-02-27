@@ -251,8 +251,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     const size_t total_size = scaled_result.vpre_sig.size();
     const size_t points_factor = scaled_result.points_factor;
     const double dt = scaled_result.dt;
-    const double *vpre_sig_data = scaled_result.vpre_sig.data();
-    const double *interpolated_pts_data = scaled_result.interpolated_points.data();
+    const double *vpre_sig_ptr = scaled_result.vpre_sig.data();
+    const double *interpolated_points_ptr = scaled_result.interpolated_points.data();
 
     for (size_t i = ind_start_i; i < N; i++)
     {
@@ -276,12 +276,12 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         size_t vpre_sig_i = 0;
         for (; vpre_sig_i < vpre_sig_start_i - avg_smooth_points; vpre_sig_i++)
         {
-            synapsis.step(dt, vpre_sig_data[vpre_sig_i], get_v_neur(model_neur));
+            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], get_v_neur(model_neur));
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(dt, interpolated_pts_data[interp_pts_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_pts_ptr[interp_pts_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(i_enum));
                 model_neur.step(dt);
                 interp_pts_counter++;
@@ -293,12 +293,12 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         {
             const double v_neur = get_v_neur(model_neur);
             vpost_sig_ptr[vpost_sig_i] = v_neur;
-            synapsis.step(dt, vpre_sig_data[vpre_sig_i], v_neur);
+            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_neur);
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(dt, interpolated_pts_data[interp_pts_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_pts_ptr[interp_pts_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(i_enum));
                 model_neur.step(dt);
                 interp_pts_counter++;
@@ -310,7 +310,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         {
             const double v_neur = get_v_neur(model_neur);
             vpost_sig_ptr[vpost_sig_i] = v_neur;
-            synapsis.step(dt, vpre_sig_data[vpre_sig_i], v_neur);
+            synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_neur);
             model_neur.add_synaptic_input(synapsis.get(i_enum));
             model_neur.step(dt);
             i_sig_ptr[syn_sig_i] = synapsis.get(i_enum);
@@ -320,7 +320,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                 islow_sig_ptr[syn_sig_i] = synapsis.get(islow_enum);
             for (size_t k = 1; k < points_factor; k++)
             {
-                synapsis.step(dt, interpolated_pts_data[interp_pts_counter], get_v_neur(model_neur));
+                synapsis.step(dt, interpolated_pts_ptr[interp_pts_counter], get_v_neur(model_neur));
                 model_neur.add_synaptic_input(synapsis.get(i_enum));
                 model_neur.step(dt);
                 interp_pts_counter++;
@@ -329,7 +329,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
         const double v_neur = get_v_neur(model_neur);
         vpost_sig_ptr[vpost_sig_i] = v_neur;
-        synapsis.step(dt, vpre_sig_data[vpre_sig_i], v_neur);
+        synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_neur);
         model_neur.add_synaptic_input(synapsis.get(i_enum));
         model_neur.step(dt);
         i_sig_ptr[syn_sig_i] = synapsis.get(i_enum);
