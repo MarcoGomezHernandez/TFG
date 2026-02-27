@@ -311,9 +311,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             const double v_post = get_v_neur(model_neur);
             vpost_sig_ptr[vpost_sig_i] = v_post;
             synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
-            model_neur.add_synaptic_input(synapsis.get(i_enum));
+            const double i_val = synapsis.get(i_enum);
+            model_neur.add_synaptic_input(i_val);
             model_neur.step(dt);
-            i_sig_ptr[syn_sig_i] = synapsis.get(i_enum);
+            i_sig_ptr[syn_sig_i] = i_val;
             if (use_ifast)
                 ifast_sig_ptr[syn_sig_i] = synapsis.get(ifast_enum);
             if (use_islow)
@@ -330,9 +331,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         const double v_post = get_v_neur(model_neur);
         vpost_sig_ptr[vpost_sig_i] = v_post;
         synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
-        model_neur.add_synaptic_input(synapsis.get(i_enum));
+        const double i_val = synapsis.get(i_enum);
+        model_neur.add_synaptic_input(i_val);
         model_neur.step(dt);
-        i_sig_ptr[syn_sig_i] = synapsis.get(i_enum);
+        i_sig_ptr[syn_sig_i] = i_val;
         if (use_ifast)
             ifast_sig_ptr[syn_sig_i] = synapsis.get(ifast_enum);
         if (use_islow)
