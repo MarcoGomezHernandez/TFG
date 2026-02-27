@@ -16,7 +16,7 @@ struct Individual
 
 struct ConstantSigFitnessVals
 {
-    univector<double> norm_vpre_sig_to_fit;
+    univector<double> norm_i_sig_to_fit;
     univector<double> smoothed_vpre_sig_to_fit;
     univector<double> norm_ifast_sig_to_fit;
     univector<double> norm_islow_sig_to_fit;
@@ -30,7 +30,7 @@ struct SigBuffers
     univector<double> ifast_sig;
     univector<double> islow_sig;
 
-    univector<double> kfr_padded;
+    univector<double> padded;
 };
 
 ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector<double> &vpre_sig,

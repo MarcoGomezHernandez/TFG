@@ -55,18 +55,18 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
         smoothed_vpre_sig_to_fit[i - start_i] = running_sum / avg_smooth_points;
     }
 
-    double smoothed_min = minof(smoothed_vpre_sig_to_fit);
-    double smoothed_max = maxof(smoothed_vpre_sig_to_fit);
+    const double smoothed_min = minof(smoothed_vpre_sig_to_fit);
+    const double smoothed_max = maxof(smoothed_vpre_sig_to_fit);
 
     result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
 
     const univector<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
 
-    univector<double> &norm_vpre_sig_to_fit = result.norm_vpre_sig_to_fit;
+    univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
     if (use_ifast && use_islow)
     {
-        norm_vpre_sig_to_fit.resize(use_size);
-        norm_vpre_sig_to_fit = (vpre_sig_seg - min) / (max - min);
+        norm_i_sig_to_fit.resize(use_size);
+        norm_i_sig_to_fit = (vpre_sig_seg - min) / (max - min);
     }
 
     calc_ifast_islow_ref_sigs(vpre_sig_seg,
@@ -77,7 +77,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
         smoothed_vpre_sig_to_fit = smoothed_min + smoothed_max - smoothed_vpre_sig_to_fit;
 
         if (use_ifast && use_islow)
-            norm_vpre_sig_to_fit = 1.0 - norm_vpre_sig_to_fit;
+            norm_i_sig_to_fit = 1.0 - norm_i_sig_to_fit;
 
         if (use_islow)
         {
@@ -121,7 +121,7 @@ static void calc_ifast_islow_ref_sigs(const univector<double> &vpre_sig,
     const double fs = 1.0 / pts_burst_real;
     const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
 
-    univector<double> &padded = buffers.kfr_padded;
+    univector<double> &padded = buffers.padded;
 
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
@@ -184,11 +184,11 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
 
     if (use_ifast && use_islow)
     {
-        const univector<double> &norm_vpre_sig_to_fit =
-            const_vpre_sig_fitness_vals.norm_vpre_sig_to_fit;
+        const univector<double> &norm_i_sig_to_fit =
+            const_vpre_sig_fitness_vals.norm_i_sig_to_fit;
         const double vpre_i_comp_score =
             compute_norm_component_score_inplace(i_sig,
-                                                 norm_vpre_sig_to_fit);
+                                                 norm_i_sig_to_fit);
 
         weighted_sum += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
         total_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
