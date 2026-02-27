@@ -62,7 +62,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     result.max_v_comp_distance = use_size * (smoothed_max - smoothed_min);
 
-    const univector<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
+    const univector_ref<double> vpre_sig_seg = vpre_sig.slice(start_i, use_size);
 
     calc_syn_ref_sigs(vpre_sig_seg,
                       result,
@@ -115,7 +115,7 @@ static double compute_norm_component_score_inplace(univector<double> &sig,
     return 1.0 - (comp_dist / sig.size());
 }
 
-static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
+static void calc_syn_ref_sigs(const univector_ref<double> &vpre_sig,
                               ConstantSigFitnessVals &result,
                               double pts_burst_real,
                               SigBuffers &buffers,
@@ -131,7 +131,7 @@ static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
     univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
-    padded_seg = vpre_sig;
+    process(padded_seg, vpre_sig);
 
     for (size_t i = 0; i < FILTER_PAD_LEN; i++)
     {
