@@ -130,11 +130,9 @@ static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
 
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 
-    const auto padded_seg_begin = padded.begin() + FILTER_PAD_LEN;
-    const auto vpre_sig_begin = vpre_sig.cbegin();
-    const auto vpre_sig_end = vpre_sig.cend();
+    univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
+    padded_seg = vpre_sig;
 
-    std::copy(vpre_sig_begin, vpre_sig_end, padded_seg_begin);
     for (size_t i = 0; i < FILTER_PAD_LEN; i++)
     {
         padded[FILTER_PAD_LEN - 1 - i] = vpre_sig[i + 1];
@@ -146,22 +144,20 @@ static void calc_syn_ref_sigs(const univector<double> &vpre_sig,
 
     if (use_ifast && use_islow)
     {
-        univector<double> &norm_i_sig_to_fit = result.norm_i_sig_to_fit;
-        norm_i_sig_to_fit = (vpre_sig - min) / (max - min);
+        result.norm_i_sig_to_fit = (vpre_sig - min) / (max - min);
     }
 
     if (use_islow)
     {
         univector<double> &norm_islow_sig_to_fit = result.norm_islow_sig_to_fit;
-        norm_islow_sig_to_fit.resize(use_size);
-        std::copy(padded_seg_begin, padded_seg_begin + use_size, norm_islow_sig_to_fit.begin());
+        norm_islow_sig_to_fit = padded_seg;
         normalize_inplace(norm_islow_sig_to_fit);
     }
 
     if (use_ifast)
     {
         univector<double> &norm_ifast_sig_to_fit = result.norm_ifast_sig_to_fit;
-        norm_ifast_sig_to_fit = vpre_sig - padded.slice(FILTER_PAD_LEN, use_size);
+        norm_ifast_sig_to_fit = vpre_sig - padded_seg;
         normalize_inplace(norm_ifast_sig_to_fit);
     }
 }
