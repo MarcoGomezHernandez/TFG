@@ -58,21 +58,24 @@ static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
 
     if (use_ifast && use_islow)
     {
-        result.i_sig_centered_to_fit = vpre_sig - mean(vpre_sig);
-        result.i_sig_stddev_to_fit = stddev(vpre_sig);
+        univector<double> &i_sig_centered = result.i_sig_centered_to_fit;
+        i_sig_centered = vpre_sig - mean(vpre_sig);
+        result.i_sig_factor_to_fit = std::sqrt(sum(sqr(i_sig_centered)));
     }
 
     if (use_islow)
     {
-        result.islow_sig_centered_to_fit = padded_seg - mean(padded_seg);
-        result.islow_sig_stddev_to_fit = stddev(padded_seg);
+        univector<double> &islow_sig_centered = result.islow_sig_centered_to_fit;
+        islow_sig_centered = padded_seg - mean(padded_seg);
+        result.islow_sig_factor_to_fit = std::sqrt(sum(sqr(islow_sig_centered)));
     }
 
     if (use_ifast)
     {
         univector<double> ifast_sig = vpre_sig - padded_seg;
-        result.ifast_sig_centered_to_fit = ifast_sig - mean(ifast_sig);
-        result.ifast_sig_stddev_to_fit = stddev(ifast_sig);
+        univector<double> &ifast_sig_centered = result.ifast_sig_centered_to_fit;
+        ifast_sig_centered = ifast_sig - mean(ifast_sig);
+        result.ifast_sig_factor_to_fit = std::sqrt(sum(sqr(ifast_sig_centered)));
     }
 }
 
@@ -125,12 +128,14 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     return result;
 }
 
-static double pearson_score(const univector<double> &sig,
+static double pearson_score(univector<double> &sig,
                             const univector<double> &ref_sig_centered,
-                            double ref_sig_stddev,
+                            double ref_sig_factor,
                             bool search_phase)
 {
-    const double r = sum((sig - mean(sig)) * ref_sig_centered) / (stddev(sig) * ref_sig_stddev);
+    sig -= mean(sig);
+    const double sig_factor = std::sqrt(sum(sqr(sig)));
+    const double r = sum(sig * ref_sig_centered) / (sig_factor * ref_sig_factor);
     const double normalized = (r + 1.0) / 2.0;
     return search_phase ? normalized : 1.0 - normalized;
 }
@@ -162,7 +167,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         const double vpre_i_comp_score =
             pearson_score(buffers.i_sig,
                           const_vpre_sig_fitness_vals.i_sig_centered_to_fit,
-                          const_vpre_sig_fitness_vals.i_sig_stddev_to_fit,
+                          const_vpre_sig_fitness_vals.i_sig_factor_to_fit,
                           search_phase);
         vpre_syn_comp_score += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
         vpre_syn_comp_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
@@ -173,7 +178,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         const double vpost_ifast_comp_score =
             pearson_score(buffers.ifast_sig,
                           const_vpre_sig_fitness_vals.ifast_sig_centered_to_fit,
-                          const_vpre_sig_fitness_vals.ifast_sig_stddev_to_fit,
+                          const_vpre_sig_fitness_vals.ifast_sig_factor_to_fit,
                           search_phase);
         vpre_syn_comp_score += FitnessConfig::VPRE_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
         vpre_syn_comp_weight += FitnessConfig::VPRE_IFAST_COMP_WEIGHT;
@@ -184,7 +189,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         const double vpost_islow_comp_score =
             pearson_score(buffers.islow_sig,
                           const_vpre_sig_fitness_vals.islow_sig_centered_to_fit,
-                          const_vpre_sig_fitness_vals.islow_sig_stddev_to_fit,
+                          const_vpre_sig_fitness_vals.islow_sig_factor_to_fit,
                           search_phase);
         vpre_syn_comp_score += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
         vpre_syn_comp_weight += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT;
