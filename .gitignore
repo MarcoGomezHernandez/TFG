@@ -3,12 +3,12 @@
 *.pdf
 
 .vscode/*
-build/*
+build
 
 *.asc
 
 consts_calculator
-genetic
+genetic/genetic
 programa
 
 *.xdy
