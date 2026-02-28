@@ -29,11 +29,10 @@ struct ConstantSigFitnessVals
 struct SigBuffers
 {
   univector<double> vpost_sig;
+  univector<double> smoothed_vpost_sig;
   univector<double> i_sig;
   univector<double> ifast_sig;
   univector<double> islow_sig;
-
-  univector<double> padded;
 };
 
 ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector<double> &vpre_sig,
@@ -42,7 +41,6 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector<double> &vpre
                                                    bool search_phase,
                                                    size_t avg_smooth_points,
                                                    double pts_burst_real,
-                                                   SigBuffers &buffers,
                                                    bool use_ifast,
                                                    bool use_islow);
 

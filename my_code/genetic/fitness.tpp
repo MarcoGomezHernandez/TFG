@@ -31,7 +31,6 @@ namespace FitnessConstants
 static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
                               ConstantSigFitnessVals &result,
                               double pts_burst_real,
-                              SigBuffers &buffers,
                               bool use_ifast, bool use_islow,
                               double min, double max)
 {
@@ -39,9 +38,9 @@ static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
     const double fs = 1.0 / pts_burst_real;
     const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
 
-    univector<double> &padded = buffers.padded;
-
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
+
+    univector<double> padded(use_size + 2 * FILTER_PAD_LEN);
 
     univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
     process(padded_seg, vpre_sig);
@@ -84,7 +83,6 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     bool search_phase,
     size_t avg_smooth_points,
     double pts_burst_real,
-    SigBuffers &buffers,
     bool use_ifast,
     bool use_islow)
 {
@@ -119,7 +117,6 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     calc_syn_ref_vals(vpre_sig.slice(avg_smooth_points, use_size),
                       result,
                       pts_burst_real,
-                      buffers,
                       use_ifast,
                       use_islow,
                       min,
@@ -140,19 +137,21 @@ static double pearson_score(const univector<double> &sig,
 
 static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
-    univector<double> &vpost_sig = buffers.vpost_sig;
+    const univector<double> &vpost_sig = buffers.vpost_sig;
+    univector<double> &smoothed_vpost_sig = buffers.smoothed_vpost_sig;
     const size_t vpost_sig_size = vpost_sig.size();
 
     double running_sum = sum(vpost_sig.slice(0, avg_smooth_points));
 
-    double *vpost_sig_ptr = vpost_sig.data();
+    const double *vpost_sig_ptr = vpost_sig.data();
+    double *smoothed_vpost_sig_ptr = smoothed_vpost_sig.data();
     for (size_t i = avg_smooth_points; i < vpost_sig_size; i++)
     {
         running_sum += vpost_sig_ptr[i];
         running_sum -= vpost_sig_ptr[i - avg_smooth_points];
-        vpost_sig_ptr[i] = running_sum / avg_smooth_points;
+        smoothed_vpost_sig_ptr[i - avg_smooth_points] = running_sum / avg_smooth_points;
     }
-    const double v_comp_RMSE = std::sqrt(sum(sqr(vpost_sig.slice(avg_smooth_points, vpost_sig_size - avg_smooth_points) - const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit)) / vpost_sig_size);
+    const double v_comp_RMSE = std::sqrt(sum(sqr(smoothed_vpost_sig - const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit)) / vpost_sig_size);
     const double v_comp_score = 1.0 - (v_comp_RMSE / const_vpre_sig_fitness_vals.max_v_comp_distance);
 
     double vpre_syn_comp_score = 0.0;

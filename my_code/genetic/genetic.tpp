@@ -377,12 +377,12 @@ Individual genetic(const std::string &csv_path,
         buffers.ifast_sig.resize(use_vpre_sig_size);
     if (use_islow)
         buffers.islow_sig.resize(use_vpre_sig_size);
-    buffers.padded.resize(use_vpre_sig_size + 2 * FitnessConfig::FILTER_PAD_LEN);
+    buffers.smoothed_vpost_sig.resize(use_vpre_sig_size);
 
     const ConstantSigFitnessVals const_vpre_sig_fitness_vals = calc_const_sig_fitness_vals(
         scaled_result.sig.slice(stabilization_points - avg_smooth_points, smoothing_size),
         model_min, model_max, search_phase,
-        avg_smooth_points, scaled_result.pts_burst_real, buffers, use_ifast, use_islow);
+        avg_smooth_points, scaled_result.pts_burst_real, use_ifast, use_islow);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
