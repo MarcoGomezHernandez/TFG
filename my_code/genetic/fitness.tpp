@@ -38,19 +38,19 @@ static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
     const double fs = pts_burst_real;
     const double fc = FitnessConfig::FILTER_FC;
 
-    constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
+    const size_t effective_pad = std::min(FitnessConfig::FILTER_PAD_LEN, use_size - 1);
 
-    univector<double> padded(use_size + 2 * FILTER_PAD_LEN);
+    univector<double> padded(use_size + (2 * effective_pad));
 
-    univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
+    univector_ref<double> padded_seg = padded.slice(effective_pad, use_size);
     process(padded_seg, vpre_sig);
 
     double *padded_ptr = padded.data();
     const double *vpre_sig_ptr = vpre_sig.data();
-    for (size_t i = 0; i < FILTER_PAD_LEN; i++)
+    for (size_t i = 0; i < effective_pad; i++)
     {
-        padded_ptr[FILTER_PAD_LEN - 1 - i] = vpre_sig_ptr[i + 1];
-        padded_ptr[use_size + FILTER_PAD_LEN + i] = vpre_sig_ptr[use_size - 2 - i];
+        padded_ptr[effective_pad - 1 - i] = vpre_sig_ptr[i + 1];
+        padded_ptr[use_size + effective_pad + i] = vpre_sig_ptr[use_size - 2 - i];
     }
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
@@ -156,7 +156,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
         running_sum -= vpost_sig_ptr[i - avg_smooth_points];
         smoothed_vpost_sig_ptr[i - avg_smooth_points] = running_sum / avg_smooth_points;
     }
-    const double v_comp_RMSE = std::sqrt(sum(sqr(smoothed_vpost_sig - const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit)) / vpost_sig_size);
+    const double v_comp_RMSE = std::sqrt(sum(sqr(smoothed_vpost_sig - const_vpre_sig_fitness_vals.smoothed_vpre_sig_to_fit)) / smoothed_vpost_sig.size());
     const double v_comp_score = 1.0 - (v_comp_RMSE / const_vpre_sig_fitness_vals.max_v_comp_distance);
 
     double vpre_syn_comp_score = 0.0;
@@ -298,7 +298,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             const double i_val = synapsis.get(i_enum);
             model_neur.add_synaptic_input(i_val);
             model_neur.step(dt);
-            i_sig_ptr[syn_sig_i] = i_val;
+            if (use_ifast && use_islow)
+                i_sig_ptr[syn_sig_i] = i_val;
             if (use_ifast)
                 ifast_sig_ptr[syn_sig_i] = synapsis.get(ifast_enum);
             if (use_islow)
@@ -318,7 +319,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         const double i_val = synapsis.get(i_enum);
         model_neur.add_synaptic_input(i_val);
         model_neur.step(dt);
-        i_sig_ptr[syn_sig_i] = i_val;
+        if (use_ifast && use_islow)
+            i_sig_ptr[syn_sig_i] = i_val;
         if (use_ifast)
             ifast_sig_ptr[syn_sig_i] = synapsis.get(ifast_enum);
         if (use_islow)

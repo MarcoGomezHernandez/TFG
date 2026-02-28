@@ -370,9 +370,10 @@ Individual genetic(const std::string &csv_path,
 
     SigBuffers buffers;
     buffers.vpost_sig.resize(smoothing_size);
-    buffers.i_sig.resize(use_vpre_sig_size);
     const bool use_ifast = (syn_component != SynComponent::ISLOW);
     const bool use_islow = (syn_component != SynComponent::IFAST);
+    if (use_ifast && use_islow)
+        buffers.i_sig.resize(use_vpre_sig_size);
     if (use_ifast)
         buffers.ifast_sig.resize(use_vpre_sig_size);
     if (use_islow)
