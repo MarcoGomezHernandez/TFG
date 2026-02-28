@@ -234,7 +234,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
     for (size_t i = ind_start_i; i < N; i++)
     {
-        Individual ind = individuals[i];
+        Individual &ind = individuals[i];
         const ChemicalSynapsisParams &params = ind.params;
 
         synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
