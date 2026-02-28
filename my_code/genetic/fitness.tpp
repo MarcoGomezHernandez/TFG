@@ -28,6 +28,55 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
+static void calc_syn_ref_vals(const univector_ref<double> &vpre_sig,
+                              ConstantSigFitnessVals &result,
+                              double pts_burst_real,
+                              SigBuffers &buffers,
+                              bool use_ifast, bool use_islow,
+                              double min, double max)
+{
+    const size_t use_size = vpre_sig.size();
+    const double fs = 1.0 / pts_burst_real;
+    const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
+
+    univector<double> &padded = buffers.padded;
+
+    constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
+
+    univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
+    process(padded_seg, vpre_sig);
+
+    double *padded_ptr = padded.data();
+    const double *vpre_sig_ptr = vpre_sig.data();
+    for (size_t i = 0; i < FILTER_PAD_LEN; i++)
+    {
+        padded_ptr[FILTER_PAD_LEN - 1 - i] = vpre_sig_ptr[i + 1];
+        padded_ptr[use_size + FILTER_PAD_LEN + i] = vpre_sig_ptr[use_size - 2 - i];
+    }
+
+    filtfilt(padded, to_sos<double>(iir_lowpass(
+                         butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
+
+    if (use_ifast && use_islow)
+    {
+        result.i_sig_centered_to_fit = vpre_sig - mean(vpre_sig);
+        result.i_sig_stddev_to_fit = stddev(vpre_sig);
+    }
+
+    if (use_islow)
+    {
+        result.islow_sig_centered_to_fit = padded_seg - mean(padded_seg);
+        result.islow_sig_stddev_to_fit = stddev(padded_seg);
+    }
+
+    if (use_ifast)
+    {
+        univector<double> ifast_sig = vpre_sig - padded_seg;
+        result.ifast_sig_centered_to_fit = ifast_sig - mean(ifast_sig);
+        result.ifast_sig_stddev_to_fit = stddev(ifast_sig);
+    }
+}
+
 ConstantSigFitnessVals calc_const_sig_fitness_vals(
     const univector<double> &vpre_sig,
     double min,
@@ -87,55 +136,6 @@ static double pearson_score(const univector<double> &sig,
     const double r = sum((sig - mean(sig)) * ref_sig_centered) / (stddev(sig) * ref_sig_stddev);
     const double normalized = (r + 1.0) / 2.0;
     return search_phase ? normalized : 1.0 - normalized;
-}
-
-static void calc_syn_ref_vals(const univector_ref<double> &vpre_sig,
-                              ConstantSigFitnessVals &result,
-                              double pts_burst_real,
-                              SigBuffers &buffers,
-                              bool use_ifast, bool use_islow,
-                              double min, double max)
-{
-    const size_t use_size = vpre_sig.size();
-    const double fs = 1.0 / pts_burst_real;
-    const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
-
-    univector<double> &padded = buffers.padded;
-
-    constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
-
-    univector_ref<double> padded_seg = padded.slice(FILTER_PAD_LEN, use_size);
-    process(padded_seg, vpre_sig);
-
-    double *padded_ptr = padded.data();
-    const double *vpre_sig_ptr = vpre_sig.data();
-    for (size_t i = 0; i < FILTER_PAD_LEN; i++)
-    {
-        padded_ptr[FILTER_PAD_LEN - 1 - i] = vpre_sig_ptr[i + 1];
-        padded_ptr[use_size + FILTER_PAD_LEN + i] = vpre_sig_ptr[use_size - 2 - i];
-    }
-
-    filtfilt(padded, to_sos<double>(iir_lowpass(
-                         butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
-
-    if (use_ifast && use_islow)
-    {
-        result.i_sig_centered_to_fit = vpre_sig - mean(vpre_sig);
-        result.i_sig_stddev_to_fit = stddev(vpre_sig);
-    }
-
-    if (use_islow)
-    {
-        result.islow_sig_centered_to_fit = padded_seg - mean(padded_seg);
-        result.islow_sig_stddev_to_fit = stddev(padded_seg);
-    }
-
-    if (use_ifast)
-    {
-        univector<double> ifast_sig = vpre_sig - padded_seg;
-        result.ifast_sig_centered_to_fit = ifast_sig - mean(ifast_sig);
-        result.ifast_sig_stddev_to_fit = stddev(ifast_sig);
-    }
 }
 
 static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
@@ -227,10 +227,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     double *ifast_sig_ptr = buffers.ifast_sig.data();
     double *islow_sig_ptr = buffers.islow_sig.data();
 
-    const size_t total_size = scaled_result.vpre_sig.size();
+    const size_t total_size = scaled_result.sig.size();
     const size_t points_factor = scaled_result.points_factor;
     const double dt = scaled_result.dt;
-    const double *vpre_sig_ptr = scaled_result.vpre_sig.data();
+    const double *vpre_sig_ptr = scaled_result.sig.data();
     const double *interpolated_points_ptr = scaled_result.interpolated_points.data();
 
     for (size_t i = ind_start_i; i < N; i++)
