@@ -366,8 +366,10 @@ Individual genetic(const std::string &csv_path,
     const size_t stabilization_points = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points);
     const size_t use_vpre_sig_size = total_vpre_sig_size - stabilization_points;
 
+    const size_t smoothing_size = avg_smooth_points + use_vpre_sig_size;
+
     SigBuffers buffers;
-    buffers.vpost_sig.resize(avg_smooth_points + use_vpre_sig_size);
+    buffers.vpost_sig.resize(smoothing_size);
     buffers.i_sig.resize(use_vpre_sig_size);
     const bool use_ifast = (syn_component != SynComponent::ISLOW);
     const bool use_islow = (syn_component != SynComponent::IFAST);
@@ -378,7 +380,7 @@ Individual genetic(const std::string &csv_path,
     buffers.padded.resize(use_vpre_sig_size + 2 * FitnessConfig::FILTER_PAD_LEN);
 
     const ConstantSigFitnessVals const_vpre_sig_fitness_vals = calc_const_sig_fitness_vals(
-        scaled_result.sig.slice(stabilization_points - avg_smooth_points, use_vpre_sig_size),
+        scaled_result.sig.slice(stabilization_points - avg_smooth_points, smoothing_size),
         model_min, model_max, search_phase,
         avg_smooth_points, scaled_result.pts_burst_real, buffers, use_ifast, use_islow);
 
