@@ -4,6 +4,8 @@ project(KFR_Project)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_compile_options(-Wall -O2 -march=native)
+
 # Desactivar multiarch simplifica el binario y acelera la compilación 
 # si solo vas a ejecutarlo en tu laptop (opcional)
 set(KFR_ENABLE_MULTIARCH OFF CACHE BOOL "" FORCE)
