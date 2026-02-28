@@ -387,8 +387,7 @@ ScaledSigResult scale_sig(
     }
     else
     {
-        sig *= scale_real_to_virtual;
-        sig += offset_real_to_virtual;
+        sig = (sig * scale_real_to_virtual) + offset_real_to_virtual;
     }
 
     const size_t interpolated_size = (sig_size - 1) * (s_points - 1);
