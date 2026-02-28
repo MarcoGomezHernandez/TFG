@@ -15,7 +15,7 @@ namespace FitnessConfig
     static constexpr double VPRE_ISLOW_COMP_WEIGHT = 0.3;
 
     static constexpr double AVG_SMOOTH_POINTS_BURST_DIVISOR = 100;
-    static constexpr double FILTER_FC_POINTS_BURST_DIVISOR = 100;
+    static constexpr double FILTER_FC = 24.76;
 
     static constexpr size_t FILTER_PAD_LEN = 1000;
     static constexpr int BUTTERWORTH_ORDER = 4;
@@ -35,8 +35,8 @@ static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
                               double min, double max)
 {
     const size_t use_size = vpre_sig.size();
-    const double fs = 1.0 / pts_burst_real;
-    const double fc = fs * FitnessConfig::FILTER_FC_POINTS_BURST_DIVISOR;
+    const double fs = pts_burst_real;
+    const double fc = FitnessConfig::FILTER_FC;
 
     constexpr size_t FILTER_PAD_LEN = FitnessConfig::FILTER_PAD_LEN;
 

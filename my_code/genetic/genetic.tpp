@@ -12,8 +12,8 @@
 
 namespace GeneticConfig
 {
-    static constexpr size_t POPULATION_SIZE = 40;
-    static constexpr size_t NUM_GENERATIONS = 80;
+    static constexpr size_t POPULATION_SIZE = 30;
+    static constexpr size_t NUM_GENERATIONS = 30;
     static constexpr size_t NUM_ELITES = 3;
 
     static constexpr double OBSERVATION_TIME_DIVISOR = 3.0;
