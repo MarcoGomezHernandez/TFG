@@ -85,8 +85,8 @@ void read_csv_column(univector<double> &data, const std::string &csv_path, size_
     file.close();
 }
 
-double sig_period(double tiempo_observacion, const univector_ref<double> &sig,
-                     double th_up, double th_on)
+double sig_period(double tiempo_observacion, const univector_ref<const double> &sig,
+                  double th_up, double th_on)
 {
     bool up = (sig.front() > th_up);
     double changes = 0.0;
@@ -239,7 +239,7 @@ SigStats ini_recibido(const univector<double> &sig, size_t obs_points, double cs
 
     SigStats stats;
 
-    const univector_ref<double> obs_sig = sig.slice(0, obs_points);
+    const univector_ref<const double> obs_sig = sig.slice(0, obs_points);
     const double max_abs = maxof(obs_sig);
     const double min_abs = minof(obs_sig);
 

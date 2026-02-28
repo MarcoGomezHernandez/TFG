@@ -28,7 +28,7 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
-static void calc_syn_ref_vals(const univector_ref<double> &vpre_sig,
+static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
                               ConstantSigFitnessVals &result,
                               double pts_burst_real,
                               SigBuffers &buffers,
@@ -111,7 +111,7 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     if (!search_phase)
     {
-        smoothed_vpre_sig_to_fit = smoothed_min + smoothed_max - smoothed_vpre_sig_to_fit;
+        smoothed_vpre_sig_to_fit = (smoothed_min + smoothed_max) - smoothed_vpre_sig_to_fit;
     }
 
     result.max_v_comp_distance = smoothed_max - smoothed_min;
