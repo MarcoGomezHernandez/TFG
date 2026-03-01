@@ -118,12 +118,6 @@ static inline std::array<Individual, POP_SIZE> initialize_population(std::mt1993
             p.sfast = dist_sfast(rng);
             p.Vfast = dist_vfast(rng);
         }
-        else
-        {
-            p.gfast = 0.0;
-            p.sfast = 0.0;
-            p.Vfast = 0.0;
-        }
 
         if (use_islow)
         {
@@ -132,14 +126,6 @@ static inline std::array<Individual, POP_SIZE> initialize_population(std::mt1993
             p.k1 = dist_k1(rng);
             p.k2 = dist_k2(rng);
             p.sslow = dist_sslow(rng);
-        }
-        else
-        {
-            p.gslow = 0.0;
-            p.Vslow = 0.0;
-            p.k1 = 0.0;
-            p.k2 = 0.0;
-            p.sslow = 0.0;
         }
     }
 
@@ -295,8 +281,27 @@ Individual genetic(const std::string &csv_path,
 
     NeuronType model_neur = create_neur(false);
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
+
+    const bool use_ifast = (syn_component != SynComponent::ISLOW);
+    const bool use_islow = (syn_component != SynComponent::IFAST);
+
     typename ChemicalSynapsisType::ConstructorArgs syn_args{};
     syn_args.params[ChemicalSynapsisType::Esyn] = search_phase ? GeneticConfig::ESYN_PHASE : GeneticConfig::ESYN_ANTIPHASE;
+    if (use_islow && !use_ifast)
+    {
+        syn_args.params[ChemicalSynapsisType::gfast] = 0.0;
+        syn_args.params[ChemicalSynapsisType::sfast] = 0.0;
+        syn_args.params[ChemicalSynapsisType::Vfast] = 0.0;
+    }
+    else if (use_ifast && !use_islow)
+    {
+        syn_args.params[ChemicalSynapsisType::gslow] = 0.0;
+        syn_args.params[ChemicalSynapsisType::Vslow] = 0.0;
+        syn_args.params[ChemicalSynapsisType::k1] = 0.0;
+        syn_args.params[ChemicalSynapsisType::k2] = 0.0;
+        syn_args.params[ChemicalSynapsisType::sslow] = 0.0;
+    }
+
     ChemicalSynapsisType synapsis(create_neur(true), neur_v_var, model_neur, neur_v_var, syn_args, syn_model_step_factor);
 
     double model_min, model_max;
@@ -320,8 +325,6 @@ Individual genetic(const std::string &csv_path,
 
     SigBuffers buffers;
     buffers.vpost_sig.resize(smoothing_size);
-    const bool use_ifast = (syn_component != SynComponent::ISLOW);
-    const bool use_islow = (syn_component != SynComponent::IFAST);
     if (use_ifast && use_islow)
         buffers.i_sig.resize(use_vpre_sig_size);
     if (use_ifast)
