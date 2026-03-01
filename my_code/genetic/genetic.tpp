@@ -285,8 +285,10 @@ Individual genetic(const std::string &csv_path,
     const bool use_ifast = (syn_component != SynComponent::ISLOW);
     const bool use_islow = (syn_component != SynComponent::IFAST);
 
+    const double used_esyn = search_phase ? GeneticConfig::ESYN_PHASE : GeneticConfig::ESYN_ANTIPHASE;
+
     typename ChemicalSynapsisType::ConstructorArgs syn_args{};
-    syn_args.params[ChemicalSynapsisType::Esyn] = search_phase ? GeneticConfig::ESYN_PHASE : GeneticConfig::ESYN_ANTIPHASE;
+    syn_args.params[ChemicalSynapsisType::Esyn] = used_esyn;
     if (use_islow && !use_ifast)
     {
         syn_args.params[ChemicalSynapsisType::gfast] = 0.0;
@@ -425,7 +427,7 @@ Individual genetic(const std::string &csv_path,
         std::cout << "Fitness: " << best.fitness << std::endl;
         std::cout << "gfast_values = [" << params.gfast << "]" << std::endl;
         std::cout << "gslow_values = [" << params.gslow << "]" << std::endl;
-        std::cout << "Esyn_values = [" << params.Esyn << "]" << std::endl;
+        std::cout << "Esyn_values = [" << used_esyn << "]" << std::endl;
         std::cout << "Vfast_values = [" << params.Vfast << "]" << std::endl;
         std::cout << "Vslow_values = [" << params.Vslow << "]" << std::endl;
         std::cout << "sfast_values = [" << params.sfast << "]" << std::endl;
