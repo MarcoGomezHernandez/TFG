@@ -315,11 +315,11 @@ Individual genetic(const std::string &csv_path,
         throw std::runtime_error("Unsupported model.");
     }
 
-    const size_t avg_smooth_points = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(scaled_result.pts_burst_real / FitnessConfig::AVG_SMOOTH_POINTS_BURST_DIVISOR));
+    const double pts_burst_real = scaled_result.pts_burst_real;
+    const size_t avg_smooth_points = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(pts_burst_real / FitnessConfig::AVG_SMOOTH_POINTS_BURST_DIVISOR));
 
-    const size_t total_vpre_sig_size = scaled_result.sig.size();
     const size_t stabilization_points = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points);
-    const size_t use_vpre_sig_size = total_vpre_sig_size - stabilization_points;
+    const size_t use_vpre_sig_size = scaled_result.sig.size() - stabilization_points;
 
     const size_t smoothing_size = avg_smooth_points + use_vpre_sig_size;
 
@@ -336,11 +336,10 @@ Individual genetic(const std::string &csv_path,
     const ConstantSigFitnessVals const_vpre_sig_fitness_vals = calc_const_sig_fitness_vals(
         scaled_result.sig.slice(stabilization_points - avg_smooth_points, smoothing_size),
         model_min, model_max, search_phase,
-        avg_smooth_points, scaled_result.pts_burst_real, use_ifast, use_islow);
+        avg_smooth_points, pts_burst_real, use_ifast, use_islow);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
-    constexpr size_t ELITES_SIZE = ELITES * sizeof(Individual);
 
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -384,7 +383,7 @@ Individual genetic(const std::string &csv_path,
 
         roulette_dist = std::uniform_real_distribution<double>(0.0, fitness_sum);
 
-        std::memcpy(&(new_population[0]), &(population[0]), ELITES_SIZE);
+        std::copy_n(population.begin(), ELITES, new_population.begin());
 
         for (size_t i = ELITES; i < POP; i++)
         {
