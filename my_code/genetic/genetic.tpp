@@ -23,7 +23,7 @@ namespace GeneticConfig
 
     static constexpr double ETA = 0.2;
 
-    static constexpr double ESYN_PHASE = -2.0;
+    static constexpr double ESYN_PHASE = -3.0;
     static constexpr double ESYN_ANTIPHASE = 2.0;
 
     static constexpr double SFAST_MIN = 0.5;
