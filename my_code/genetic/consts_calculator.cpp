@@ -62,7 +62,7 @@ struct PtsResult
 };
 
 template <typename NeuronType, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
-MinMaxResult calculate_min_max(
+static inline MinMaxResult calculate_min_max(
     CreateFuncType create_neur,
     ResetFuncType reset_state_neur,
     GetVFuncType get_v_neur,
@@ -106,7 +106,7 @@ MinMaxResult calculate_min_max(
 }
 
 template <typename NeuronType, size_t N, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
-PtsResult calculate_pts(
+static inline PtsResult calculate_pts(
     CreateFuncType create_neur,
     ResetFuncType reset_state_neur,
     GetVFuncType get_v_neur,
@@ -179,7 +179,7 @@ PtsResult calculate_pts(
     return result;
 }
 
-inline std::string integrator_to_string(NumericIntegrator integrator)
+static inline std::string integrator_to_string(NumericIntegrator integrator)
 {
     switch (integrator)
     {
@@ -190,7 +190,7 @@ inline std::string integrator_to_string(NumericIntegrator integrator)
     }
 }
 
-void print_tables(const PtsResult &pr, NumericIntegrator integrator)
+static inline void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 {
     const std::string integrator_str = integrator_to_string(integrator);
 

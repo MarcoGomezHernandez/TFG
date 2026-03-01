@@ -33,8 +33,8 @@ struct SigStats
     double period_sig;
 };
 
-void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_i,
-                     size_t start_i, size_t num_points)
+static inline void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_i,
+                                   size_t start_i, size_t num_points)
 {
     std::ifstream file(csv_path);
 
@@ -85,8 +85,8 @@ void read_csv_column(univector<double> &data, const std::string &csv_path, size_
     file.close();
 }
 
-double sig_period(double tiempo_observacion, const univector_ref<const double> &sig,
-                  double th_up, double th_on)
+static inline double sig_period(double tiempo_observacion, const univector_ref<const double> &sig,
+                                double th_up, double th_on)
 {
     bool up = (sig.front() > th_up);
     double changes = 0.0;
@@ -107,8 +107,8 @@ double sig_period(double tiempo_observacion, const univector_ref<const double> &
     return 1.0 / (changes / tiempo_observacion);
 }
 
-ScalingFactors calcula_escala(double min_virtual, double max_virtual,
-                              double min_viva, double max_viva)
+static inline ScalingFactors calcula_escala(double min_virtual, double max_virtual,
+                                            double min_viva, double max_viva)
 {
     const double rg_virtual = max_virtual - min_virtual;
     const double rg_viva = max_viva - min_viva;
@@ -122,9 +122,9 @@ ScalingFactors calcula_escala(double min_virtual, double max_virtual,
 }
 
 template <size_t N>
-DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
-                                   const std::array<double, N> &pts,
-                                   double pts_live)
+static inline DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
+                                                 const std::array<double, N> &pts,
+                                                 double pts_live)
 {
     double aux = pts_live;
     double factor = 1.0;
@@ -186,7 +186,7 @@ DTSelection select_dt_neuron_model(const std::array<double, N> &dts,
     return selection;
 }
 
-inline DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_live)
+static inline DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_live)
 {
     if (model == NeuronModel::HINDMARSH_ROSE)
     {
@@ -205,7 +205,7 @@ inline DTSelection set_pts_burst(NeuronModel model, NumericIntegrator integrator
     }
 }
 
-inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SigStats &stats)
+static inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, double min_window, double max_window, SigStats &stats)
 {
     ScalingFactors factors = calcula_escala(min_abs_model, max_abs_model, min_window, max_window);
 
@@ -233,7 +233,7 @@ inline ScalingFactors fix_drift(double min_abs_model, double max_abs_model, doub
     return factors;
 }
 
-SigStats ini_recibido(const univector<double> &sig, size_t obs_points, double csv_step)
+static inline SigStats ini_recibido(const univector<double> &sig, size_t obs_points, double csv_step)
 {
     const double observation_time_to_use = obs_points * csv_step;
 

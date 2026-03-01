@@ -108,11 +108,10 @@ inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
     return NeuronType(args);
 }
 
-struct ChemicalSynapsisParams
+struct ChemicalSynapsisVariationParams
 {
     double gfast;
     double gslow;
-    double Esyn;
     double sfast;
     double Vfast;
     double Vslow;

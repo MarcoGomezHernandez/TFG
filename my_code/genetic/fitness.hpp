@@ -10,7 +10,7 @@ using namespace kfr;
 
 struct Individual
 {
-  ChemicalSynapsisParams params;
+  ChemicalSynapsisVariationParams params;
   double fitness;
 };
 

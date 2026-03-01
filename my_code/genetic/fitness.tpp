@@ -28,11 +28,11 @@ namespace FitnessConstants
     static constexpr size_t MIN_AVG_SMOOTH_POINTS = 1;
 }
 
-static void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
-                              ConstantSigFitnessVals &result,
-                              double pts_burst_real,
-                              bool use_ifast, bool use_islow,
-                              double min, double max)
+static inline void calc_syn_ref_vals(const univector_ref<const double> &vpre_sig,
+                                     ConstantSigFitnessVals &result,
+                                     double pts_burst_real,
+                                     bool use_ifast, bool use_islow,
+                                     double min, double max)
 {
     const size_t use_size = vpre_sig.size();
     const double fs = pts_burst_real;
@@ -128,10 +128,10 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     return result;
 }
 
-static double pearson_score(univector<double> &sig,
-                            const univector<double> &ref_sig_centered,
-                            double ref_sig_factor,
-                            bool search_phase)
+static inline double pearson_score(univector<double> &sig,
+                                   const univector<double> &ref_sig_centered,
+                                   double ref_sig_factor,
+                                   bool search_phase)
 {
     sig -= mean(sig);
     const double sig_factor = std::sqrt(sum(sqr(sig)));
@@ -140,7 +140,7 @@ static double pearson_score(univector<double> &sig,
     return search_phase ? normalized : 1.0 - normalized;
 }
 
-static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
+static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, size_t avg_smooth_points, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
     const univector<double> &vpost_sig = buffers.vpost_sig;
     univector<double> &smoothed_vpost_sig = buffers.smoothed_vpost_sig;
@@ -240,11 +240,10 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     for (size_t i = ind_start_i; i < N; i++)
     {
         Individual &ind = individuals[i];
-        const ChemicalSynapsisParams &params = ind.params;
+        const ChemicalSynapsisVariationParams &params = ind.params;
 
         synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
         synapsis.set(ChemicalSynapsisType::gslow, params.gslow);
-        synapsis.set(ChemicalSynapsisType::Esyn, params.Esyn);
         synapsis.set(ChemicalSynapsisType::sfast, params.sfast);
         synapsis.set(ChemicalSynapsisType::Vfast, params.Vfast);
         synapsis.set(ChemicalSynapsisType::Vslow, params.Vslow);
