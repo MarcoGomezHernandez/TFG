@@ -242,14 +242,21 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         Individual &ind = individuals[i];
         const ChemicalSynapsisVariationParams &params = ind.params;
 
-        synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
-        synapsis.set(ChemicalSynapsisType::gslow, params.gslow);
-        synapsis.set(ChemicalSynapsisType::sfast, params.sfast);
-        synapsis.set(ChemicalSynapsisType::Vfast, params.Vfast);
-        synapsis.set(ChemicalSynapsisType::Vslow, params.Vslow);
-        synapsis.set(ChemicalSynapsisType::k1, params.k1);
-        synapsis.set(ChemicalSynapsisType::k2, params.k2);
-        synapsis.set(ChemicalSynapsisType::sslow, params.sslow);
+        if (use_ifast)
+        {
+            synapsis.set(ChemicalSynapsisType::gfast, params.gfast);
+            synapsis.set(ChemicalSynapsisType::sfast, params.sfast);
+            synapsis.set(ChemicalSynapsisType::Vfast, params.Vfast);
+        }
+
+        if (use_islow)
+        {
+            synapsis.set(ChemicalSynapsisType::gslow, params.gslow);
+            synapsis.set(ChemicalSynapsisType::Vslow, params.Vslow);
+            synapsis.set(ChemicalSynapsisType::sslow, params.sslow);
+            synapsis.set(ChemicalSynapsisType::k1, params.k1);
+            synapsis.set(ChemicalSynapsisType::k2, params.k2);
+        }
 
         synapsis.set(ChemicalSynapsisType::mslow, FitnessConstants::M_SLOW_INITIAL_VALUE);
 
