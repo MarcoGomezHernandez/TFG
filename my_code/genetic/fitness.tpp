@@ -198,7 +198,7 @@ static double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fit
     const double final_score = (FitnessConfig::V_COMP_WEIGHT * v_comp_score) +
                                (FitnessConfig::VPRE_SYN_COMP_WEIGHT * (vpre_syn_comp_score / vpre_syn_comp_weight));
 
-    if (std::isnan(final_score) || final_score < 0.0)
+    if (!(std::isfinite(final_score)) || final_score < 0.0)
         return 0.0;
 
     return final_score;
