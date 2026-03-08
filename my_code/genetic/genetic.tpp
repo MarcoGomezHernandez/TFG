@@ -32,11 +32,11 @@ namespace GeneticConfig
     static constexpr double SSLOW_MIN = 0.5;
     static constexpr double SSLOW_MAX = 1.0;
 
-    static constexpr double K1_MIN = 0.000001;
-    static constexpr double K1_MAX = 0.08;
+    static constexpr double K1_MIN = 0.0000001;
+    static constexpr double K1_MAX = 1.0;
 
-    static constexpr double K2_MIN = 0.000001;
-    static constexpr double K2_MAX = 0.08;
+    static constexpr double K2_MIN = 0.0000001;
+    static constexpr double K2_MAX = 1.0;
 
     static constexpr double GFAST_MIN = 0.001;
     static constexpr double GFAST_MAX = 3.0;
