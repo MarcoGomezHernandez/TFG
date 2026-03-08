@@ -14,7 +14,7 @@ namespace FitnessConfig
     static constexpr double VPRE_IFAST_COMP_WEIGHT = 0.3;
     static constexpr double VPRE_ISLOW_COMP_WEIGHT = 0.3;
 
-    static constexpr double AVG_SMOOTH_POINTS_BURST_DIVISOR = 100;
+    static constexpr double AVG_SMOOTH_POINTS_BURST_DIVISOR = 1000.0;
     static constexpr double FILTER_FC = 24.76;
 
     static constexpr size_t FILTER_PAD_LEN = 1000;

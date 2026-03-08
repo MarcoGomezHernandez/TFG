@@ -39,7 +39,7 @@ namespace GeneticConfig
     static constexpr double K2_MAX = 0.08;
 
     static constexpr double GFAST_MIN = 0.001;
-    static constexpr double GFAST_MAX = 5.0;
+    static constexpr double GFAST_MAX = 3.0;
 
     static constexpr double GSLOW_MIN = 0.001;
     static constexpr double GSLOW_MAX = 5.0;
@@ -47,11 +47,11 @@ namespace GeneticConfig
     static constexpr double VFAST_MIN = HindmarshRose::MIN;
     static constexpr double VFAST_MAX = HindmarshRose::MAX;
 
-    static constexpr double VSLOW_PHASE_MIN = (HindmarshRose::MAX - HindmarshRose::MIN) * (2/3) + HindmarshRose::MIN;
+    static constexpr double VSLOW_PHASE_MIN = (HindmarshRose::MAX - HindmarshRose::MIN) * (3.0 / 4.0) + HindmarshRose::MIN;
     static constexpr double VSLOW_PHASE_MAX = HindmarshRose::MAX;
 
     static constexpr double VSLOW_ANTIPHASE_MIN = HindmarshRose::MIN;
-    static constexpr double VSLOW_ANTIPHASE_MAX = (HindmarshRose::MAX - HindmarshRose::MIN) * (1/3) + HindmarshRose::MIN;
+    static constexpr double VSLOW_ANTIPHASE_MAX = (HindmarshRose::MAX - HindmarshRose::MIN) * (1.0 / 4.0) + HindmarshRose::MIN;
 
     static constexpr double SFAST_MUT_FACTOR = ETA * (SFAST_MAX - SFAST_MIN);
     static constexpr double VFAST_MUT_FACTOR = ETA * (VFAST_MAX - VFAST_MIN);
@@ -123,8 +123,8 @@ static inline std::array<Individual, POP_SIZE> initialize_population(std::mt1993
     if (use_islow)
     {
         dist_vslow = search_phase
-            ? std::uniform_real_distribution<double>(GeneticConfig::VSLOW_PHASE_MIN, GeneticConfig::VSLOW_PHASE_MAX)
-            : std::uniform_real_distribution<double>(GeneticConfig::VSLOW_ANTIPHASE_MIN, GeneticConfig::VSLOW_ANTIPHASE_MAX);
+                         ? std::uniform_real_distribution<double>(GeneticConfig::VSLOW_PHASE_MIN, GeneticConfig::VSLOW_PHASE_MAX)
+                         : std::uniform_real_distribution<double>(GeneticConfig::VSLOW_ANTIPHASE_MIN, GeneticConfig::VSLOW_ANTIPHASE_MAX);
         dist_k1 = std::uniform_real_distribution<double>(GeneticConstants::LOG_K1_MIN, GeneticConstants::LOG_K1_MAX);
         dist_k2 = std::uniform_real_distribution<double>(GeneticConstants::LOG_K2_MIN, GeneticConstants::LOG_K2_MAX);
         dist_sslow = std::uniform_real_distribution<double>(GeneticConfig::SSLOW_MIN, GeneticConfig::SSLOW_MAX);
