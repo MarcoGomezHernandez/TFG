@@ -26,8 +26,8 @@ namespace GeneticConfig
     static constexpr double ESYN_PHASE = -15.0;
     static constexpr double ESYN_ANTIPHASE = 15.0;
 
-    static constexpr double SFAST_MIN = 0.5;
-    static constexpr double SFAST_MAX = 1.0;
+    static constexpr double SFAST_MIN = 1.25;
+    static constexpr double SFAST_MAX = 4.0;
 
     static constexpr double SSLOW_MIN = 0.5;
     static constexpr double SSLOW_MAX = 1.0;
@@ -47,12 +47,16 @@ namespace GeneticConfig
     static constexpr double VFAST_MIN = HindmarshRose::MIN;
     static constexpr double VFAST_MAX = HindmarshRose::MAX;
 
-    static constexpr double VSLOW_MIN = HindmarshRose::MIN;
-    static constexpr double VSLOW_MAX = HindmarshRose::MAX;
+    static constexpr double VSLOW_PHASE_MIN = (HindmarshRose::MAX - HindmarshRose::MIN) * (2/3) + HindmarshRose::MIN;
+    static constexpr double VSLOW_PHASE_MAX = HindmarshRose::MAX;
+
+    static constexpr double VSLOW_ANTIPHASE_MIN = HindmarshRose::MIN;
+    static constexpr double VSLOW_ANTIPHASE_MAX = (HindmarshRose::MAX - HindmarshRose::MIN) * (1/3) + HindmarshRose::MIN;
 
     static constexpr double SFAST_MUT_FACTOR = ETA * (SFAST_MAX - SFAST_MIN);
     static constexpr double VFAST_MUT_FACTOR = ETA * (VFAST_MAX - VFAST_MIN);
-    static constexpr double VSLOW_MUT_FACTOR = ETA * (VSLOW_MAX - VSLOW_MIN);
+    static constexpr double VSLOW_PHASE_MUT_FACTOR = ETA * (VSLOW_PHASE_MAX - VSLOW_PHASE_MIN);
+    static constexpr double VSLOW_ANTIPHASE_MUT_FACTOR = ETA * (VSLOW_ANTIPHASE_MAX - VSLOW_ANTIPHASE_MIN);
     static constexpr double K1_MUT_FACTOR = ETA * (K1_MAX - K1_MIN);
     static constexpr double K2_MUT_FACTOR = ETA * (K2_MAX - K2_MIN);
     static constexpr double SSLOW_MUT_FACTOR = ETA * (SSLOW_MAX - SSLOW_MIN);
@@ -97,7 +101,8 @@ static inline bool fitness_descending(const Individual &a, const Individual &b)
 template <size_t POP_SIZE>
 static inline std::array<Individual, POP_SIZE> initialize_population(std::mt19937 &rng,
                                                                      bool use_ifast,
-                                                                     bool use_islow)
+                                                                     bool use_islow,
+                                                                     bool search_phase)
 {
     std::uniform_real_distribution<double> dist_sfast;
     std::uniform_real_distribution<double> dist_vfast;
@@ -117,7 +122,9 @@ static inline std::array<Individual, POP_SIZE> initialize_population(std::mt1993
 
     if (use_islow)
     {
-        dist_vslow = std::uniform_real_distribution<double>(GeneticConfig::VSLOW_MIN, GeneticConfig::VSLOW_MAX);
+        dist_vslow = search_phase
+            ? std::uniform_real_distribution<double>(GeneticConfig::VSLOW_PHASE_MIN, GeneticConfig::VSLOW_PHASE_MAX)
+            : std::uniform_real_distribution<double>(GeneticConfig::VSLOW_ANTIPHASE_MIN, GeneticConfig::VSLOW_ANTIPHASE_MAX);
         dist_k1 = std::uniform_real_distribution<double>(GeneticConstants::LOG_K1_MIN, GeneticConstants::LOG_K1_MAX);
         dist_k2 = std::uniform_real_distribution<double>(GeneticConstants::LOG_K2_MIN, GeneticConstants::LOG_K2_MAX);
         dist_sslow = std::uniform_real_distribution<double>(GeneticConfig::SSLOW_MIN, GeneticConfig::SSLOW_MAX);
@@ -161,7 +168,7 @@ static inline void crossover(const ChemicalSynapsisVariationParams &a, const Che
     result.sslow = (a.sslow + b.sslow) * 0.5;
 }
 
-static inline void mutate(ChemicalSynapsisVariationParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, bool use_ifast, bool use_islow)
+static inline void mutate(ChemicalSynapsisVariationParams &p, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, bool use_ifast, bool use_islow, bool search_phase)
 {
     constexpr double MUTATION_PROBABILITY = GeneticConfig::MUTATION_PROBABILITY;
     constexpr double ETA = GeneticConfig::ETA;
@@ -203,8 +210,21 @@ static inline void mutate(ChemicalSynapsisVariationParams &p, std::mt19937 &rng,
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &Vslow = p.Vslow;
-            Vslow += ndist(rng) * GeneticConfig::VSLOW_MUT_FACTOR;
-            Vslow = bounce_clamp(Vslow, GeneticConfig::VSLOW_MIN, GeneticConfig::VSLOW_MAX);
+            double vslow_min, vslow_max, vslow_mut;
+            if (search_phase)
+            {
+                vslow_min = GeneticConfig::VSLOW_PHASE_MIN;
+                vslow_max = GeneticConfig::VSLOW_PHASE_MAX;
+                vslow_mut = GeneticConfig::VSLOW_PHASE_MUT_FACTOR;
+            }
+            else
+            {
+                vslow_min = GeneticConfig::VSLOW_ANTIPHASE_MIN;
+                vslow_max = GeneticConfig::VSLOW_ANTIPHASE_MAX;
+                vslow_mut = GeneticConfig::VSLOW_ANTIPHASE_MUT_FACTOR;
+            }
+            Vslow += ndist(rng) * vslow_mut;
+            Vslow = bounce_clamp(Vslow, vslow_min, vslow_max);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
@@ -372,7 +392,7 @@ Individual genetic(const std::string &csv_path,
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng, use_ifast, use_islow);
+    std::array<Individual, POP> buffer1 = initialize_population<POP>(rng, use_ifast, use_islow, search_phase);
     std::array<Individual, POP> buffer2;
 
     std::array<Individual, POP> *population_ptr = &buffer1;
@@ -431,7 +451,7 @@ Individual genetic(const std::string &csv_path,
                 child = p1;
             }
 
-            mutate(child.params, rng, ndist, prob_dist, use_ifast, use_islow);
+            mutate(child.params, rng, ndist, prob_dist, use_ifast, use_islow, search_phase);
         }
 
         std::swap(population_ptr, new_population_ptr);
