@@ -15,7 +15,7 @@
 
 namespace HindmarshRoseParams
 {
-    inline constexpr double e = 2.281;
+    inline constexpr double e = 3.281;
     inline constexpr double mu = 0.0021;
     inline constexpr double S = 1.0;
     inline constexpr double a = 1.0;
