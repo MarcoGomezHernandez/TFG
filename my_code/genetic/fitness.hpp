@@ -31,7 +31,7 @@ struct SigBuffers
   univector<double> islow_sig;
 };
 
-ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector<double> &vpre_sig,
+ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector_ref<const double> &vpre_sig,
                                                    double pts_burst_real,
                                                    bool use_ifast,
                                                    bool use_islow);
