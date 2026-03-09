@@ -14,8 +14,11 @@ namespace FitnessConfig
     static constexpr double VPRE_IFAST_COMP_WEIGHT = 0.3;
     static constexpr double VPRE_ISLOW_COMP_WEIGHT = 0.3;
 
-    static constexpr double SYN_RANGE_EXPECTED_MIN = -3.0;
-    static constexpr double SYN_RANGE_EXPECTED_MAX = 3.0;
+    static constexpr double SYN_RANGE_EXPECTED_MIN_PHASE = 0.25;
+    static constexpr double SYN_RANGE_EXPECTED_MAX_PHASE = 1.1;
+
+    static constexpr double SYN_RANGE_EXPECTED_MIN_ANTIPHASE = 0.25;
+    static constexpr double SYN_RANGE_EXPECTED_MAX_ANTIPHASE = 1.1;
 
     static constexpr double FILTER_FC = 24.76;
     static constexpr size_t FILTER_PAD_LEN = 1000;
@@ -26,7 +29,8 @@ namespace FitnessConstants
 {
     static constexpr double M_SLOW_INITIAL_VALUE = 0.0;
 
-    static constexpr double SYN_RANGE_MAX_DIFF = FitnessConfig::SYN_RANGE_EXPECTED_MAX - FitnessConfig::SYN_RANGE_EXPECTED_MIN;
+    static constexpr double SYN_RANGE_MAX_DIFF_PHASE = FitnessConfig::SYN_RANGE_EXPECTED_MAX_PHASE - FitnessConfig::SYN_RANGE_EXPECTED_MIN_PHASE;
+    static constexpr double SYN_RANGE_MAX_DIFF_ANTIPHASE = FitnessConfig::SYN_RANGE_EXPECTED_MAX_ANTIPHASE - FitnessConfig::SYN_RANGE_EXPECTED_MIN_ANTIPHASE;
 }
 
 ConstantSigFitnessVals calc_const_sig_fitness_vals(
@@ -96,7 +100,7 @@ static inline double pearson_score(univector<double> &sig,
     return search_phase ? normalized : 1.0 - normalized;
 }
 
-static inline double range_score(const SigBuffers &buffers, bool use_ifast, bool use_islow)
+static inline double range_score(const SigBuffers &buffers, bool use_ifast, bool use_islow, bool search_phase)
 {
     double observed_min;
     double observed_max;
@@ -117,10 +121,24 @@ static inline double range_score(const SigBuffers &buffers, bool use_ifast, bool
         observed_max = maxof(buffers.islow_sig);
     }
 
-    return 1.0 - (((std::abs(observed_min - FitnessConfig::SYN_RANGE_EXPECTED_MIN) +
-                    std::abs(observed_max - FitnessConfig::SYN_RANGE_EXPECTED_MAX)) *
+    double expected_min, expected_max, max_diff;
+    if (search_phase)
+    {
+        expected_min = FitnessConfig::SYN_RANGE_EXPECTED_MIN_PHASE;
+        expected_max = FitnessConfig::SYN_RANGE_EXPECTED_MAX_PHASE;
+        max_diff = FitnessConstants::SYN_RANGE_MAX_DIFF_PHASE;
+    }
+    else
+    {
+        expected_min = FitnessConfig::SYN_RANGE_EXPECTED_MIN_ANTIPHASE;
+        expected_max = FitnessConfig::SYN_RANGE_EXPECTED_MAX_ANTIPHASE;
+        max_diff = FitnessConstants::SYN_RANGE_MAX_DIFF_ANTIPHASE;
+    }
+
+    return 1.0 - (((std::abs(observed_min - expected_min) +
+                    std::abs(observed_max - expected_max)) *
                    0.5) /
-                  FitnessConstants::SYN_RANGE_MAX_DIFF);
+                  max_diff);
 }
 
 static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, bool use_ifast, bool use_islow, SigBuffers &buffers)
@@ -161,7 +179,7 @@ static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_
         vpre_syn_comp_weight += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT;
     }
 
-    const double syn_range_score = range_score(buffers, use_ifast, use_islow);
+    const double syn_range_score = range_score(buffers, use_ifast, use_islow, search_phase);
 
     const double final_score = (FitnessConfig::SYN_RANGE_WEIGHT * syn_range_score) +
                                (FitnessConfig::VPRE_SYN_COMP_WEIGHT * (vpre_syn_comp_score / vpre_syn_comp_weight));
