@@ -332,39 +332,20 @@ Individual genetic(const std::string &csv_path,
 
     ChemicalSynapsisType synapsis(create_neur(true), neur_v_var, model_neur, neur_v_var, syn_args, syn_model_step_factor);
 
-    double model_min, model_max;
-    if (model == NeuronModel::HINDMARSH_ROSE)
-    {
-        model_min = HindmarshRose::MIN;
-        model_max = HindmarshRose::MAX;
-    }
-    else
-    {
-        throw std::runtime_error("Unsupported model.");
-    }
-
-    const double pts_burst_real = scaled_result.pts_burst_real;
-    const size_t avg_smooth_points = std::max(FitnessConstants::MIN_AVG_SMOOTH_POINTS, static_cast<size_t>(pts_burst_real / FitnessConfig::AVG_SMOOTH_POINTS_BURST_DIVISOR));
-
-    const size_t stabilization_points = std::max(static_cast<size_t>(stabilization_time / csv_step), avg_smooth_points);
+    const size_t stabilization_points = static_cast<size_t>(stabilization_time / csv_step);
     const size_t use_vpre_sig_size = scaled_result.sig.size() - stabilization_points;
 
-    const size_t smoothing_size = avg_smooth_points + use_vpre_sig_size;
-
     SigBuffers buffers;
-    buffers.vpost_sig.resize(smoothing_size);
     if (use_ifast && use_islow)
         buffers.i_sig.resize(use_vpre_sig_size);
     if (use_ifast)
         buffers.ifast_sig.resize(use_vpre_sig_size);
     if (use_islow)
         buffers.islow_sig.resize(use_vpre_sig_size);
-    buffers.smoothed_vpost_sig.resize(use_vpre_sig_size);
 
     const ConstantSigFitnessVals const_vpre_sig_fitness_vals = calc_const_sig_fitness_vals(
-        scaled_result.sig.slice(stabilization_points - avg_smooth_points, smoothing_size),
-        model_min, model_max, search_phase,
-        avg_smooth_points, pts_burst_real, use_ifast, use_islow);
+        scaled_result.sig.slice(stabilization_points, use_vpre_sig_size),
+        scaled_result.pts_burst_real, use_ifast, use_islow);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;
@@ -381,7 +362,7 @@ Individual genetic(const std::string &csv_path,
     calc_fitnesses<Integrator, NeuronType, POP>(
         synapsis, model_neur, *population_ptr, scaled_result,
         const_vpre_sig_fitness_vals, search_phase, buffers,
-        reset_state_neur, get_v_neur, 0, stabilization_points, avg_smooth_points,
+        reset_state_neur, get_v_neur, 0, stabilization_points,
         use_ifast, use_islow);
 
     std::normal_distribution<double> ndist(0.0, 1.0);
@@ -439,7 +420,7 @@ Individual genetic(const std::string &csv_path,
         calc_fitnesses<Integrator, NeuronType, POP>(
             synapsis, model_neur, *population_ptr, scaled_result,
             const_vpre_sig_fitness_vals, search_phase, buffers,
-            reset_state_neur, get_v_neur, ELITES, stabilization_points, avg_smooth_points,
+            reset_state_neur, get_v_neur, ELITES, stabilization_points,
             use_ifast, use_islow);
     }
 

@@ -22,24 +22,16 @@ struct ConstantSigFitnessVals
   double ifast_sig_factor_to_fit;
   univector<double> islow_sig_centered_to_fit;
   double islow_sig_factor_to_fit;
-  univector<double> smoothed_vpre_sig_to_fit;
-  double max_v_comp_distance;
 };
 
 struct SigBuffers
 {
-  univector<double> vpost_sig;
-  univector<double> smoothed_vpost_sig;
   univector<double> i_sig;
   univector<double> ifast_sig;
   univector<double> islow_sig;
 };
 
 ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector<double> &vpre_sig,
-                                                   double min,
-                                                   double max,
-                                                   bool search_phase,
-                                                   size_t avg_smooth_points,
                                                    double pts_burst_real,
                                                    bool use_ifast,
                                                    bool use_islow);
@@ -56,7 +48,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
                     GetVFuncType get_v_neur,
                     size_t ind_start_i,
                     size_t vpre_sig_start_i,
-                    size_t avg_smooth_points,
                     bool use_ifast,
                     bool use_islow);
 
