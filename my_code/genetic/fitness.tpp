@@ -15,10 +15,10 @@ namespace FitnessConfig
     static constexpr double VPRE_ISLOW_COMP_WEIGHT = 0.3;
 
     static constexpr double SYN_RANGE_EXPECTED_MIN_PHASE = 0.25;
-    static constexpr double SYN_RANGE_EXPECTED_MAX_PHASE = 1.1;
+    static constexpr double SYN_RANGE_EXPECTED_MAX_PHASE = 1.0;
 
-    static constexpr double SYN_RANGE_EXPECTED_MIN_ANTIPHASE = 0.25;
-    static constexpr double SYN_RANGE_EXPECTED_MAX_ANTIPHASE = 1.1;
+    static constexpr double SYN_RANGE_EXPECTED_MIN_ANTIPHASE = -0.75;
+    static constexpr double SYN_RANGE_EXPECTED_MAX_ANTIPHASE = 0.0;
 
     static constexpr double FILTER_FC = 24.76;
     static constexpr size_t FILTER_PAD_LEN = 1000;
