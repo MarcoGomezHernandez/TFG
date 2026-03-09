@@ -13,11 +13,11 @@ namespace FitnessConfig
     static constexpr double IFAST_WEIGHT = 0.5;
     static constexpr double ISLOW_WEIGHT = 0.5;
 
-    static constexpr double I_RANGE_EXPECTED_MIN_PHASE = 0.25;
-    static constexpr double I_RANGE_EXPECTED_MAX_PHASE = 1.0;
+    static constexpr double I_RANGE_EXPECTED_MIN_PHASE = 0.2;
+    static constexpr double I_RANGE_EXPECTED_MAX_PHASE = 0.8;
 
-    static constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = -0.75;
-    static constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = 0.0;
+    static constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = -1.4;
+    static constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = -0.4;
 
     static constexpr double FILTER_FC = 24.76;
     static constexpr size_t FILTER_PAD_LEN = 1000;
