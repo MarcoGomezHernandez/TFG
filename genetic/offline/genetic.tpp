@@ -336,8 +336,6 @@ Individual genetic(const std::string &csv_path,
     const size_t use_vpre_sig_size = scaled_result.sig.size() - stabilization_points;
 
     SigBuffers buffers;
-    if (use_ifast && use_islow)
-        buffers.i_sig.resize(use_vpre_sig_size);
     if (use_ifast)
         buffers.ifast_sig.resize(use_vpre_sig_size);
     if (use_islow)
@@ -345,7 +343,7 @@ Individual genetic(const std::string &csv_path,
 
     const ConstantSigFitnessVals const_vpre_sig_fitness_vals = calc_const_sig_fitness_vals(
         scaled_result.sig.slice(stabilization_points, use_vpre_sig_size),
-        scaled_result.pts_burst_real, use_ifast, use_islow);
+        scaled_result.pts_burst_real, use_ifast, use_islow, search_phase);
 
     constexpr size_t POP = GeneticConfig::POPULATION_SIZE;
     constexpr size_t ELITES = GeneticConfig::NUM_ELITES;

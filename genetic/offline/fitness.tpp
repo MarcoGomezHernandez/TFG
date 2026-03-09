@@ -10,15 +10,14 @@ namespace FitnessConfig
     static constexpr double SYN_RANGE_WEIGHT = 0.5;
     static constexpr double VPRE_SYN_COMP_WEIGHT = 0.5;
 
-    static constexpr double VPRE_I_COMP_WEIGHT = 0.4;
-    static constexpr double VPRE_IFAST_COMP_WEIGHT = 0.3;
-    static constexpr double VPRE_ISLOW_COMP_WEIGHT = 0.3;
+    static constexpr double IFAST_WEIGHT = 0.5;
+    static constexpr double ISLOW_WEIGHT = 0.5;
 
-    static constexpr double SYN_RANGE_EXPECTED_MIN_PHASE = 0.25;
-    static constexpr double SYN_RANGE_EXPECTED_MAX_PHASE = 1.0;
+    static constexpr double I_RANGE_EXPECTED_MIN_PHASE = 0.25;
+    static constexpr double I_RANGE_EXPECTED_MAX_PHASE = 1.0;
 
-    static constexpr double SYN_RANGE_EXPECTED_MIN_ANTIPHASE = -0.75;
-    static constexpr double SYN_RANGE_EXPECTED_MAX_ANTIPHASE = 0.0;
+    static constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = -0.75;
+    static constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = 0.0;
 
     static constexpr double FILTER_FC = 24.76;
     static constexpr size_t FILTER_PAD_LEN = 1000;
@@ -28,22 +27,31 @@ namespace FitnessConfig
 namespace FitnessConstants
 {
     static constexpr double M_SLOW_INITIAL_VALUE = 0.0;
+}
 
-    static constexpr double SYN_RANGE_MAX_DIFF_PHASE = FitnessConfig::SYN_RANGE_EXPECTED_MAX_PHASE - FitnessConfig::SYN_RANGE_EXPECTED_MIN_PHASE;
-    static constexpr double SYN_RANGE_MAX_DIFF_ANTIPHASE = FitnessConfig::SYN_RANGE_EXPECTED_MAX_ANTIPHASE - FitnessConfig::SYN_RANGE_EXPECTED_MIN_ANTIPHASE;
+static inline double rescale_to_target(double value,
+                                       double src_min, double src_max,
+                                       double dst_min, double dst_max)
+{
+    const double norm = (value - src_min) / (src_max - src_min);
+    return dst_min + (norm * (dst_max - dst_min));
 }
 
 ConstantSigFitnessVals calc_const_sig_fitness_vals(
     const univector_ref<const double> &vpre_sig,
     double pts_burst_real,
     bool use_ifast,
-    bool use_islow)
+    bool use_islow,
+    bool search_phase)
 {
     ConstantSigFitnessVals result;
 
     const size_t use_size = vpre_sig.size();
     const double fs = pts_burst_real;
     const double fc = FitnessConfig::FILTER_FC;
+
+    const double vpre_min = minof(vpre_sig);
+    const double vpre_max = maxof(vpre_sig);
 
     const size_t effective_pad = std::min(FitnessConfig::FILTER_PAD_LEN, use_size - 1);
 
@@ -63,26 +71,72 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     filtfilt(padded, to_sos<double>(iir_lowpass(
                          butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
 
-    if (use_ifast && use_islow)
-    {
-        univector<double> &i_sig_centered = result.i_sig_centered_to_fit;
-        i_sig_centered = vpre_sig - mean(vpre_sig);
-        result.i_sig_factor_to_fit = std::sqrt(sum(sqr(i_sig_centered)));
-    }
+    constexpr double I_RANGE_EXPECTED_MIN_PHASE = FitnessConfig::I_RANGE_EXPECTED_MIN_PHASE;
+    constexpr double I_RANGE_EXPECTED_MAX_PHASE = FitnessConfig::I_RANGE_EXPECTED_MAX_PHASE;
+    constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = FitnessConfig::I_RANGE_EXPECTED_MIN_ANTIPHASE;
+    constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = FitnessConfig::I_RANGE_EXPECTED_MAX_ANTIPHASE;
 
     if (use_islow)
     {
         univector<double> &islow_sig_centered = result.islow_sig_centered_to_fit;
         islow_sig_centered = padded_seg - mean(padded_seg);
         result.islow_sig_factor_to_fit = std::sqrt(sum(sqr(islow_sig_centered)));
+
+        const double raw_min = minof(padded_seg);
+        const double raw_max = maxof(padded_seg);
+
+        double dst_min, dst_max;
+        if (search_phase)
+        {
+            dst_min = I_RANGE_EXPECTED_MIN_PHASE;
+            dst_max = I_RANGE_EXPECTED_MAX_PHASE;
+        }
+        else
+        {
+            dst_min = I_RANGE_EXPECTED_MIN_ANTIPHASE;
+            dst_max = I_RANGE_EXPECTED_MAX_ANTIPHASE;
+        }
+
+        double &islow_sig_min = result.islow_sig_min_to_fit;
+        double &islow_sig_max = result.islow_sig_max_to_fit;
+
+        islow_sig_min = rescale_to_target(raw_min, vpre_min, vpre_max,
+                                          dst_min, dst_max);
+        islow_sig_max = rescale_to_target(raw_max, vpre_min, vpre_max,
+                                          dst_min, dst_max);
+        result.islow_sig_range_to_fit = islow_sig_max - islow_sig_min;
     }
 
     if (use_ifast)
     {
-        univector<double> ifast_sig = vpre_sig - padded_seg;
+        const univector<double> ifast_sig = vpre_sig - padded_seg;
         univector<double> &ifast_sig_centered = result.ifast_sig_centered_to_fit;
         ifast_sig_centered = ifast_sig - mean(ifast_sig);
         result.ifast_sig_factor_to_fit = std::sqrt(sum(sqr(ifast_sig_centered)));
+
+        const double raw_min = minof(ifast_sig);
+        const double raw_max = maxof(ifast_sig);
+
+        double dst_min, dst_max;
+        if (search_phase)
+        {
+            dst_min = I_RANGE_EXPECTED_MIN_PHASE;
+            dst_max = I_RANGE_EXPECTED_MAX_PHASE;
+        }
+        else
+        {
+            dst_min = I_RANGE_EXPECTED_MIN_ANTIPHASE;
+            dst_max = I_RANGE_EXPECTED_MAX_ANTIPHASE;
+        }
+
+        double &ifast_sig_min = result.ifast_sig_min_to_fit;
+        double &ifast_sig_max = result.ifast_sig_max_to_fit;
+
+        ifast_sig_min = rescale_to_target(raw_min, vpre_min, vpre_max,
+                                          dst_min, dst_max);
+        ifast_sig_max = rescale_to_target(raw_max, vpre_min, vpre_max,
+                                          dst_min, dst_max);
+        result.ifast_sig_range_to_fit = ifast_sig_max - ifast_sig_min;
     }
 
     return result;
@@ -100,41 +154,10 @@ static inline double pearson_score(univector<double> &sig,
     return search_phase ? normalized : 1.0 - normalized;
 }
 
-static inline double range_score(const SigBuffers &buffers, bool use_ifast, bool use_islow, bool search_phase)
+static inline double calc_range_score_component(double observed_min, double observed_max,
+                                                double expected_min, double expected_max,
+                                                double max_diff)
 {
-    double observed_min;
-    double observed_max;
-
-    if (use_ifast && use_islow)
-    {
-        observed_min = minof(buffers.i_sig);
-        observed_max = maxof(buffers.i_sig);
-    }
-    else if (use_ifast)
-    {
-        observed_min = minof(buffers.ifast_sig);
-        observed_max = maxof(buffers.ifast_sig);
-    }
-    else
-    {
-        observed_min = minof(buffers.islow_sig);
-        observed_max = maxof(buffers.islow_sig);
-    }
-
-    double expected_min, expected_max, max_diff;
-    if (search_phase)
-    {
-        expected_min = FitnessConfig::SYN_RANGE_EXPECTED_MIN_PHASE;
-        expected_max = FitnessConfig::SYN_RANGE_EXPECTED_MAX_PHASE;
-        max_diff = FitnessConstants::SYN_RANGE_MAX_DIFF_PHASE;
-    }
-    else
-    {
-        expected_min = FitnessConfig::SYN_RANGE_EXPECTED_MIN_ANTIPHASE;
-        expected_max = FitnessConfig::SYN_RANGE_EXPECTED_MAX_ANTIPHASE;
-        max_diff = FitnessConstants::SYN_RANGE_MAX_DIFF_ANTIPHASE;
-    }
-
     return 1.0 - (((std::abs(observed_min - expected_min) +
                     std::abs(observed_max - expected_max)) *
                    0.5) /
@@ -143,19 +166,12 @@ static inline double range_score(const SigBuffers &buffers, bool use_ifast, bool
 
 static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
-    double vpre_syn_comp_score = 0.0;
-    double vpre_syn_comp_weight = 0.0;
+    constexpr double IFAST_WEIGHT = FitnessConfig::IFAST_WEIGHT;
+    constexpr double ISLOW_WEIGHT = FitnessConfig::ISLOW_WEIGHT;
 
-    if (use_ifast && use_islow)
-    {
-        const double vpre_i_comp_score =
-            pearson_score(buffers.i_sig,
-                          const_vpre_sig_fitness_vals.i_sig_centered_to_fit,
-                          const_vpre_sig_fitness_vals.i_sig_factor_to_fit,
-                          search_phase);
-        vpre_syn_comp_score += FitnessConfig::VPRE_I_COMP_WEIGHT * vpre_i_comp_score;
-        vpre_syn_comp_weight += FitnessConfig::VPRE_I_COMP_WEIGHT;
-    }
+    double vpre_syn_comp_accum = 0.0;
+    double i_range_accum = 0.0;
+    double total_weight = 0.0;
 
     if (use_ifast)
     {
@@ -164,8 +180,17 @@ static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_
                           const_vpre_sig_fitness_vals.ifast_sig_centered_to_fit,
                           const_vpre_sig_fitness_vals.ifast_sig_factor_to_fit,
                           search_phase);
-        vpre_syn_comp_score += FitnessConfig::VPRE_IFAST_COMP_WEIGHT * vpost_ifast_comp_score;
-        vpre_syn_comp_weight += FitnessConfig::VPRE_IFAST_COMP_WEIGHT;
+        vpre_syn_comp_accum += IFAST_WEIGHT * vpost_ifast_comp_score;
+
+        const double comp_ifast = calc_range_score_component(
+            minof(buffers.ifast_sig),
+            maxof(buffers.ifast_sig),
+            const_vpre_sig_fitness_vals.ifast_sig_min_to_fit,
+            const_vpre_sig_fitness_vals.ifast_sig_max_to_fit,
+            const_vpre_sig_fitness_vals.ifast_sig_range_to_fit);
+        i_range_accum += IFAST_WEIGHT * comp_ifast;
+
+        total_weight += IFAST_WEIGHT;
     }
 
     if (use_islow)
@@ -175,14 +200,22 @@ static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_
                           const_vpre_sig_fitness_vals.islow_sig_centered_to_fit,
                           const_vpre_sig_fitness_vals.islow_sig_factor_to_fit,
                           search_phase);
-        vpre_syn_comp_score += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT * vpost_islow_comp_score;
-        vpre_syn_comp_weight += FitnessConfig::VPRE_ISLOW_COMP_WEIGHT;
+        vpre_syn_comp_accum += ISLOW_WEIGHT * vpost_islow_comp_score;
+
+        const double comp_islow = calc_range_score_component(
+            minof(buffers.islow_sig),
+            maxof(buffers.islow_sig),
+            const_vpre_sig_fitness_vals.islow_sig_min_to_fit,
+            const_vpre_sig_fitness_vals.islow_sig_max_to_fit,
+            const_vpre_sig_fitness_vals.islow_sig_range_to_fit);
+        i_range_accum += ISLOW_WEIGHT * comp_islow;
+
+        total_weight += ISLOW_WEIGHT;
     }
 
-    const double syn_range_score = range_score(buffers, use_ifast, use_islow, search_phase);
-
-    const double final_score = (FitnessConfig::SYN_RANGE_WEIGHT * syn_range_score) +
-                               (FitnessConfig::VPRE_SYN_COMP_WEIGHT * (vpre_syn_comp_score / vpre_syn_comp_weight));
+    const double final_score = ((FitnessConfig::SYN_RANGE_WEIGHT * i_range_accum) +
+                                (FitnessConfig::VPRE_SYN_COMP_WEIGHT * vpre_syn_comp_accum)) /
+                               total_weight;
 
     if (!(std::isfinite(final_score)) || final_score < 0.0)
         return 0.0;
@@ -211,7 +244,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
     constexpr auto ifast_enum = ChemicalSynapsisType::ifast;
     constexpr auto islow_enum = ChemicalSynapsisType::islow;
 
-    double *i_sig_ptr = buffers.i_sig.data();
     double *ifast_sig_ptr = buffers.ifast_sig.data();
     double *islow_sig_ptr = buffers.islow_sig.data();
 
@@ -270,8 +302,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             const double i_val = synapsis.get(i_enum);
             model_neur.add_synaptic_input(i_val);
             model_neur.step(dt);
-            if (use_ifast && use_islow)
-                i_sig_ptr[syn_sig_i] = i_val;
             if (use_ifast)
                 ifast_sig_ptr[syn_sig_i] = synapsis.get(ifast_enum);
             if (use_islow)
@@ -290,8 +320,6 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         const double i_val = synapsis.get(i_enum);
         model_neur.add_synaptic_input(i_val);
         model_neur.step(dt);
-        if (use_ifast && use_islow)
-            i_sig_ptr[syn_sig_i] = i_val;
         if (use_ifast)
             ifast_sig_ptr[syn_sig_i] = synapsis.get(ifast_enum);
         if (use_islow)

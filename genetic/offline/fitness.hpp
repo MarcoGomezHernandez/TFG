@@ -16,17 +16,22 @@ struct Individual
 
 struct ConstantSigFitnessVals
 {
-  univector<double> i_sig_centered_to_fit;
-  double i_sig_factor_to_fit;
   univector<double> ifast_sig_centered_to_fit;
   double ifast_sig_factor_to_fit;
   univector<double> islow_sig_centered_to_fit;
   double islow_sig_factor_to_fit;
+
+  double ifast_sig_min_to_fit;
+  double ifast_sig_max_to_fit;
+  double ifast_sig_range_to_fit;
+
+  double islow_sig_min_to_fit;
+  double islow_sig_max_to_fit;
+  double islow_sig_range_to_fit;
 };
 
 struct SigBuffers
 {
-  univector<double> i_sig;
   univector<double> ifast_sig;
   univector<double> islow_sig;
 };
@@ -34,7 +39,8 @@ struct SigBuffers
 ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector_ref<const double> &vpre_sig,
                                                    double pts_burst_real,
                                                    bool use_ifast,
-                                                   bool use_islow);
+                                                   bool use_islow,
+                                                   bool search_phase);
 
 template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
