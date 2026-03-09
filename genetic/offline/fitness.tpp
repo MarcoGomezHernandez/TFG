@@ -50,9 +50,6 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     const double fs = pts_burst_real;
     const double fc = FitnessConfig::FILTER_FC;
 
-    const double vpre_min = minof(vpre_sig);
-    const double vpre_max = maxof(vpre_sig);
-
     const size_t effective_pad = std::min(FitnessConfig::FILTER_PAD_LEN, use_size - 1);
 
     univector<double> padded(use_size + (2 * effective_pad));
@@ -76,34 +73,44 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = FitnessConfig::I_RANGE_EXPECTED_MIN_ANTIPHASE;
     constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = FitnessConfig::I_RANGE_EXPECTED_MAX_ANTIPHASE;
 
+    double expected_i_min;
+    double expected_i_max;
+    if (search_phase)
+    {
+        expected_i_min = I_RANGE_EXPECTED_MIN_PHASE;
+        expected_i_max = I_RANGE_EXPECTED_MAX_PHASE;
+    }
+    else
+    {
+        expected_i_min = I_RANGE_EXPECTED_MIN_ANTIPHASE;
+        expected_i_max = I_RANGE_EXPECTED_MAX_ANTIPHASE;
+    }
+
+    const bool use_both = use_ifast && use_islow;
+
     if (use_islow)
     {
         univector<double> &islow_sig_centered = result.islow_sig_centered_to_fit;
         islow_sig_centered = padded_seg - mean(padded_seg);
         result.islow_sig_factor_to_fit = std::sqrt(sum(sqr(islow_sig_centered)));
 
-        const double raw_min = minof(padded_seg);
-        const double raw_max = maxof(padded_seg);
-
-        double dst_min, dst_max;
-        if (search_phase)
-        {
-            dst_min = I_RANGE_EXPECTED_MIN_PHASE;
-            dst_max = I_RANGE_EXPECTED_MAX_PHASE;
-        }
-        else
-        {
-            dst_min = I_RANGE_EXPECTED_MIN_ANTIPHASE;
-            dst_max = I_RANGE_EXPECTED_MAX_ANTIPHASE;
-        }
-
         double &islow_sig_min = result.islow_sig_min_to_fit;
         double &islow_sig_max = result.islow_sig_max_to_fit;
 
-        islow_sig_min = rescale_to_target(raw_min, vpre_min, vpre_max,
-                                          dst_min, dst_max);
-        islow_sig_max = rescale_to_target(raw_max, vpre_min, vpre_max,
-                                          dst_min, dst_max);
+        if (use_both)
+        {
+            const double vpre_min = minof(vpre_sig);
+            const double vpre_max = maxof(vpre_sig);
+            islow_sig_min = rescale_to_target(minof(padded_seg), vpre_min, vpre_max,
+                                              expected_i_min, expected_i_max);
+            islow_sig_max = rescale_to_target(maxof(padded_seg), vpre_min, vpre_max,
+                                              expected_i_min, expected_i_max);
+        }
+        else
+        {
+            islow_sig_min = expected_i_min;
+            islow_sig_max = expected_i_max;
+        }
         result.islow_sig_range_to_fit = islow_sig_max - islow_sig_min;
     }
 
@@ -114,28 +121,23 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
         ifast_sig_centered = ifast_sig - mean(ifast_sig);
         result.ifast_sig_factor_to_fit = std::sqrt(sum(sqr(ifast_sig_centered)));
 
-        const double raw_min = minof(ifast_sig);
-        const double raw_max = maxof(ifast_sig);
-
-        double dst_min, dst_max;
-        if (search_phase)
-        {
-            dst_min = I_RANGE_EXPECTED_MIN_PHASE;
-            dst_max = I_RANGE_EXPECTED_MAX_PHASE;
-        }
-        else
-        {
-            dst_min = I_RANGE_EXPECTED_MIN_ANTIPHASE;
-            dst_max = I_RANGE_EXPECTED_MAX_ANTIPHASE;
-        }
-
         double &ifast_sig_min = result.ifast_sig_min_to_fit;
         double &ifast_sig_max = result.ifast_sig_max_to_fit;
 
-        ifast_sig_min = rescale_to_target(raw_min, vpre_min, vpre_max,
-                                          dst_min, dst_max);
-        ifast_sig_max = rescale_to_target(raw_max, vpre_min, vpre_max,
-                                          dst_min, dst_max);
+        if (use_both)
+        {
+            const double vpre_min = minof(vpre_sig);
+            const double vpre_max = maxof(vpre_sig);
+            ifast_sig_min = rescale_to_target(minof(ifast_sig), vpre_min, vpre_max,
+                                              expected_i_min, expected_i_max);
+            ifast_sig_max = rescale_to_target(maxof(ifast_sig), vpre_min, vpre_max,
+                                              expected_i_min, expected_i_max);
+        }
+        else
+        {
+            ifast_sig_min = expected_i_min;
+            ifast_sig_max = expected_i_max;
+        }
         result.ifast_sig_range_to_fit = ifast_sig_max - ifast_sig_min;
     }
 
