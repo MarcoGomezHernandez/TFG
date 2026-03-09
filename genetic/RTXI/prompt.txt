@@ -1,0 +1,9 @@
+Quiero que me hagas en la carpeta RTXI dos ficheros fitness  (.cpp o .tpp; y .hpp) como los que te he pasado (mismo nombre), pero ahora no habrá opción de calcular parte de las cosas del fitness de manera offline, sino que tanto vpre como lo demás se calculará todo lo necesario en fitness_from_sigs, que recibirá todo.
+
+Además, ahora será bidireccional/simétrico, de forma que el fitness incluirá tanto en un sentido como en el otro (la media de ambos); y recibirá v1_sig, v2_sig, syn1_sig y syn2_sig, debiendo de ponderar para el fitness las distancias que se hacen como el fichero existente entre v1 y sig1 y entre v2 y sig2.
+
+Además, se pasará el scale_syn_2_to_2 y el offset_syn_2_to_1 (metelos en un struct ScalingFactors). Asumimos que la neurona y sinapsis 2 es la que trabaja sin necesidad de escalado, y la otra sí lo necesita. Estos factores sirven para escalar la señal de la corriente 2, así como el maximo y el minimos constantes (y el rango) a comparar.
+
+Usa las mismas estructurras, funciones, código... que se usa aquí, cambiando lo mínimo posible (nombres de variables y structs, estructura del código...)
+
+Añade los buffers y todo lo que necesites a un fichero utils.hpp
