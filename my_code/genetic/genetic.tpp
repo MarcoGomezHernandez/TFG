@@ -26,7 +26,7 @@ namespace GeneticConfig
     static constexpr double ESYN_PHASE = -15.0;
     static constexpr double ESYN_ANTIPHASE = 15.0;
 
-    static constexpr double SFAST_MIN = 1.25;
+    static constexpr double SFAST_MIN = 1.2;
     static constexpr double SFAST_MAX = 4.0;
 
     static constexpr double SSLOW_MIN = 0.5;
@@ -39,7 +39,7 @@ namespace GeneticConfig
     static constexpr double K2_MAX = 1.0;
 
     static constexpr double GFAST_MIN = 0.001;
-    static constexpr double GFAST_MAX = 3.0;
+    static constexpr double GFAST_MAX = 5.0;
 
     static constexpr double GSLOW_MIN = 0.001;
     static constexpr double GSLOW_MAX = 5.0;
