@@ -7,8 +7,8 @@ using namespace kfr;
 
 namespace FitnessConfig
 {
-    static constexpr double V_COMP_WEIGHT = 0.5;
-    static constexpr double VPRE_SYN_COMP_WEIGHT = 0.5;
+    static constexpr double V_COMP_WEIGHT = 0.0;
+    static constexpr double VPRE_SYN_COMP_WEIGHT = 1.0;
 
     static constexpr double VPRE_I_COMP_WEIGHT = 0.4;
     static constexpr double VPRE_IFAST_COMP_WEIGHT = 0.3;
