@@ -1,0 +1,3 @@
+Para que se aplique el burst duration que se mete, el de la GUI debe ser -1. Aún así, casi mejor ponerlo manuealmente porque no lo calcula del todo bien el módulo de BurstAnalysis por lo menos para neuronas HR. NO es buena idea meter los burst duration de una a otra retroalimentados, porque si uno varia un poco, modela al otro y viceversa, y estarán variando todo el rato.
+
+En el fichero de la config de RTXI, faltan conectar las neuronas, que si las conecto si todavia no se han calculado cosas ambas fallan por el loop.
