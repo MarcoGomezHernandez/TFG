@@ -16,21 +16,19 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * This is a template header file for a user modules derived from
- * DefaultGUIModel with a custom GUI.
- */
+#ifndef RTHYBRID_CHEMICAL_SYNAPSE_GENETIC_H
+#define RTHYBRID_CHEMICAL_SYNAPSE_GENETIC_H
 
 #include <default_gui_model.h>
 
-class RTHybridHindmarshRose1984Neuron : public DefaultGUIModel
+class BidirectionalChemicalSynapseGenetic : public DefaultGUIModel
 {
 
   Q_OBJECT
 
 public:
-  RTHybridHindmarshRose1984Neuron(void);
-  virtual ~RTHybridHindmarshRose1984Neuron(void);
+  BidirectionalChemicalSynapseGenetic(void);
+  virtual ~BidirectionalChemicalSynapseGenetic(void);
 
   void execute(void);
   void createGUI(DefaultGUIModel::variable_t *, int);
@@ -40,26 +38,28 @@ protected:
   virtual void update(DefaultGUIModel::update_flags_t);
 
 private:
-  double vars_model[3];
-  double params_model[11];
+  double vars_model[2];
+  double params_model[25];
   double period, freq;
   double burst_duration, burst_duration_value;
+  double scale21, scale21_value;
+  double offset21, offset21_value;
+  double scale12, scale12_value;
+  double offset12, offset12_value;
   double s_points;
 
   void initParameters();
 
-  void runge_kutta_65(void (*f)(double *, double *, double *, double), int dim, double dt, double *vars, double *params, double aux);
+  void runge_kutta_65(void (*f)(double *, double *, double *), int dim, double dt, double *vars, double *params);
   void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
-  static double nm_hindmarsh_rose_1986_v(double *vars, double *params);
-  static double nm_hindmarsh_rose_1986_y(double *vars, double *params);
-  static double nm_hindmarsh_rose_1986_z(double *vars, double *params);
-  static void nm_hindmarsh_rose_1986_f(double *vars, double *ret, double *params, double syn);
+
+  static void sm_chemical_synapse_m_21(double *vars, double *ret, double *params);
+  static void sm_chemical_synapse_m_12(double *vars, double *ret, double *params);
 
 private slots:
-  // these are custom functions that can also be connected to events
-  // through the Qt API. they must be implemented in plugin_template.cpp
-
   void aBttn_event(void);
   void bBttn_event(void);
 };
+
+#endif
