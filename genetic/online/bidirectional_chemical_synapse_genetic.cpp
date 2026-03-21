@@ -273,7 +273,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     }
   }
 
-  if (scale21_value <= -1.0)
+  if (scale21_gui <= -1.0)
   {
     scale21 = input(2);
     if (scale21 == 0.0)
@@ -281,19 +281,19 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   }
   else
   {
-    scale21 = scale21_value;
+    scale21 = scale21_gui;
   }
 
-  if (offset21_value <= -1.0)
+  if (offset21_gui <= -1.0)
   {
     offset21 = input(3) * 1000.0;
   }
   else
   {
-    offset21 = offset21_value * 1000.0;
+    offset21 = offset21_gui * 1000.0;
   }
 
-  if (scale12_value <= -1.0)
+  if (scale12_gui <= -1.0)
   {
     scale12 = input(4);
     if (scale12 == 0.0)
@@ -301,16 +301,16 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   }
   else
   {
-    scale12 = scale12_value;
+    scale12 = scale12_gui;
   }
 
-  if (offset12_value <= -1.0)
+  if (offset12_gui <= -1.0)
   {
     offset12 = input(5) * 1000.0;
   }
   else
   {
-    offset12 = offset12_value * 1000.0;
+    offset12 = offset12_gui * 1000.0;
   }
 
   double v1 = input(0) * 1000.0;
@@ -365,16 +365,16 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
 {
-  scale21_value = 1.0;
-  offset21_value = 0.0;
-  scale12_value = 1.0;
-  offset12_value = 0.0;
+  scale21_gui = 1.0;
+  offset21_gui = 0.0;
+  scale12_gui = 1.0;
+  offset12_gui = 0.0;
   burst_duration_gui = 1.0;
 
-  scale21 = scale21_value;
-  offset21 = offset21_value;
-  scale12 = scale12_value;
-  offset12 = offset12_value;
+  scale21 = scale21_gui;
+  offset21 = offset21_gui;
+  scale12 = scale12_gui;
+  offset12 = offset12_gui;
   last_burst_duration = burst_duration_gui;
 
   vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_21] = 0.0;
@@ -398,10 +398,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       s_points = 1;
 
     setParameter("Burst duration (s)", burst_duration_gui);
-    setParameter("Scale 2->1", scale21_value);
-    setParameter("Offset 2->1", offset21_value);
-    setParameter("Scale 1->2", scale12_value);
-    setParameter("Offset 1->2", offset12_value);
+    setParameter("Scale 2->1", scale21_gui);
+    setParameter("Offset 2->1", offset21_gui);
+    setParameter("Scale 1->2", scale12_gui);
+    setParameter("Offset 1->2", offset12_gui);
 
     setParameter("E_syn 2->1", params_model[SN_CHEMICAL_SYNAPSE_E_SYN_21]);
     setParameter("g_fast 2->1", params_model[SN_CHEMICAL_SYNAPSE_G_FAST_21]);
@@ -434,10 +434,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     break;
 
   case MODIFY:
-    scale21_value = getParameter("Scale 2->1").toDouble();
-    offset21_value = getParameter("Offset 2->1").toDouble();
-    scale12_value = getParameter("Scale 1->2").toDouble();
-    offset12_value = getParameter("Offset 1->2").toDouble();
+    scale21_gui = getParameter("Scale 2->1").toDouble();
+    offset21_gui = getParameter("Offset 2->1").toDouble();
+    scale12_gui = getParameter("Scale 1->2").toDouble();
+    offset12_gui = getParameter("Offset 1->2").toDouble();
     burst_duration_gui = getParameter("Burst duration (s)").toDouble();
 
     if ((burst_duration_gui > 0.0) && (burst_duration_gui != last_burst_duration))

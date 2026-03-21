@@ -42,10 +42,10 @@ private:
   double params_model[25];
   double period, freq;
   double last_burst_duration, burst_duration_gui;
-  double scale21, scale21_value;
-  double offset21, offset21_value;
-  double scale12, scale12_value;
-  double offset12, offset12_value;
+  double scale21, scale21_gui;
+  double offset21, offset21_gui;
+  double scale12, scale12_gui;
+  double offset12, offset12_gui;
   double s_points;
 
   void initParameters();
