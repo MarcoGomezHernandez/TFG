@@ -321,7 +321,29 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   m_slow_21 = 0.0;
   m_slow_12 = 0.0;
 
-  
+  params_21[SP_ESYN] = -1.92;
+  params_21[SP_G_FAST] = 0.046;
+  params_21[SP_S_FAST] = 0.44;
+  params_21[SP_V_FAST] = -1.66;
+  params_21[SP_G_SLOW] = 0.208;
+  params_21[SP_K1] = 0.74;
+  params_21[SP_K2] = 0.007;
+  params_21[SP_S_SLOW] = 1.0;
+  params_21[SP_V_SLOW] = -1.74;
+  params_21[SP_USE_I_FAST] = 1.0;
+  params_21[SP_USE_I_SLOW] = 1.0;
+
+  params_12[SP_ESYN] = -1.92;
+  params_12[SP_G_FAST] = 0.046;
+  params_12[SP_S_FAST] = 0.44;
+  params_12[SP_V_FAST] = -1.66;
+  params_12[SP_G_SLOW] = 0.208;
+  params_12[SP_K1] = 0.74;
+  params_12[SP_K2] = 0.007;
+  params_12[SP_S_SLOW] = 1.0;
+  params_12[SP_V_SLOW] = -1.74;
+  params_12[SP_USE_I_FAST] = 1.0;
+  params_12[SP_USE_I_SLOW] = 1.0;
 }
 
 void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
