@@ -38,14 +38,15 @@ protected:
   virtual void update(DefaultGUIModel::update_flags_t);
 
 private:
-  double vars_model[2];
-  double params_model[25];
+  double vars_model[5];
+  double params_model[23];
   double period, freq;
   double last_burst_duration, burst_duration_gui;
   double scale21, scale21_gui;
   double offset21, offset21_gui;
   double scale12, scale12_gui;
   double offset12, offset12_gui;
+  double dynamic_scaling_gui;
   double s_points;
 
   void initParameters();

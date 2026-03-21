@@ -29,6 +29,8 @@
 // Variables
 #define SN_CHEMICAL_SYNAPSE_M_SLOW_21 0
 #define SN_CHEMICAL_SYNAPSE_M_SLOW_12 1
+#define SN_CHEMICAL_SYNAPSE_V2 2
+#define SN_CHEMICAL_SYNAPSE_V1 3
 
 // Parameters
 #define SN_CHEMICAL_SYNAPSE_DT 0
@@ -50,12 +52,10 @@
 #define SN_CHEMICAL_SYNAPSE_K2_12 16
 #define SN_CHEMICAL_SYNAPSE_S_SLOW_12 17
 #define SN_CHEMICAL_SYNAPSE_V_SLOW_12 18
-#define SN_CHEMICAL_SYNAPSE_V2 19
-#define SN_CHEMICAL_SYNAPSE_V1 20
-#define SN_CHEMICAL_SYNAPSE_USE_FAST_21 21
-#define SN_CHEMICAL_SYNAPSE_USE_SLOW_21 22
-#define SN_CHEMICAL_SYNAPSE_USE_FAST_12 23
-#define SN_CHEMICAL_SYNAPSE_USE_SLOW_12 24
+#define SN_CHEMICAL_SYNAPSE_USE_FAST_21 19
+#define SN_CHEMICAL_SYNAPSE_USE_SLOW_21 20
+#define SN_CHEMICAL_SYNAPSE_USE_FAST_12 21
+#define SN_CHEMICAL_SYNAPSE_USE_SLOW_12 22
 
 extern "C" Plugin::Object *
 createRTXIPlugin(void)
@@ -69,6 +69,7 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Offset 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Offset 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic scaling (1/0)", "1=dynamic (input), 0=static (GUI)", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Config 2 -> 1
     {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -248,14 +249,14 @@ double BidirectionalChemicalSynapseGenetic::set_pts_burst(double sec_per_burst)
 void BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m_21(double *vars, double *ret, double *params)
 {
   ret[SN_CHEMICAL_SYNAPSE_M_SLOW_21] = (params[SN_CHEMICAL_SYNAPSE_K1_21] * (1.0 - vars[SN_CHEMICAL_SYNAPSE_M_SLOW_21])) /
-                                           (1.0 + exp(params[SN_CHEMICAL_SYNAPSE_S_SLOW_21] * (params[SN_CHEMICAL_SYNAPSE_V_SLOW_21] - params[SN_CHEMICAL_SYNAPSE_V2]))) -
+                                           (1.0 + exp(params[SN_CHEMICAL_SYNAPSE_S_SLOW_21] * (params[SN_CHEMICAL_SYNAPSE_V_SLOW_21] - vars[SN_CHEMICAL_SYNAPSE_V2]))) -
                                        (params[SN_CHEMICAL_SYNAPSE_K2_21] * vars[SN_CHEMICAL_SYNAPSE_M_SLOW_21]);
 }
 
 void BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m_12(double *vars, double *ret, double *params)
 {
   ret[SN_CHEMICAL_SYNAPSE_M_SLOW_12] = (params[SN_CHEMICAL_SYNAPSE_K1_12] * (1.0 - vars[SN_CHEMICAL_SYNAPSE_M_SLOW_12])) /
-                                           (1.0 + exp(params[SN_CHEMICAL_SYNAPSE_S_SLOW_12] * (params[SN_CHEMICAL_SYNAPSE_V_SLOW_12] - params[SN_CHEMICAL_SYNAPSE_V1]))) -
+                                           (1.0 + exp(params[SN_CHEMICAL_SYNAPSE_S_SLOW_12] * (params[SN_CHEMICAL_SYNAPSE_V_SLOW_12] - vars[SN_CHEMICAL_SYNAPSE_V1]))) -
                                        (params[SN_CHEMICAL_SYNAPSE_K2_12] * vars[SN_CHEMICAL_SYNAPSE_M_SLOW_12]);
 }
 
@@ -273,43 +274,22 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     }
   }
 
-  if (scale21_gui <= -1.0)
+  if (dynamic_scaling_gui > 0.5)
   {
     scale21 = input(2);
     if (scale21 == 0.0)
       scale21 = 1.0;
-  }
-  else
-  {
-    scale21 = scale21_gui;
-  }
-
-  if (offset21_gui <= -1.0)
-  {
     offset21 = input(3) * 1000.0;
-  }
-  else
-  {
-    offset21 = offset21_gui * 1000.0;
-  }
-
-  if (scale12_gui <= -1.0)
-  {
     scale12 = input(4);
     if (scale12 == 0.0)
       scale12 = 1.0;
-  }
-  else
-  {
-    scale12 = scale12_gui;
-  }
-
-  if (offset12_gui <= -1.0)
-  {
     offset12 = input(5) * 1000.0;
   }
   else
   {
+    scale21 = scale21_gui;
+    offset21 = offset21_gui * 1000.0;
+    scale12 = scale12_gui;
     offset12 = offset12_gui * 1000.0;
   }
 
@@ -319,8 +299,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   double v2_scaled = v2 * scale21 + offset21;
   double v1_scaled = v1 * scale12 + offset12;
 
-  params_model[SN_CHEMICAL_SYNAPSE_V2] = v2_scaled;
-  params_model[SN_CHEMICAL_SYNAPSE_V1] = v1_scaled;
+  vars_model[SN_CHEMICAL_SYNAPSE_V2] = v2_scaled;
+  vars_model[SN_CHEMICAL_SYNAPSE_V1] = v1_scaled;
 
   if (params_model[SN_CHEMICAL_SYNAPSE_USE_SLOW_21] > 0.5)
   {
@@ -379,8 +359,11 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
 
   vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_21] = 0.0;
   vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_12] = 0.0;
+  vars_model[SN_CHEMICAL_SYNAPSE_V2] = 0.0;
+  vars_model[SN_CHEMICAL_SYNAPSE_V1] = 0.0;
+  dynamic_scaling_gui = 0.0;
 
-  for (int i = 1; i <= 24; ++i)
+  for (int i = 0; i < 23; ++i)
   {
     params_model[i] = 0.0;
   }
@@ -426,6 +409,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("V_slow 1->2", params_model[SN_CHEMICAL_SYNAPSE_V_SLOW_12]);
     setParameter("Use I_fast 1->2 (1/0)", params_model[SN_CHEMICAL_SYNAPSE_USE_FAST_12]);
     setParameter("Use I_slow 1->2 (1/0)", params_model[SN_CHEMICAL_SYNAPSE_USE_SLOW_12]);
+    setParameter("Dynamic scaling (1/0)", dynamic_scaling_gui);
 
     setState("m_slow 2->1", vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_21]);
     setState("m_slow 1->2", vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_12]);
@@ -471,6 +455,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     params_model[SN_CHEMICAL_SYNAPSE_V_SLOW_12] = getParameter("V_slow 1->2").toDouble();
     params_model[SN_CHEMICAL_SYNAPSE_USE_FAST_12] = getParameter("Use I_fast 1->2 (1/0)").toDouble();
     params_model[SN_CHEMICAL_SYNAPSE_USE_SLOW_12] = getParameter("Use I_slow 1->2 (1/0)").toDouble();
+    dynamic_scaling_gui = getParameter("Dynamic scaling (1/0)").toDouble();
     break;
 
   case UNPAUSE:
