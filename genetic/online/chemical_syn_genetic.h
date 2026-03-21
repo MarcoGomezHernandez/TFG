@@ -33,7 +33,7 @@ public:
   virtual ~RTHybridHindmarshRose1984Neuron(void);
 
   void execute(void);
-  void createGUI(DefaultGUIModel::variable_t*, int);
+  void createGUI(DefaultGUIModel::variable_t *, int);
   void customizeGUI(void);
 
 protected:
@@ -48,13 +48,13 @@ private:
 
   void initParameters();
 
-  void runge_kutta_65 (void (*f) (double *, double *, double *, double), int dim, double dt, double * vars, double * params, double aux);
-  void select_dt_neuron_model (double * dts, double * pts, unsigned int length, double pts_live, double * dt, double * pts_burst);
-  double set_pts_burst (double sec_per_burst);
-  static double nm_hindmarsh_rose_1986_v (double * vars, double * params);
-  static double nm_hindmarsh_rose_1986_y (double * vars, double * params);
-  static double nm_hindmarsh_rose_1986_z (double * vars, double * params);
-  static void nm_hindmarsh_rose_1986_f (double * vars, double * ret, double * params, double syn);
+  void runge_kutta_65(void (*f)(double *, double *, double *, double), int dim, double dt, double *vars, double *params, double aux);
+  void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
+  double set_pts_burst(double sec_per_burst);
+  static double nm_hindmarsh_rose_1986_v(double *vars, double *params);
+  static double nm_hindmarsh_rose_1986_y(double *vars, double *params);
+  static double nm_hindmarsh_rose_1986_z(double *vars, double *params);
+  static void nm_hindmarsh_rose_1986_f(double *vars, double *ret, double *params, double syn);
 
 private slots:
   // these are custom functions that can also be connected to events
