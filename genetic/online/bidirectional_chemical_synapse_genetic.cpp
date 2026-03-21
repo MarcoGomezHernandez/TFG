@@ -251,44 +251,60 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     }
   }
 
-  double scale_21, offset_21, scale_12, offset_12;
-  if (dynamic_scaling > 0.5)
-  {
-    scale_21 = input(2);
-    offset_21 = input(3) * 1000.0;
-    scale_12 = input(4);
-    offset_12 = input(5) * 1000.0;
-  }
-  else
-  {
-    scale_21 = scale_21_gui;
-    offset_21 = offset_21_gui;
-    scale_12 = scale_12_gui;
-    offset_12 = offset_12_gui;
-  }
-
-  if (scale_21 == 0.0)
-  {
-    scale_21 = 1.0;
-    offset_21 = 0.0;
-  }
-
-  if (scale_12 == 0.0)
-  {
-    scale_12 = 1.0;
-    offset_12 = 0.0;
-  }
+  bool use_syn_21 = (params_21[SP_USE_I_FAST] > 0.5) || (params_21[SP_USE_I_SLOW] > 0.5);
+  bool use_syn_12 = (params_12[SP_USE_I_FAST] > 0.5) || (params_12[SP_USE_I_SLOW] > 0.5);
 
   double v1 = input(0) * 1000.0;
   double v2 = input(1) * 1000.0;
-  double v1_scaled = v1 * scale_12 + offset_12;
-  double v2_scaled = v2 * scale_21 + offset_21;
 
-  double i_syn_12 = compute_synapse_current(m_slow_12, v1_scaled, v2, params_12);
-  double i_syn_21 = compute_synapse_current(m_slow_21, v2_scaled, v1, params_21);
+  double v2_scaled;
+  if (use_syn_21)
+  {
+    double scale_21, offset_21;
+    if (dynamic_scaling > 0.5)
+    {
+      scale_21 = input(2);
+      offset_21 = input(3) * 1000.0;
+    }
+    else
+    {
+      scale_21 = scale_21_gui;
+      offset_21 = offset_21_gui;
+    }
 
-  output(0) = i_syn_21;
-  output(1) = i_syn_12;
+    if (scale_21 == 0.0)
+    {
+      scale_21 = 1.0;
+      offset_21 = 0.0;
+    }
+    v2_scaled = v2 * scale_21 + offset_21;
+  }
+
+  double v1_scaled;
+  if (use_syn_12)
+  {
+    double scale_12, offset_12;
+    if (dynamic_scaling > 0.5)
+    {
+      scale_12 = input(4);
+      offset_12 = input(5) * 1000.0;
+    }
+    else
+    {
+      scale_12 = scale_12_gui;
+      offset_12 = offset_12_gui;
+    }
+
+    if (scale_12 == 0.0)
+    {
+      scale_12 = 1.0;
+      offset_12 = 0.0;
+    }
+    v1_scaled = v1 * scale_12 + offset_12;
+  }
+
+  output(0) = compute_synapse_current(m_slow_21, v2_scaled, v1, params_21);
+  output(1) = compute_synapse_current(m_slow_12, v1_scaled, v2, params_12);
 }
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
@@ -305,11 +321,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   m_slow_21 = 0.0;
   m_slow_12 = 0.0;
 
-  for (int i = 0; i < SP_COUNT; ++i)
-  {
-    params_21[i] = 0.0;
-    params_12[i] = 0.0;
-  }
+  
 }
 
 void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
