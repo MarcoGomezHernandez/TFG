@@ -45,12 +45,13 @@ private:
   double period, freq;
   double last_burst_duration, burst_duration_gui;
   double scale_21_gui, offset_21_gui, scale_12_gui, offset_12_gui;
-  double dynamic_scaling_gui;
+  double dynamic_scaling;
   double s_points;
 
   void initParameters();
 
   void runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params);
+  double compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params);
   void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 

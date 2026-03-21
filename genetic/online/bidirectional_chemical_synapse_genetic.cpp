@@ -214,6 +214,29 @@ double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow,
          (params[SP_K2] * m_slow);
 }
 
+double BidirectionalChemicalSynapseGenetic::compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params)
+{
+  double i_syn = 0.0;
+
+  if (params[SP_USE_I_SLOW] > 0.5)
+  {
+    for (int i = 0; i < s_points; i++)
+    {
+      runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
+    }
+
+    i_syn += params[SP_G_SLOW] * m_slow * (v_post - params[SP_ESYN]);
+  }
+
+  if (params[SP_USE_I_FAST] > 0.5)
+  {
+    i_syn += (params[SP_G_FAST] * (v_post - params[SP_ESYN])) /
+             (1.0 + exp(params[SP_S_FAST] * (params[SP_V_FAST] - v_pre)));
+  }
+
+  return i_syn;
+}
+
 void BidirectionalChemicalSynapseGenetic::execute(void)
 {
   if (burst_duration_gui <= 0.0)
@@ -228,75 +251,44 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     }
   }
 
+  double scale_21, offset_21, scale_12, offset_12;
   if (dynamic_scaling > 0.5)
   {
-    scale21 = input(2);
-    if (scale21 == 0.0)
-      scale21 = 1.0;
-    offset21 = input(3) * 1000.0;
-    scale12 = input(4);
-    if (scale12 == 0.0)
-      scale12 = 1.0;
-    offset12 = input(5) * 1000.0;
+    scale_21 = input(2);
+    offset_21 = input(3) * 1000.0;
+    scale_12 = input(4);
+    offset_12 = input(5) * 1000.0;
   }
   else
   {
-    scale21 = scale21_gui;
-    offset21 = offset21_gui * 1000.0;
-    scale12 = scale12_gui;
-    offset12 = offset12_gui * 1000.0;
+    scale_21 = scale_21_gui;
+    offset_21 = offset_21_gui;
+    scale_12 = scale_12_gui;
+    offset_12 = offset_12_gui;
+  }
+
+  if (scale_21 == 0.0)
+  {
+    scale_21 = 1.0;
+    offset_21 = 0.0;
+  }
+
+  if (scale_12 == 0.0)
+  {
+    scale_12 = 1.0;
+    offset_12 = 0.0;
   }
 
   double v1 = input(0) * 1000.0;
   double v2 = input(1) * 1000.0;
+  double v1_scaled = v1 * scale_12 + offset_12;
+  double v2_scaled = v2 * scale_21 + offset_21;
 
-  double v2_scaled = v2 * scale21 + offset21;
-  double v1_scaled = v1 * scale12 + offset12;
+  double i_syn_12 = compute_synapse_current(m_slow_12, v1_scaled, v2, params_12);
+  double i_syn_21 = compute_synapse_current(m_slow_21, v2_scaled, v1, params_21);
 
-  v1_21 = v1;
-  v2_21 = v2;
-  v1_12 = v1;
-  v2_12 = v2;
-
-  if (params_21[SP_USE_I_SLOW] > 0.5)
-  {
-    for (int i = 0; i < s_points; i++)
-    {
-      runge_kutta_65(sm_chemical_synapse_m, m_slow_21, v1_21, dt, params_21);
-    }
-  }
-
-  if (params_12[SP_USE_I_SLOW] > 0.5)
-  {
-    for (int i = 0; i < s_points; i++)
-    {
-      runge_kutta_65(sm_chemical_synapse_m, m_slow_12, v1_12, dt, params_12);
-    }
-  }
-
-  double I_syn1 = 0.0;
-  double I_syn2 = 0.0;
-
-  if (params_21[SP_USE_I_FAST] > 0.5)
-  {
-    I_syn1 += (params_21[SP_G_FAST] * (v1 - params_21[SP_ESYN])) / (1.0 + exp(params_21[SP_S_FAST] * (params_21[SP_V_FAST] - v2_scaled)));
-  }
-  if (params_21[SP_USE_I_SLOW] > 0.5)
-  {
-    I_syn1 += params_21[SP_G_SLOW] * m_slow_21 * (v1 - params_21[SP_ESYN]);
-  }
-
-  if (params_12[SP_USE_I_FAST] > 0.5)
-  {
-    I_syn2 += (params_12[SP_G_FAST] * (v2 - params_12[SP_ESYN])) / (1.0 + exp(params_12[SP_S_FAST] * (params_12[SP_V_FAST] - v1_scaled)));
-  }
-  if (params_12[SP_USE_I_SLOW] > 0.5)
-  {
-    I_syn2 += params_12[SP_G_SLOW] * m_slow_12 * (v2 - params_12[SP_ESYN]);
-  }
-
-  output(0) = I_syn1;
-  output(1) = I_syn2;
+  output(0) = i_syn_21;
+  output(1) = i_syn_12;
 }
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
@@ -334,10 +326,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Burst duration (s)", burst_duration_gui);
 
     setParameter("Dynamic scaling (1/0)", dynamic_scaling);
-    setParameter("Scale 2->1", scale21_gui);
-    setParameter("Offset 2->1", offset21_gui);
-    setParameter("Scale 1->2", scale12_gui);
-    setParameter("Offset 1->2", offset12_gui);
+    setParameter("Scale 2->1", scale_21_gui);
+    setParameter("Offset 2->1", offset_21_gui);
+    setParameter("Scale 1->2", scale_12_gui);
+    setParameter("Offset 1->2", offset_12_gui);
 
     setParameter("E_syn 2->1", params_21[SP_ESYN]);
     setParameter("g_fast 2->1", params_21[SP_G_FAST]);
@@ -378,10 +370,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     }
 
     dynamic_scaling = getParameter("Dynamic scaling (1/0)").toDouble();
-    scale21_gui = getParameter("Scale 2->1").toDouble();
-    offset21_gui = getParameter("Offset 2->1").toDouble();
-    scale12_gui = getParameter("Scale 1->2").toDouble();
-    offset12_gui = getParameter("Offset 1->2").toDouble();
+    scale_21_gui = getParameter("Scale 2->1").toDouble();
+    offset_21_gui = getParameter("Offset 2->1").toDouble() * 1000.0;
+    scale_12_gui = getParameter("Scale 1->2").toDouble();
+    offset_12_gui = getParameter("Offset 1->2").toDouble() * 1000.0;
 
     params_21[SP_ESYN] = getParameter("E_syn 2->1").toDouble();
     params_21[SP_G_FAST] = getParameter("g_fast 2->1").toDouble();
