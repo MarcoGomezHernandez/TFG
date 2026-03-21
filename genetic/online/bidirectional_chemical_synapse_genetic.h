@@ -41,7 +41,7 @@ private:
   double vars_model[2];
   double params_model[25];
   double period, freq;
-  double burst_duration, burst_duration_value;
+  double last_burst_duration, burst_duration_gui;
   double scale21, scale21_value;
   double offset21, offset21_value;
   double scale12, scale12_value;

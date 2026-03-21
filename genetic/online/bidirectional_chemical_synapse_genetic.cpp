@@ -261,12 +261,16 @@ void BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m_12(double *vars,
 
 void BidirectionalChemicalSynapseGenetic::execute(void)
 {
-  if (burst_duration_value <= -1.0)
+  if (burst_duration_gui <= 0.0)
   {
-    burst_duration = input(6);
-    s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-    if (s_points < 1)
-      s_points = 1;
+    double new_burst_duration = input(6);
+    if (new_burst_duration != last_burst_duration)
+    {
+      last_burst_duration = new_burst_duration;
+      s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
+      if (s_points < 1)
+        s_points = 1;
+    }
   }
 
   if (scale21_value <= -1.0)
@@ -361,25 +365,17 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
 {
-  period = RT::System::getInstance()->getPeriod() * 1e-6;
-
-  burst_duration_value = 1.0;
-  burst_duration = burst_duration_value;
-
   scale21_value = 1.0;
   offset21_value = 0.0;
   scale12_value = 1.0;
   offset12_value = 0.0;
+  burst_duration_gui = 1.0;
 
   scale21 = scale21_value;
   offset21 = offset21_value;
   scale12 = scale12_value;
   offset12 = offset12_value;
-
-  freq = 1.0 / (period * 1e-3);
-  s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-  if (s_points == 0)
-    s_points = 1;
+  last_burst_duration = burst_duration_gui;
 
   vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_21] = 0.0;
   vars_model[SN_CHEMICAL_SYNAPSE_M_SLOW_12] = 0.0;
@@ -397,8 +393,11 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   case INIT:
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     freq = 1.0 / (period * 1e-3);
+    s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
+    if (s_points == 0)
+      s_points = 1;
 
-    setParameter("Burst duration (s)", burst_duration_value);
+    setParameter("Burst duration (s)", burst_duration_gui);
     setParameter("Scale 2->1", scale21_value);
     setParameter("Offset 2->1", offset21_value);
     setParameter("Scale 1->2", scale12_value);
@@ -435,21 +434,19 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     break;
 
   case MODIFY:
-    burst_duration_value = getParameter("Burst duration (s)").toDouble();
     scale21_value = getParameter("Scale 2->1").toDouble();
     offset21_value = getParameter("Offset 2->1").toDouble();
     scale12_value = getParameter("Scale 1->2").toDouble();
     offset12_value = getParameter("Offset 1->2").toDouble();
+    burst_duration_gui = getParameter("Burst duration (s)").toDouble();
 
-    freq = 1.0 / (period * 1e-3);
-    if (burst_duration_value > -1.0)
+    if ((burst_duration_gui > 0.0) && (burst_duration_gui != last_burst_duration))
     {
-      burst_duration = burst_duration_value;
+      last_burst_duration = burst_duration_gui;
+      s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
+      if (s_points < 1)
+        s_points = 1;
     }
-
-    s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-    if (s_points < 1)
-      s_points = 1;
 
     params_model[SN_CHEMICAL_SYNAPSE_E_SYN_21] = getParameter("E_syn 2->1").toDouble();
     params_model[SN_CHEMICAL_SYNAPSE_G_FAST_21] = getParameter("g_fast 2->1").toDouble();
@@ -477,13 +474,12 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     break;
 
   case UNPAUSE:
+    break;
+
   case PERIOD:
-    if (flag == PERIOD)
-    {
-      period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
-    }
+    period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     freq = 1.0 / (period * 1e-3);
-    s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
+    s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
     if (s_points == 0)
       s_points = 1;
     break;
