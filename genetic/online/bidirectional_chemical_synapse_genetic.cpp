@@ -26,22 +26,6 @@
 #include <cmath>
 #include <main_window.h>
 
-enum SynapseParam
-{
-  SP_ESYN = 0,
-  SP_G_FAST,
-  SP_S_FAST,
-  SP_V_FAST,
-  SP_G_SLOW,
-  SP_K1,
-  SP_K2,
-  SP_S_SLOW,
-  SP_V_SLOW,
-  SP_USE_I_FAST,
-  SP_USE_I_SLOW,
-  SP_COUNT
-};
-
 extern "C" Plugin::Object *
 createRTXIPlugin(void)
 {
@@ -113,7 +97,7 @@ BidirectionalChemicalSynapseGenetic::BidirectionalChemicalSynapseGenetic(void)
 
 BidirectionalChemicalSynapseGenetic::~BidirectionalChemicalSynapseGenetic(void) {}
 
-void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, double, double *), double &m_slow, double v_pre, double dt, double *params)
+void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params)
 {
   double apoyo, retorno;
   double k[6];

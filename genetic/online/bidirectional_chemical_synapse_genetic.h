@@ -21,6 +21,22 @@
 
 #include <default_gui_model.h>
 
+enum SynapseParam
+{
+  SP_ESYN = 0,
+  SP_G_FAST,
+  SP_S_FAST,
+  SP_V_FAST,
+  SP_G_SLOW,
+  SP_K1,
+  SP_K2,
+  SP_S_SLOW,
+  SP_V_SLOW,
+  SP_USE_I_FAST,
+  SP_USE_I_SLOW,
+  SP_COUNT
+};
+
 class BidirectionalChemicalSynapseGenetic : public DefaultGUIModel
 {
 
