@@ -2,4 +2,12 @@ Para que se aplique el burst duration que se mete, el de la GUI debe ser -1. Aú
 
 En el fichero de la config de RTXI, faltan conectar las neuronas, que si las conecto si todavia no se han calculado cosas ambas fallan por el loop.
 
-De momento está bien que no sea real time (Xenomai), porque no voy a estar desarrollando en vscode con el parche puesto (al iniciar el SO), con que sólo probarlo con Xenomai al final; porque si ahora lo instalo con Xenomai, no lo podré usar con Posix normal.
+Para ver restricts RT, darle a RT Benchmarks en RTXI, que muestra tiempos del execute
+
+
+
+Hay que hacer el escalado temporal en la sinapsis quimica igual que en el modulo Hindmarsh Rose (exactamente igual, con las mismas tablas y todo, solo cambiar las formulas).
+
+Probar si funciona vectorizacion KFR en modulo de prueba
+
+La mejor opcion (que se prueba ahora y funciona) es hacer que se lance un hilo al pulsar un boton con la GUI, asi le paso lo que quiera y no esta todo el rato funcionando cuando queremos funcionamiento normal.
