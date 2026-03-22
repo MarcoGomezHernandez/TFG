@@ -77,9 +77,6 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Scale 1->2", "Dynamic amplitude scale 1->2", DefaultGUIModel::INPUT},
     {"Offset 1->2", "Dynamic amplitude offset 1->2", DefaultGUIModel::INPUT},
     {"Burst duration (s)", "Dynamic burst duration", DefaultGUIModel::INPUT},
-
-    {"m_slow 2->1", "Slow gating variable 2->1", DefaultGUIModel::STATE},
-    {"m_slow 1->2", "Slow gating variable 1->2", DefaultGUIModel::STATE},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
@@ -360,7 +357,6 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("V_slow 2->1", params_21[SP_V_SLOW]);
     setParameter("Use I_fast 2->1 (1/0)", params_21[SP_USE_I_FAST]);
     setParameter("Use I_slow 2->1 (1/0)", params_21[SP_USE_I_SLOW]);
-    setState("m_slow 2->1", m_slow_21);
 
     setParameter("E_syn 1->2", params_12[SP_ESYN]);
     setParameter("g_fast 1->2", params_12[SP_G_FAST]);
@@ -373,7 +369,6 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("V_slow 1->2", params_12[SP_V_SLOW]);
     setParameter("Use I_fast 1->2 (1/0)", params_12[SP_USE_I_FAST]);
     setParameter("Use I_slow 1->2 (1/0)", params_12[SP_USE_I_SLOW]);
-    setState("m_slow 1->2", m_slow_12);
 
     break;
 
