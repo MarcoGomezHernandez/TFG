@@ -4,6 +4,7 @@ HEADERS = bidirectional_chemical_synapse_genetic.h
 
 SOURCES = bidirectional_chemical_synapse_genetic.cpp\
           moc_bidirectional_chemical_synapse_genetic.cpp\
+          genetic.cpp\
 
 LIBS = 
 

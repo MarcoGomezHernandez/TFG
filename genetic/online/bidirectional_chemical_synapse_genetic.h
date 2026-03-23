@@ -20,6 +20,12 @@
 #define RTHYBRID_CHEMICAL_SYNAPSE_GENETIC_H
 
 #include <default_gui_model.h>
+#include <kfr/all.hpp>
+#include <thread>
+#include <atomic>
+#include <semaphore>
+
+using namespace kfr;
 
 enum SynapseParam
 {
@@ -32,8 +38,6 @@ enum SynapseParam
   SP_K2,
   SP_S_SLOW,
   SP_V_SLOW,
-  SP_USE_I_FAST,
-  SP_USE_I_SLOW,
   SP_COUNT
 };
 
@@ -57,25 +61,59 @@ private:
   double m_slow_21, m_slow_12;
   double params_21[SP_COUNT];
   double params_12[SP_COUNT];
+  unsigned int use_i_fast_21, use_i_slow_21, use_i_fast_12, use_i_slow_12;
   double dt;
   double period, freq;
-  double last_burst_duration, burst_duration_gui;
+  double burst_duration, burst_duration_gui;
   double scale_21_gui, offset_21_gui, scale_12_gui, offset_12_gui;
-  double dynamic_scaling;
+  unsigned int dynamic_scaling;
+  unsigned int is_living_1, is_living_2;
   double s_points;
+
+  double evaluation_time;
+  double stabilization_time;
+  std::thread genetic_NRT_thread;
+  std::atomic<bool> RT_storing;
+  std::atomic<bool> stop_genetic;
+  std::atomic<bool> genetic_running;
+  std::binary_semaphore synapse_lock{1};
+  int storing_idx;
+  int num_elements;
+
+  univector<double> i_fast_sig_12;
+  univector<double> i_fast_sig_21;
+  univector<double> i_slow_12;
+  univector<double> i_slow_21;
+  univector<double> v1_scaled_sig;
+  univector<double> v1_sig;
+  univector<double> v2_scaled_sig;
+  univector<double> v2_sig;
+
+  QPushButton *gentic_button;
 
   void initParameters();
 
   void runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params);
-  double compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params);
+
+  double compute_i_slow(double &m_slow, double v_pre, double v_post, double *params);
+  double compute_i_fast(double v_pre, double v_post, double *params);
+
   void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, double *params);
 
+  void NRT_genetic(void);
+
+  void update_params_gui(void);
+
+  void set_params_read_only(bool read_only);
+  void set_param_read_only(const QString &name, const QPalette &pal, bool read_only);
+
+  void stop_genetic_event_async(void)
+
 private slots:
-  void aBttn_event(void);
-  void bBttn_event(void);
+  void toggle_genetic_event(void);
 };
 
 #endif

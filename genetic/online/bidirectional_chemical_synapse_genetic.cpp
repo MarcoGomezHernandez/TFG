@@ -16,11 +16,6 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * This is a template implementation file for a user module derived from
- * DefaultGUIModel with a custom GUI.
- */
-
 #include "bidirectional_chemical_synapse_genetic.h"
 #include <iostream>
 #include <cmath>
@@ -33,13 +28,18 @@ createRTXIPlugin(void)
 }
 
 static DefaultGUIModel::variable_t vars[] = {
+    {"Individual evaluation time (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Individual stabilization time (s)", "Stabilization time for each individual; not included in Individual evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Burst duration (s)", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Scale 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Offset 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Offset 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic scaling (1/0)", "1=dynamic (input), 0=static (GUI)", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic scaling (1/0)", "1=dynamic (input), 0=static (GUI)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+
+    {"Neur 1 is living (1/0)", "Indicates if neuron 1 is alive (1) or Hindmarsh–Rose model (0)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Neur 2 is living (1/0)", "Indicates if neuron 2 is alive (1) or Hindmarsh–Rose model (0)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     // Config 2 -> 1
     {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -51,8 +51,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"k2 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"V_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     // Config 1 -> 2
     {"E_syn 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -64,8 +64,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"k2 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"V_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
     {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
@@ -86,13 +86,21 @@ BidirectionalChemicalSynapseGenetic::BidirectionalChemicalSynapseGenetic(void)
 {
   setWhatsThis("<p><b>RTHybrid Bidirectional Chemical Synapse Genetic</b></p>");
   DefaultGUIModel::createGUI(vars, num_vars);
+  customizeGUI();
   initParameters();
   update(INIT);
   refresh();
   QTimer::singleShot(0, this, SLOT(resizeMe()));
 }
 
-BidirectionalChemicalSynapseGenetic::~BidirectionalChemicalSynapseGenetic(void) {}
+BidirectionalChemicalSynapseGenetic::~BidirectionalChemicalSynapseGenetic(void)
+{
+  if (genetic_NRT_thread.joinable())
+  {
+    stop_genetic.store(true, std::memory_order_relaxed);
+    genetic_NRT_thread.join();
+  }
+}
 
 void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params)
 {
@@ -195,27 +203,19 @@ double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow,
          (params[SP_K2] * m_slow);
 }
 
-double BidirectionalChemicalSynapseGenetic::compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params)
+double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, double *params)
 {
-  double i_syn = 0.0;
-
-  if (params[SP_USE_I_SLOW] > 0.5)
+  for (int i = 0; i < s_points; i++)
   {
-    for (int i = 0; i < s_points; i++)
-    {
-      runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
-    }
-
-    i_syn += params[SP_G_SLOW] * m_slow * (v_post - params[SP_ESYN]);
+    runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   }
+  return params[SP_G_SLOW] * m_slow * (v_post - params[SP_ESYN]);
+}
 
-  if (params[SP_USE_I_FAST] > 0.5)
-  {
-    i_syn += (params[SP_G_FAST] * (v_post - params[SP_ESYN])) /
-             (1.0 + exp(params[SP_S_FAST] * (params[SP_V_FAST] - v_pre)));
-  }
-
-  return i_syn;
+double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double v_post, double *params)
+{
+  return (params[SP_G_FAST] * (v_post - params[SP_ESYN])) /
+         (1.0 + exp(params[SP_S_FAST] * (params[SP_V_FAST] - v_pre)));
 }
 
 void BidirectionalChemicalSynapseGenetic::execute(void)
@@ -223,77 +223,133 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   if (burst_duration_gui <= 0.0)
   {
     double new_burst_duration = input(6);
-    if (new_burst_duration != last_burst_duration)
+    if (new_burst_duration != burst_duration)
     {
-      last_burst_duration = new_burst_duration;
-      s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
+      burst_duration = new_burst_duration;
+      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
       if (s_points < 1)
         s_points = 1;
     }
   }
 
-  bool use_syn_21 = (params_21[SP_USE_I_FAST] > 0.5) || (params_21[SP_USE_I_SLOW] > 0.5);
-  bool use_syn_12 = (params_12[SP_USE_I_FAST] > 0.5) || (params_12[SP_USE_I_SLOW] > 0.5);
-
-  double v1 = input(0) * 1000.0;
-  double v2 = input(1) * 1000.0;
-
-  double v2_scaled;
-  if (use_syn_21)
+  double i_slow_21 = 0.0, i_fast_21 = 0.0;
+  double i_slow_12 = 0.0, i_fast_12 = 0.0;
+  if (synapse_lock.try_acquire())
   {
-    double scale_21, offset_21;
-    if (dynamic_scaling > 0.5)
+    bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
+    bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
+
+    double v1, v2;
+    if (use_syn_21 || use_syn_12)
     {
-      scale_21 = input(2);
-      offset_21 = input(3) * 1000.0;
-    }
-    else
-    {
-      scale_21 = scale_21_gui;
-      offset_21 = offset_21_gui;
+      v1 = input(0) * 1000.0;
+      v2 = input(1) * 1000.0;
     }
 
-    if (scale_21 == 0.0)
+    double v2_scaled;
+    if (use_syn_21)
     {
-      scale_21 = 1.0;
-      offset_21 = 0.0;
+      double scale_21, offset_21;
+      if (dynamic_scaling)
+      {
+        scale_21 = input(2);
+        offset_21 = input(3) * 1000.0;
+      }
+      else
+      {
+        scale_21 = scale_21_gui;
+        offset_21 = offset_21_gui;
+      }
+
+      if (scale_21 == 0.0)
+      {
+        scale_21 = 1.0;
+        offset_21 = 0.0;
+      }
+      v2_scaled = v2 * scale_21 + offset_21;
+
+      if (use_i_slow_21)
+        i_slow_21 = compute_i_slow(m_slow_21, v2_scaled, v1, params_21);
+      if (use_i_fast_21)
+        i_fast_21 = compute_i_fast(v2_scaled, v1, params_21);
     }
-    v2_scaled = v2 * scale_21 + offset_21;
+
+    double v1_scaled;
+    if (use_syn_12)
+    {
+      double scale_12, offset_12;
+      if (dynamic_scaling)
+      {
+        scale_12 = input(4);
+        offset_12 = input(5) * 1000.0;
+      }
+      else
+      {
+        scale_12 = scale_12_gui;
+        offset_12 = offset_12_gui;
+      }
+
+      if (scale_12 == 0.0)
+      {
+        scale_12 = 1.0;
+        offset_12 = 0.0;
+      }
+      v1_scaled = v1 * scale_12 + offset_12;
+
+      if (use_i_slow_12)
+        i_slow_12 = compute_i_slow(m_slow_12, v1_scaled, v2, params_12);
+      if (use_i_fast_12)
+        i_fast_12 = compute_i_fast(v1_scaled, v2, params_12);
+    }
+
+    if (RT_storing.load(std::memory_order_acquire))
+    {
+      if (storing_idx < num_elements)
+      {
+        if (use_syn_21)
+        {
+          v1_sig[storing_idx] = v1;
+          v2_scaled_sig[storing_idx] = v2_scaled;
+          if (use_i_fast_21)
+            i_fast_sig_21[storing_idx] = i_fast_21;
+          if (use_i_slow_21)
+            i_slow_21[storing_idx] = i_slow_21;
+        }
+        if (use_syn_12)
+        {
+          v2_sig[storing_idx] = v2;
+          v1_scaled_sig[storing_idx] = v1_scaled;
+          if (use_i_fast_12)
+            i_fast_sig_12[storing_idx] = i_fast_12;
+          if (use_i_slow_12)
+            i_slow_12[storing_idx] = i_slow_12;
+        }
+        storing_idx++;
+      }
+      else
+      {
+        RT_storing.store(false, std::memory_order_release);
+      }
+    }
+
+    synapse_lock.release();
   }
 
-  double v1_scaled;
-  if (use_syn_12)
-  {
-    double scale_12, offset_12;
-    if (dynamic_scaling > 0.5)
-    {
-      scale_12 = input(4);
-      offset_12 = input(5) * 1000.0;
-    }
-    else
-    {
-      scale_12 = scale_12_gui;
-      offset_12 = offset_12_gui;
-    }
-
-    if (scale_12 == 0.0)
-    {
-      scale_12 = 1.0;
-      offset_12 = 0.0;
-    }
-    v1_scaled = v1 * scale_12 + offset_12;
-  }
-
-  output(0) = compute_synapse_current(m_slow_21, v2_scaled, v1, params_21);
-  output(1) = compute_synapse_current(m_slow_12, v1_scaled, v2, params_12);
+  output(0) = i_fast_21 + i_slow_21;
+  output(1) = i_fast_12 + i_slow_12;
 }
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
 {
-  burst_duration_gui = 1.0;
-  last_burst_duration = burst_duration_gui;
+  evaluation_time = 10.0;
+  stabilization_time = 1.0;
 
-  dynamic_scaling = 0.0;
+  burst_duration_gui = 1.0;
+  burst_duration = burst_duration_gui;
+
+  dynamic_scaling = 0u;
+  is_living_1 = 0u;
+  is_living_2 = 0u;
   scale_21_gui = 1.0;
   offset_21_gui = 0.0;
   scale_12_gui = 1.0;
@@ -301,6 +357,10 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
 
   m_slow_21 = 0.0;
   m_slow_12 = 0.0;
+
+  stop_genetic.store(false, std::memory_order_relaxed);
+  RT_storing.store(false, std::memory_order_relaxed);
+  genetic_running.store(false, std::memory_order_relaxed);
 
   params_21[SP_ESYN] = -1.92;
   params_21[SP_G_FAST] = 0.046;
@@ -311,8 +371,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   params_21[SP_K2] = 0.007;
   params_21[SP_S_SLOW] = 1.0;
   params_21[SP_V_SLOW] = -1.74;
-  params_21[SP_USE_I_FAST] = 1.0;
-  params_21[SP_USE_I_SLOW] = 1.0;
+  use_i_fast_21 = 1u;
+  use_i_slow_21 = 1u;
 
   params_12[SP_ESYN] = -1.92;
   params_12[SP_G_FAST] = 0.046;
@@ -323,8 +383,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   params_12[SP_K2] = 0.007;
   params_12[SP_S_SLOW] = 1.0;
   params_12[SP_V_SLOW] = -1.74;
-  params_12[SP_USE_I_FAST] = 1.0;
-  params_12[SP_USE_I_SLOW] = 1.0;
+  use_i_fast_12 = 1u;
+  use_i_slow_12 = 1u;
 }
 
 void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
@@ -332,57 +392,49 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   switch (flag)
   {
   case INIT:
-    period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
-    freq = 1.0 / (period * 1e-3);
-    s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
+    period = RT::System::getInstance()->getPeriod() * 1e-9; // s
+    freq = 1.0 / period;
+    s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
     if (s_points == 0)
       s_points = 1;
 
+    setParameter("Individual evaluation time (s)", evaluation_time);
+    setParameter("Individual stabilization time (s)", stabilization_time);
     setParameter("Burst duration (s)", burst_duration_gui);
 
     setParameter("Dynamic scaling (1/0)", dynamic_scaling);
+    setParameter("Neur 1 is living (1/0)", is_living_1);
+    setParameter("Neur 2 is living (1/0)", is_living_2);
     setParameter("Scale 2->1", scale_21_gui);
     setParameter("Offset 2->1", offset_21_gui);
     setParameter("Scale 1->2", scale_12_gui);
     setParameter("Offset 1->2", offset_12_gui);
 
-    setParameter("E_syn 2->1", params_21[SP_ESYN]);
-    setParameter("g_fast 2->1", params_21[SP_G_FAST]);
-    setParameter("s_fast 2->1", params_21[SP_S_FAST]);
-    setParameter("V_fast 2->1", params_21[SP_V_FAST]);
-    setParameter("g_slow 2->1", params_21[SP_G_SLOW]);
-    setParameter("k1 2->1", params_21[SP_K1]);
-    setParameter("k2 2->1", params_21[SP_K2]);
-    setParameter("s_slow 2->1", params_21[SP_S_SLOW]);
-    setParameter("V_slow 2->1", params_21[SP_V_SLOW]);
-    setParameter("Use I_fast 2->1 (1/0)", params_21[SP_USE_I_FAST]);
-    setParameter("Use I_slow 2->1 (1/0)", params_21[SP_USE_I_SLOW]);
+    update_params_gui();
 
-    setParameter("E_syn 1->2", params_12[SP_ESYN]);
-    setParameter("g_fast 1->2", params_12[SP_G_FAST]);
-    setParameter("s_fast 1->2", params_12[SP_S_FAST]);
-    setParameter("V_fast 1->2", params_12[SP_V_FAST]);
-    setParameter("g_slow 1->2", params_12[SP_G_SLOW]);
-    setParameter("k1 1->2", params_12[SP_K1]);
-    setParameter("k2 1->2", params_12[SP_K2]);
-    setParameter("s_slow 1->2", params_12[SP_S_SLOW]);
-    setParameter("V_slow 1->2", params_12[SP_V_SLOW]);
-    setParameter("Use I_fast 1->2 (1/0)", params_12[SP_USE_I_FAST]);
-    setParameter("Use I_slow 1->2 (1/0)", params_12[SP_USE_I_SLOW]);
+    setParameter("Use I_fast 2->1 (1/0)", use_i_fast_21);
+    setParameter("Use I_slow 2->1 (1/0)", use_i_slow_21);
+    setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
+    setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
 
     break;
 
   case MODIFY:
+    evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
+    stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
+
     burst_duration_gui = getParameter("Burst duration (s)").toDouble();
-    if ((burst_duration_gui > 0.0) && (burst_duration_gui != last_burst_duration))
+    if ((burst_duration_gui > 0.0) && (burst_duration_gui != burst_duration))
     {
-      last_burst_duration = burst_duration_gui;
-      s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
+      burst_duration = burst_duration_gui;
+      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
       if (s_points < 1)
         s_points = 1;
     }
 
-    dynamic_scaling = getParameter("Dynamic scaling (1/0)").toDouble();
+    dynamic_scaling = getParameter("Dynamic scaling (1/0)").toUInt();
+    is_living_1 = getParameter("Neur 1 is living (1/0)").toUInt();
+    is_living_2 = getParameter("Neur 2 is living (1/0)").toUInt();
     scale_21_gui = getParameter("Scale 2->1").toDouble();
     offset_21_gui = getParameter("Offset 2->1").toDouble() * 1000.0;
     scale_12_gui = getParameter("Scale 1->2").toDouble();
@@ -397,8 +449,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     params_21[SP_K2] = getParameter("k2 2->1").toDouble();
     params_21[SP_S_SLOW] = getParameter("s_slow 2->1").toDouble();
     params_21[SP_V_SLOW] = getParameter("V_slow 2->1").toDouble();
-    params_21[SP_USE_I_FAST] = getParameter("Use I_fast 2->1 (1/0)").toDouble();
-    params_21[SP_USE_I_SLOW] = getParameter("Use I_slow 2->1 (1/0)").toDouble();
+    use_i_fast_21 = getParameter("Use I_fast 2->1 (1/0)").toUInt();
+    use_i_slow_21 = getParameter("Use I_slow 2->1 (1/0)").toUInt();
 
     params_12[SP_ESYN] = getParameter("E_syn 1->2").toDouble();
     params_12[SP_G_FAST] = getParameter("g_fast 1->2").toDouble();
@@ -409,8 +461,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     params_12[SP_K2] = getParameter("k2 1->2").toDouble();
     params_12[SP_S_SLOW] = getParameter("s_slow 1->2").toDouble();
     params_12[SP_V_SLOW] = getParameter("V_slow 1->2").toDouble();
-    params_12[SP_USE_I_FAST] = getParameter("Use I_fast 1->2 (1/0)").toDouble();
-    params_12[SP_USE_I_SLOW] = getParameter("Use I_slow 1->2 (1/0)").toDouble();
+    use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
+    use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
 
     break;
 
@@ -418,11 +470,21 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     break;
 
   case PERIOD:
-    period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
-    freq = 1.0 / (period * 1e-3);
-    s_points = (int)(set_pts_burst(last_burst_duration) / (last_burst_duration * freq));
-    if (s_points == 0)
-      s_points = 1;
+    double new_period = RT::System::getInstance()->getPeriod() * 1e-9; // s
+    if (new_period != period)
+    {
+      period = new_period;
+      freq = 1.0 / period;
+      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
+      if (s_points == 0)
+        s_points = 1;
+
+      if (genetic_running.load(std::memory_order_relaxed))
+      {
+        stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
+      }
+    }
+
     break;
 
   case PAUSE:
@@ -438,20 +500,103 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
 {
   QGridLayout *customlayout = DefaultGUIModel::getLayout();
-  QGroupBox *button_group = new QGroupBox;
-
-  QPushButton *abutton = new QPushButton("Button A");
-  QPushButton *bbutton = new QPushButton("Button B");
-  QHBoxLayout *button_layout = new QHBoxLayout;
-  button_group->setLayout(button_layout);
-  button_layout->addWidget(abutton);
-  button_layout->addWidget(bbutton);
-  QObject::connect(abutton, SIGNAL(clicked()), this, SLOT(aBttn_event()));
-  QObject::connect(bbutton, SIGNAL(clicked()), this, SLOT(bBttn_event()));
-
-  customlayout->addWidget(button_group, 0, 0);
+  gentic_button = new QPushButton("Start Genetic");
+  QObject::connect(gentic_button, SIGNAL(clicked()), this, SLOT(start_genetic_event()));
+  customlayout->addWidget(gentic_button, 0, 0);
   setLayout(customlayout);
 }
 
-void BidirectionalChemicalSynapseGenetic::aBttn_event(void) {}
-void BidirectionalChemicalSynapseGenetic::bBttn_event(void) {}
+void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
+{
+  if (!genetic_running.load(std::memory_order_relaxed))
+  {
+    // Lógica para EMPEZAR
+    if (genetic_NRT_thread.joinable())
+    {
+      genetic_NRT_thread.join();
+      stop_genetic.store(false, std::memory_order_relaxed);
+    }
+    genetic_running.store(true, std::memory_order_relaxed);
+    geneticBtn->setText("Stop Genetic");
+    make_params_read_only(true);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this);
+  }
+  else
+  {
+    // Lógica para PARAR
+    stop_genetic.store(true, std::memory_order_relaxed);
+  }
+}
+
+void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
+{
+  make_params_read_only(false);
+  geneticBtn->setText("Start Genetic");
+  genetic_running.store(false, std::memory_order_relaxed);
+}
+
+void BidirectionalChemicalSynapseGenetic::make_params_read_only(bool read_only)
+{
+  DefaultGUILineEdit *example_edit = parameter["Individual evaluation time (s)"].edit;
+  QPalette palette = example_edit->palette();
+  palette.setBrush(example_edit->foregroundRole(), read_only ? Qt::darkGray : QApplication::palette().color(QPalette::WindowText));
+
+  set_param_read_only("Individual evaluation time (s)", palette, read_only);
+  set_param_read_only("Individual stabilization time (s)", palette, read_only);
+  set_param_read_only("Neur 1 is living (1/0)", palette, read_only);
+  set_param_read_only("Neur 2 is living (1/0)", palette, read_only);
+
+  set_param_read_only("E_syn 2->1", palette, read_only);
+  set_param_read_only("g_fast 2->1", palette, read_only);
+  set_param_read_only("s_fast 2->1", palette, read_only);
+  set_param_read_only("V_fast 2->1", palette, read_only);
+  set_param_read_only("g_slow 2->1", palette, read_only);
+  set_param_read_only("k1 2->1", palette, read_only);
+  set_param_read_only("k2 2->1", palette, read_only);
+  set_param_read_only("s_slow 2->1", palette, read_only);
+  set_param_read_only("V_slow 2->1", palette, read_only);
+  set_param_read_only("Use I_fast 2->1 (1/0)", palette, read_only);
+  set_param_read_only("Use I_slow 2->1 (1/0)", palette, read_only);
+
+  set_param_read_only("E_syn 1->2", palette, read_only);
+  set_param_read_only("g_fast 1->2", palette, read_only);
+  set_param_read_only("s_fast 1->2", palette, read_only);
+  set_param_read_only("V_fast 1->2", palette, read_only);
+  set_param_read_only("g_slow 1->2", palette, read_only);
+  set_param_read_only("k1 1->2", palette, read_only);
+  set_param_read_only("k2 1->2", palette, read_only);
+  set_param_read_only("s_slow 1->2", palette, read_only);
+  set_param_read_only("V_slow 1->2", palette, read_only);
+  set_param_read_only("Use I_fast 1->2 (1/0)", palette, read_only);
+  set_param_read_only("Use I_slow 1->2 (1/0)", palette, read_only);
+}
+
+void BidirectionalChemicalSynapseGenetic::make_param_read_only(const QString &name, const QPalette &pal, bool read_only)
+{
+  DefaultGUILineEdit *edit = parameter[name].edit;
+  edit->setReadOnly(read_only);
+  edit->setPalette(pal);
+}
+
+void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
+{
+  setParameter("E_syn 2->1", params_21[SP_ESYN]);
+  setParameter("g_fast 2->1", params_21[SP_G_FAST]);
+  setParameter("s_fast 2->1", params_21[SP_S_FAST]);
+  setParameter("V_fast 2->1", params_21[SP_V_FAST]);
+  setParameter("g_slow 2->1", params_21[SP_G_SLOW]);
+  setParameter("k1 2->1", params_21[SP_K1]);
+  setParameter("k2 2->1", params_21[SP_K2]);
+  setParameter("s_slow 2->1", params_21[SP_S_SLOW]);
+  setParameter("V_slow 2->1", params_21[SP_V_SLOW]);
+
+  setParameter("E_syn 1->2", params_12[SP_ESYN]);
+  setParameter("g_fast 1->2", params_12[SP_G_FAST]);
+  setParameter("s_fast 1->2", params_12[SP_S_FAST]);
+  setParameter("V_fast 1->2", params_12[SP_V_FAST]);
+  setParameter("g_slow 1->2", params_12[SP_G_SLOW]);
+  setParameter("k1 1->2", params_12[SP_K1]);
+  setParameter("k2 1->2", params_12[SP_K2]);
+  setParameter("s_slow 1->2", params_12[SP_S_SLOW]);
+  setParameter("V_slow 1->2", params_12[SP_V_SLOW]);
+}
