@@ -39,7 +39,7 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Offset 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Offset 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic scaling (1/0)", "1=dynamic (input), 0=static (GUI)", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic scaling (1/0)", "1=dynamic (input), 0=static (GUI)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     // Config 2 -> 1
     {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -51,8 +51,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"k2 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"V_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     // Config 1 -> 2
     {"E_syn 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -64,8 +64,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"k2 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"V_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
     {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
@@ -195,11 +195,11 @@ double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow,
          (params[SP_K2] * m_slow);
 }
 
-double BidirectionalChemicalSynapseGenetic::compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params)
+double BidirectionalChemicalSynapseGenetic::compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params, unsigned int use_i_fast, unsigned int use_i_slow)
 {
   double i_syn = 0.0;
 
-  if (params[SP_USE_I_SLOW] > 0.5)
+  if (use_i_slow)
   {
     for (int i = 0; i < s_points; i++)
     {
@@ -209,7 +209,7 @@ double BidirectionalChemicalSynapseGenetic::compute_synapse_current(double &m_sl
     i_syn += params[SP_G_SLOW] * m_slow * (v_post - params[SP_ESYN]);
   }
 
-  if (params[SP_USE_I_FAST] > 0.5)
+  if (use_i_fast)
   {
     i_syn += (params[SP_G_FAST] * (v_post - params[SP_ESYN])) /
              (1.0 + exp(params[SP_S_FAST] * (params[SP_V_FAST] - v_pre)));
@@ -232,8 +232,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     }
   }
 
-  bool use_syn_21 = (params_21[SP_USE_I_FAST] > 0.5) || (params_21[SP_USE_I_SLOW] > 0.5);
-  bool use_syn_12 = (params_12[SP_USE_I_FAST] > 0.5) || (params_12[SP_USE_I_SLOW] > 0.5);
+  bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
+  bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
 
   double v1 = input(0) * 1000.0;
   double v2 = input(1) * 1000.0;
@@ -242,7 +242,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   if (use_syn_21)
   {
     double scale_21, offset_21;
-    if (dynamic_scaling > 0.5)
+    if (dynamic_scaling)
     {
       scale_21 = input(2);
       offset_21 = input(3) * 1000.0;
@@ -265,7 +265,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   if (use_syn_12)
   {
     double scale_12, offset_12;
-    if (dynamic_scaling > 0.5)
+    if (dynamic_scaling)
     {
       scale_12 = input(4);
       offset_12 = input(5) * 1000.0;
@@ -284,8 +284,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     v1_scaled = v1 * scale_12 + offset_12;
   }
 
-  output(0) = compute_synapse_current(m_slow_21, v2_scaled, v1, params_21);
-  output(1) = compute_synapse_current(m_slow_12, v1_scaled, v2, params_12);
+  output(0) = compute_synapse_current(m_slow_21, v2_scaled, v1, params_21, use_i_fast_21, use_i_slow_21);
+  output(1) = compute_synapse_current(m_slow_12, v1_scaled, v2, params_12, use_i_fast_12, use_i_slow_12);
 }
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
@@ -293,7 +293,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   burst_duration_gui = 1.0;
   last_burst_duration = burst_duration_gui;
 
-  dynamic_scaling = 0.0;
+  dynamic_scaling = 0u;
   scale_21_gui = 1.0;
   offset_21_gui = 0.0;
   scale_12_gui = 1.0;
@@ -311,8 +311,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   params_21[SP_K2] = 0.007;
   params_21[SP_S_SLOW] = 1.0;
   params_21[SP_V_SLOW] = -1.74;
-  params_21[SP_USE_I_FAST] = 1.0;
-  params_21[SP_USE_I_SLOW] = 1.0;
+  use_i_fast_21 = 1u;
+  use_i_slow_21 = 1u;
 
   params_12[SP_ESYN] = -1.92;
   params_12[SP_G_FAST] = 0.046;
@@ -323,8 +323,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   params_12[SP_K2] = 0.007;
   params_12[SP_S_SLOW] = 1.0;
   params_12[SP_V_SLOW] = -1.74;
-  params_12[SP_USE_I_FAST] = 1.0;
-  params_12[SP_USE_I_SLOW] = 1.0;
+  use_i_fast_12 = 1u;
+  use_i_slow_12 = 1u;
 }
 
 void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
@@ -355,8 +355,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("k2 2->1", params_21[SP_K2]);
     setParameter("s_slow 2->1", params_21[SP_S_SLOW]);
     setParameter("V_slow 2->1", params_21[SP_V_SLOW]);
-    setParameter("Use I_fast 2->1 (1/0)", params_21[SP_USE_I_FAST]);
-    setParameter("Use I_slow 2->1 (1/0)", params_21[SP_USE_I_SLOW]);
+    setParameter("Use I_fast 2->1 (1/0)", use_i_fast_21);
+    setParameter("Use I_slow 2->1 (1/0)", use_i_slow_21);
 
     setParameter("E_syn 1->2", params_12[SP_ESYN]);
     setParameter("g_fast 1->2", params_12[SP_G_FAST]);
@@ -367,8 +367,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("k2 1->2", params_12[SP_K2]);
     setParameter("s_slow 1->2", params_12[SP_S_SLOW]);
     setParameter("V_slow 1->2", params_12[SP_V_SLOW]);
-    setParameter("Use I_fast 1->2 (1/0)", params_12[SP_USE_I_FAST]);
-    setParameter("Use I_slow 1->2 (1/0)", params_12[SP_USE_I_SLOW]);
+    setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
+    setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
 
     break;
 
@@ -382,7 +382,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         s_points = 1;
     }
 
-    dynamic_scaling = getParameter("Dynamic scaling (1/0)").toDouble();
+    dynamic_scaling = getParameter("Dynamic scaling (1/0)").toUInt();
     scale_21_gui = getParameter("Scale 2->1").toDouble();
     offset_21_gui = getParameter("Offset 2->1").toDouble() * 1000.0;
     scale_12_gui = getParameter("Scale 1->2").toDouble();
@@ -397,8 +397,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     params_21[SP_K2] = getParameter("k2 2->1").toDouble();
     params_21[SP_S_SLOW] = getParameter("s_slow 2->1").toDouble();
     params_21[SP_V_SLOW] = getParameter("V_slow 2->1").toDouble();
-    params_21[SP_USE_I_FAST] = getParameter("Use I_fast 2->1 (1/0)").toDouble();
-    params_21[SP_USE_I_SLOW] = getParameter("Use I_slow 2->1 (1/0)").toDouble();
+    use_i_fast_21 = getParameter("Use I_fast 2->1 (1/0)").toUInt();
+    use_i_slow_21 = getParameter("Use I_slow 2->1 (1/0)").toUInt();
 
     params_12[SP_ESYN] = getParameter("E_syn 1->2").toDouble();
     params_12[SP_G_FAST] = getParameter("g_fast 1->2").toDouble();
@@ -409,8 +409,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     params_12[SP_K2] = getParameter("k2 1->2").toDouble();
     params_12[SP_S_SLOW] = getParameter("s_slow 1->2").toDouble();
     params_12[SP_V_SLOW] = getParameter("V_slow 1->2").toDouble();
-    params_12[SP_USE_I_FAST] = getParameter("Use I_fast 1->2 (1/0)").toDouble();
-    params_12[SP_USE_I_SLOW] = getParameter("Use I_slow 1->2 (1/0)").toDouble();
+    use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
+    use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
 
     break;
 

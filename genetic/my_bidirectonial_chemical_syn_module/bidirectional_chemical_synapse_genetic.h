@@ -32,8 +32,6 @@ enum SynapseParam
   SP_K2,
   SP_S_SLOW,
   SP_V_SLOW,
-  SP_USE_I_FAST,
-  SP_USE_I_SLOW,
   SP_COUNT
 };
 
@@ -57,17 +55,18 @@ private:
   double m_slow_21, m_slow_12;
   double params_21[SP_COUNT];
   double params_12[SP_COUNT];
+  unsigned int use_i_fast_21, use_i_slow_21, use_i_fast_12, use_i_slow_12;
   double dt;
   double period, freq;
   double last_burst_duration, burst_duration_gui;
   double scale_21_gui, offset_21_gui, scale_12_gui, offset_12_gui;
-  double dynamic_scaling;
+  unsigned int dynamic_scaling;
   double s_points;
 
   void initParameters();
 
   void runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params);
-  double compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params);
+  double compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params, unsigned int use_i_fast, unsigned int use_i_slow);
   void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 
