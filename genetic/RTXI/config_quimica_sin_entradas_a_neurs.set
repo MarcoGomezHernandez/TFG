@@ -1,0 +1,183 @@
+<RTXI version="2.3" class="settings">
+ <OBJECT id="0" component="rt">
+  <PARAM name="Period">1000000</PARAM>
+ </OBJECT>
+ <OBJECT id="1" component="io">
+  <PARAM name="0 Destination ID">11</PARAM>
+  <PARAM name="0 Destination channel">1</PARAM>
+  <PARAM name="0 Source ID">15</PARAM>
+  <PARAM name="0 Source channel">2</PARAM>
+  <PARAM name="1 Destination ID">15</PARAM>
+  <PARAM name="1 Destination channel">0</PARAM>
+  <PARAM name="1 Source ID">2</PARAM>
+  <PARAM name="1 Source channel">0</PARAM>
+  <PARAM name="2 Destination ID">17</PARAM>
+  <PARAM name="2 Destination channel">0</PARAM>
+  <PARAM name="2 Source ID">15</PARAM>
+  <PARAM name="2 Source channel">0</PARAM>
+  <PARAM name="3 Destination ID">17</PARAM>
+  <PARAM name="3 Destination channel">1</PARAM>
+  <PARAM name="3 Source ID">15</PARAM>
+  <PARAM name="3 Source channel">1</PARAM>
+  <PARAM name="4 Destination ID">17</PARAM>
+  <PARAM name="4 Destination channel">2</PARAM>
+  <PARAM name="4 Source ID">18</PARAM>
+  <PARAM name="4 Source channel">0</PARAM>
+  <PARAM name="5 Destination ID">17</PARAM>
+  <PARAM name="5 Destination channel">3</PARAM>
+  <PARAM name="5 Source ID">18</PARAM>
+  <PARAM name="5 Source channel">1</PARAM>
+  <PARAM name="6 Destination ID">18</PARAM>
+  <PARAM name="6 Destination channel">0</PARAM>
+  <PARAM name="6 Source ID">11</PARAM>
+  <PARAM name="6 Source channel">0</PARAM>
+  <PARAM name="Num Links">7</PARAM>
+ </OBJECT>
+ <OBJECT id="3" component="plugin" library="model_loader.so"/>
+ <OBJECT id="4" component="plugin" library="module_installer.so"/>
+ <OBJECT id="5" component="plugin" library="system_control.so"/>
+ <OBJECT id="6" component="plugin" library="oscilloscope.so">
+  <PARAM name="Num Panels">2</PARAM>
+  <OBJECT id="12" name="0">
+   <PARAM name="0 ID">2</PARAM>
+   <PARAM name="0 index">0</PARAM>
+   <PARAM name="0 offset">0</PARAM>
+   <PARAM name="0 pen color">#0075dc</PARAM>
+   <PARAM name="0 pen style">1</PARAM>
+   <PARAM name="0 pen width">2</PARAM>
+   <PARAM name="0 scale">0.0005</PARAM>
+   <PARAM name="0 type">2</PARAM>
+   <PARAM name="1 ID">11</PARAM>
+   <PARAM name="1 index">0</PARAM>
+   <PARAM name="1 offset">0</PARAM>
+   <PARAM name="1 pen color">#ffa405</PARAM>
+   <PARAM name="1 pen style">1</PARAM>
+   <PARAM name="1 pen width">2</PARAM>
+   <PARAM name="1 scale">0.0005</PARAM>
+   <PARAM name="1 type">2</PARAM>
+   <PARAM name="DivT">500</PARAM>
+   <PARAM name="DivX">10</PARAM>
+   <PARAM name="DivY">10</PARAM>
+   <PARAM name="H">422</PARAM>
+   <PARAM name="Num Channels">2</PARAM>
+   <PARAM name="Paused">0</PARAM>
+   <PARAM name="Refresh">250</PARAM>
+   <PARAM name="Size">5001</PARAM>
+   <PARAM name="W">845</PARAM>
+   <PARAM name="X">992</PARAM>
+   <PARAM name="Y">10</PARAM>
+  </OBJECT>
+  <OBJECT id="14" name="1">
+   <PARAM name="DivT">500</PARAM>
+   <PARAM name="DivX">10</PARAM>
+   <PARAM name="DivY">10</PARAM>
+   <PARAM name="H">422</PARAM>
+   <PARAM name="Num Channels">0</PARAM>
+   <PARAM name="Paused">0</PARAM>
+   <PARAM name="Refresh">250</PARAM>
+   <PARAM name="Size">5001</PARAM>
+   <PARAM name="W">845</PARAM>
+   <PARAM name="X">992</PARAM>
+   <PARAM name="Y">466</PARAM>
+  </OBJECT>
+ </OBJECT>
+ <OBJECT id="7" component="plugin" library="data_recorder.so">
+  <PARAM name="Num Panels">0</PARAM>
+ </OBJECT>
+ <OBJECT id="8" component="plugin" library="connector.so"/>
+ <OBJECT id="9" component="plugin" library="performance_measurement.so"/>
+ <OBJECT id="10" component="plugin" library="userprefs.so"/>
+ <OBJECT id="2" component="plugin" library="rthybrid_hindmarsh_rose_1984_neuron.so">
+  <PARAM name="Burst duration (s)">0.6</PARAM>
+  <PARAM name="H">484</PARAM>
+  <PARAM name="I">3.281</PARAM>
+  <PARAM name="Vh">0.1</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">18</PARAM>
+  <PARAM name="Y">7</PARAM>
+  <PARAM name="a">1</PARAM>
+  <PARAM name="b">3</PARAM>
+  <PARAM name="c">1</PARAM>
+  <PARAM name="d">5</PARAM>
+  <PARAM name="dt">0.0933</PARAM>
+  <PARAM name="paused">0</PARAM>
+  <PARAM name="r">0.0021</PARAM>
+  <PARAM name="s">1</PARAM>
+  <PARAM name="s_points">5</PARAM>
+  <PARAM name="syn">0</PARAM>
+  <PARAM name="v">-1.65895</PARAM>
+  <PARAM name="x0">-0.712841</PARAM>
+  <PARAM name="xr">-1.6</PARAM>
+  <PARAM name="y0">-1.93688</PARAM>
+  <PARAM name="z0">3.16568</PARAM>
+ </OBJECT>
+ <OBJECT id="11" component="plugin" library="rthybrid_hindmarsh_rose_1984_neuron.so">
+  <PARAM name="Burst duration (s)">0.6</PARAM>
+  <PARAM name="H">484</PARAM>
+  <PARAM name="I">3.281</PARAM>
+  <PARAM name="Vh">0.1</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">639</PARAM>
+  <PARAM name="Y">8</PARAM>
+  <PARAM name="a">1</PARAM>
+  <PARAM name="b">3</PARAM>
+  <PARAM name="c">1</PARAM>
+  <PARAM name="d">5</PARAM>
+  <PARAM name="dt">0.0933</PARAM>
+  <PARAM name="paused">0</PARAM>
+  <PARAM name="r">0.0021</PARAM>
+  <PARAM name="s">1</PARAM>
+  <PARAM name="s_points">5</PARAM>
+  <PARAM name="syn">0</PARAM>
+  <PARAM name="v">-1.64774</PARAM>
+  <PARAM name="x0">-0.712841</PARAM>
+  <PARAM name="xr">-1.6</PARAM>
+  <PARAM name="y0">-1.93688</PARAM>
+  <PARAM name="z0">3.16568</PARAM>
+ </OBJECT>
+ <OBJECT id="15" component="plugin" library="rthybrid_burst_analysis.so">
+  <PARAM name="Amplitude (V)">0.00343191</PARAM>
+  <PARAM name="Burst counter">1</PARAM>
+  <PARAM name="Burst duration (s)">1.78087</PARAM>
+  <PARAM name="H">400</PARAM>
+  <PARAM name="Is burst">0</PARAM>
+  <PARAM name="Lower threshold (V)">-0.00132528</PARAM>
+  <PARAM name="Max (V)">0.00176344</PARAM>
+  <PARAM name="Min (V)">-0.00166847</PARAM>
+  <PARAM name="Observation time (s)">15</PARAM>
+  <PARAM name="Points counter">1976</PARAM>
+  <PARAM name="Upper threshold (V)">0.00142025</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">18</PARAM>
+  <PARAM name="Y">523</PARAM>
+  <PARAM name="paused">0</PARAM>
+ </OBJECT>
+ <OBJECT id="17" component="plugin" library="rthybrid_amplitude_scale_offset.so">
+  <PARAM name="H">214</PARAM>
+  <PARAM name="Offset 1-2">3.72033e-07</PARAM>
+  <PARAM name="Offset 2-1">-3.7195e-07</PARAM>
+  <PARAM name="Scale 1-2">1.00022</PARAM>
+  <PARAM name="Scale 2-1">0.999777</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">328</PARAM>
+  <PARAM name="Y">709</PARAM>
+  <PARAM name="paused">0</PARAM>
+ </OBJECT>
+ <OBJECT id="18" component="plugin" library="rthybrid_burst_analysis.so">
+  <PARAM name="Amplitude (V)">0.00343267</PARAM>
+  <PARAM name="Burst counter">1</PARAM>
+  <PARAM name="Burst duration (s)">1.76775</PARAM>
+  <PARAM name="H">400</PARAM>
+  <PARAM name="Is burst">0</PARAM>
+  <PARAM name="Lower threshold (V)">-0.00132521</PARAM>
+  <PARAM name="Max (V)">0.0017642</PARAM>
+  <PARAM name="Min (V)">-0.00166847</PARAM>
+  <PARAM name="Observation time (s)">15</PARAM>
+  <PARAM name="Points counter">1975</PARAM>
+  <PARAM name="Upper threshold (V)">0.00142093</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">640</PARAM>
+  <PARAM name="Y">523</PARAM>
+  <PARAM name="paused">0</PARAM>
+ </OBJECT>
+</RTXI>

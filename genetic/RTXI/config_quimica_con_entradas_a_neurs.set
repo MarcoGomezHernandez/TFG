@@ -1,0 +1,272 @@
+<RTXI version="2.3" class="settings">
+ <OBJECT id="0" component="rt">
+  <PARAM name="Period">1000000</PARAM>
+ </OBJECT>
+ <OBJECT id="1" component="io">
+  <PARAM name="0 Destination ID">2</PARAM>
+  <PARAM name="0 Destination channel">0</PARAM>
+  <PARAM name="0 Source ID">13</PARAM>
+  <PARAM name="0 Source channel">0</PARAM>
+  <PARAM name="1 Destination ID">11</PARAM>
+  <PARAM name="1 Destination channel">0</PARAM>
+  <PARAM name="1 Source ID">13</PARAM>
+  <PARAM name="1 Source channel">1</PARAM>
+  <PARAM name="10 Destination ID">13</PARAM>
+  <PARAM name="10 Destination channel">1</PARAM>
+  <PARAM name="10 Source ID">11</PARAM>
+  <PARAM name="10 Source channel">0</PARAM>
+  <PARAM name="11 Destination ID">13</PARAM>
+  <PARAM name="11 Destination channel">2</PARAM>
+  <PARAM name="11 Source ID">17</PARAM>
+  <PARAM name="11 Source channel">2</PARAM>
+  <PARAM name="12 Destination ID">13</PARAM>
+  <PARAM name="12 Destination channel">3</PARAM>
+  <PARAM name="12 Source ID">17</PARAM>
+  <PARAM name="12 Source channel">3</PARAM>
+  <PARAM name="13 Destination ID">13</PARAM>
+  <PARAM name="13 Destination channel">4</PARAM>
+  <PARAM name="13 Source ID">17</PARAM>
+  <PARAM name="13 Source channel">0</PARAM>
+  <PARAM name="14 Destination ID">13</PARAM>
+  <PARAM name="14 Destination channel">5</PARAM>
+  <PARAM name="14 Source ID">17</PARAM>
+  <PARAM name="14 Source channel">1</PARAM>
+  <PARAM name="15 Destination ID">13</PARAM>
+  <PARAM name="15 Destination channel">6</PARAM>
+  <PARAM name="15 Source ID">15</PARAM>
+  <PARAM name="15 Source channel">2</PARAM>
+  <PARAM name="2 Destination ID">11</PARAM>
+  <PARAM name="2 Destination channel">1</PARAM>
+  <PARAM name="2 Source ID">15</PARAM>
+  <PARAM name="2 Source channel">2</PARAM>
+  <PARAM name="3 Destination ID">15</PARAM>
+  <PARAM name="3 Destination channel">0</PARAM>
+  <PARAM name="3 Source ID">2</PARAM>
+  <PARAM name="3 Source channel">0</PARAM>
+  <PARAM name="4 Destination ID">17</PARAM>
+  <PARAM name="4 Destination channel">0</PARAM>
+  <PARAM name="4 Source ID">15</PARAM>
+  <PARAM name="4 Source channel">0</PARAM>
+  <PARAM name="5 Destination ID">17</PARAM>
+  <PARAM name="5 Destination channel">1</PARAM>
+  <PARAM name="5 Source ID">15</PARAM>
+  <PARAM name="5 Source channel">1</PARAM>
+  <PARAM name="6 Destination ID">17</PARAM>
+  <PARAM name="6 Destination channel">2</PARAM>
+  <PARAM name="6 Source ID">18</PARAM>
+  <PARAM name="6 Source channel">0</PARAM>
+  <PARAM name="7 Destination ID">17</PARAM>
+  <PARAM name="7 Destination channel">3</PARAM>
+  <PARAM name="7 Source ID">18</PARAM>
+  <PARAM name="7 Source channel">1</PARAM>
+  <PARAM name="8 Destination ID">18</PARAM>
+  <PARAM name="8 Destination channel">0</PARAM>
+  <PARAM name="8 Source ID">11</PARAM>
+  <PARAM name="8 Source channel">0</PARAM>
+  <PARAM name="9 Destination ID">13</PARAM>
+  <PARAM name="9 Destination channel">0</PARAM>
+  <PARAM name="9 Source ID">2</PARAM>
+  <PARAM name="9 Source channel">0</PARAM>
+  <PARAM name="Num Links">16</PARAM>
+ </OBJECT>
+ <OBJECT id="3" component="plugin" library="model_loader.so"/>
+ <OBJECT id="4" component="plugin" library="module_installer.so"/>
+ <OBJECT id="5" component="plugin" library="system_control.so"/>
+ <OBJECT id="6" component="plugin" library="oscilloscope.so">
+  <PARAM name="Num Panels">2</PARAM>
+  <OBJECT id="12" name="0">
+   <PARAM name="0 ID">2</PARAM>
+   <PARAM name="0 index">0</PARAM>
+   <PARAM name="0 offset">0</PARAM>
+   <PARAM name="0 pen color">#0075dc</PARAM>
+   <PARAM name="0 pen style">1</PARAM>
+   <PARAM name="0 pen width">2</PARAM>
+   <PARAM name="0 scale">0.0005</PARAM>
+   <PARAM name="0 type">2</PARAM>
+   <PARAM name="1 ID">11</PARAM>
+   <PARAM name="1 index">0</PARAM>
+   <PARAM name="1 offset">0</PARAM>
+   <PARAM name="1 pen color">#ffa405</PARAM>
+   <PARAM name="1 pen style">1</PARAM>
+   <PARAM name="1 pen width">2</PARAM>
+   <PARAM name="1 scale">0.0005</PARAM>
+   <PARAM name="1 type">2</PARAM>
+   <PARAM name="DivT">500</PARAM>
+   <PARAM name="DivX">10</PARAM>
+   <PARAM name="DivY">10</PARAM>
+   <PARAM name="H">422</PARAM>
+   <PARAM name="Num Channels">2</PARAM>
+   <PARAM name="Paused">0</PARAM>
+   <PARAM name="Refresh">250</PARAM>
+   <PARAM name="Size">5001</PARAM>
+   <PARAM name="W">845</PARAM>
+   <PARAM name="X">992</PARAM>
+   <PARAM name="Y">10</PARAM>
+  </OBJECT>
+  <OBJECT id="14" name="1">
+   <PARAM name="0 ID">13</PARAM>
+   <PARAM name="0 index">1</PARAM>
+   <PARAM name="0 offset">0</PARAM>
+   <PARAM name="0 pen color">#b266ff</PARAM>
+   <PARAM name="0 pen style">1</PARAM>
+   <PARAM name="0 pen width">2</PARAM>
+   <PARAM name="0 scale">0.025</PARAM>
+   <PARAM name="0 type">2</PARAM>
+   <PARAM name="1 ID">13</PARAM>
+   <PARAM name="1 index">0</PARAM>
+   <PARAM name="1 offset">0</PARAM>
+   <PARAM name="1 pen color">#2bce48</PARAM>
+   <PARAM name="1 pen style">1</PARAM>
+   <PARAM name="1 pen width">2</PARAM>
+   <PARAM name="1 scale">0.025</PARAM>
+   <PARAM name="1 type">2</PARAM>
+   <PARAM name="DivT">500</PARAM>
+   <PARAM name="DivX">10</PARAM>
+   <PARAM name="DivY">10</PARAM>
+   <PARAM name="H">422</PARAM>
+   <PARAM name="Num Channels">2</PARAM>
+   <PARAM name="Paused">0</PARAM>
+   <PARAM name="Refresh">250</PARAM>
+   <PARAM name="Size">5001</PARAM>
+   <PARAM name="W">845</PARAM>
+   <PARAM name="X">992</PARAM>
+   <PARAM name="Y">466</PARAM>
+  </OBJECT>
+ </OBJECT>
+ <OBJECT id="7" component="plugin" library="data_recorder.so">
+  <PARAM name="Num Panels">0</PARAM>
+ </OBJECT>
+ <OBJECT id="8" component="plugin" library="connector.so"/>
+ <OBJECT id="9" component="plugin" library="performance_measurement.so"/>
+ <OBJECT id="10" component="plugin" library="userprefs.so"/>
+ <OBJECT id="2" component="plugin" library="rthybrid_hindmarsh_rose_1984_neuron.so">
+  <PARAM name="Burst duration (s)">0.6</PARAM>
+  <PARAM name="H">484</PARAM>
+  <PARAM name="I">3.281</PARAM>
+  <PARAM name="Vh">0.1</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">18</PARAM>
+  <PARAM name="Y">7</PARAM>
+  <PARAM name="a">1</PARAM>
+  <PARAM name="b">3</PARAM>
+  <PARAM name="c">1</PARAM>
+  <PARAM name="d">5</PARAM>
+  <PARAM name="dt">0.0933</PARAM>
+  <PARAM name="paused">0</PARAM>
+  <PARAM name="r">0.0021</PARAM>
+  <PARAM name="s">1</PARAM>
+  <PARAM name="s_points">5</PARAM>
+  <PARAM name="syn">0.104095</PARAM>
+  <PARAM name="v">-0.717555</PARAM>
+  <PARAM name="x0">-0.712841</PARAM>
+  <PARAM name="xr">-1.6</PARAM>
+  <PARAM name="y0">-1.93688</PARAM>
+  <PARAM name="z0">3.16568</PARAM>
+ </OBJECT>
+ <OBJECT id="11" component="plugin" library="rthybrid_hindmarsh_rose_1984_neuron.so">
+  <PARAM name="Burst duration (s)">0.6</PARAM>
+  <PARAM name="H">484</PARAM>
+  <PARAM name="I">3.281</PARAM>
+  <PARAM name="Vh">0.1</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">639</PARAM>
+  <PARAM name="Y">8</PARAM>
+  <PARAM name="a">1</PARAM>
+  <PARAM name="b">3</PARAM>
+  <PARAM name="c">1</PARAM>
+  <PARAM name="d">5</PARAM>
+  <PARAM name="dt">0.0933</PARAM>
+  <PARAM name="paused">0</PARAM>
+  <PARAM name="r">0.0021</PARAM>
+  <PARAM name="s">1</PARAM>
+  <PARAM name="s_points">5</PARAM>
+  <PARAM name="syn">0.0614809</PARAM>
+  <PARAM name="v">-1.35844</PARAM>
+  <PARAM name="x0">-0.712841</PARAM>
+  <PARAM name="xr">-1.6</PARAM>
+  <PARAM name="y0">-1.93688</PARAM>
+  <PARAM name="z0">3.16568</PARAM>
+ </OBJECT>
+ <OBJECT id="15" component="plugin" library="rthybrid_burst_analysis.so">
+  <PARAM name="Amplitude (V)">0.00335573</PARAM>
+  <PARAM name="Burst counter">6</PARAM>
+  <PARAM name="Burst duration (s)">2.1335</PARAM>
+  <PARAM name="H">400</PARAM>
+  <PARAM name="Is burst">1</PARAM>
+  <PARAM name="Lower threshold (V)">-0.00137061</PARAM>
+  <PARAM name="Max (V)">0.00164955</PARAM>
+  <PARAM name="Min (V)">-0.00170618</PARAM>
+  <PARAM name="Observation time (s)">15</PARAM>
+  <PARAM name="Points counter">12924</PARAM>
+  <PARAM name="Upper threshold (V)">0.00131398</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">18</PARAM>
+  <PARAM name="Y">523</PARAM>
+  <PARAM name="paused">0</PARAM>
+ </OBJECT>
+ <OBJECT id="17" component="plugin" library="rthybrid_amplitude_scale_offset.so">
+  <PARAM name="H">214</PARAM>
+  <PARAM name="Offset 1-2">6.36003e-07</PARAM>
+  <PARAM name="Offset 2-1">-6.35846e-07</PARAM>
+  <PARAM name="Scale 1-2">1.00025</PARAM>
+  <PARAM name="Scale 2-1">0.999753</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">328</PARAM>
+  <PARAM name="Y">709</PARAM>
+  <PARAM name="paused">0</PARAM>
+ </OBJECT>
+ <OBJECT id="18" component="plugin" library="rthybrid_burst_analysis.so">
+  <PARAM name="Amplitude (V)">0.00335655</PARAM>
+  <PARAM name="Burst counter">5</PARAM>
+  <PARAM name="Burst duration (s)">2.23867</PARAM>
+  <PARAM name="H">400</PARAM>
+  <PARAM name="Is burst">0</PARAM>
+  <PARAM name="Lower threshold (V)">-0.00137031</PARAM>
+  <PARAM name="Max (V)">0.00165059</PARAM>
+  <PARAM name="Min (V)">-0.00170596</PARAM>
+  <PARAM name="Observation time (s)">15</PARAM>
+  <PARAM name="Points counter">12923</PARAM>
+  <PARAM name="Upper threshold (V)">0.00131494</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">640</PARAM>
+  <PARAM name="Y">523</PARAM>
+  <PARAM name="paused">0</PARAM>
+ </OBJECT>
+ <OBJECT id="13" component="plugin" library="bidirectional_chemical_synapse_genetic.so">
+  <PARAM name="Burst duration (s)">0.6</PARAM>
+  <PARAM name="Dynamic scaling (1/0)">0</PARAM>
+  <PARAM name="E_syn 1->2">-1.92</PARAM>
+  <PARAM name="E_syn 2->1">-1.92</PARAM>
+  <PARAM name="H">484</PARAM>
+  <PARAM name="Offset 1->2">0</PARAM>
+  <PARAM name="Offset 2->1">0</PARAM>
+  <PARAM name="Scale 1->2">1</PARAM>
+  <PARAM name="Scale 2->1">1</PARAM>
+  <PARAM name="Use I_fast 1->2 (1/0)">1</PARAM>
+  <PARAM name="Use I_fast 2->1 (1/0)">1</PARAM>
+  <PARAM name="Use I_slow 1->2 (1/0)">1</PARAM>
+  <PARAM name="Use I_slow 2->1 (1/0)">1</PARAM>
+  <PARAM name="V_fast 1->2">-1.66</PARAM>
+  <PARAM name="V_fast 2->1">-1.66</PARAM>
+  <PARAM name="V_slow 1->2">0</PARAM>
+  <PARAM name="V_slow 2->1">0</PARAM>
+  <PARAM name="W">294</PARAM>
+  <PARAM name="X">328</PARAM>
+  <PARAM name="Y">7</PARAM>
+  <PARAM name="g_fast 1->2">0.046</PARAM>
+  <PARAM name="g_fast 2->1">0.046</PARAM>
+  <PARAM name="g_slow 1->2">0.108</PARAM>
+  <PARAM name="g_slow 2->1">0.108</PARAM>
+  <PARAM name="k1 1->2">0.05</PARAM>
+  <PARAM name="k1 2->1">0.05</PARAM>
+  <PARAM name="k2 1->2">0.007</PARAM>
+  <PARAM name="k2 2->1">0.007</PARAM>
+  <PARAM name="m_slow 1->2">0.728866</PARAM>
+  <PARAM name="m_slow 2->1">0.587536</PARAM>
+  <PARAM name="paused">0</PARAM>
+  <PARAM name="s_fast 1->2">0.44</PARAM>
+  <PARAM name="s_fast 2->1">0.44</PARAM>
+  <PARAM name="s_slow 1->2">1</PARAM>
+  <PARAM name="s_slow 2->1">1</PARAM>
+ </OBJECT>
+</RTXI>
