@@ -102,7 +102,7 @@ BidirectionalChemicalSynapseGenetic::~BidirectionalChemicalSynapseGenetic(void)
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params)
+void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params)
 {
   double apoyo, retorno;
   double k[6];
@@ -196,26 +196,26 @@ double BidirectionalChemicalSynapseGenetic::set_pts_burst(double sec_per_burst)
   return pts_burst;
 }
 
-double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow, double v_pre, double *params)
+double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params)
 {
-  return ((params[SP_K1] * (1.0 - m_slow)) /
-          (1.0 + exp(params[SP_S_SLOW] * (params[SP_V_SLOW] - v_pre)))) -
-         (params[SP_K2] * m_slow);
+  return ((params.k1 * (1.0 - m_slow)) /
+          (1.0 + exp(params.s_slow * (params.v_slow - v_pre)))) -
+         (params.k2 * m_slow);
 }
 
-double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, double *params)
+double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
   for (int i = 0; i < s_points; i++)
   {
     runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   }
-  return params[SP_G_SLOW] * m_slow * (v_post - params[SP_ESYN]);
+  return params.g_slow * m_slow * (v_post - params.e_syn);
 }
 
-double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double v_post, double *params)
+double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
-  return (params[SP_G_FAST] * (v_post - params[SP_ESYN])) /
-         (1.0 + exp(params[SP_S_FAST] * (params[SP_V_FAST] - v_pre)));
+  return (params.g_fast * (v_post - params.e_syn)) /
+         (1.0 + exp(params.s_fast * (params.v_fast - v_pre)));
 }
 
 void BidirectionalChemicalSynapseGenetic::execute(void)
@@ -362,27 +362,27 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   RT_storing.store(false, std::memory_order_relaxed);
   genetic_running.store(false, std::memory_order_relaxed);
 
-  params_21[SP_ESYN] = -1.92;
-  params_21[SP_G_FAST] = 0.046;
-  params_21[SP_S_FAST] = 0.44;
-  params_21[SP_V_FAST] = -1.66;
-  params_21[SP_G_SLOW] = 0.208;
-  params_21[SP_K1] = 0.74;
-  params_21[SP_K2] = 0.007;
-  params_21[SP_S_SLOW] = 1.0;
-  params_21[SP_V_SLOW] = -1.74;
+  params_21.e_syn = -1.92;
+  params_21.g_fast = 0.046;
+  params_21.s_fast = 0.44;
+  params_21.v_fast = -1.66;
+  params_21.g_slow = 0.208;
+  params_21.k1 = 0.74;
+  params_21.k2 = 0.007;
+  params_21.s_slow = 1.0;
+  params_21.v_slow = -1.74;
   use_i_fast_21 = 1u;
   use_i_slow_21 = 1u;
 
-  params_12[SP_ESYN] = -1.92;
-  params_12[SP_G_FAST] = 0.046;
-  params_12[SP_S_FAST] = 0.44;
-  params_12[SP_V_FAST] = -1.66;
-  params_12[SP_G_SLOW] = 0.208;
-  params_12[SP_K1] = 0.74;
-  params_12[SP_K2] = 0.007;
-  params_12[SP_S_SLOW] = 1.0;
-  params_12[SP_V_SLOW] = -1.74;
+  params_12.e_syn = -1.92;
+  params_12.g_fast = 0.046;
+  params_12.s_fast = 0.44;
+  params_12.v_fast = -1.66;
+  params_12.g_slow = 0.208;
+  params_12.k1 = 0.74;
+  params_12.k2 = 0.007;
+  params_12.s_slow = 1.0;
+  params_12.v_slow = -1.74;
   use_i_fast_12 = 1u;
   use_i_slow_12 = 1u;
 }
@@ -440,27 +440,27 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     scale_12_gui = getParameter("Scale 1->2").toDouble();
     offset_12_gui = getParameter("Offset 1->2").toDouble() * 1000.0;
 
-    params_21[SP_ESYN] = getParameter("E_syn 2->1").toDouble();
-    params_21[SP_G_FAST] = getParameter("g_fast 2->1").toDouble();
-    params_21[SP_S_FAST] = getParameter("s_fast 2->1").toDouble();
-    params_21[SP_V_FAST] = getParameter("V_fast 2->1").toDouble();
-    params_21[SP_G_SLOW] = getParameter("g_slow 2->1").toDouble();
-    params_21[SP_K1] = getParameter("k1 2->1").toDouble();
-    params_21[SP_K2] = getParameter("k2 2->1").toDouble();
-    params_21[SP_S_SLOW] = getParameter("s_slow 2->1").toDouble();
-    params_21[SP_V_SLOW] = getParameter("V_slow 2->1").toDouble();
+    params_21.e_syn = getParameter("E_syn 2->1").toDouble();
+    params_21.g_fast = getParameter("g_fast 2->1").toDouble();
+    params_21.s_fast = getParameter("s_fast 2->1").toDouble();
+    params_21.v_fast = getParameter("V_fast 2->1").toDouble();
+    params_21.g_slow = getParameter("g_slow 2->1").toDouble();
+    params_21.k1 = getParameter("k1 2->1").toDouble();
+    params_21.k2 = getParameter("k2 2->1").toDouble();
+    params_21.s_slow = getParameter("s_slow 2->1").toDouble();
+    params_21.v_slow = getParameter("V_slow 2->1").toDouble();
     use_i_fast_21 = getParameter("Use I_fast 2->1 (1/0)").toUInt();
     use_i_slow_21 = getParameter("Use I_slow 2->1 (1/0)").toUInt();
 
-    params_12[SP_ESYN] = getParameter("E_syn 1->2").toDouble();
-    params_12[SP_G_FAST] = getParameter("g_fast 1->2").toDouble();
-    params_12[SP_S_FAST] = getParameter("s_fast 1->2").toDouble();
-    params_12[SP_V_FAST] = getParameter("V_fast 1->2").toDouble();
-    params_12[SP_G_SLOW] = getParameter("g_slow 1->2").toDouble();
-    params_12[SP_K1] = getParameter("k1 1->2").toDouble();
-    params_12[SP_K2] = getParameter("k2 1->2").toDouble();
-    params_12[SP_S_SLOW] = getParameter("s_slow 1->2").toDouble();
-    params_12[SP_V_SLOW] = getParameter("V_slow 1->2").toDouble();
+    params_12.e_syn = getParameter("E_syn 1->2").toDouble();
+    params_12.g_fast = getParameter("g_fast 1->2").toDouble();
+    params_12.s_fast = getParameter("s_fast 1->2").toDouble();
+    params_12.v_fast = getParameter("V_fast 1->2").toDouble();
+    params_12.g_slow = getParameter("g_slow 1->2").toDouble();
+    params_12.k1 = getParameter("k1 1->2").toDouble();
+    params_12.k2 = getParameter("k2 1->2").toDouble();
+    params_12.s_slow = getParameter("s_slow 1->2").toDouble();
+    params_12.v_slow = getParameter("V_slow 1->2").toDouble();
     use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
     use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
 
@@ -582,23 +582,23 @@ void BidirectionalChemicalSynapseGenetic::set_param_read_only(const QString &nam
 
 void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
 {
-  setParameter("E_syn 2->1", params_21[SP_ESYN]);
-  setParameter("g_fast 2->1", params_21[SP_G_FAST]);
-  setParameter("s_fast 2->1", params_21[SP_S_FAST]);
-  setParameter("V_fast 2->1", params_21[SP_V_FAST]);
-  setParameter("g_slow 2->1", params_21[SP_G_SLOW]);
-  setParameter("k1 2->1", params_21[SP_K1]);
-  setParameter("k2 2->1", params_21[SP_K2]);
-  setParameter("s_slow 2->1", params_21[SP_S_SLOW]);
-  setParameter("V_slow 2->1", params_21[SP_V_SLOW]);
+  setParameter("E_syn 2->1", params_21.e_syn);
+  setParameter("g_fast 2->1", params_21.g_fast);
+  setParameter("s_fast 2->1", params_21.s_fast);
+  setParameter("V_fast 2->1", params_21.v_fast);
+  setParameter("g_slow 2->1", params_21.g_slow);
+  setParameter("k1 2->1", params_21.k1);
+  setParameter("k2 2->1", params_21.k2);
+  setParameter("s_slow 2->1", params_21.s_slow);
+  setParameter("V_slow 2->1", params_21.v_slow);
 
-  setParameter("E_syn 1->2", params_12[SP_ESYN]);
-  setParameter("g_fast 1->2", params_12[SP_G_FAST]);
-  setParameter("s_fast 1->2", params_12[SP_S_FAST]);
-  setParameter("V_fast 1->2", params_12[SP_V_FAST]);
-  setParameter("g_slow 1->2", params_12[SP_G_SLOW]);
-  setParameter("k1 1->2", params_12[SP_K1]);
-  setParameter("k2 1->2", params_12[SP_K2]);
-  setParameter("s_slow 1->2", params_12[SP_S_SLOW]);
-  setParameter("V_slow 1->2", params_12[SP_V_SLOW]);
+  setParameter("E_syn 1->2", params_12.e_syn);
+  setParameter("g_fast 1->2", params_12.g_fast);
+  setParameter("s_fast 1->2", params_12.s_fast);
+  setParameter("V_fast 1->2", params_12.v_fast);
+  setParameter("g_slow 1->2", params_12.g_slow);
+  setParameter("k1 1->2", params_12.k1);
+  setParameter("k2 1->2", params_12.k2);
+  setParameter("s_slow 1->2", params_12.s_slow);
+  setParameter("V_slow 1->2", params_12.v_slow);
 }

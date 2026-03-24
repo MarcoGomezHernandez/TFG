@@ -5,21 +5,21 @@
 #include <kfr/all.hpp>
 using namespace kfr;
 
-struct ChemicalSynapsisVariationParams
+struct ChemicalSynapseVariationParams
 {
-    double gfast;
-    double gslow;
-    double sfast;
-    double Vfast;
-    double Vslow;
+    double g_fast;
+    double g_slow;
+    double s_fast;
+    double v_fast;
+    double v_slow;
     double k1;
     double k2;
-    double sslow;
+    double s_slow;
 };
 
 struct Individual
 {
-  ChemicalSynapsisVariationParams params;
+  ChemicalSynapseVariationParams params;
   double fitness;
 };
 

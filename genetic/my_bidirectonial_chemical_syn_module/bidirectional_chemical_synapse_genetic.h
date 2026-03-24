@@ -21,18 +21,17 @@
 
 #include <default_gui_model.h>
 
-enum SynapseParam
+struct ChemicalSynapseParams
 {
-  SP_ESYN = 0,
-  SP_G_FAST,
-  SP_S_FAST,
-  SP_V_FAST,
-  SP_G_SLOW,
-  SP_K1,
-  SP_K2,
-  SP_S_SLOW,
-  SP_V_SLOW,
-  SP_COUNT
+  double e_syn;
+  double g_fast;
+  double s_fast;
+  double v_fast;
+  double g_slow;
+  double k1;
+  double k2;
+  double s_slow;
+  double v_slow;
 };
 
 class BidirectionalChemicalSynapseGenetic : public DefaultGUIModel
@@ -53,8 +52,8 @@ protected:
 
 private:
   double m_slow_21, m_slow_12;
-  double params_21[SP_COUNT];
-  double params_12[SP_COUNT];
+  ChemicalSynapseParams params_21;
+  ChemicalSynapseParams params_12;
   unsigned int use_i_fast_21, use_i_slow_21, use_i_fast_12, use_i_slow_12;
   double dt;
   double period, freq;
@@ -65,12 +64,12 @@ private:
 
   void initParameters();
 
-  void runge_kutta_65(double (*f)(double, double, double *), double &m_slow, double v_pre, double dt, double *params);
-  double compute_synapse_current(double &m_slow, double v_pre, double v_post, double *params, unsigned int use_i_fast, unsigned int use_i_slow);
+  void runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params);
+  double compute_synapse_current(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params, unsigned int use_i_fast, unsigned int use_i_slow);
   void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 
-  static double sm_chemical_synapse_m(double m_slow, double v_pre, double *params);
+  static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
 private slots:
   void aBttn_event(void);

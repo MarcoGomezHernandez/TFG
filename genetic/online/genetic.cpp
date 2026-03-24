@@ -13,11 +13,25 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
         synapse_lock.acquire();
         m_slow_12 = 0.0;
         m_slow_21 = 0.0;
-        for (int i = 0; i < SP_COUNT; ++i)
-        {
-            params_12[i] += 0.0;
-            params_21[i] += 0.0;
-        }
+        params_12.e_syn += 0.0;
+        params_12.g_fast += 0.0;
+        params_12.s_fast += 0.0;
+        params_12.v_fast += 0.0;
+        params_12.g_slow += 0.0;
+        params_12.k1 += 0.0;
+        params_12.k2 += 0.0;
+        params_12.s_slow += 0.0;
+        params_12.v_slow += 0.0;
+
+        params_21.e_syn += 0.0;
+        params_21.g_fast += 0.0;
+        params_21.s_fast += 0.0;
+        params_21.v_fast += 0.0;
+        params_21.g_slow += 0.0;
+        params_21.k1 += 0.0;
+        params_21.k2 += 0.0;
+        params_21.s_slow += 0.0;
+        params_21.v_slow += 0.0;
         synapse_lock.release();
 
         if (stabilization_time > 0.0)
