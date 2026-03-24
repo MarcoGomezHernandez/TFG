@@ -4,8 +4,18 @@
 #include <array>
 #include <kfr/all.hpp>
 using namespace kfr;
-#include <ChemicalSynapsis.h>
-#include "../offline/utils.hpp"
+
+struct ChemicalSynapsisVariationParams
+{
+    double gfast;
+    double gslow;
+    double sfast;
+    double Vfast;
+    double Vslow;
+    double k1;
+    double k2;
+    double sslow;
+};
 
 struct Individual
 {
@@ -52,7 +62,5 @@ struct SigBuffers
 
 double fitness_from_sigs(const FitnessExtraData &extra,
                          SigBuffers &buffers);
-
-#include "fitness.tpp"
 
 #endif

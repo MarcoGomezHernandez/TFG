@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <kfr/all.hpp>
+#include "fitness.hpp"
 using namespace kfr;
 
 namespace FitnessConfig

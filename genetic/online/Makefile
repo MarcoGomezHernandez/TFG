@@ -1,10 +1,12 @@
 PLUGIN_NAME = bidirectional_chemical_synapse_genetic
 
-HEADERS = bidirectional_chemical_synapse_genetic.h
+HEADERS = bidirectional_chemical_synapse_genetic.h\
+          fitness.hpp\
 
 SOURCES = bidirectional_chemical_synapse_genetic.cpp\
           moc_bidirectional_chemical_synapse_genetic.cpp\
           genetic.cpp\
+          fitness.cpp\
 
 LIBS = -lkfr_dsp
 
