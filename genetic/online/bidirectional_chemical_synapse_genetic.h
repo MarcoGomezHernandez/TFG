@@ -23,9 +23,47 @@
 #include <kfr/all.hpp>
 #include <thread>
 #include <atomic>
-#include <semaphore>
+#include <mutex>
+#include <condition_variable>
 
 using namespace kfr;
+
+class BinarySemaphore
+{
+private:
+  std::mutex mtx_;
+  std::condition_variable cv_;
+  bool available_;
+
+public:
+  explicit BinarySemaphore(bool initial_state = false) : available_(initial_state) {}
+
+  void acquire()
+  {
+    std::unique_lock<std::mutex> lock(mtx_);
+    cv_.wait(lock, [this]()
+             { return available_; });
+    available_ = false;
+  }
+
+  bool try_acquire()
+  {
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (available_)
+    {
+      available_ = false;
+      return true;
+    }
+    return false;
+  }
+
+  void release()
+  {
+    std::lock_guard<std::mutex> lock(mtx_);
+    available_ = true;
+    cv_.notify_one();
+  }
+};
 
 enum SynapseParam
 {
@@ -76,7 +114,7 @@ private:
   std::atomic<bool> RT_storing;
   std::atomic<bool> stop_genetic;
   std::atomic<bool> genetic_running;
-  std::binary_semaphore synapse_lock{1};
+  BinarySemaphore synapse_lock{true};
   int storing_idx;
   int num_elements;
 
@@ -110,7 +148,7 @@ private:
   void set_params_read_only(bool read_only);
   void set_param_read_only(const QString &name, const QPalette &pal, bool read_only);
 
-  void stop_genetic_event_async(void)
+  void stop_genetic_event_async(void);
 
 private slots:
   void toggle_genetic_event(void);

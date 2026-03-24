@@ -21,7 +21,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
 
         if (stabilization_time > 0.0)
         {
-            std::this_thread::sleep_for(std::chrono::seconds(stabilization_time));
+            std::this_thread::sleep_for(std::chrono::duration<double>(stabilization_time));
         }
 
         num_elements = (int)(evaluation_time * freq);
@@ -57,7 +57,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
                 stop_genetic_event_async();
                 return;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
         }
 
         update_params_gui();

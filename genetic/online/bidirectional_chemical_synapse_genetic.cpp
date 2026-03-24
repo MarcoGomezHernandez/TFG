@@ -232,8 +232,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     }
   }
 
-  double i_slow_21 = 0.0, i_fast_21 = 0.0;
-  double i_slow_12 = 0.0, i_fast_12 = 0.0;
+  double val_i_slow_21 = 0.0, val_i_fast_21 = 0.0;
+  double val_i_slow_12 = 0.0, val_i_fast_12 = 0.0;
   if (synapse_lock.try_acquire())
   {
     bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
@@ -269,9 +269,9 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       v2_scaled = v2 * scale_21 + offset_21;
 
       if (use_i_slow_21)
-        i_slow_21 = compute_i_slow(m_slow_21, v2_scaled, v1, params_21);
+        val_i_slow_21 = compute_i_slow(m_slow_21, v2_scaled, v1, params_21);
       if (use_i_fast_21)
-        i_fast_21 = compute_i_fast(v2_scaled, v1, params_21);
+        val_i_fast_21 = compute_i_fast(v2_scaled, v1, params_21);
     }
 
     double v1_scaled;
@@ -297,9 +297,9 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       v1_scaled = v1 * scale_12 + offset_12;
 
       if (use_i_slow_12)
-        i_slow_12 = compute_i_slow(m_slow_12, v1_scaled, v2, params_12);
+        val_i_slow_12 = compute_i_slow(m_slow_12, v1_scaled, v2, params_12);
       if (use_i_fast_12)
-        i_fast_12 = compute_i_fast(v1_scaled, v2, params_12);
+        val_i_fast_12 = compute_i_fast(v1_scaled, v2, params_12);
     }
 
     if (RT_storing.load(std::memory_order_acquire))
@@ -311,18 +311,18 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
           v1_sig[storing_idx] = v1;
           v2_scaled_sig[storing_idx] = v2_scaled;
           if (use_i_fast_21)
-            i_fast_sig_21[storing_idx] = i_fast_21;
+            i_fast_sig_21[storing_idx] = val_i_fast_21;
           if (use_i_slow_21)
-            i_slow_21[storing_idx] = i_slow_21;
+            i_slow_21[storing_idx] = val_i_slow_21;
         }
         if (use_syn_12)
         {
           v2_sig[storing_idx] = v2;
           v1_scaled_sig[storing_idx] = v1_scaled;
           if (use_i_fast_12)
-            i_fast_sig_12[storing_idx] = i_fast_12;
+            i_fast_sig_12[storing_idx] = val_i_fast_12;
           if (use_i_slow_12)
-            i_slow_12[storing_idx] = i_slow_12;
+            i_slow_12[storing_idx] = val_i_slow_12;
         }
         storing_idx++;
       }
@@ -335,8 +335,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     synapse_lock.release();
   }
 
-  output(0) = i_fast_21 + i_slow_21;
-  output(1) = i_fast_12 + i_slow_12;
+  output(0) = val_i_fast_21 + val_i_slow_21;
+  output(1) = val_i_fast_12 + val_i_slow_12;
 }
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
@@ -470,6 +470,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     break;
 
   case PERIOD:
+  {
     double new_period = RT::System::getInstance()->getPeriod() * 1e-9; // s
     if (new_period != period)
     {
@@ -486,6 +487,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     }
 
     break;
+  }
 
   case PAUSE:
     output(0) = 0;
@@ -517,8 +519,8 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
       stop_genetic.store(false, std::memory_order_relaxed);
     }
     genetic_running.store(true, std::memory_order_relaxed);
-    geneticBtn->setText("Stop Genetic");
-    make_params_read_only(true);
+    gentic_button->setText("Stop Genetic");
+    set_params_read_only(true);
     genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this);
   }
   else
@@ -530,15 +532,15 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
 
 void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
-  make_params_read_only(false);
-  geneticBtn->setText("Start Genetic");
+  set_params_read_only(false);
+  gentic_button->setText("Start Genetic");
   genetic_running.store(false, std::memory_order_relaxed);
 }
 
-void BidirectionalChemicalSynapseGenetic::make_params_read_only(bool read_only)
+void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
 {
   DefaultGUILineEdit *example_edit = parameter["Individual evaluation time (s)"].edit;
-  QPalette palette = example_edit->palette();
+  QPalette palette = example_edit->palette;
   palette.setBrush(example_edit->foregroundRole(), read_only ? Qt::darkGray : QApplication::palette().color(QPalette::WindowText));
 
   set_param_read_only("Individual evaluation time (s)", palette, read_only);
@@ -571,7 +573,7 @@ void BidirectionalChemicalSynapseGenetic::make_params_read_only(bool read_only)
   set_param_read_only("Use I_slow 1->2 (1/0)", palette, read_only);
 }
 
-void BidirectionalChemicalSynapseGenetic::make_param_read_only(const QString &name, const QPalette &pal, bool read_only)
+void BidirectionalChemicalSynapseGenetic::set_param_read_only(const QString &name, const QPalette &pal, bool read_only)
 {
   DefaultGUILineEdit *edit = parameter[name].edit;
   edit->setReadOnly(read_only);
