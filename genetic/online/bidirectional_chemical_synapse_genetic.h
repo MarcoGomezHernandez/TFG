@@ -59,8 +59,10 @@ public:
 
   void release()
   {
-    std::lock_guard<std::mutex> lock(mtx_);
-    available_ = true;
+    {
+      std::lock_guard<std::mutex> lock(mtx_);
+      available_ = true;
+    }
     cv_.notify_one();
   }
 };
