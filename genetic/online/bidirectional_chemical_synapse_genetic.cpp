@@ -503,7 +503,7 @@ void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
 {
   QGridLayout *customlayout = DefaultGUIModel::getLayout();
   gentic_button = new QPushButton("Start Genetic");
-  QObject::connect(gentic_button, SIGNAL(clicked()), this, SLOT(start_genetic_event()));
+  QObject::connect(gentic_button, SIGNAL(clicked()), this, SLOT(toggle_genetic_event()));
   customlayout->addWidget(gentic_button, 0, 0);
   setLayout(customlayout);
 }

@@ -54,14 +54,14 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
             if (stop_genetic.load(std::memory_order_relaxed))
             {
                 RT_storing.store(false, std::memory_order_relaxed);
-                stop_genetic_event_async();
+                QMetaObject::invokeMethod(this, "stop_genetic_event_async", Qt::QueuedConnection);
                 return;
             }
             std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
         }
 
-        update_params_gui();
+        QMetaObject::invokeMethod(this, "update_params_gui", Qt::QueuedConnection);
     }
 
-    stop_genetic_event_async();
+    QMetaObject::invokeMethod(this, "stop_genetic_event_async", Qt::QueuedConnection);
 }

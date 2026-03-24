@@ -145,15 +145,13 @@ private:
 
   void NRT_genetic(void);
 
-  void update_params_gui(void);
-
   void set_params_read_only(bool read_only);
   void set_param_read_only(const QString &name, const QPalette &pal, bool read_only);
 
-  void stop_genetic_event_async(void);
-
 private slots:
   void toggle_genetic_event(void);
+  void stop_genetic_event_async(void);
+  void update_params_gui(void);
 };
 
 #endif
