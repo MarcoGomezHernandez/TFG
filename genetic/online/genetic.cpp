@@ -1,5 +1,6 @@
 #include "bidirectional_chemical_synapse_genetic.h"
 #include <chrono>
+#include <iostream>
 
 void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
 {
@@ -14,8 +15,8 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
         m_slow_21 = 0.0;
         for (int i = 0; i < SP_COUNT; ++i)
         {
-            params_12[i] += 1.0;
-            params_21[i] += 1.0;
+            params_12[i] += 0.0;
+            params_21[i] += 0.0;
         }
         synapse_lock.release();
 
@@ -58,6 +59,38 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
                 return;
             }
             std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
+        }
+
+        auto print_first = [&](const char *name, const univector<double> &v) {
+            int n = (int)std::min<size_t>(v.size(), 10);
+            std::cout << name << " [" << v.size() << "] -> ";
+            for (int i = 0; i < n; i++)
+            {
+                std::cout << v[i];
+                if (i + 1 < n)
+                    std::cout << ", ";
+            }
+            std::cout << "\n";
+        };
+
+        if (use_syn_12)
+        {
+            print_first("v1_scaled_sig", v1_scaled_sig);
+            print_first("v2_sig", v2_sig);
+            if (use_i_fast_12)
+                print_first("i_fast_sig_12", i_fast_sig_12);
+            if (use_i_slow_12)
+                print_first("i_slow_12", i_slow_12);
+        }
+
+        if (use_syn_21)
+        {
+            print_first("v2_scaled_sig", v2_scaled_sig);
+            print_first("v1_sig", v1_sig);
+            if (use_i_fast_21)
+                print_first("i_fast_sig_21", i_fast_sig_21);
+            if (use_i_slow_21)
+                print_first("i_slow_21", i_slow_21);
         }
 
         QMetaObject::invokeMethod(this, "update_params_gui", Qt::QueuedConnection);
