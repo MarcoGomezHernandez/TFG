@@ -224,7 +224,9 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 {
   if (burst_duration_gui <= 0.0)
   {
-    double new_burst_duration = std::min(input(6), input(7));
+    double burst_duration_1 = input(6);
+    double burst_duration_2 = input(7);
+    double new_burst_duration = (burst_duration_1 == 0.0) ? burst_duration_2 : (burst_duration_2 == 0.0 ? burst_duration_1 : std::min(burst_duration_1, burst_duration_2));
     if (new_burst_duration != burst_duration)
     {
       burst_duration = new_burst_duration;
