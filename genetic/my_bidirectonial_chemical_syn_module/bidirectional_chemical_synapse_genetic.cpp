@@ -24,6 +24,7 @@
 #include "bidirectional_chemical_synapse_genetic.h"
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include <main_window.h>
 
 extern "C" Plugin::Object *
@@ -76,7 +77,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Offset 2->1", "Dynamic amplitude offset 2->1", DefaultGUIModel::INPUT},
     {"Scale 1->2", "Dynamic amplitude scale 1->2", DefaultGUIModel::INPUT},
     {"Offset 1->2", "Dynamic amplitude offset 1->2", DefaultGUIModel::INPUT},
-    {"Burst duration (s)", "Dynamic burst duration", DefaultGUIModel::INPUT},
+    {"Burst duration 1 (s)", "Dynamic burst duration 1", DefaultGUIModel::INPUT},
+    {"Burst duration 2 (s)", "Dynamic burst duration 2", DefaultGUIModel::INPUT},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
@@ -222,7 +224,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 {
   if (burst_duration_gui <= 0.0)
   {
-    double new_burst_duration = input(6);
+    double new_burst_duration = std::min(input(6), input(7));
     if (new_burst_duration != last_burst_duration)
     {
       last_burst_duration = new_burst_duration;
