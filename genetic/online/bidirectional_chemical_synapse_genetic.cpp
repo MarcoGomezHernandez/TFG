@@ -254,19 +254,23 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     double v2_scaled;
     if (use_syn_21)
     {
-      if (scale_21_gui <= 0.0)
+      if (scaling_factors_lock_21.try_acquire())
       {
-        scale_21 = input(2);
-      }
-      if (dynamic_offset_21)
-      {
-        offset_21 = input(3) * 1000.0;
-      }
+        if (scale_21_gui <= 0.0)
+        {
+          scale_21 = input(2);
+        }
+        if (dynamic_offset_21)
+        {
+          offset_21 = input(3) * 1000.0;
+        }
 
-      if (scale_21 == 0.0)
-      {
-        scale_21 = 1.0;
-        offset_21 = 0.0;
+        if (scale_21 == 0.0)
+        {
+          scale_21 = 1.0;
+          offset_21 = 0.0;
+        }
+        scaling_factors_lock_21.release();
       }
       v2_scaled = v2 * scale_21 + offset_21;
 
@@ -279,19 +283,23 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     double v1_scaled;
     if (use_syn_12)
     {
-      if (scale_12_gui <= 0.0)
+      if (scaling_factors_lock_12.try_acquire())
       {
-        scale_12 = input(4);
-      }
-      if (dynamic_offset_12)
-      {
-        offset_12 = input(5) * 1000.0;
-      }
+        if (scale_12_gui <= 0.0)
+        {
+          scale_12 = input(4);
+        }
+        if (dynamic_offset_12)
+        {
+          offset_12 = input(5) * 1000.0;
+        }
 
-      if (scale_12 == 0.0)
-      {
-        scale_12 = 1.0;
-        offset_12 = 0.0;
+        if (scale_12 == 0.0)
+        {
+          scale_12 = 1.0;
+          offset_12 = 0.0;
+        }
+        scaling_factors_lock_12.release();
       }
       v1_scaled = v1 * scale_12 + offset_12;
 
@@ -439,18 +447,24 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     is_living_1 = getParameter("Neur 1 is living (1/0)").toUInt();
     is_living_2 = getParameter("Neur 2 is living (1/0)").toUInt();
     scale_21_gui = getParameter("Scale 2->1").toDouble();
-    if (scale_21_gui > 0.0)
-      scale_21 = scale_21_gui;
     dynamic_offset_21 = getParameter("Dynamic offset 2->1 (1/0)").toUInt();
-    if (!dynamic_offset_21)
-      offset_21 = getParameter("Offset 2->1").toDouble() * 1000.0;
+    if (scaling_factors_21_lock.acquire())
+    {
+      if (scale_21_gui > 0.0)
+        scale_21 = scale_21_gui;
+      if (!dynamic_offset_21)
+        offset_21 = getParameter("Offset 2->1").toDouble() * 1000.0;
+    }
 
     scale_12_gui = getParameter("Scale 1->2").toDouble();
-    if (scale_12_gui > 0.0)
-      scale_12 = scale_12_gui;
     dynamic_offset_12 = getParameter("Dynamic offset 1->2 (1/0)").toUInt();
-    if (!dynamic_offset_12)
-      offset_12 = getParameter("Offset 1->2").toDouble() * 1000.0;
+    if (scaling_factors_12_lock.acquire())
+    {
+      if (scale_12_gui > 0.0)
+        scale_12 = scale_12_gui;
+      if (!dynamic_offset_12)
+        offset_12 = getParameter("Offset 1->2").toDouble() * 1000.0;
+    }
 
     params_21.e_syn = getParameter("E_syn 2->1").toDouble();
     params_21.g_fast = getParameter("g_fast 2->1").toDouble();

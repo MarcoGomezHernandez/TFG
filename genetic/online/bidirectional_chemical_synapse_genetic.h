@@ -117,6 +117,7 @@ private:
   std::atomic<bool> stop_genetic;
   std::atomic<bool> genetic_running;
   BinarySemaphore synapse_lock{true};
+  BinarySemaphore scaling_factors_21_lock{true}, scaling_factors_12_lock{true};
   int storing_idx;
   int num_elements;
 
