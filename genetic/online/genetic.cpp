@@ -4,14 +4,13 @@
 
 void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double scale_21_thread, double offset_21_thread, double scale_12_thread, double offset_12_thread)
 {
-    bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
-    bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
-    bool use_syn = use_syn_21 || use_syn_12;
+    const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
+    const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
 
-    if (use_syn)
+    if (use_syn_21 || use_syn_12)
     {
-        size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
-        size_t new_synapse_idx = 1 - curr_synapse_idx;
+        const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+        const size_t new_synapse_idx = 1 - curr_synapse_idx;
         params_12[new_synapse_idx].e_syn += 0.0;
         params_12[new_synapse_idx].g_fast += 0.0;
         params_12[new_synapse_idx].s_fast += 0.0;
@@ -74,10 +73,10 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
             std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
         }
 
-        size_t act_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_acquire);
+        const size_t act_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_acquire);
         std::cout << "Final scale 21: " << scale_21[act_scaling_factors_21_idx] << ", offset 21: " << offset_21[act_scaling_factors_21_idx] << "\n";
 
-        size_t act_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_acquire);
+        const size_t act_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_acquire);
         std::cout << "Final scale 12: " << scale_12[act_scaling_factors_12_idx] << ", offset 12: " << offset_12[act_scaling_factors_12_idx] << "\n";
 
         auto print_first = [&](const char *name, const univector<double> &v)
