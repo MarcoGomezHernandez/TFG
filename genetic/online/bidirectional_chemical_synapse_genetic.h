@@ -142,7 +142,7 @@ private:
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
-  void NRT_genetic(void);
+  void NRT_genetic(double thread_freq);
 
   void set_params_read_only(bool read_only);
   void set_param_read_only(const QString &name, const QPalette &pal, bool read_only);

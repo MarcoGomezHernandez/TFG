@@ -521,7 +521,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running.store(true, std::memory_order_relaxed);
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq);
   }
   else
   {

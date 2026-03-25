@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 
-void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
+void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq)
 {
     bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
     bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
@@ -39,7 +39,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
             std::this_thread::sleep_for(std::chrono::duration<double>(stabilization_time));
         }
 
-        num_elements = (int)(evaluation_time * freq);
+        num_elements = (int)(evaluation_time * thread_freq);
 
         if (use_syn_12)
         {
@@ -75,7 +75,8 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(void)
             std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
         }
 
-        auto print_first = [&](const char *name, const univector<double> &v) {
+        auto print_first = [&](const char *name, const univector<double> &v)
+        {
             int n = (int)std::min<size_t>(v.size(), 10);
             std::cout << name << " [" << v.size() << "] -> ";
             for (int i = 0; i < n; i++)
