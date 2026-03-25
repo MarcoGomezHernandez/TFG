@@ -28,45 +28,6 @@
 
 using namespace kfr;
 
-class BinarySemaphore
-{
-private:
-  std::mutex mtx_;
-  std::condition_variable cv_;
-  bool available_;
-
-public:
-  explicit BinarySemaphore(bool initial_state = false) : available_(initial_state) {}
-
-  void acquire()
-  {
-    std::unique_lock<std::mutex> lock(mtx_);
-    cv_.wait(lock, [this]()
-             { return available_; });
-    available_ = false;
-  }
-
-  bool try_acquire()
-  {
-    std::lock_guard<std::mutex> lock(mtx_);
-    if (available_)
-    {
-      available_ = false;
-      return true;
-    }
-    return false;
-  }
-
-  void release()
-  {
-    {
-      std::lock_guard<std::mutex> lock(mtx_);
-      available_ = true;
-    }
-    cv_.notify_one();
-  }
-};
-
 struct ChemicalSynapseParams
 {
   double e_syn;
@@ -97,14 +58,14 @@ protected:
   virtual void update(DefaultGUIModel::update_flags_t);
 
 private:
-  double m_slow_21, m_slow_12;
-  ChemicalSynapseParams params_21;
-  ChemicalSynapseParams params_12;
+  double m_slow_21[2], m_slow_12[2];
+  ChemicalSynapseParams params_21[2];
+  ChemicalSynapseParams params_12[2];
   unsigned int use_i_fast_21, use_i_slow_21, use_i_fast_12, use_i_slow_12;
   double dt;
   double period, freq;
   double burst_duration, burst_duration_gui;
-  double scale_21, offset_21, scale_12, offset_12;
+  double scale_21[2], offset_21[2], scale_12[2], offset_12[2];
   double scale_21_gui, scale_12_gui;
   unsigned int is_living_1, is_living_2;
   unsigned int dynamic_offset_21, dynamic_offset_12;
@@ -119,8 +80,9 @@ private:
   std::atomic<bool> RT_storing;
   std::atomic<bool> stop_genetic;
   std::atomic<bool> genetic_running;
-  BinarySemaphore synapse_lock{true};
-  BinarySemaphore scaling_factors_21_lock{true}, scaling_factors_12_lock{true};
+  std::atomic<size_t> synapse_idx;
+  std::atomic<size_t> scaling_factors_21_idx;
+  std::atomic<size_t> scaling_factors_12_idx;
   size_t storing_idx;
   size_t num_elements;
 

@@ -229,121 +229,132 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 {
   double val_i_slow_21 = 0.0, val_i_fast_21 = 0.0;
   double val_i_slow_12 = 0.0, val_i_fast_12 = 0.0;
-  if (synapse_lock.try_acquire())
+
+  if (burst_duration_gui <= 0.0)
   {
-    if (burst_duration_gui <= 0.0)
+    double burst_duration_1 = input(6);
+    double burst_duration_2 = input(7);
+    double new_burst_duration = (burst_duration_1 == 0.0) ? burst_duration_2 : (burst_duration_2 == 0.0 ? burst_duration_1 : std::min(burst_duration_1, burst_duration_2));
+    if (new_burst_duration != burst_duration)
     {
-      double burst_duration_1 = input(6);
-      double burst_duration_2 = input(7);
-      double new_burst_duration = (burst_duration_1 == 0.0) ? burst_duration_2 : (burst_duration_2 == 0.0 ? burst_duration_1 : std::min(burst_duration_1, burst_duration_2));
-      if (new_burst_duration != burst_duration)
-      {
-        burst_duration = new_burst_duration;
-        s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-        if (s_points < 1)
-          s_points = 1;
-      }
+      burst_duration = new_burst_duration;
+      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
+      if (s_points < 1)
+        s_points = 1;
     }
+  }
 
-    bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
-    bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
+  bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
+  bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
 
-    double v1, v2;
-    if (use_syn_21 || use_syn_12)
+  double v1, v2;
+  if (use_syn_21 || use_syn_12)
+  {
+    v1 = input(0) * 1000.0;
+    v2 = input(1) * 1000.0;
+  }
+
+  size_t curr_scaling_factors_idx, new_scaling_factors_idx;
+  double curr_scale, curr_offset;
+
+  size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+
+  double v2_scaled;
+  if (use_syn_21)
+  {
+    curr_scaling_factors_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
+    new_scaling_factors_idx = 1 - curr_scaling_factors_idx;
+    curr_scale = scale_21[curr_scaling_factors_idx];
+    curr_offset = offset_21[curr_scaling_factors_idx];
+    double &new_scale = scale_21[new_scaling_factors_idx];
+    double &new_offset = offset_21[new_scaling_factors_idx];
+
+    new_scale = curr_scale;
+    new_offset = curr_offset;
+
+    if (scale_21_gui <= 0.0)
     {
-      v1 = input(0) * 1000.0;
-      v2 = input(1) * 1000.0;
+      new_scale = input(2);
+      if (new_scale == 0.0)
+        new_scale = 1.0;
     }
+    if (dynamic_offset_21)
+      new_offset = input(3) * 1000.0;
 
-    double v2_scaled;
-    if (use_syn_21)
+    if (new_scale != curr_scale || new_offset != curr_offset)
+      scaling_factors_21_idx.store(new_scaling_factors_idx, std::memory_order_release);
+
+    v2_scaled = v2 * new_scale + new_offset;
+
+    ChemicalSynapseParams &curr_params_21 = params_21[curr_synapse_idx];
+    if (use_i_slow_21)
+      val_i_slow_21 = compute_i_slow(m_slow_21[curr_synapse_idx], v2_scaled, v1, curr_params_21);
+    if (use_i_fast_21)
+      val_i_fast_21 = compute_i_fast(v2_scaled, v1, curr_params_21);
+  }
+
+  double v1_scaled;
+  if (use_syn_12)
+  {
+    curr_scaling_factors_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
+    new_scaling_factors_idx = 1 - curr_scaling_factors_idx;
+    curr_scale = scale_12[curr_scaling_factors_idx];
+    curr_offset = offset_12[curr_scaling_factors_idx];
+    double &new_scale = scale_12[new_scaling_factors_idx];
+    double &new_offset = offset_12[new_scaling_factors_idx];
+
+    new_scale = curr_scale;
+    new_offset = curr_offset;
+
+    if (scale_12_gui <= 0.0)
     {
-      if (scaling_factors_lock_21.try_acquire())
-      {
-        if (scale_21_gui <= 0.0)
-        {
-          scale_21 = input(2);
-        }
-        if (dynamic_offset_21)
-        {
-          offset_21 = input(3) * 1000.0;
-        }
-
-        if (scale_21 == 0.0)
-        {
-          scale_21 = 1.0;
-          offset_21 = 0.0;
-        }
-        scaling_factors_lock_21.release();
-      }
-      v2_scaled = v2 * scale_21 + offset_21;
-
-      if (use_i_slow_21)
-        val_i_slow_21 = compute_i_slow(m_slow_21, v2_scaled, v1, params_21);
-      if (use_i_fast_21)
-        val_i_fast_21 = compute_i_fast(v2_scaled, v1, params_21);
+      new_scale = input(2);
+      if (new_scale == 0.0)
+        new_scale = 1.0;
     }
+    if (dynamic_offset_12)
+      new_offset = input(3) * 1000.0;
 
-    double v1_scaled;
-    if (use_syn_12)
+    if (new_scale != curr_scale || new_offset != curr_offset)
+      scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
+
+    v1_scaled = v1 * new_scale + new_offset;
+
+    ChemicalSynapseParams &curr_params_12 = params_12[curr_synapse_idx];
+    if (use_i_slow_12)
+      val_i_slow_12 = compute_i_slow(m_slow_12[curr_synapse_idx], v1_scaled, v2, curr_params_12);
+    if (use_i_fast_12)
+      val_i_fast_12 = compute_i_fast(v1_scaled, v2, curr_params_12);
+  }
+
+  if (RT_storing.load(std::memory_order_acquire))
+  {
+    if (storing_idx < num_elements)
     {
-      if (scaling_factors_lock_12.try_acquire())
+      if (use_syn_21)
       {
-        if (scale_12_gui <= 0.0)
-        {
-          scale_12 = input(4);
-        }
-        if (dynamic_offset_12)
-        {
-          offset_12 = input(5) * 1000.0;
-        }
-
-        if (scale_12 == 0.0)
-        {
-          scale_12 = 1.0;
-          offset_12 = 0.0;
-        }
-        scaling_factors_lock_12.release();
+        v1_sig[storing_idx] = v1;
+        v2_scaled_sig[storing_idx] = v2_scaled;
+        if (use_i_fast_21)
+          i_fast_sig_21[storing_idx] = val_i_fast_21;
+        if (use_i_slow_21)
+          i_slow_21[storing_idx] = val_i_slow_21;
       }
-      v1_scaled = v1 * scale_12 + offset_12;
-
-      if (use_i_slow_12)
-        val_i_slow_12 = compute_i_slow(m_slow_12, v1_scaled, v2, params_12);
-      if (use_i_fast_12)
-        val_i_fast_12 = compute_i_fast(v1_scaled, v2, params_12);
+      if (use_syn_12)
+      {
+        v2_sig[storing_idx] = v2;
+        v1_scaled_sig[storing_idx] = v1_scaled;
+        if (use_i_fast_12)
+          i_fast_sig_12[storing_idx] = val_i_fast_12;
+        if (use_i_slow_12)
+          i_slow_12[storing_idx] = val_i_slow_12;
+      }
+      storing_idx++;
     }
-
-    if (RT_storing.load(std::memory_order_acquire))
+    else
     {
-      if (storing_idx < num_elements)
-      {
-        if (use_syn_21)
-        {
-          v1_sig[storing_idx] = v1;
-          v2_scaled_sig[storing_idx] = v2_scaled;
-          if (use_i_fast_21)
-            i_fast_sig_21[storing_idx] = val_i_fast_21;
-          if (use_i_slow_21)
-            i_slow_21[storing_idx] = val_i_slow_21;
-        }
-        if (use_syn_12)
-        {
-          v2_sig[storing_idx] = v2;
-          v1_scaled_sig[storing_idx] = v1_scaled;
-          if (use_i_fast_12)
-            i_fast_sig_12[storing_idx] = val_i_fast_12;
-          if (use_i_slow_12)
-            i_slow_12[storing_idx] = val_i_slow_12;
-        }
-        storing_idx++;
-      }
-      else
-      {
-        RT_storing.store(false, std::memory_order_release);
-      }
+      RT_storing.store(false, std::memory_order_release);
     }
-
-    synapse_lock.release();
   }
 
   output(0) = val_i_fast_21 + val_i_slow_21;
@@ -367,40 +378,46 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   dynamic_offset_21 = 0u;
   dynamic_offset_12 = 0u;
   scale_21_gui = 1.0;
-  scale_21 = scale_21_gui;
-  offset_21 = 0.0 * 1000.0;
+  scale_21[0] = scale_21_gui;
+  offset_21[0] = 0.0 * 1000.0;
   scale_12_gui = 1.0;
-  scale_12 = scale_12_gui;
-  offset_12 = 0.0 * 1000.0;
+  scale_12[0] = scale_12_gui;
+  offset_12[0] = 0.0 * 1000.0;
 
-  m_slow_21 = 0.0;
-  m_slow_12 = 0.0;
+  m_slow_21[0] = 0.0;
+  m_slow_12[0] = 0.0;
 
   stop_genetic.store(false, std::memory_order_relaxed);
   RT_storing.store(false, std::memory_order_relaxed);
   genetic_running.store(false, std::memory_order_relaxed);
 
-  params_21.e_syn = -1.92;
-  params_21.g_fast = 0.046;
-  params_21.s_fast = 0.44;
-  params_21.v_fast = -1.66;
-  params_21.g_slow = 0.208;
-  params_21.k1 = 0.74;
-  params_21.k2 = 0.007;
-  params_21.s_slow = 1.0;
-  params_21.v_slow = -1.74;
+  synapse_idx.store(0, std::memory_order_relaxed);
+  scaling_factors_21_idx.store(0, std::memory_order_relaxed);
+  scaling_factors_12_idx.store(0, std::memory_order_relaxed);
+
+  params_21[0].e_syn = -1.92;
+  params_21[0].g_fast = 0.046;
+  params_21[0].s_fast = 0.44;
+  params_21[0].v_fast = -1.66;
+  params_21[0].g_slow = 0.208;
+  params_21[0].k1 = 0.74;
+  params_21[0].k2 = 0.007;
+  params_21[0].s_slow = 1.0;
+  params_21[0].v_slow = -1.74;
+
   use_i_fast_21 = 1u;
   use_i_slow_21 = 1u;
 
-  params_12.e_syn = -1.92;
-  params_12.g_fast = 0.046;
-  params_12.s_fast = 0.44;
-  params_12.v_fast = -1.66;
-  params_12.g_slow = 0.208;
-  params_12.k1 = 0.74;
-  params_12.k2 = 0.007;
-  params_12.s_slow = 1.0;
-  params_12.v_slow = -1.74;
+  params_12[0].e_syn = -1.92;
+  params_12[0].g_fast = 0.046;
+  params_12[0].s_fast = 0.44;
+  params_12[0].v_fast = -1.66;
+  params_12[0].g_slow = 0.208;
+  params_12[0].k1 = 0.74;
+  params_12[0].k2 = 0.007;
+  params_12[0].s_slow = 1.0;
+  params_12[0].v_slow = -1.74;
+
   use_i_fast_12 = 1u;
   use_i_slow_12 = 1u;
 }
@@ -427,9 +444,9 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Neur 1 is living (1/0)", is_living_1);
     setParameter("Neur 2 is living (1/0)", is_living_2);
     setParameter("Scale 2->1", scale_21_gui);
-    setParameter("Offset 2->1", offset_21 / 1000.0);
+    setParameter("Offset 2->1", offset_21[scaling_factors_21_idx.load(std::memory_order_relaxed)] / 1000.0);
     setParameter("Scale 1->2", scale_12_gui);
-    setParameter("Offset 1->2", offset_12 / 1000.0);
+    setParameter("Offset 1->2", offset_12[scaling_factors_12_idx.load(std::memory_order_relaxed)] / 1000.0);
 
     setParameter("Dynamic offset 2->1 (1/0)", dynamic_offset_21);
     setParameter("Dynamic offset 1->2 (1/0)", dynamic_offset_12);
@@ -444,6 +461,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     break;
 
   case MODIFY:
+  {
     evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
     stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
 
@@ -462,24 +480,52 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
     is_living_1 = getParameter("Neur 1 is living (1/0)").toUInt();
     is_living_2 = getParameter("Neur 2 is living (1/0)").toUInt();
+
+    size_t curr_scaling_factors_idx, new_scaling_factors_idx;
+    double curr_scale, curr_offset;
+
     scale_21_gui = getParameter("Scale 2->1").toDouble();
     dynamic_offset_21 = getParameter("Dynamic offset 2->1 (1/0)").toUInt();
-    if (scaling_factors_21_lock.acquire())
+    curr_scaling_factors_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
+    new_scaling_factors_idx = 1 - curr_scaling_factors_idx;
+    curr_scale = scale_21[curr_scaling_factors_idx];
+    curr_offset = offset_21[curr_scaling_factors_idx];
     {
+      double &new_scale = scale_21[new_scaling_factors_idx];
+      double &new_offset = offset_21[new_scaling_factors_idx];
+
+      new_scale = curr_scale;
+      new_offset = curr_offset;
+
       if (scale_21_gui > 0.0)
-        scale_21 = scale_21_gui;
+        new_scale = scale_21_gui;
       if (!dynamic_offset_21)
-        offset_21 = getParameter("Offset 2->1").toDouble() * 1000.0;
+        new_offset = getParameter("Offset 2->1").toDouble() * 1000.0;
+
+      if (new_scale != curr_scale || new_offset != curr_offset)
+        scaling_factors_21_idx.store(new_scaling_factors_idx, std::memory_order_release);
     }
 
     scale_12_gui = getParameter("Scale 1->2").toDouble();
     dynamic_offset_12 = getParameter("Dynamic offset 1->2 (1/0)").toUInt();
-    if (scaling_factors_12_lock.acquire())
+    curr_scaling_factors_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
+    new_scaling_factors_idx = 1 - curr_scaling_factors_idx;
+    curr_scale = scale_12[curr_scaling_factors_idx];
+    curr_offset = offset_12[curr_scaling_factors_idx];
     {
+      double &new_scale = scale_12[new_scaling_factors_idx];
+      double &new_offset = offset_12[new_scaling_factors_idx];
+
+      new_scale = curr_scale;
+      new_offset = curr_offset;
+
       if (scale_12_gui > 0.0)
-        scale_12 = scale_12_gui;
+        new_scale = scale_12_gui;
       if (!dynamic_offset_12)
-        offset_12 = getParameter("Offset 1->2").toDouble() * 1000.0;
+        new_offset = getParameter("Offset 1->2").toDouble() * 1000.0;
+
+      if (new_scale != curr_scale || new_offset != curr_offset)
+        scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
     }
 
     params_21.e_syn = getParameter("E_syn 2->1").toDouble();
@@ -507,6 +553,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
 
     break;
+  }
 
   case UNPAUSE:
     break;
