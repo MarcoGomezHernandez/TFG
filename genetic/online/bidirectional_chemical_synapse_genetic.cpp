@@ -144,13 +144,13 @@ void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, dou
             k[5] * 0.035714285714285;
 }
 
-void BidirectionalChemicalSynapseGenetic::select_dt_neuron_model(double *dts, double *pts, size_t length, double pts_live, double *dt, double *pts_burst)
+void BidirectionalChemicalSynapseGenetic::select_dt_neuron_model(const double *dts, const double *pts, size_t length, double pts_live, double *dt, double *pts_burst)
 {
   double aux = pts_live;
   double factor = 1;
   double intpart, fractpart;
   unsigned int flag = 0;
-  size_t i;
+  int i;
 
   *dt = -1;
   *pts_burst = -1;
@@ -462,13 +462,6 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
   case MODIFY:
   {
-    evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
-    stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
-
-    search_phase = getParameter("Search phase genetic (1/0)").toUInt();
-    current_max = getParameter("Current max to achieve genetic").toDouble();
-    current_min = getParameter("Current min to achieve genetic").toDouble();
-
     burst_duration_gui = getParameter("Burst duration (s)").toDouble();
     if ((burst_duration_gui > 0.0) && (burst_duration_gui != burst_duration))
     {
@@ -477,9 +470,6 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       if (s_points < 1)
         s_points = 1;
     }
-
-    is_living_1 = getParameter("Neur 1 is living (1/0)").toUInt();
-    is_living_2 = getParameter("Neur 2 is living (1/0)").toUInt();
 
     size_t curr_scaling_factors_idx, new_scaling_factors_idx;
     double curr_scale, curr_offset;
@@ -528,31 +518,43 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
     }
 
-    const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+    if (!genetic_running.load(std::memory_order_acquire))
+    {
+      evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
+      stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
+      is_living_1 = getParameter("Neur 1 is living (1/0)").toUInt();
+      is_living_2 = getParameter("Neur 2 is living (1/0)").toUInt();
 
-    params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1").toDouble();
-    params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1").toDouble();
-    params_21[curr_synapse_idx].s_fast = getParameter("s_fast 2->1").toDouble();
-    params_21[curr_synapse_idx].v_fast = getParameter("V_fast 2->1").toDouble();
-    params_21[curr_synapse_idx].g_slow = getParameter("g_slow 2->1").toDouble();
-    params_21[curr_synapse_idx].k1 = getParameter("k1 2->1").toDouble();
-    params_21[curr_synapse_idx].k2 = getParameter("k2 2->1").toDouble();
-    params_21[curr_synapse_idx].s_slow = getParameter("s_slow 2->1").toDouble();
-    params_21[curr_synapse_idx].v_slow = getParameter("V_slow 2->1").toDouble();
-    use_i_fast_21 = getParameter("Use I_fast 2->1 (1/0)").toUInt();
-    use_i_slow_21 = getParameter("Use I_slow 2->1 (1/0)").toUInt();
+      search_phase = getParameter("Search phase genetic (1/0)").toUInt();
+      current_max = getParameter("Current max to achieve genetic").toDouble();
+      current_min = getParameter("Current min to achieve genetic").toDouble();
 
-    params_12[curr_synapse_idx].e_syn = getParameter("E_syn 1->2").toDouble();
-    params_12[curr_synapse_idx].g_fast = getParameter("g_fast 1->2").toDouble();
-    params_12[curr_synapse_idx].s_fast = getParameter("s_fast 1->2").toDouble();
-    params_12[curr_synapse_idx].v_fast = getParameter("V_fast 1->2").toDouble();
-    params_12[curr_synapse_idx].g_slow = getParameter("g_slow 1->2").toDouble();
-    params_12[curr_synapse_idx].k1 = getParameter("k1 1->2").toDouble();
-    params_12[curr_synapse_idx].k2 = getParameter("k2 1->2").toDouble();
-    params_12[curr_synapse_idx].s_slow = getParameter("s_slow 1->2").toDouble();
-    params_12[curr_synapse_idx].v_slow = getParameter("V_slow 1->2").toDouble();
-    use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
-    use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
+      const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+
+      params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1").toDouble();
+      params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1").toDouble();
+      params_21[curr_synapse_idx].s_fast = getParameter("s_fast 2->1").toDouble();
+      params_21[curr_synapse_idx].v_fast = getParameter("V_fast 2->1").toDouble();
+      params_21[curr_synapse_idx].g_slow = getParameter("g_slow 2->1").toDouble();
+      params_21[curr_synapse_idx].k1 = getParameter("k1 2->1").toDouble();
+      params_21[curr_synapse_idx].k2 = getParameter("k2 2->1").toDouble();
+      params_21[curr_synapse_idx].s_slow = getParameter("s_slow 2->1").toDouble();
+      params_21[curr_synapse_idx].v_slow = getParameter("V_slow 2->1").toDouble();
+      use_i_fast_21 = getParameter("Use I_fast 2->1 (1/0)").toUInt();
+      use_i_slow_21 = getParameter("Use I_slow 2->1 (1/0)").toUInt();
+
+      params_12[curr_synapse_idx].e_syn = getParameter("E_syn 1->2").toDouble();
+      params_12[curr_synapse_idx].g_fast = getParameter("g_fast 1->2").toDouble();
+      params_12[curr_synapse_idx].s_fast = getParameter("s_fast 1->2").toDouble();
+      params_12[curr_synapse_idx].v_fast = getParameter("V_fast 1->2").toDouble();
+      params_12[curr_synapse_idx].g_slow = getParameter("g_slow 1->2").toDouble();
+      params_12[curr_synapse_idx].k1 = getParameter("k1 1->2").toDouble();
+      params_12[curr_synapse_idx].k2 = getParameter("k2 1->2").toDouble();
+      params_12[curr_synapse_idx].s_slow = getParameter("s_slow 1->2").toDouble();
+      params_12[curr_synapse_idx].v_slow = getParameter("V_slow 1->2").toDouble();
+      use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
+      use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
+    }
 
     break;
   }
@@ -612,7 +614,9 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running.store(true, std::memory_order_relaxed);
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_21, offset_21, scale_12, offset_12);
+    size_t curr_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
+    size_t curr_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_21[curr_scaling_factors_21_idx], offset_21[curr_scaling_factors_21_idx], scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx]);
   }
   else
   {
@@ -625,7 +629,7 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
   set_params_read_only(false);
   gentic_button->setText("Start Genetic");
-  genetic_running.store(false, std::memory_order_relaxed);
+  genetic_running.store(false, std::memory_order_release);
 }
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)

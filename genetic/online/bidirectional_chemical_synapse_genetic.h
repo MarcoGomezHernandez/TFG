@@ -104,7 +104,7 @@ private:
   double compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params);
   double compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params);
 
-  void select_dt_neuron_model(double *dts, double *pts, size_t length, double pts_live, double *dt, double *pts_burst);
+  void select_dt_neuron_model(const double *dts, const double *pts, size_t length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
