@@ -223,24 +223,24 @@ double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double 
 
 void BidirectionalChemicalSynapseGenetic::execute(void)
 {
-  if (burst_duration_gui <= 0.0)
-  {
-    double burst_duration_1 = input(6);
-    double burst_duration_2 = input(7);
-    double new_burst_duration = (burst_duration_1 == 0.0) ? burst_duration_2 : (burst_duration_2 == 0.0 ? burst_duration_1 : std::min(burst_duration_1, burst_duration_2));
-    if (new_burst_duration != burst_duration)
-    {
-      burst_duration = new_burst_duration;
-      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-      if (s_points < 1)
-        s_points = 1;
-    }
-  }
-
   double val_i_slow_21 = 0.0, val_i_fast_21 = 0.0;
   double val_i_slow_12 = 0.0, val_i_fast_12 = 0.0;
   if (synapse_lock.try_acquire())
   {
+    if (burst_duration_gui <= 0.0)
+    {
+      double burst_duration_1 = input(6);
+      double burst_duration_2 = input(7);
+      double new_burst_duration = (burst_duration_1 == 0.0) ? burst_duration_2 : (burst_duration_2 == 0.0 ? burst_duration_1 : std::min(burst_duration_1, burst_duration_2));
+      if (new_burst_duration != burst_duration)
+      {
+        burst_duration = new_burst_duration;
+        s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
+        if (s_points < 1)
+          s_points = 1;
+      }
+    }
+
     bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
     bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
 

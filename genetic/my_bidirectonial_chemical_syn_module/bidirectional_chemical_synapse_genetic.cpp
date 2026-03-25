@@ -251,6 +251,10 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     {
       scale_21 = input(2);
     }
+    else
+    {
+      scale_21 = scale_21_gui;
+    }
     if (dynamic_offset_21)
     {
       offset_21 = input(3) * 1000.0;
@@ -271,6 +275,10 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     if (scale_12_gui <= 0.0)
     {
       scale_12 = input(4);
+    }
+    else
+    {
+      scale_12 = scale_12_gui;
     }
     if (dynamic_offset_12)
     {

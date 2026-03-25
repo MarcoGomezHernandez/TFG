@@ -11,3 +11,5 @@ Hay que hacer el escalado temporal en la sinapsis quimica igual que en el modulo
 Probar si funciona vectorizacion KFR en modulo de prueba
 
 La mejor opcion (que se prueba ahora y funciona) es hacer que se lance un hilo al pulsar un boton con la GUI, asi le paso lo que quiera y no esta todo el rato funcionando cuando queremos funcionamiento normal.
+
+Ojo, tuve que compilar kfr con cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
