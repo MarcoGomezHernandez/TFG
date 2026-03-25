@@ -140,13 +140,13 @@ void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, dou
             k[5] * 0.035714285714285;
 }
 
-void BidirectionalChemicalSynapseGenetic::select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst)
+void BidirectionalChemicalSynapseGenetic::select_dt_neuron_model(double *dts, double *pts, size_t length, double pts_live, double *dt, double *pts_burst)
 {
   double aux = pts_live;
   double factor = 1;
   double intpart, fractpart;
-  int flag = 0;
-  int i;
+  unsigned int flag = 0;
+  size_t i;
 
   *dt = -1;
   *pts_burst = -1;
@@ -188,7 +188,7 @@ void BidirectionalChemicalSynapseGenetic::select_dt_neuron_model(double *dts, do
 
 double BidirectionalChemicalSynapseGenetic::set_pts_burst(double sec_per_burst)
 {
-  int length = 144;
+  size_t length = 144;
   double pts_match = sec_per_burst * freq;
   double pts_burst;
 
@@ -208,7 +208,7 @@ double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow,
 
 double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
-  for (int i = 0; i < s_points; i++)
+  for (size_t i = 0; i < s_points; i++)
   {
     runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   }

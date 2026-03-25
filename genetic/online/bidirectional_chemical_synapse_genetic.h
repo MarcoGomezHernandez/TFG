@@ -118,8 +118,8 @@ private:
   std::atomic<bool> genetic_running;
   BinarySemaphore synapse_lock{true};
   BinarySemaphore scaling_factors_21_lock{true}, scaling_factors_12_lock{true};
-  int storing_idx;
-  int num_elements;
+  size_t storing_idx;
+  size_t num_elements;
 
   univector<double> i_fast_sig_12;
   univector<double> i_fast_sig_21;
@@ -139,7 +139,7 @@ private:
   double compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params);
   double compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params);
 
-  void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
+  void select_dt_neuron_model(double *dts, double *pts, size_t length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);

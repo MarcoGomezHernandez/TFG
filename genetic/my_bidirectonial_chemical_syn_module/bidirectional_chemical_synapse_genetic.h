@@ -67,7 +67,7 @@ private:
 
   void runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params);
   double compute_synapse_current(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params, unsigned int use_i_fast, unsigned int use_i_slow);
-  void select_dt_neuron_model(double *dts, double *pts, unsigned int length, double pts_live, double *dt, double *pts_burst);
+  void select_dt_neuron_model(double *dts, double *pts, size_t length, double pts_live, double *dt, double *pts_burst);
   double set_pts_burst(double sec_per_burst);
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
