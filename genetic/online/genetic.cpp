@@ -10,29 +10,28 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
 
     if (use_syn)
     {
-        synapse_lock.acquire();
-        m_slow_12 = 0.0;
-        m_slow_21 = 0.0;
-        params_12.e_syn += 0.0;
-        params_12.g_fast += 0.0;
-        params_12.s_fast += 0.0;
-        params_12.v_fast += 0.0;
-        params_12.g_slow += 0.0;
-        params_12.k1 += 0.0;
-        params_12.k2 += 0.0;
-        params_12.s_slow += 0.0;
-        params_12.v_slow += 0.0;
+        size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+        size_t new_synapse_idx = 1 - curr_synapse_idx;
+        params_12[new_synapse_idx].e_syn += 0.0;
+        params_12[new_synapse_idx].g_fast += 0.0;
+        params_12[new_synapse_idx].s_fast += 0.0;
+        params_12[new_synapse_idx].v_fast += 0.0;
+        params_12[new_synapse_idx].g_slow += 0.0;
+        params_12[new_synapse_idx].k1 += 0.0;
+        params_12[new_synapse_idx].k2 += 0.0;
+        params_12[new_synapse_idx].s_slow += 0.0;
+        params_12[new_synapse_idx].v_slow += 0.0;
 
-        params_21.e_syn += 0.0;
-        params_21.g_fast += 0.0;
-        params_21.s_fast += 0.0;
-        params_21.v_fast += 0.0;
-        params_21.g_slow += 0.0;
-        params_21.k1 += 0.0;
-        params_21.k2 += 0.0;
-        params_21.s_slow += 0.0;
-        params_21.v_slow += 0.0;
-        synapse_lock.release();
+        params_21[new_synapse_idx].e_syn += 0.0;
+        params_21[new_synapse_idx].g_fast += 0.0;
+        params_21[new_synapse_idx].s_fast += 0.0;
+        params_21[new_synapse_idx].v_fast += 0.0;
+        params_21[new_synapse_idx].g_slow += 0.0;
+        params_21[new_synapse_idx].k1 += 0.0;
+        params_21[new_synapse_idx].k2 += 0.0;
+        params_21[new_synapse_idx].s_slow += 0.0;
+        params_21[new_synapse_idx].v_slow += 0.0;
+        synapse_idx.store(new_synapse_idx, std::memory_order_release);
 
         if (stabilization_time > 0.0)
         {
@@ -74,6 +73,12 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
             }
             std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
         }
+
+        size_t act_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_acquire);
+        std::cout << "Final scale 21: " << scale_21[act_scaling_factors_21_idx] << ", offset 21: " << offset_21[act_scaling_factors_21_idx] << "\n";
+
+        size_t act_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_acquire);
+        std::cout << "Final scale 12: " << scale_12[act_scaling_factors_12_idx] << ", offset 12: " << offset_12[act_scaling_factors_12_idx] << "\n";
 
         auto print_first = [&](const char *name, const univector<double> &v)
         {
