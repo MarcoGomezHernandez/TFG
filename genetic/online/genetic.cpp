@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 
-void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq)
+void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double scale_21_thread, double offset_21_thread, double scale_12_thread, double offset_12_thread)
 {
     bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
     bool use_syn_12 = use_i_fast_12 || use_i_slow_12;

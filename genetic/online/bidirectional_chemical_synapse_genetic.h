@@ -112,6 +112,9 @@ private:
 
   double evaluation_time;
   double stabilization_time;
+  unsigned int search_phase;
+  double current_max;
+  double current_min;
   std::thread genetic_NRT_thread;
   std::atomic<bool> RT_storing;
   std::atomic<bool> stop_genetic;
@@ -144,7 +147,7 @@ private:
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
-  void NRT_genetic(double thread_freq);
+  void NRT_genetic(double thread_freq, double scale_21_thread, double offset_21_thread, double scale_12_thread, double offset_12_thread);
 
   void set_params_read_only(bool read_only);
   void set_param_read_only(const QString &name, const QPalette &pal, bool read_only);

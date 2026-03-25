@@ -69,6 +69,10 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
+    {"Search phase genetic (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Current max to achieve genetic", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min to achieve genetic", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+
     {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
     {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
 
@@ -351,6 +355,10 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   evaluation_time = 10.0;
   stabilization_time = 1.0;
 
+  search_phase = 1u;
+  current_max = 10.0;
+  current_min = -10.0;
+
   burst_duration_gui = 1.0;
   burst_duration = burst_duration_gui;
 
@@ -412,6 +420,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Individual stabilization time (s)", stabilization_time);
     setParameter("Burst duration (s)", burst_duration_gui);
 
+    setParameter("Search phase genetic (1/0)", search_phase);
+    setParameter("Current max to achieve genetic", current_max);
+    setParameter("Current min to achieve genetic", current_min);
+
     setParameter("Neur 1 is living (1/0)", is_living_1);
     setParameter("Neur 2 is living (1/0)", is_living_2);
     setParameter("Scale 2->1", scale_21_gui);
@@ -434,6 +446,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   case MODIFY:
     evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
     stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
+
+    search_phase = getParameter("Search phase genetic (1/0)").toUInt();
+    current_max = getParameter("Current max to achieve genetic").toDouble();
+    current_min = getParameter("Current min to achieve genetic").toDouble();
 
     burst_duration_gui = getParameter("Burst duration (s)").toDouble();
     if ((burst_duration_gui > 0.0) && (burst_duration_gui != burst_duration))
@@ -547,7 +563,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running.store(true, std::memory_order_relaxed);
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_21, offset_21, scale_12, offset_12);
   }
   else
   {
@@ -573,6 +589,10 @@ void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
   set_param_read_only("Individual stabilization time (s)", palette, read_only);
   set_param_read_only("Neur 1 is living (1/0)", palette, read_only);
   set_param_read_only("Neur 2 is living (1/0)", palette, read_only);
+
+  set_param_read_only("Search phase genetic (1/0)", palette, read_only);
+  set_param_read_only("Current max to achieve genetic", palette, read_only);
+  set_param_read_only("Current min to achieve genetic", palette, read_only);
 
   set_param_read_only("E_syn 2->1", palette, read_only);
   set_param_read_only("g_fast 2->1", palette, read_only);
