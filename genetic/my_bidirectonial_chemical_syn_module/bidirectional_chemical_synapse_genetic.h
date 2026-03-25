@@ -58,8 +58,9 @@ private:
   double dt;
   double period, freq;
   double last_burst_duration, burst_duration_gui;
-  double scale_21_gui, offset_21_gui, scale_12_gui, offset_12_gui;
-  unsigned int dynamic_scaling;
+  double offset_21, offset_12;
+  double scale_21_gui, scale_12_gui;
+  unsigned int dynamic_offset_21, dynamic_offset_12;
   double s_points;
 
   void initParameters();

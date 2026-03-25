@@ -37,10 +37,11 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Burst duration (s)", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Scale 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Offset 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Offset 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic offset 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Offset 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic scaling (1/0)", "1=dynamic (input), 0=static (GUI)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Offset 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic offset 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     // Config 2 -> 1
     {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -245,16 +246,14 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   double v2_scaled;
   if (use_syn_21)
   {
-    double scale_21, offset_21;
-    if (dynamic_scaling)
+    double scale_21;
+    if (scale_21_gui <= 0.0)
     {
       scale_21 = input(2);
-      offset_21 = input(3) * 1000.0;
     }
-    else
+    if (dynamic_offset_21)
     {
-      scale_21 = scale_21_gui;
-      offset_21 = offset_21_gui;
+      offset_21 = input(3) * 1000.0;
     }
 
     if (scale_21 == 0.0)
@@ -268,16 +267,14 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   double v1_scaled;
   if (use_syn_12)
   {
-    double scale_12, offset_12;
-    if (dynamic_scaling)
+    double scale_12;
+    if (scale_12_gui <= 0.0)
     {
       scale_12 = input(4);
-      offset_12 = input(5) * 1000.0;
     }
-    else
+    if (dynamic_offset_12)
     {
-      scale_12 = scale_12_gui;
-      offset_12 = offset_12_gui;
+      offset_12 = input(5) * 1000.0;
     }
 
     if (scale_12 == 0.0)
@@ -297,11 +294,12 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   burst_duration_gui = 1.0;
   last_burst_duration = burst_duration_gui;
 
-  dynamic_scaling = 0u;
+  dynamic_offset_21 = 0u;
+  dynamic_offset_12 = 0u;
   scale_21_gui = 1.0;
-  offset_21_gui = 0.0;
+  offset_21 = 0.0 * 1000.0;
   scale_12_gui = 1.0;
-  offset_12_gui = 0.0;
+  offset_12 = 0.0 * 1000.0;
 
   m_slow_21 = 0.0;
   m_slow_12 = 0.0;
@@ -344,11 +342,13 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
     setParameter("Burst duration (s)", burst_duration_gui);
 
-    setParameter("Dynamic scaling (1/0)", dynamic_scaling);
     setParameter("Scale 2->1", scale_21_gui);
-    setParameter("Offset 2->1", offset_21_gui);
+    setParameter("Offset 2->1", offset_21 / 1000.0);
     setParameter("Scale 1->2", scale_12_gui);
-    setParameter("Offset 1->2", offset_12_gui);
+    setParameter("Offset 1->2", offset_12 / 1000.0);
+
+    setParameter("Dynamic offset 2->1 (1/0)", dynamic_offset_21);
+    setParameter("Dynamic offset 1->2 (1/0)", dynamic_offset_12);
 
     setParameter("E_syn 2->1", params_21.e_syn);
     setParameter("g_fast 2->1", params_21.g_fast);
@@ -386,11 +386,15 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         s_points = 1;
     }
 
-    dynamic_scaling = getParameter("Dynamic scaling (1/0)").toUInt();
     scale_21_gui = getParameter("Scale 2->1").toDouble();
-    offset_21_gui = getParameter("Offset 2->1").toDouble() * 1000.0;
+    dynamic_offset_21 = getParameter("Dynamic offset 2->1 (1/0)").toUInt();
+    if (!dynamic_offset_21)
+      offset_21 = getParameter("Offset 2->1").toDouble() * 1000.0;
+
     scale_12_gui = getParameter("Scale 1->2").toDouble();
-    offset_12_gui = getParameter("Offset 1->2").toDouble() * 1000.0;
+    dynamic_offset_12 = getParameter("Dynamic offset 1->2 (1/0)").toUInt();
+    if (!dynamic_offset_12)
+      offset_12 = getParameter("Offset 1->2").toDouble() * 1000.0;
 
     params_21.e_syn = getParameter("E_syn 2->1").toDouble();
     params_21.g_fast = getParameter("g_fast 2->1").toDouble();

@@ -104,9 +104,10 @@ private:
   double dt;
   double period, freq;
   double burst_duration, burst_duration_gui;
-  double scale_21_gui, offset_21_gui, scale_12_gui, offset_12_gui;
-  unsigned int dynamic_scaling;
+  double scale_21, offset_21, scale_12, offset_12;
+  double scale_21_gui, scale_12_gui;
   unsigned int is_living_1, is_living_2;
+  unsigned int dynamic_offset_21, dynamic_offset_12;
   double s_points;
 
   double evaluation_time;
