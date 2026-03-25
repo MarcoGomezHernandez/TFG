@@ -11,6 +11,9 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
     {
         const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
         const size_t new_synapse_idx = 1 - curr_synapse_idx;
+        m_slow_12[new_synapse_idx] = 0.0;
+        m_slow_21[new_synapse_idx] = 0.0;
+
         params_12[new_synapse_idx].e_syn += 0.0;
         params_12[new_synapse_idx].g_fast += 0.0;
         params_12[new_synapse_idx].s_fast += 0.0;
