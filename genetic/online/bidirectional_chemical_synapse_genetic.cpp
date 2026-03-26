@@ -412,7 +412,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
 
   stop_genetic.store(false, std::memory_order_relaxed);
   RT_storing.store(false, std::memory_order_relaxed);
-  genetic_running.store(false, std::memory_order_relaxed);
+  genetic_running = false;
 
   synapse_idx.store(0, std::memory_order_relaxed);
   generations_completed = 0u;
@@ -461,11 +461,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
     setParameter("Genetic generations completed", generations_completed);
     setParameter("Genetic individuals of the generation completed", individuals_completed);
-    DefaultGUILineEdit *example_edit = parameter["Genetic generations completed"].edit;
-    QPalette palette = example_edit->palette;
-    palette.setBrush(example_edit->foregroundRole(), Qt::darkGray);
-    set_param_read_only("Genetic generations completed", palette, true);
-    set_param_read_only("Genetic individuals of the generation completed", palette, true);
+    parameter["Genetic generations completed"].edit->setReadOnly(true);
+    parameter["Genetic individuals of the generation completed"].edit->setReadOnly(true);
 
     setParameter("Individual evaluation time genetic (s)", evaluation_time);
     setParameter("Individual stabilization time genetic (s)", stabilization_time);
@@ -558,7 +555,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
     }
 
-    if (!genetic_running.load(std::memory_order_acquire))
+    if (!genetic_running)
     {
       evaluation_time = getParameter("Individual evaluation time genetic (s)").toDouble();
       stabilization_time = getParameter("Individual stabilization time genetic (s)").toDouble();
@@ -623,7 +620,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       if (s_points == 0)
         s_points = 1;
 
-      if (genetic_running.load(std::memory_order_relaxed))
+      if (genetic_running)
       {
         stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
       }
@@ -653,7 +650,7 @@ void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
 
 void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
 {
-  if (!genetic_running.load(std::memory_order_relaxed))
+  if (!genetic_running)
   {
     // Lógica para EMPEZAR
     if (genetic_NRT_thread.joinable())
@@ -661,7 +658,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
       genetic_NRT_thread.join();
       stop_genetic.store(false, std::memory_order_relaxed);
     }
-    genetic_running.store(true, std::memory_order_relaxed);
+    genetic_running = true;
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
     size_t curr_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
@@ -679,60 +676,49 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
   set_params_read_only(false);
   gentic_button->setText("Start Genetic");
-  genetic_running.store(false, std::memory_order_release);
+  genetic_running = true;
 }
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
 {
-  DefaultGUILineEdit *example_edit = parameter["Individual evaluation time genetic (s)"].edit;
-  QPalette palette = example_edit->palette;
-  palette.setBrush(example_edit->foregroundRole(), read_only ? Qt::darkGray : QApplication::palette().color(QPalette::WindowText));
+  parameter["Individual evaluation time genetic (s)"].edit->setReadOnly(read_only);
+  parameter["Individual stabilization time genetic (s)"].edit->setReadOnly(read_only);
+  parameter["Genetic num generations"].edit->setReadOnly(read_only);
+  parameter["Genetic population size"].edit->setReadOnly(read_only);
+  parameter["Dynamic min and max 1 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Max 1 (V)"].edit->setReadOnly(read_only);
+  parameter["Min 1 (V)"].edit->setReadOnly(read_only);
 
-  set_param_read_only("Individual evaluation time genetic (s)", palette, read_only);
-  set_param_read_only("Individual stabilization time genetic (s)", palette, read_only);
-  set_param_read_only("Genetic num generations", palette, read_only);
-  set_param_read_only("Genetic population size", palette, read_only);
-  set_param_read_only("Dynamic min and max 1 (1/0)", palette, read_only);
-  set_param_read_only("Max 1 (V)", palette, read_only);
-  set_param_read_only("Min 1 (V)", palette, read_only);
+  parameter["Search phase genetic (1/0)"].edit->setReadOnly(read_only);
+  parameter["Current ranges to achieve are from scale of neuron (1/2)"].edit->setReadOnly(read_only);
+  parameter["Current max to achieve genetic 2->1"].edit->setReadOnly(read_only);
+  parameter["Current min to achieve genetic 2->1"].edit->setReadOnly(read_only);
+  parameter["Current max to achieve genetic 1->2"].edit->setReadOnly(read_only);
+  parameter["Current min to achieve genetic 1->2"].edit->setReadOnly(read_only);
 
-  set_param_read_only("Search phase genetic (1/0)", palette, read_only);
-  set_param_read_only("Current ranges to achieve are from scale of neuron (1/2)", palette, read_only);
-  set_param_read_only("Current max to achieve genetic 2->1", palette, read_only);
-  set_param_read_only("Current min to achieve genetic 2->1", palette, read_only);
-  set_param_read_only("Current max to achieve genetic 1->2", palette, read_only);
-  set_param_read_only("Current min to achieve genetic 1->2", palette, read_only);
+  parameter["E_syn 2->1"].edit->setReadOnly(read_only);
+  parameter["g_fast 2->1"].edit->setReadOnly(read_only);
+  parameter["s_fast 2->1"].edit->setReadOnly(read_only);
+  parameter["V_fast 2->1"].edit->setReadOnly(read_only);
+  parameter["g_slow 2->1"].edit->setReadOnly(read_only);
+  parameter["k1 2->1"].edit->setReadOnly(read_only);
+  parameter["k2 2->1"].edit->setReadOnly(read_only);
+  parameter["s_slow 2->1"].edit->setReadOnly(read_only);
+  parameter["V_slow 2->1"].edit->setReadOnly(read_only);
+  parameter["Use I_fast 2->1 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Use I_slow 2->1 (1/0)"].edit->setReadOnly(read_only);
 
-  set_param_read_only("E_syn 2->1", palette, read_only);
-  set_param_read_only("g_fast 2->1", palette, read_only);
-  set_param_read_only("s_fast 2->1", palette, read_only);
-  set_param_read_only("V_fast 2->1", palette, read_only);
-  set_param_read_only("g_slow 2->1", palette, read_only);
-  set_param_read_only("k1 2->1", palette, read_only);
-  set_param_read_only("k2 2->1", palette, read_only);
-  set_param_read_only("s_slow 2->1", palette, read_only);
-  set_param_read_only("V_slow 2->1", palette, read_only);
-  set_param_read_only("Use I_fast 2->1 (1/0)", palette, read_only);
-  set_param_read_only("Use I_slow 2->1 (1/0)", palette, read_only);
-
-  set_param_read_only("E_syn 1->2", palette, read_only);
-  set_param_read_only("g_fast 1->2", palette, read_only);
-  set_param_read_only("s_fast 1->2", palette, read_only);
-  set_param_read_only("V_fast 1->2", palette, read_only);
-  set_param_read_only("g_slow 1->2", palette, read_only);
-  set_param_read_only("k1 1->2", palette, read_only);
-  set_param_read_only("k2 1->2", palette, read_only);
-  set_param_read_only("s_slow 1->2", palette, read_only);
-  set_param_read_only("V_slow 1->2", palette, read_only);
-  set_param_read_only("Use I_fast 1->2 (1/0)", palette, read_only);
-  set_param_read_only("Use I_slow 1->2 (1/0)", palette, read_only);
-}
-
-void BidirectionalChemicalSynapseGenetic::set_param_read_only(const QString &name, const QPalette &pal, bool read_only)
-{
-  DefaultGUILineEdit *edit = parameter[name].edit;
-  edit->setReadOnly(read_only);
-  edit->setPalette(pal);
+  parameter["E_syn 1->2"].edit->setReadOnly(read_only);
+  parameter["g_fast 1->2"].edit->setReadOnly(read_only);
+  parameter["s_fast 1->2"].edit->setReadOnly(read_only);
+  parameter["V_fast 1->2"].edit->setReadOnly(read_only);
+  parameter["g_slow 1->2"].edit->setReadOnly(read_only);
+  parameter["k1 1->2"].edit->setReadOnly(read_only);
+  parameter["k2 1->2"].edit->setReadOnly(read_only);
+  parameter["s_slow 1->2"].edit->setReadOnly(read_only);
+  parameter["V_slow 1->2"].edit->setReadOnly(read_only);
+  parameter["Use I_fast 1->2 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Use I_slow 1->2 (1/0)"].edit->setReadOnly(read_only);
 }
 
 void BidirectionalChemicalSynapseGenetic::update_params_gui(void)

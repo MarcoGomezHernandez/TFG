@@ -85,7 +85,7 @@ private:
   std::thread genetic_NRT_thread;
   std::atomic<bool> RT_storing;
   std::atomic<bool> stop_genetic;
-  std::atomic<bool> genetic_running;
+  bool genetic_running;
   std::atomic<size_t> synapse_idx;
   std::atomic<size_t> scaling_factors_21_idx;
   std::atomic<size_t> scaling_factors_12_idx;
@@ -118,7 +118,6 @@ private:
   void NRT_genetic(double thread_freq, double scale_21_t, double offset_21_t, double scale_12_t, double offset_12_t, unsigned int i_ranges_from_neuron_t, double i_max_21_t, double i_min_21_t, double i_max_12_t, double i_min_12_t, double max_1_t, double min_1_t);
 
   void set_params_read_only(bool read_only);
-  void set_param_read_only(const QString &name, const QPalette &pal, bool read_only);
 
 private slots:
   void toggle_genetic_event(void);
