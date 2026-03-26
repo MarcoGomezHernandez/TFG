@@ -29,32 +29,32 @@ createRTXIPlugin(void)
 }
 
 static DefaultGUIModel::variable_t vars[] = {
+    // Genetic parameters
     {"Individual evaluation time genetic (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Individual stabilization time genetic (s)", "Stabilization time for each individual; not included in Individual evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Burst duration (s)", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Search phase genetic (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Current ranges to achieve are from scale of neuron (1/2)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Current max to achieve genetic 2->1", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min to achieve genetic 2->1", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current max to achieve genetic 1->2", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min to achieve genetic 1->2", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    {"Scale 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Offset 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Offset 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic offsets (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-
-    {"Dynamic min and max 1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Max 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Min 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-
-    // Config 2 -> 1
-    {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"k1 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"k2 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    // Use fast/slow currents
+    {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+
+    // Dynamic, Offsets, Scales, Min/Max
+    {"Dynamic offsets (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Dynamic min and max 1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Offset 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Offset 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Scale 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Max 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Min 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Burst duration (s)", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Config 1 -> 2
     {"E_syn 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -66,15 +66,17 @@ static DefaultGUIModel::variable_t vars[] = {
     {"k2 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"V_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
-    {"Search phase genetic (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Current ranges to achieve are from scale of neuron (1/2)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Current max to achieve genetic 2->1", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current min to achieve genetic 2->1", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current max to achieve genetic 1->2", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current min to achieve genetic 1->2", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    // Config 2 -> 1
+    {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"k1 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"k2 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
     {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
