@@ -452,6 +452,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   switch (flag)
   {
   case INIT:
+  {
     period = RT::System::getInstance()->getPeriod() * 1e-9; // s
     freq = 1.0 / period;
     s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
@@ -498,7 +499,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
 
     break;
-
+  }
   case MODIFY:
   {
     burst_duration_gui = getParameter("Burst duration (s)").toDouble();
