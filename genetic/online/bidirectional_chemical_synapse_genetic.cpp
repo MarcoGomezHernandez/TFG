@@ -674,7 +674,7 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
   set_params_read_only(false);
   gentic_button->setText("Start Genetic");
-  genetic_running = true;
+  genetic_running = false;
 }
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
