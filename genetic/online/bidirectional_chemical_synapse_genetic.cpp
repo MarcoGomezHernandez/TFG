@@ -257,6 +257,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   size_t curr_scaling_factors_idx, new_scaling_factors_idx;
   double curr_scale, curr_offset;
 
+  const bool aux_RT_storing = RT_storing.load(std::memory_order_acquire);
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
 
   double v2_scaled;
@@ -327,7 +328,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       val_i_fast_12 = compute_i_fast(v1_scaled, v2, curr_params_12);
   }
 
-  if (RT_storing.load(std::memory_order_acquire))
+  if (aux_RT_storing)
   {
     if (storing_idx < num_elements)
     {
