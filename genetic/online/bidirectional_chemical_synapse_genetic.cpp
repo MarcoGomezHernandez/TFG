@@ -518,7 +518,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
     }
 
-    if (!genetic_running.load(std::memory_order_acquire))
+    if (std::unique_lock<std::mutex> lock(params_modification_mutex, std::try_to_lock); lock.owns_lock())
     {
       evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
       stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
@@ -629,7 +629,7 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
   set_params_read_only(false);
   gentic_button->setText("Start Genetic");
-  genetic_running.store(false, std::memory_order_release);
+  genetic_running.store(false, std::memory_order_relaxed);
 }
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)

@@ -4,6 +4,8 @@
 
 void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double scale_21_thread, double offset_21_thread, double scale_12_thread, double offset_12_thread)
 {
+    std::lock_guard<std::mutex> lock(params_modification_mutex);
+
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
 
