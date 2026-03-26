@@ -30,8 +30,8 @@ createRTXIPlugin(void)
 
 static DefaultGUIModel::variable_t vars[] = {
     // Genetic parameters
-    {"Genetic generations completed", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic individuals of the generation completed", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Genetic generations completed", "", DefaultGUIModel::STATE},
+    {"Genetic individuals of the generation completed", "", DefaultGUIModel::STATE},
     {"Genetic num generations", "Number of generations for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Genetic population size", "Population size for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Individual evaluation time genetic (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -459,10 +459,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     if (s_points == 0)
       s_points = 1;
 
-    setParameter("Genetic generations completed", generations_completed);
-    setParameter("Genetic individuals of the generation completed", individuals_completed);
-    parameter["Genetic generations completed"].edit->setReadOnly(true);
-    parameter["Genetic individuals of the generation completed"].edit->setReadOnly(true);
+    setState("Genetic generations completed", generations_completed);
+    setState("Genetic individuals of the generation completed", individuals_completed);
 
     setParameter("Individual evaluation time genetic (s)", evaluation_time);
     setParameter("Individual stabilization time genetic (s)", stabilization_time);
@@ -744,4 +742,14 @@ void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
   setParameter("k2 1->2", params_12[curr_synapse_idx].k2);
   setParameter("s_slow 1->2", params_12[curr_synapse_idx].s_slow);
   setParameter("V_slow 1->2", params_12[curr_synapse_idx].v_slow);
+}
+
+void BidirectionalChemicalSynapseGenetic::set_generations_completed(size_t generations)
+{
+  generations_completed = generations;
+}
+
+void BidirectionalChemicalSynapseGenetic::set_individuals_completed(size_t individuals)
+{
+  individuals_completed = individuals;
 }

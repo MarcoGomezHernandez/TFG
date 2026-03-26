@@ -78,8 +78,8 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
             std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
         }
 
-        setParameter("Genetic generations completed", ++generations_completed);
-        setParameter("Genetic individuals of the generation completed", ++individuals_completed);
+        QMetaObject::invokeMethod(this, "set_generations_completed", Qt::QueuedConnection, Q_ARG(size_t, generations_completed + 1));
+        QMetaObject::invokeMethod(this, "set_individuals_completed", Qt::QueuedConnection, Q_ARG(size_t, individuals_completed + 1));
 
         const size_t act_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_acquire);
         std::cout << "Final scale 21: " << scale_21[act_scaling_factors_21_idx] << ", offset 21: " << offset_21[act_scaling_factors_21_idx] << "\n";
