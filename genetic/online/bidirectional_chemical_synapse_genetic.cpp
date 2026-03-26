@@ -458,6 +458,14 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     if (s_points == 0)
       s_points = 1;
 
+    setParameter("Genetic generations completed", generations_completed);
+    setParameter("Genetic individuals of the generation completed", individuals_completed);
+    DefaultGUILineEdit *example_edit = parameter["Genetic generations completed"].edit;
+    QPalette palette = example_edit->palette;
+    palette.setBrush(example_edit->foregroundRole(), Qt::darkGray);
+    set_param_read_only("Genetic generations completed", palette, true);
+    set_param_read_only("Genetic individuals of the generation completed", palette, true);
+
     setParameter("Individual evaluation time genetic (s)", evaluation_time);
     setParameter("Individual stabilization time genetic (s)", stabilization_time);
     setParameter("Genetic num generations", num_generations);
@@ -635,12 +643,6 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
 void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
 {
-  DefaultGUILineEdit *example_edit = parameter["Genetic generations completed"].edit;
-  QPalette palette = example_edit->palette;
-  palette.setBrush(example_edit->foregroundRole(), Qt::darkGray);
-  set_param_read_only("Genetic generations completed", palette, true);
-  set_param_read_only("Genetic individuals of the generation completed", palette, true);
-
   QGridLayout *customlayout = DefaultGUIModel::getLayout();
   gentic_button = new QPushButton("Start Genetic");
   QObject::connect(gentic_button, SIGNAL(clicked()), this, SLOT(toggle_genetic_event()));
