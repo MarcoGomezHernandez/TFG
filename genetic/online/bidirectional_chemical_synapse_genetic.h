@@ -83,7 +83,6 @@ private:
   std::atomic<size_t> synapse_idx;
   std::atomic<size_t> scaling_factors_21_idx;
   std::atomic<size_t> scaling_factors_12_idx;
-  std::mutex params_modification_mutex;
   size_t storing_idx;
   size_t num_elements;
 

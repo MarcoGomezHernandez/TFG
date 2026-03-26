@@ -93,8 +93,8 @@ BidirectionalChemicalSynapseGenetic::BidirectionalChemicalSynapseGenetic(void)
 {
   setWhatsThis("<p><b>RTHybrid Bidirectional Chemical Synapse Genetic</b></p>");
   DefaultGUIModel::createGUI(vars, num_vars);
-  customizeGUI();
   initParameters();
+  customizeGUI();
   update(INIT);
   refresh();
   QTimer::singleShot(0, this, SLOT(resizeMe()));
@@ -518,7 +518,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
     }
 
-    if (std::unique_lock<std::mutex> lock(params_modification_mutex, std::try_to_lock); lock.owns_lock())
+    if (!genetic_running.load(std::memory_order_acquire))
     {
       evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
       stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
@@ -529,7 +529,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       current_max = getParameter("Current max to achieve genetic").toDouble();
       current_min = getParameter("Current min to achieve genetic").toDouble();
 
-      const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+      const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
 
       params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1").toDouble();
       params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1").toDouble();
@@ -629,7 +629,7 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
   set_params_read_only(false);
   gentic_button->setText("Start Genetic");
-  genetic_running.store(false, std::memory_order_relaxed);
+  genetic_running.store(false, std::memory_order_release);
 }
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
@@ -681,7 +681,7 @@ void BidirectionalChemicalSynapseGenetic::set_param_read_only(const QString &nam
 
 void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
 {
-  const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+  const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
 
   setParameter("E_syn 2->1", params_21[curr_synapse_idx].e_syn);
   setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
