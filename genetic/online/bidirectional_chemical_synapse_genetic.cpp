@@ -30,6 +30,10 @@ createRTXIPlugin(void)
 
 static DefaultGUIModel::variable_t vars[] = {
     // Genetic parameters
+    {"Genetic generations completed", "", DefaultGUIModel::STATE},
+    {"Genetic individuals of the generation completed", "", DefaultGUIModel::STATE},
+    {"Genetic num generations", "Number of generations for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Genetic population size", "Population size for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Individual evaluation time genetic (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Individual stabilization time genetic (s)", "Stabilization time for each individual; not included in Individual evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Search phase genetic (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -379,6 +383,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
 {
   evaluation_time = 10.0;
   stabilization_time = 1.0;
+  num_generations = 30u;
+  population_size = 30u;
 
   search_phase = 1u;
   i_max_21 = 10.0;
@@ -409,6 +415,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   genetic_running.store(false, std::memory_order_relaxed);
 
   synapse_idx.store(0, std::memory_order_relaxed);
+  generations_completed.store(0, std::memory_order_relaxed);
+  individuals_completed.store(0, std::memory_order_relaxed);
   scaling_factors_21_idx.store(0, std::memory_order_relaxed);
   scaling_factors_12_idx.store(0, std::memory_order_relaxed);
 
@@ -452,6 +460,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
     setParameter("Individual evaluation time genetic (s)", evaluation_time);
     setParameter("Individual stabilization time genetic (s)", stabilization_time);
+    setParameter("Genetic num generations", num_generations);
+    setParameter("Genetic population size", population_size);
     setParameter("Burst duration (s)", burst_duration_gui);
 
     setParameter("Search phase genetic (1/0)", search_phase);
@@ -543,6 +553,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     {
       evaluation_time = getParameter("Individual evaluation time genetic (s)").toDouble();
       stabilization_time = getParameter("Individual stabilization time genetic (s)").toDouble();
+      num_generations = getParameter("Genetic num generations").toUInt();
+      population_size = getParameter("Genetic population size").toUInt();
 
       dynamic_min_max_1 = getParameter("Dynamic min and max 1 (1/0)").toUInt();
       if (!dynamic_min_max_1)
@@ -669,6 +681,8 @@ void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
 
   set_param_read_only("Individual evaluation time genetic (s)", palette, read_only);
   set_param_read_only("Individual stabilization time genetic (s)", palette, read_only);
+  set_param_read_only("Genetic num generations", palette, read_only);
+  set_param_read_only("Genetic population size", palette, read_only);
   set_param_read_only("Dynamic min and max 1 (1/0)", palette, read_only);
   set_param_read_only("Max 1 (V)", palette, read_only);
   set_param_read_only("Min 1 (V)", palette, read_only);
