@@ -74,8 +74,8 @@ private:
 
   double evaluation_time;
   double stabilization_time;
-  unsigned int num_generations;
-  unsigned int population_size;
+  unsigned int num_generations, generations_completed;
+  unsigned int population_size, individuals_completed;
   unsigned int search_phase;
   unsigned int i_ranges_from_neuron;
   double i_max_21;
@@ -86,8 +86,6 @@ private:
   std::atomic<bool> RT_storing;
   std::atomic<bool> stop_genetic;
   std::atomic<bool> genetic_running;
-  std::atomic<size_t> generations_completed;
-  std::atomic<size_t> individuals_completed;
   std::atomic<size_t> synapse_idx;
   std::atomic<size_t> scaling_factors_21_idx;
   std::atomic<size_t> scaling_factors_12_idx;

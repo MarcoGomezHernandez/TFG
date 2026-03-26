@@ -30,8 +30,8 @@ createRTXIPlugin(void)
 
 static DefaultGUIModel::variable_t vars[] = {
     // Genetic parameters
-    {"Genetic generations completed", "", DefaultGUIModel::STATE},
-    {"Genetic individuals of the generation completed", "", DefaultGUIModel::STATE},
+    {"Genetic generations completed", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Genetic individuals of the generation completed", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Genetic num generations", "Number of generations for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Genetic population size", "Population size for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Individual evaluation time genetic (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -415,8 +415,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   genetic_running.store(false, std::memory_order_relaxed);
 
   synapse_idx.store(0, std::memory_order_relaxed);
-  generations_completed.store(0, std::memory_order_relaxed);
-  individuals_completed.store(0, std::memory_order_relaxed);
+  generations_completed = 0u;
+  individuals_completed = 0u;
   scaling_factors_21_idx.store(0, std::memory_order_relaxed);
   scaling_factors_12_idx.store(0, std::memory_order_relaxed);
 
@@ -635,6 +635,12 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
 void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
 {
+  DefaultGUILineEdit *example_edit = parameter["Genetic generations completed"].edit;
+  QPalette palette = example_edit->palette;
+  palette.setBrush(example_edit->foregroundRole(), read_only ? Qt::darkGray : QApplication::palette().color(QPalette::WindowText));
+  set_param_read_only("Genetic generations completed", palette, true);
+  set_param_read_only("Genetic individuals of the generation completed", palette, true);
+
   QGridLayout *customlayout = DefaultGUIModel::getLayout();
   gentic_button = new QPushButton("Start Genetic");
   QObject::connect(gentic_button, SIGNAL(clicked()), this, SLOT(toggle_genetic_event()));
