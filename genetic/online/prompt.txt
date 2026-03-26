@@ -1,15 +1,5 @@
-Quiero que me hagas en la carpeta online dos ficheros fitness  (.cpp o .tpp; y .hpp) como los que te he pasado de la carpea offline (mismo nombre), pero ahora no habrá opción de calcular parte de las cosas del fitness de manera offline, sino que tanto vpre como lo demás se calculará todo lo necesario en fitness_from_sigs.
+Quiero que de el fitness unidireccional y offline que te doy, me hagas una version que servirá para online y bidireccional. De momento no quiero que hagas la funcion void calc_fitnesses, sino solo la de fitness_from_sigs y las demás. El score final será la media de los scores de ambas direcciones.
 
-Además, ahora será bidireccional/simétrico, de forma que el fitness incluirá tanto en un sentido como en el otro (la media de ambos); y recibirá v1_sig, v2_sig, syn1_sig y syn2_sig, y un struct con los datos extra (constantes entre generaciones). Estos datos extra incluyen ifast e islow pero en un sentido y en otro; fase y antifase (universal); ahora en vez de pasar los puntos por burst se pasará directamente en este struct la frecuencia de sampling (fs); y además, las siguientes cosas que antes eran constantes, ya no lo serán y se pasarán como args también en el struct:
-    static constexpr double I_RANGE_EXPECTED_MIN_PHASE = 0.2;
-    static constexpr double I_RANGE_EXPECTED_MAX_PHASE = 0.8;
+Ahora los individuos serán variation_params_12, variation_params_21 (del tipo ChemicalSynapsisVariationParams), scale_12, offset_12 y fitness.
 
-    static constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = -1.4;
-    static constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = -0.4;
-
-    static constexpr double FILTER_FC = 24.76;
-En el caso específico de i_range_expected_min phase y max, se pasarán un sólo min y max por cada sinapsis (el usuario de fuera es el que debe pasarnos el de la fase o a antifase, esta funcion se despreocupa).
-
-Usa las mismas estructurras, funciones, código... que se usa aquí, cambiando lo mínimo posible (nombres de variables y structs, estructura del código...); aunque ahora es posible que se necesiten más buffers para no inicializar arrays que antes se inicializaban una vez en calc_const_fitness_vals. Sin embargo, cambia todo lo que sea conveniente dado el contexto.
-
-Añade los buffers, interfaz, y todo lo que necesites al fichero fitness.hpp.
+Los argumentos de fitness_from_sigs serán i_expected_min_1,i_expected_max_1 (que ahora no serán ctes, y solo van en la escala de la neurona 1, calculando el rango esperado en base a los factores)

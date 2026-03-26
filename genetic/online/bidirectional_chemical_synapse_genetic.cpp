@@ -29,19 +29,19 @@ createRTXIPlugin(void)
 }
 
 static DefaultGUIModel::variable_t vars[] = {
-    {"Individual evaluation time (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Individual stabilization time (s)", "Stabilization time for each individual; not included in Individual evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Individual evaluation time genetic (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Individual stabilization time genetic (s)", "Stabilization time for each individual; not included in Individual evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Burst duration (s)", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Scale 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Offset 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Scale 1->2", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Offset 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic offset 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Dynamic offset 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Dynamic offsets (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
-    {"Neur 1 is living (1/0)", "Indicates if neuron 1 is alive (1) or Hindmarsh–Rose model (0)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Neur 2 is living (1/0)", "Indicates if neuron 2 is alive (1) or Hindmarsh–Rose model (0)", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Dynamic min and max 1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Max 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Min 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Config 2 -> 1
     {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -70,8 +70,11 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     {"Search phase genetic (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Current max to achieve genetic", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current min to achieve genetic", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current ranges to achieve are from scale of neuron (1/2)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Current max to achieve genetic 2->1", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min to achieve genetic 2->1", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current max to achieve genetic 1->2", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min to achieve genetic 1->2", "Both directions are in the same scale", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
     {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
@@ -84,6 +87,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Offset 1->2", "Dynamic amplitude offset 1->2", DefaultGUIModel::INPUT},
     {"Burst duration 1 (s)", "Dynamic burst duration 1", DefaultGUIModel::INPUT},
     {"Burst duration 2 (s)", "Dynamic burst duration 2", DefaultGUIModel::INPUT},
+    {"Max 1 (V)", "Dynamic max 1", DefaultGUIModel::INPUT},
+    {"Min 1 (V)", "Dynamic min 1", DefaultGUIModel::INPUT},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
@@ -230,6 +235,12 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   double val_i_slow_21 = 0.0, val_i_fast_21 = 0.0;
   double val_i_slow_12 = 0.0, val_i_fast_12 = 0.0;
 
+  if (dynamic_min_max_1)
+  {
+    max_1 = input(8);
+    min_1 = input(9);
+  }
+
   if (burst_duration_gui <= 0.0)
   {
     const double burst_duration_1 = input(6);
@@ -279,7 +290,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       if (new_scale == 0.0)
         new_scale = 1.0;
     }
-    if (dynamic_offset_21)
+    if (dynamic_offsets)
       new_offset = input(3) * 1000.0;
 
     if (new_scale != curr_scale || new_offset != curr_offset)
@@ -313,8 +324,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       if (new_scale == 0.0)
         new_scale = 1.0;
     }
-    if (dynamic_offset_12)
-      new_offset = input(3) * 1000.0;
+    if (dynamic_offsets)
+      new_offset = input(5) * 1000.0;
 
     if (new_scale != curr_scale || new_offset != curr_offset)
       scaling_factors_12_idx.store(new_scaling_factors_idx, std::memory_order_release);
@@ -368,16 +379,19 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   stabilization_time = 1.0;
 
   search_phase = 1u;
-  current_max = 10.0;
-  current_min = -10.0;
+  i_max_21 = 10.0;
+  i_min_21 = -10.0;
+  i_max_12 = 10.0;
+  i_min_12 = -10.0;
+  i_ranges_from_neuron = 1u;
 
   burst_duration_gui = 1.0;
   burst_duration = burst_duration_gui;
 
-  is_living_1 = 0u;
-  is_living_2 = 0u;
-  dynamic_offset_21 = 0u;
-  dynamic_offset_12 = 0u;
+  max_1 = 0.0;
+  min_1 = 0.0;
+  dynamic_min_max_1 = 0u;
+  dynamic_offsets = 0u;
   scale_21_gui = 1.0;
   scale_21[0] = scale_21_gui;
   offset_21[0] = 0.0 * 1000.0;
@@ -434,23 +448,27 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     if (s_points == 0)
       s_points = 1;
 
-    setParameter("Individual evaluation time (s)", evaluation_time);
-    setParameter("Individual stabilization time (s)", stabilization_time);
+    setParameter("Individual evaluation time genetic (s)", evaluation_time);
+    setParameter("Individual stabilization time genetic (s)", stabilization_time);
     setParameter("Burst duration (s)", burst_duration_gui);
 
     setParameter("Search phase genetic (1/0)", search_phase);
-    setParameter("Current max to achieve genetic", current_max);
-    setParameter("Current min to achieve genetic", current_min);
+    setParameter("Current ranges to achieve are from scale of neuron (1/2)", i_ranges_from_neuron);
+    setParameter("Current max to achieve genetic 2->1", i_max_21);
+    setParameter("Current min to achieve genetic 2->1", i_min_21);
+    setParameter("Current max to achieve genetic 1->2", i_max_12);
+    setParameter("Current min to achieve genetic 1->2", i_min_12);
 
-    setParameter("Neur 1 is living (1/0)", is_living_1);
-    setParameter("Neur 2 is living (1/0)", is_living_2);
+    setParameter("Dynamic min and max 1 (1/0)", dynamic_min_max_1);
+    setParameter("Max 1 (V)", max_1);
+    setParameter("Min 1 (V)", min_1);
+
     setParameter("Scale 2->1", scale_21_gui);
     setParameter("Offset 2->1", offset_21[scaling_factors_21_idx.load(std::memory_order_relaxed)] / 1000.0);
     setParameter("Scale 1->2", scale_12_gui);
     setParameter("Offset 1->2", offset_12[scaling_factors_12_idx.load(std::memory_order_relaxed)] / 1000.0);
 
-    setParameter("Dynamic offset 2->1 (1/0)", dynamic_offset_21);
-    setParameter("Dynamic offset 1->2 (1/0)", dynamic_offset_12);
+    setParameter("Dynamic offsets (1/0)", dynamic_offsets);
 
     update_params_gui();
 
@@ -475,8 +493,9 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     size_t curr_scaling_factors_idx, new_scaling_factors_idx;
     double curr_scale, curr_offset;
 
+    dynamic_offsets = getParameter("Dynamic offsets (1/0)").toUInt();
+
     scale_21_gui = getParameter("Scale 2->1").toDouble();
-    dynamic_offset_21 = getParameter("Dynamic offset 2->1 (1/0)").toUInt();
     curr_scaling_factors_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
     new_scaling_factors_idx = 1 - curr_scaling_factors_idx;
     curr_scale = scale_21[curr_scaling_factors_idx];
@@ -490,7 +509,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
       if (scale_21_gui > 0.0)
         new_scale = scale_21_gui;
-      if (!dynamic_offset_21)
+      if (!dynamic_offsets)
         new_offset = getParameter("Offset 2->1").toDouble() * 1000.0;
 
       if (new_scale != curr_scale || new_offset != curr_offset)
@@ -498,7 +517,6 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     }
 
     scale_12_gui = getParameter("Scale 1->2").toDouble();
-    dynamic_offset_12 = getParameter("Dynamic offset 1->2 (1/0)").toUInt();
     curr_scaling_factors_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
     new_scaling_factors_idx = 1 - curr_scaling_factors_idx;
     curr_scale = scale_12[curr_scaling_factors_idx];
@@ -512,7 +530,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
       if (scale_12_gui > 0.0)
         new_scale = scale_12_gui;
-      if (!dynamic_offset_12)
+      if (!dynamic_offsets)
         new_offset = getParameter("Offset 1->2").toDouble() * 1000.0;
 
       if (new_scale != curr_scale || new_offset != curr_offset)
@@ -521,14 +539,22 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
     if (!genetic_running.load(std::memory_order_acquire))
     {
-      evaluation_time = getParameter("Individual evaluation time (s)").toDouble();
-      stabilization_time = getParameter("Individual stabilization time (s)").toDouble();
-      is_living_1 = getParameter("Neur 1 is living (1/0)").toUInt();
-      is_living_2 = getParameter("Neur 2 is living (1/0)").toUInt();
+      evaluation_time = getParameter("Individual evaluation time genetic (s)").toDouble();
+      stabilization_time = getParameter("Individual stabilization time genetic (s)").toDouble();
+
+      dynamic_min_max_1 = getParameter("Dynamic min and max 1 (1/0)").toUInt();
+      if (!dynamic_min_max_1)
+      {
+        max_1 = getParameter("Max 1 (V)").toDouble();
+        min_1 = getParameter("Min 1 (V)").toDouble();
+      }
 
       search_phase = getParameter("Search phase genetic (1/0)").toUInt();
-      current_max = getParameter("Current max to achieve genetic").toDouble();
-      current_min = getParameter("Current min to achieve genetic").toDouble();
+      i_ranges_from_neuron = getParameter("Current ranges to achieve are from scale of neuron (1/2)").toUInt();
+      i_max_21 = getParameter("Current max to achieve genetic 2->1").toDouble();
+      i_min_21 = getParameter("Current min to achieve genetic 2->1").toDouble();
+      i_max_12 = getParameter("Current max to achieve genetic 1->2").toDouble();
+      i_min_12 = getParameter("Current min to achieve genetic 1->2").toDouble();
 
       const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
 
@@ -617,7 +643,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     set_params_read_only(true);
     size_t curr_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
     size_t curr_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_21[curr_scaling_factors_21_idx], offset_21[curr_scaling_factors_21_idx], scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx]);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_21[curr_scaling_factors_21_idx], offset_21[curr_scaling_factors_21_idx], scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx], i_ranges_from_neuron, i_max_21, i_min_21, i_max_12, i_min_12, max_1, min_1);
   }
   else
   {
@@ -635,18 +661,22 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
 {
-  DefaultGUILineEdit *example_edit = parameter["Individual evaluation time (s)"].edit;
+  DefaultGUILineEdit *example_edit = parameter["Individual evaluation time genetic (s)"].edit;
   QPalette palette = example_edit->palette;
   palette.setBrush(example_edit->foregroundRole(), read_only ? Qt::darkGray : QApplication::palette().color(QPalette::WindowText));
 
-  set_param_read_only("Individual evaluation time (s)", palette, read_only);
-  set_param_read_only("Individual stabilization time (s)", palette, read_only);
-  set_param_read_only("Neur 1 is living (1/0)", palette, read_only);
-  set_param_read_only("Neur 2 is living (1/0)", palette, read_only);
+  set_param_read_only("Individual evaluation time genetic (s)", palette, read_only);
+  set_param_read_only("Individual stabilization time genetic (s)", palette, read_only);
+  set_param_read_only("Dynamic min and max 1 (1/0)", palette, read_only);
+  set_param_read_only("Max 1 (V)", palette, read_only);
+  set_param_read_only("Min 1 (V)", palette, read_only);
 
   set_param_read_only("Search phase genetic (1/0)", palette, read_only);
-  set_param_read_only("Current max to achieve genetic", palette, read_only);
-  set_param_read_only("Current min to achieve genetic", palette, read_only);
+  set_param_read_only("Current ranges to achieve are from scale of neuron (1/2)", palette, read_only);
+  set_param_read_only("Current max to achieve genetic 2->1", palette, read_only);
+  set_param_read_only("Current min to achieve genetic 2->1", palette, read_only);
+  set_param_read_only("Current max to achieve genetic 1->2", palette, read_only);
+  set_param_read_only("Current min to achieve genetic 1->2", palette, read_only);
 
   set_param_read_only("E_syn 2->1", palette, read_only);
   set_param_read_only("g_fast 2->1", palette, read_only);
