@@ -659,9 +659,8 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running = true;
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    size_t curr_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_relaxed);
     size_t curr_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_21[curr_scaling_factors_21_idx], offset_21[curr_scaling_factors_21_idx], scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx], i_ranges_from_neuron, i_max_21, i_min_21, i_max_12, i_min_12, max_1, min_1);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx], max_1, min_1);
   }
   else
   {
