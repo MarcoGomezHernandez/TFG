@@ -123,8 +123,8 @@ private slots:
   void toggle_genetic_event(void);
   void stop_genetic_event_async(void);
   void update_params_gui(void);
-  void set_generations_completed(size_t generations);
-  void set_individuals_completed(size_t individuals);
+  void set_generations_completed(double generations);
+  void set_individuals_completed(double individuals);
 };
 
 #endif
