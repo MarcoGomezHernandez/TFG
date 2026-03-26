@@ -415,8 +415,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   genetic_running = false;
 
   synapse_idx.store(0, std::memory_order_relaxed);
-  generations_completed = 0u;
-  individuals_completed = 0u;
+  generations_completed = 0.0;
+  individuals_completed = 0.0;
   scaling_factors_21_idx.store(0, std::memory_order_relaxed);
   scaling_factors_12_idx.store(0, std::memory_order_relaxed);
 
@@ -744,12 +744,12 @@ void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
   setParameter("V_slow 1->2", params_12[curr_synapse_idx].v_slow);
 }
 
-void BidirectionalChemicalSynapseGenetic::set_generations_completed(size_t generations)
+void BidirectionalChemicalSynapseGenetic::set_generations_completed(double generations)
 {
   generations_completed = generations;
 }
 
-void BidirectionalChemicalSynapseGenetic::set_individuals_completed(size_t individuals)
+void BidirectionalChemicalSynapseGenetic::set_individuals_completed(double individuals)
 {
   individuals_completed = individuals;
 }

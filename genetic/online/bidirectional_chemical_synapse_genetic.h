@@ -74,8 +74,8 @@ private:
 
   double evaluation_time;
   double stabilization_time;
-  unsigned int num_generations, generations_completed;
-  unsigned int population_size, individuals_completed;
+  unsigned int num_generations, population_size;
+  double generations_completed, individuals_completed;
   unsigned int search_phase;
   unsigned int i_ranges_from_neuron;
   double i_max_21;
