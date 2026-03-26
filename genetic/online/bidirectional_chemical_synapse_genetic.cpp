@@ -637,7 +637,7 @@ void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
 {
   DefaultGUILineEdit *example_edit = parameter["Genetic generations completed"].edit;
   QPalette palette = example_edit->palette;
-  palette.setBrush(example_edit->foregroundRole(), read_only ? Qt::darkGray : QApplication::palette().color(QPalette::WindowText));
+  palette.setBrush(example_edit->foregroundRole(), Qt::darkGray);
   set_param_read_only("Genetic generations completed", palette, true);
   set_param_read_only("Genetic individuals of the generation completed", palette, true);
 
