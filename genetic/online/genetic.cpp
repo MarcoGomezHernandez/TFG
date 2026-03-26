@@ -14,25 +14,25 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
         m_slow_12[new_synapse_idx] = 0.0;
         m_slow_21[new_synapse_idx] = 0.0;
 
-        params_12[new_synapse_idx].e_syn = 0.0;
-        params_12[new_synapse_idx].g_fast = 0.0;
-        params_12[new_synapse_idx].s_fast = 0.0;
-        params_12[new_synapse_idx].v_fast = 0.0;
-        params_12[new_synapse_idx].g_slow = 0.0;
-        params_12[new_synapse_idx].k1 = 0.0;
-        params_12[new_synapse_idx].k2 = 0.0;
-        params_12[new_synapse_idx].s_slow = 0.0;
-        params_12[new_synapse_idx].v_slow = 0.0;
+        params_12[new_synapse_idx].e_syn += 0.1;
+        params_12[new_synapse_idx].g_fast += 0.1;
+        params_12[new_synapse_idx].s_fast += 0.1;
+        params_12[new_synapse_idx].v_fast += 0.1;
+        params_12[new_synapse_idx].g_slow += 0.1;
+        params_12[new_synapse_idx].k1 += 0.1;
+        params_12[new_synapse_idx].k2 += 0.1;
+        params_12[new_synapse_idx].s_slow += 0.1;
+        params_12[new_synapse_idx].v_slow += 0.1;
 
-        params_21[new_synapse_idx].e_syn = 0.0;
-        params_21[new_synapse_idx].g_fast = 0.0;
-        params_21[new_synapse_idx].s_fast = 0.0;
-        params_21[new_synapse_idx].v_fast = 0.0;
-        params_21[new_synapse_idx].g_slow = 0.0;
-        params_21[new_synapse_idx].k1 = 0.0;
-        params_21[new_synapse_idx].k2 = 0.0;
-        params_21[new_synapse_idx].s_slow = 0.0;
-        params_21[new_synapse_idx].v_slow = 0.0;
+        params_21[new_synapse_idx].e_syn += 0.1;
+        params_21[new_synapse_idx].g_fast += 0.1;
+        params_21[new_synapse_idx].s_fast += 0.1;
+        params_21[new_synapse_idx].v_fast += 0.1;
+        params_21[new_synapse_idx].g_slow += 0.1;
+        params_21[new_synapse_idx].k1 += 0.1;
+        params_21[new_synapse_idx].k2 += 0.1;
+        params_21[new_synapse_idx].s_slow += 0.1;
+        params_21[new_synapse_idx].v_slow += 0.1;
         synapse_idx.store(new_synapse_idx, std::memory_order_release);
 
         QMetaObject::invokeMethod(this, "update_params_gui", Qt::QueuedConnection);
