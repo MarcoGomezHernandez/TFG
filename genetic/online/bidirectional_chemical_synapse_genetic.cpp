@@ -171,9 +171,6 @@ double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double 
 
 void BidirectionalChemicalSynapseGenetic::execute(void)
 {
-  const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
-  const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
-
   if (!genetic_running)
   {
     if (dynamic_v_min_max_1)
@@ -188,6 +185,9 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       v_min_2 = input(5);
     }
   }
+
+  const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
+  const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
 
   double v1, v2;
   if (use_syn_12 || use_syn_21)
