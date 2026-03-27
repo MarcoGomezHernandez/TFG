@@ -63,14 +63,12 @@ private:
   ChemicalSynapseParams params_12[2];
   unsigned int use_i_fast_21, use_i_slow_21, use_i_fast_12, use_i_slow_12;
   double dt;
-  double period, freq;
-  double burst_duration, burst_duration_gui;
+  double period;
   double scale_21[2], offset_21[2], scale_12[2], offset_12[2];
   double scale_21_gui, scale_12_gui;
   unsigned int dynamic_offsets;
   unsigned int dynamic_min_max_1;
   double max_1, min_1;
-  double s_points;
 
   double evaluation_time;
   double stabilization_time;
@@ -107,9 +105,6 @@ private:
 
   double compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params);
   double compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params);
-
-  void select_dt_neuron_model(const double *dts, const double *pts, size_t length, double pts_live, double *dt, double *pts_burst);
-  double set_pts_burst(double sec_per_burst);
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 

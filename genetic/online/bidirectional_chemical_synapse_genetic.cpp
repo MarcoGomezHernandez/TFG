@@ -58,7 +58,7 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Scale 2->1", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Max 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Min 1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Burst duration (s)", "-1 to use dynamic input", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"dt", "Integration timestep for synapse model", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Config 1 -> 2
     {"E_syn 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -91,8 +91,6 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Offset 2->1", "Dynamic amplitude offset 2->1", DefaultGUIModel::INPUT},
     {"Scale 1->2", "Dynamic amplitude scale 1->2", DefaultGUIModel::INPUT},
     {"Offset 1->2", "Dynamic amplitude offset 1->2", DefaultGUIModel::INPUT},
-    {"Burst duration 1 (s)", "Dynamic burst duration 1", DefaultGUIModel::INPUT},
-    {"Burst duration 2 (s)", "Dynamic burst duration 2", DefaultGUIModel::INPUT},
     {"Max 1 (V)", "Dynamic max 1", DefaultGUIModel::INPUT},
     {"Min 1 (V)", "Dynamic min 1", DefaultGUIModel::INPUT},
 };
@@ -155,65 +153,6 @@ void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, dou
             k[5] * 0.035714285714285;
 }
 
-void BidirectionalChemicalSynapseGenetic::select_dt_neuron_model(const double *dts, const double *pts, size_t length, double pts_live, double *dt, double *pts_burst)
-{
-  double aux = pts_live;
-  double factor = 1;
-  double intpart, fractpart;
-  unsigned int flag = 0;
-  int i;
-
-  *dt = -1;
-  *pts_burst = -1;
-
-  while (aux < pts[0])
-  {
-    aux = pts_live * factor;
-    factor += 1;
-
-    for (i = length - 1; i >= 0; i--)
-    {
-      if (pts[i] > aux)
-      {
-        *dt = dts[i];
-        *pts_burst = pts[i];
-        fractpart = modf(*pts_burst / pts_live, &intpart);
-        if (fractpart <= 0.1 * intpart)
-          flag = 1;
-        break;
-      }
-    }
-    if (flag == 1)
-      break;
-  }
-
-  if (flag == 0)
-  {
-    for (i = length - 1; i >= 0; i--)
-    {
-      if (pts[i] > aux)
-      {
-        *dt = dts[i];
-        *pts_burst = pts[i];
-        break;
-      }
-    }
-  }
-}
-
-double BidirectionalChemicalSynapseGenetic::set_pts_burst(double sec_per_burst)
-{
-  constexpr size_t length = 144;
-  const double pts_match = sec_per_burst * freq;
-  double pts_burst;
-
-  constexpr double dts[] = {0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200, 0.001300, 0.001400, 0.001500, 0.001600, 0.001800, 0.002000, 0.002200, 0.002500, 0.002800, 0.002900, 0.003000, 0.003100, 0.003200, 0.003300, 0.003400, 0.003500, 0.003600, 0.003700, 0.003800, 0.003900, 0.004000, 0.004100, 0.004200, 0.004300, 0.004400, 0.004500, 0.004600, 0.004700, 0.004800, 0.004900, 0.005000, 0.005100, 0.005200, 0.005400, 0.005600, 0.005800, 0.006000, 0.006200, 0.006400, 0.006600, 0.006800, 0.007000, 0.007200, 0.007400, 0.007700, 0.008000, 0.008300, 0.008600, 0.008900, 0.009200, 0.009600, 0.010000, 0.010400, 0.010900, 0.011400, 0.011900, 0.012500, 0.013100, 0.013800, 0.014600, 0.015400, 0.016300, 0.017300, 0.018500, 0.019900, 0.021500, 0.023300, 0.025500, 0.028100, 0.028400, 0.028700, 0.029000, 0.029400, 0.029800, 0.030200, 0.030600, 0.031000, 0.031400, 0.031800, 0.032200, 0.032600, 0.033000, 0.033400, 0.033900, 0.034400, 0.034900, 0.035400, 0.035900, 0.036400, 0.036900, 0.037400, 0.038000, 0.038600, 0.039200, 0.039800, 0.040400, 0.041000, 0.041700, 0.042400, 0.043100, 0.043800, 0.044500, 0.045300, 0.046100, 0.046900, 0.047700, 0.048600, 0.049500, 0.050400, 0.051400, 0.052400, 0.053400, 0.054500, 0.055600, 0.056800, 0.058000, 0.059300, 0.060600, 0.062000, 0.063400, 0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700, 0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
-  constexpr double pts[] = {577638.000000, 481366.000000, 412599.000000, 357615.500000, 317880.000000, 286092.500000, 259143.333333, 237548.000000, 218869.500000, 203236.000000, 189687.000000, 177634.000000, 157897.000000, 142001.833333, 129024.142857, 113496.125000, 101304.555556, 97811.222222, 94527.400000, 91478.200000, 88619.400000, 85916.636364, 83389.636364, 81007.090909, 78743.583333, 76615.416667, 74599.250000, 72676.000000, 70859.076923, 69130.846154, 67476.642857, 65907.357143, 64402.666667, 62971.466667, 61602.533333, 60286.187500, 59030.250000, 57825.562500, 56664.411765, 55553.294118, 54485.000000, 52463.222222, 50586.263158, 48841.842105, 47211.050000, 45685.666667, 44255.818182, 42914.772727, 41650.739130, 40459.083333, 39335.208333, 38270.680000, 36778.346154, 35398.000000, 34117.571429, 32926.517241, 31815.833333, 30777.612903, 29493.939394, 28313.588235, 27223.638889, 25974.405405, 24834.410256, 23790.268293, 22647.767442, 21609.977778, 20513.166667, 19388.627451, 18381.132075, 17365.719298, 16361.600000, 15299.937500, 14223.202899, 13164.400000, 12147.123457, 11098.876404, 10071.693878, 9965.282828, 9861.100000, 9759.059406, 9626.242718, 9497.009615, 9371.179245, 9248.672897, 9129.293578, 9012.981818, 8899.594595, 8789.000000, 8681.149123, 8575.896552, 8473.170940, 8348.176471, 8226.809917, 8108.934426, 7994.379032, 7883.015873, 7774.710938, 7669.348837, 7566.801527, 7447.308271, 7331.525926, 7219.291971, 7110.435714, 7004.816901, 6902.298611, 6786.417808, 6674.355705, 6565.940397, 6460.987013, 6359.339744, 6247.012579, 6138.592593, 6033.866667, 5932.660714, 5822.777778, 5716.896552, 5614.796610, 5505.541436, 5400.467391, 5299.324468, 5192.348958, 5089.615385, 4982.075000, 4878.985294, 4772.014354, 4669.633803, 4564.178899, 4463.381166, 4360.214912, 4255.294872, 4149.216667, 4048.296748, 3946.654762, 3844.764479, 3743.041353, 3641.872263, 3541.583630, 3438.300000, 3336.926421, 3233.951299, 3133.666667, 3032.899696, 2932.320588, 2829.684659};
-  select_dt_neuron_model(dts, pts, length, pts_match, &dt, &pts_burst);
-
-  return pts_burst;
-}
-
 double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params)
 {
   return ((params.k1 * (1.0 - m_slow)) /
@@ -223,10 +162,7 @@ double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow,
 
 double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
-  for (size_t i = 0; i < s_points; i++)
-  {
-    runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
-  }
+  runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   return params.g_slow * m_slow * (v_post - params.e_syn);
 }
 
@@ -245,20 +181,6 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   {
     max_1 = input(8);
     min_1 = input(9);
-  }
-
-  if (burst_duration_gui <= 0.0)
-  {
-    const double burst_duration_1 = input(6);
-    const double burst_duration_2 = input(7);
-    const double new_burst_duration = (burst_duration_1 == 0.0) ? burst_duration_2 : (burst_duration_2 == 0.0 ? burst_duration_1 : std::min(burst_duration_1, burst_duration_2));
-    if (new_burst_duration != burst_duration)
-    {
-      burst_duration = new_burst_duration;
-      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-      if (s_points < 1)
-        s_points = 1;
-    }
   }
 
   const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
@@ -390,9 +312,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   i_max_12 = 10.0;
   i_min_12 = -10.0;
   i_ranges_from_neuron = 1u;
-
-  burst_duration_gui = 1.0;
-  burst_duration = burst_duration_gui;
+  dt = 0.001;
 
   max_1 = 0.0;
   min_1 = 0.0;
@@ -451,11 +371,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   {
   case INIT:
   {
-    period = RT::System::getInstance()->getPeriod() * 1e-9; // s
-    freq = 1.0 / period;
-    s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-    if (s_points == 0)
-      s_points = 1;
+    period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
 
     setState("Genetic generations completed", generations_completed);
     setState("Genetic individuals of the generation completed", individuals_completed);
@@ -464,7 +380,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Individual stabilization time genetic (s)", stabilization_time);
     setParameter("Genetic num generations", num_generations);
     setParameter("Genetic population size", population_size);
-    setParameter("Burst duration (s)", burst_duration_gui);
+    setParameter("dt", dt);
 
     setParameter("Search phase genetic (1/0)", search_phase);
     setParameter("Current ranges to achieve are from scale of neuron (1/2)", i_ranges_from_neuron);
@@ -495,14 +411,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   }
   case MODIFY:
   {
-    burst_duration_gui = getParameter("Burst duration (s)").toDouble();
-    if ((burst_duration_gui > 0.0) && (burst_duration_gui != burst_duration))
-    {
-      burst_duration = burst_duration_gui;
-      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-      if (s_points < 1)
-        s_points = 1;
-    }
+    dt = getParameter("dt").toDouble();
 
     size_t curr_scaling_factors_idx, new_scaling_factors_idx;
     double curr_scale, curr_offset;
@@ -607,15 +516,10 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
   case PERIOD:
   {
-    const double new_period = RT::System::getInstance()->getPeriod() * 1e-9; // s
+    const double new_period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     if (new_period != period)
     {
       period = new_period;
-      freq = 1.0 / period;
-      s_points = (int)(set_pts_burst(burst_duration) / (burst_duration * freq));
-      if (s_points == 0)
-        s_points = 1;
-
       if (genetic_running)
       {
         stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
@@ -658,7 +562,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
     size_t curr_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_relaxed);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, freq, scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx], max_1, min_1);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, 1.0 / period, scale_12[curr_scaling_factors_12_idx], offset_12[curr_scaling_factors_12_idx], max_1, min_1);
   }
   else
   {
