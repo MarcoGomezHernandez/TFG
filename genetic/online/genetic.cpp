@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 
-void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double scale_12_t, double offset_12_t, double max_1_t, double min_1_t)
+void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double v_max_1_t, double v_min_1_t, double v_max_2_t, double v_min_2_t)
 {
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
@@ -43,11 +43,11 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
             std::this_thread::sleep_for(std::chrono::duration<double>(stabilization_time));
         }
 
-        num_elements = (int)(evaluation_time * thread_freq);
+        num_elements = (int)(evaluation_time / period_t);
 
         if (use_syn_12)
         {
-            v1_scaled_sig.resize(num_elements);
+            v_sig_1.resize(num_elements);
             if (use_i_fast_12)
                 i_fast_sig_12.resize(num_elements);
             if (use_i_slow_12)
@@ -56,7 +56,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
 
         if (use_syn_21)
         {
-            v2_scaled_sig.resize(num_elements);
+            v_sig_2.resize(num_elements);
             if (use_i_fast_21)
                 i_fast_sig_21.resize(num_elements);
             if (use_i_slow_21)
@@ -79,12 +79,6 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
 
         QMetaObject::invokeMethod(this, "set_generations_completed", Qt::QueuedConnection, Q_ARG(double, generations_completed + 1));
         QMetaObject::invokeMethod(this, "set_individuals_completed", Qt::QueuedConnection, Q_ARG(double, individuals_completed + 1));
-
-        const size_t act_scaling_factors_21_idx = scaling_factors_21_idx.load(std::memory_order_acquire);
-        std::cout << "Final scale 21: " << scale_21[act_scaling_factors_21_idx] << ", offset 21: " << offset_21[act_scaling_factors_21_idx] << "\n";
-
-        const size_t act_scaling_factors_12_idx = scaling_factors_12_idx.load(std::memory_order_acquire);
-        std::cout << "Final scale 12: " << scale_12[act_scaling_factors_12_idx] << ", offset 12: " << offset_12[act_scaling_factors_12_idx] << "\n";
 
         auto print_first = [&](const char *name, const univector<double> &v)
         {
