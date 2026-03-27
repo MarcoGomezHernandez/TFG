@@ -1,5 +1,18 @@
-Quiero que de el fitness unidireccional y offline que te doy, me hagas una version que servirá para online y bidireccional. De momento no quiero que hagas la funcion void calc_fitnesses, sino solo la de fitness_from_sigs y las demás. El score final será la media de los scores de ambas direcciones.
+Quiero que de el fitness unidireccional y offline que te doy, me hagas una version que servirá para online (ya no se calcula una señal offline y la otra online sobre las constantes de esta, sino ambas online) y bidireccional. De momento no quiero que hagas la funcion void calc_fitnesses, sino solo la de fitness_from_sigs y las demás. El score final será la media de los scores de ambas direcciones.
 
-Ahora los individuos serán variation_params_12, variation_params_21 (del tipo ChemicalSynapsisVariationParams), scale_12, offset_12 y fitness.
+Ahora los individuos serán variation_params_12, variation_params_21 (del tipo ChemicalSynapsisVariationParams), i_max_21, i_min_21, i_max_12, i_min_12 (ya no son constantes), y fitness. Usa esta notacion de _12 y _21 para diferenciar las direcciones cuando sea necesario.
 
-Los argumentos de fitness_from_sigs serán i_expected_min_1,i_expected_max_1 (que ahora no serán ctes, y solo van en la escala de la neurona 1, calculando el rango esperado en base a los factores)
+Los argumentos de calc_fitness_from_sigs serán el Individuo, fs, search_phase, use_i_fast_12, use i_fast_21, use_i_slow (usa siempre ahora como sintaxis para los params por ejemplo v_slow en vez de Vslow), y buffers, que ahora contendrá los siguientes buffers:
+univector<double> i_fast_sig_12;
+  univector<double> i_fast_sig_21;
+  univector<double> i_slow_12;
+  univector<double> i_slow_21;
+  univector<double> v1_scaled_sig;
+  univector<double> v1_sig;
+  univector<double> v2_scaled_sig;
+  univector<double> v2_sig;
+Mas los auxiliares que se requieran para no crear ni un nuevo univector durante todo el cálculo del fitness, ya que sería costoso. El resto de cosas que no dije, seguiran siendo declaradas como constantes de la misma forma que antes. ES posible que se necesiten más que los que había antes.
+
+Mas alla de lo que te dije, que el código siga haciendo lo mismo y tenga una estructura lo más parecida posible.
+
+Estos son los fitness antiguos@beautifulMention@beautifulMention Debes crear en la carpeta online fitness.cpp (no hacen falta templates ya) y fitness.hpp.
