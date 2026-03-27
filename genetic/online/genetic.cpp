@@ -51,7 +51,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double v_
             if (use_i_fast_12)
                 i_fast_sig_12.resize(num_elements);
             if (use_i_slow_12)
-                i_slow_12.resize(num_elements);
+                i_slow_sig_12.resize(num_elements);
         }
 
         if (use_syn_21)
@@ -60,7 +60,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double v_
             if (use_i_fast_21)
                 i_fast_sig_21.resize(num_elements);
             if (use_i_slow_21)
-                i_slow_21.resize(num_elements);
+                i_slow_sig_21.resize(num_elements);
         }
 
         storing_idx = 0;
@@ -95,22 +95,20 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double v_
 
         if (use_syn_12)
         {
-            print_first("v1_scaled_sig", v1_scaled_sig);
-            print_first("v2_sig", v2_sig);
+            print_first("v_sig_1", v_sig_1);
             if (use_i_fast_12)
                 print_first("i_fast_sig_12", i_fast_sig_12);
             if (use_i_slow_12)
-                print_first("i_slow_12", i_slow_12);
+                print_first("i_slow_sig_12", i_slow_sig_12);
         }
 
         if (use_syn_21)
         {
-            print_first("v2_scaled_sig", v2_scaled_sig);
-            print_first("v1_sig", v1_sig);
+            print_first("v_sig_2", v_sig_2);
             if (use_i_fast_21)
                 print_first("i_fast_sig_21", i_fast_sig_21);
             if (use_i_slow_21)
-                print_first("i_slow_21", i_slow_21);
+                print_first("i_slow_sig_21", i_slow_sig_21);
         }
     }
 
