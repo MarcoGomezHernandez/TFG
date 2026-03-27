@@ -219,8 +219,8 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       val_i_fast_21 = compute_i_fast(v2, v1, curr_params_21);
   }
 
-  output(1) = val_i_fast_12 + val_i_slow_12;
-  output(0) = val_i_fast_21 + val_i_slow_21;
+  output(0) = val_i_fast_12 + val_i_slow_12;
+  output(1) = val_i_fast_21 + val_i_slow_21;
 
   if (aux_RT_storing)
   {
