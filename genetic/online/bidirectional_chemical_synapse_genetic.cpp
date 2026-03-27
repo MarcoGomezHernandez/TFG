@@ -351,7 +351,6 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
     {
       if (use_syn_21)
       {
-        v1_sig[storing_idx] = v1;
         v2_scaled_sig[storing_idx] = v2_scaled;
         if (use_i_fast_21)
           i_fast_sig_21[storing_idx] = val_i_fast_21;
@@ -360,7 +359,6 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
       }
       if (use_syn_12)
       {
-        v2_sig[storing_idx] = v2;
         v1_scaled_sig[storing_idx] = v1_scaled;
         if (use_i_fast_12)
           i_fast_sig_12[storing_idx] = val_i_fast_12;

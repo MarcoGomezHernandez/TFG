@@ -97,9 +97,7 @@ private:
   univector<double> i_slow_12;
   univector<double> i_slow_21;
   univector<double> v1_scaled_sig;
-  univector<double> v1_sig;
   univector<double> v2_scaled_sig;
-  univector<double> v2_sig;
 
   QPushButton *gentic_button;
 

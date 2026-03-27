@@ -48,7 +48,6 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
         if (use_syn_12)
         {
             v1_scaled_sig.resize(num_elements);
-            v2_sig.resize(num_elements);
             if (use_i_fast_12)
                 i_fast_sig_12.resize(num_elements);
             if (use_i_slow_12)
@@ -58,7 +57,6 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double thread_freq, double
         if (use_syn_21)
         {
             v2_scaled_sig.resize(num_elements);
-            v1_sig.resize(num_elements);
             if (use_i_fast_21)
                 i_fast_sig_21.resize(num_elements);
             if (use_i_slow_21)
