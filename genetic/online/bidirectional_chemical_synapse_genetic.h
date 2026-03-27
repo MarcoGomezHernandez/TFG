@@ -109,6 +109,8 @@ private:
 
   void set_params_read_only(bool read_only);
 
+  void init_syn_params_and_vars(ChemicalSynapseParams &params, double &m_slow);
+
 private slots:
   void toggle_genetic_event(void);
   void stop_genetic_event_async(void);
