@@ -177,40 +177,42 @@ static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_
 
     if (use_ifast)
     {
-        const double vpost_ifast_comp_score =
-            pearson_score(buffers.ifast_sig,
-                          const_vpre_sig_fitness_vals.ifast_sig_centered_to_fit,
-                          const_vpre_sig_fitness_vals.ifast_sig_factor_to_fit,
-                          search_phase);
-        vpre_syn_comp_accum += IFAST_WEIGHT * vpost_ifast_comp_score;
-
+        univector<double> &ifast_sig = buffers.ifast_sig;
         const double comp_ifast = calc_range_score_component(
-            minof(buffers.ifast_sig),
-            maxof(buffers.ifast_sig),
+            minof(ifast_sig),
+            maxof(ifast_sig),
             const_vpre_sig_fitness_vals.ifast_sig_min_to_fit,
             const_vpre_sig_fitness_vals.ifast_sig_max_to_fit,
             const_vpre_sig_fitness_vals.ifast_sig_range_to_fit);
         i_range_accum += IFAST_WEIGHT * comp_ifast;
+
+        const double vpost_ifast_comp_score =
+            pearson_score(ifast_sig,
+                          const_vpre_sig_fitness_vals.ifast_sig_centered_to_fit,
+                          const_vpre_sig_fitness_vals.ifast_sig_factor_to_fit,
+                          search_phase);
+        vpre_syn_comp_accum += IFAST_WEIGHT * vpost_ifast_comp_score;
 
         total_weight += IFAST_WEIGHT;
     }
 
     if (use_islow)
     {
-        const double vpost_islow_comp_score =
-            pearson_score(buffers.islow_sig,
-                          const_vpre_sig_fitness_vals.islow_sig_centered_to_fit,
-                          const_vpre_sig_fitness_vals.islow_sig_factor_to_fit,
-                          search_phase);
-        vpre_syn_comp_accum += ISLOW_WEIGHT * vpost_islow_comp_score;
-
+        univector<double> &islow_sig = buffers.islow_sig;
         const double comp_islow = calc_range_score_component(
-            minof(buffers.islow_sig),
-            maxof(buffers.islow_sig),
+            minof(islow_sig),
+            maxof(islow_sig),
             const_vpre_sig_fitness_vals.islow_sig_min_to_fit,
             const_vpre_sig_fitness_vals.islow_sig_max_to_fit,
             const_vpre_sig_fitness_vals.islow_sig_range_to_fit);
         i_range_accum += ISLOW_WEIGHT * comp_islow;
+
+        const double vpost_islow_comp_score =
+            pearson_score(islow_sig,
+                          const_vpre_sig_fitness_vals.islow_sig_centered_to_fit,
+                          const_vpre_sig_fitness_vals.islow_sig_factor_to_fit,
+                          search_phase);
+        vpre_syn_comp_accum += ISLOW_WEIGHT * vpost_islow_comp_score;
 
         total_weight += ISLOW_WEIGHT;
     }
