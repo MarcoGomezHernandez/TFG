@@ -67,7 +67,7 @@ private:
   unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
   double v_max_1, v_min_1, v_max_2, v_min_2;
 
-  double dt, factor;
+  double dt, dt_factor;
 
   unsigned int use_i_fast_12, use_i_slow_12, use_i_fast_21, use_i_slow_21;
 
@@ -105,7 +105,7 @@ private:
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
-  void NRT_genetic(double period_t, double v_max_1_t, double v_min_1_t, double v_max_2_t, double v_min_2_t);
+  void NRT_genetic(double period_t, double dt_factor_t, double v_max_1_t, double v_min_1_t, double v_max_2_t, double v_min_2_t);
 
   void set_params_read_only(bool read_only);
 

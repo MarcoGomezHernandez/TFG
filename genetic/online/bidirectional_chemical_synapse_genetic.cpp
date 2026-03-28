@@ -270,7 +270,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   v_max_2 = 2.0;
   v_min_2 = -2.0;
 
-  factor = 1.0;
+  dt_factor = 1.0;
 
   use_i_fast_12 = 1u;
   use_i_slow_12 = 1u;
@@ -311,7 +311,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   case INIT:
   {
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
-    dt = period * factor;                                   // ms by default
+    dt = period * dt_factor;                                   // ms by default
 
     setState("Genetic generations completed", generations_completed);
     setState("Genetic individuals of the generation completed", individuals_completed);
@@ -333,7 +333,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Voltage max 2", v_max_2);
     setParameter("Voltage min 2", v_min_2);
 
-    setParameter("factor in dt = period (ms) * factor", factor);
+    setParameter("factor in dt = period (ms) * factor", dt_factor);
 
     setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
     setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
@@ -371,11 +371,11 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         v_min_2 = getParameter("Voltage min 2").toDouble();
       }
 
-      double new_factor = getParameter("factor in dt = period (ms) * factor").toDouble();
-      if (new_factor != factor)
+      double new_dt_factor = getParameter("factor in dt = period (ms) * factor").toDouble();
+      if (new_dt_factor != dt_factor)
       {
-        factor = new_factor;
-        dt = period * factor;
+        dt_factor = new_dt_factor;
+        dt = period * dt_factor;
       }
 
       use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
@@ -418,7 +418,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     if (new_period != period)
     {
       period = new_period;
-      dt = period * factor;
+      dt = period * dt_factor;
       if (genetic_running)
       {
         stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
@@ -460,7 +460,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running = true;
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period, v_max_1, v_min_1, v_max_2, v_min_2);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period, dt_factor, v_max_1, v_min_1, v_max_2, v_min_2);
   }
   else
   {

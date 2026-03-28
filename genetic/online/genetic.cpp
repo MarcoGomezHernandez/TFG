@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 
-void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double v_max_1_t, double v_min_1_t, double v_max_2_t, double v_min_2_t)
+void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double dt_factor_t, double v_max_1_t, double v_min_1_t, double v_max_2_t, double v_min_2_t)
 {
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
