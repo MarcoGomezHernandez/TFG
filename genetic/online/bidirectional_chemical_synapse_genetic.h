@@ -67,7 +67,7 @@ private:
   unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
   double v_max_1, v_min_1, v_max_2, v_min_2;
 
-  double step;
+  double dt, factor;
 
   unsigned int use_i_fast_12, use_i_slow_12, use_i_fast_21, use_i_slow_21;
 

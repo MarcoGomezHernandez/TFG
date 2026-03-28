@@ -41,7 +41,7 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t, double v_
             std::this_thread::sleep_for(std::chrono::duration<double>(stabilization_time));
         }
 
-        num_elements = (int)(evaluation_time / period_t);
+        num_elements = (int)(evaluation_time / (period_t * 1e-3));
 
         if (use_syn_12)
         {

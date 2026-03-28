@@ -51,7 +51,7 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Voltage min 2", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Integration timestep
-    {"Step", "Integration timestep for synapse model", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"factor in dt = period (ms) * factor", "Factor for calculating dt form the period; depends on the magnitude of k1 and k2; default: dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Use fast/slow currents
     {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -115,33 +115,33 @@ BidirectionalChemicalSynapseGenetic::~BidirectionalChemicalSynapseGenetic(void)
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double step, const ChemicalSynapseParams &params)
+void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params)
 {
   double apoyo, retorno;
   double k[6];
 
   retorno = (*f)(m_slow, v_pre, params);
-  k[0] = step * retorno;
+  k[0] = dt * retorno;
   apoyo = m_slow + k[0] * 0.2;
 
   retorno = (*f)(apoyo, v_pre, params);
-  k[1] = step * retorno;
+  k[1] = dt * retorno;
   apoyo = m_slow + k[0] * 0.075 + k[1] * 0.225;
 
   retorno = (*f)(apoyo, v_pre, params);
-  k[2] = step * retorno;
+  k[2] = dt * retorno;
   apoyo = m_slow + k[0] * 0.3 - k[1] * 0.9 + k[2] * 1.2;
 
   retorno = (*f)(apoyo, v_pre, params);
-  k[3] = step * retorno;
+  k[3] = dt * retorno;
   apoyo = m_slow + k[0] * 0.075 + k[1] * 0.675 - k[2] * 0.6 + k[3] * 0.75;
 
   retorno = (*f)(apoyo, v_pre, params);
-  k[4] = step * retorno;
+  k[4] = dt * retorno;
   apoyo = m_slow + k[0] * 0.660493827160493 + k[1] * 2.5 - k[2] * 5.185185185185185 + k[3] * 3.888888888888889 - k[4] * 0.864197530864197;
 
   retorno = (*f)(apoyo, v_pre, params);
-  k[5] = step * retorno;
+  k[5] = dt * retorno;
 
   m_slow += k[0] * 0.098765432098765 +
             k[2] * 0.396825396825396 +
@@ -159,7 +159,7 @@ double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow,
 
 double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
-  runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, step, params);
+  runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   return params.g_slow * m_slow * (v_post - params.e_syn);
 }
 
@@ -270,7 +270,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   v_max_2 = 2.0;
   v_min_2 = -2.0;
 
-  step = 0.001;
+  factor = 1.0;
 
   use_i_fast_12 = 1u;
   use_i_slow_12 = 1u;
@@ -310,7 +310,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   {
   case INIT:
   {
-    period = RT::System::getInstance()->getPeriod() * 1e-9; // s
+    period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
+    dt = period * factor;                                   // ms by default
 
     setState("Genetic generations completed", generations_completed);
     setState("Genetic individuals of the generation completed", individuals_completed);
@@ -332,7 +333,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Voltage max 2", v_max_2);
     setParameter("Voltage min 2", v_min_2);
 
-    setParameter("Step", step);
+    setParameter("factor in dt = period (ms) * factor", factor);
 
     setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
     setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
@@ -370,7 +371,12 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
         v_min_2 = getParameter("Voltage min 2").toDouble();
       }
 
-      step = getParameter("Step").toDouble();
+      double new_factor = getParameter("factor in dt = period (ms) * factor").toDouble();
+      if (new_factor != factor)
+      {
+        factor = new_factor;
+        dt = period * factor;
+      }
 
       use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
       use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
@@ -408,10 +414,11 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
   case PERIOD:
   {
-    const double new_period = RT::System::getInstance()->getPeriod() * 1e-9; // s
+    const double new_period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     if (new_period != period)
     {
       period = new_period;
+      dt = period * factor;
       if (genetic_running)
       {
         stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
