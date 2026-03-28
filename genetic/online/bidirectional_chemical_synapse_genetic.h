@@ -74,7 +74,7 @@ private:
   ChemicalSynapseParams params_21[2];
   ChemicalSynapseParams params_12[2];
 
-  double m_slow_21[2], m_slow_12[2];
+  double m_slow_21, m_slow_12;
   double period;
 
   std::thread genetic_NRT_thread;

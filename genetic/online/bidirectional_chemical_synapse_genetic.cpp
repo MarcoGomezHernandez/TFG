@@ -205,7 +205,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   {
     const ChemicalSynapseParams &curr_params_12 = params_12[curr_synapse_idx];
     if (use_i_slow_12)
-      val_i_slow_12 = compute_i_slow(m_slow_12[curr_synapse_idx], v1, v2, curr_params_12);
+      val_i_slow_12 = compute_i_slow(m_slow_12, v1, v2, curr_params_12);
     if (use_i_fast_12)
       val_i_fast_12 = compute_i_fast(v1, v2, curr_params_12);
   }
@@ -215,7 +215,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   {
     const ChemicalSynapseParams &curr_params_21 = params_21[curr_synapse_idx];
     if (use_i_slow_21)
-      val_i_slow_21 = compute_i_slow(m_slow_21[curr_synapse_idx], v2, v1, curr_params_21);
+      val_i_slow_21 = compute_i_slow(m_slow_21, v2, v1, curr_params_21);
     if (use_i_fast_21)
       val_i_fast_21 = compute_i_fast(v2, v1, curr_params_21);
   }
@@ -277,8 +277,11 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   use_i_fast_21 = 1u;
   use_i_slow_21 = 1u;
 
-  init_syn_params_and_vars(params_12[0], m_slow_12[0]);
-  init_syn_params_and_vars(params_21[0], m_slow_21[0]);
+  init_syn_params_and_vars(params_12[0]);
+  init_syn_params_and_vars(params_21[0]);
+
+  m_slow_12 = 0.0;
+  m_slow_21 = 0.0;
 
   synapse_idx.store(0, std::memory_order_relaxed);
 
@@ -287,7 +290,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   genetic_running = false;
 }
 
-void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynapseParams &params, double &m_slow)
+void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynapseParams &params)
 {
   params.e_syn = -1.92;
   params.g_fast = 0.046;
@@ -298,8 +301,6 @@ void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynap
   params.k2 = 0.7;
   params.s_slow = 1.0;
   params.v_slow = 0.0;
-
-  m_slow = 0.0;
 }
 
 void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
