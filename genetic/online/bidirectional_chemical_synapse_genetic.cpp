@@ -292,6 +292,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
 
 void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynapseParams &params)
 {
+  // Estos pesos están pensados para la salida mV de la escala de la neurona Hindmarsh-Rose
   params.e_syn = -1.92;
   params.g_fast = 0.046;
   params.s_fast = 0.44;
