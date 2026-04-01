@@ -107,8 +107,8 @@ static inline double sig_period(double tiempo_observacion, const univector_ref<c
     return 1.0 / (changes / tiempo_observacion);
 }
 
-static inline ScalingFactors calcula_escala(double min_virtual, double max_virtual,
-                                            double min_viva, double max_viva)
+static ScalingFactors calcula_escala(double min_virtual, double max_virtual,
+                                     double min_viva, double max_viva)
 {
     const double rg_virtual = max_virtual - min_virtual;
     const double rg_viva = max_viva - min_viva;
@@ -332,7 +332,6 @@ ScaledSigResult scale_sig(
     }
 
     result.dt = selection.dt;
-    result.pts_burst_real = external_pts_per_burst;
 
     size_t s_points = static_cast<size_t>(selection.pts_burst / external_pts_per_burst);
     if (s_points == 0)

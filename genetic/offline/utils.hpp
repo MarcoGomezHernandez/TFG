@@ -81,13 +81,13 @@ inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
 }
 
 template <typename Integrator>
-inline double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron)
+double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron)
 {
     return neuron.get(HindmarshRoseNeuron<Integrator>::x);
 }
 
 template <typename Integrator>
-inline HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
+HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 {
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     typename NeuronType::ConstructorArgs args;

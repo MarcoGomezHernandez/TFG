@@ -2,6 +2,7 @@
 #define FITNESS_H
 
 #include <array>
+#include <span>
 #include <kfr/all.hpp>
 using namespace kfr;
 #include <ChemicalSynapsis.h>
@@ -37,22 +38,21 @@ struct SigBuffers
 };
 
 ConstantSigFitnessVals calc_const_sig_fitness_vals(const univector_ref<const double> &vpre_sig,
-                                                   double pts_burst_real,
+                                                   double csv_step,
                                                    bool use_ifast,
                                                    bool use_islow,
                                                    bool search_phase);
 
-template <typename Integrator, typename NeuronType, size_t N, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
+template <typename Integrator, typename NeuronType, ResetStateFunc<NeuronType> ResetStateFuncType, GetVFunc<NeuronType> GetVFuncType>
 void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapsis,
                     NeuronType &model_neur,
-                    std::array<Individual, N> &individuals,
+                    std::span<Individual> individuals,
                     const ScaledSigResult &scaled_result,
                     const ConstantSigFitnessVals &const_vpre_sig_fitness_vals,
                     bool search_phase,
                     SigBuffers &buffers,
                     ResetStateFuncType reset_state_neur,
                     GetVFuncType get_v_neur,
-                    size_t ind_start_i,
                     size_t vpre_sig_start_i,
                     bool use_ifast,
                     bool use_islow);

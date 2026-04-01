@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     if (argc < 11)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_i> <csv_step> <start_time> <use_time> <stabilization_time> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
+                  << " <csv_path> <column_i> <csv_step (µs)> <start_time (µs)> <use_time (µs)> <stabilization_time (µs)> <search_phase> <check_drift> <syn_model_step_factor> <syn_component>"
                   << std::endl;
         std::cerr << "  syn_component: 0=ifast  1=islow  2=both" << std::endl;
         return 1;

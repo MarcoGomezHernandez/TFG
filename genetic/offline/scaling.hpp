@@ -32,7 +32,6 @@ struct ScaledSigResult
     univector<double> interpolated_points;
     size_t points_factor;
     double dt;
-    double pts_burst_real;
     bool success;
 };
 
