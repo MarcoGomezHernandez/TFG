@@ -18,6 +18,7 @@
 
 #include "bidirectional_chemical_synapse_genetic.h"
 #include <iostream>
+#include <chrono>
 #include <cmath>
 #include <algorithm>
 #include <main_window.h>
@@ -200,6 +201,7 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 
   const bool aux_RT_storing = RT_storing.load(std::memory_order_acquire);
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+  last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
 
   if (use_syn_12)
   {
@@ -285,6 +287,7 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   m_slow_21 = 0.0;
 
   synapse_idx.store(0, std::memory_order_relaxed);
+  last_synapse_idx_read_RT.store(0, std::memory_order_relaxed);
 
   stop_genetic.store(false, std::memory_order_relaxed);
   RT_storing.store(false, std::memory_order_relaxed);
@@ -302,6 +305,21 @@ void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynap
   params.k2 = 0.0;
   params.s_slow = 0.0;
   params.v_slow = 0.0;
+}
+
+bool BidirectionalChemicalSynapseGenetic::wait_until_RT_read_idx_or_stop(size_t idx_to_achieve)
+{
+  const std::chrono::duration<double> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_SECS);
+
+  while (last_synapse_idx_read_RT.load(std::memory_order_relaxed) != idx_to_achieve)
+  {
+    if (stop_genetic.load(std::memory_order_relaxed))
+      return false;
+
+    std::this_thread::sleep_for(active_wait_duration);
+  }
+
+  return true;
 }
 
 void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
@@ -340,27 +358,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Use I_fast 2->1 (1/0)", use_i_fast_21);
     setParameter("Use I_slow 2->1 (1/0)", use_i_slow_21);
 
-    const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
-
-    setParameter("E_syn 2->1", params_21[curr_synapse_idx].e_syn);
-    setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
-    setParameter("s_fast 2->1", params_21[curr_synapse_idx].s_fast);
-    setParameter("V_fast 2->1", params_21[curr_synapse_idx].v_fast);
-    setParameter("g_slow 2->1", params_21[curr_synapse_idx].g_slow);
-    setParameter("k1 2->1", params_21[curr_synapse_idx].k1);
-    setParameter("k2 2->1", params_21[curr_synapse_idx].k2);
-    setParameter("s_slow 2->1", params_21[curr_synapse_idx].s_slow);
-    setParameter("V_slow 2->1", params_21[curr_synapse_idx].v_slow);
-
-    setParameter("E_syn 1->2", params_12[curr_synapse_idx].e_syn);
-    setParameter("g_fast 1->2", params_12[curr_synapse_idx].g_fast);
-    setParameter("s_fast 1->2", params_12[curr_synapse_idx].s_fast);
-    setParameter("V_fast 1->2", params_12[curr_synapse_idx].v_fast);
-    setParameter("g_slow 1->2", params_12[curr_synapse_idx].g_slow);
-    setParameter("k1 1->2", params_12[curr_synapse_idx].k1);
-    setParameter("k2 1->2", params_12[curr_synapse_idx].k2);
-    setParameter("s_slow 1->2", params_12[curr_synapse_idx].s_slow);
-    setParameter("V_slow 1->2", params_12[curr_synapse_idx].v_slow);
+    update_params_gui();
 
     break;
   }
@@ -491,6 +489,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
 
 void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 {
+  update_params_gui();
   set_params_read_only(false);
   gentic_button->setText("Start Genetic");
   genetic_running = false;
@@ -507,15 +506,7 @@ void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
 void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
 {
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
-
-  setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
-  setParameter("s_fast 2->1", params_21[curr_synapse_idx].s_fast);
-  setParameter("V_fast 2->1", params_21[curr_synapse_idx].v_fast);
-  setParameter("g_slow 2->1", params_21[curr_synapse_idx].g_slow);
-  setParameter("k1 2->1", params_21[curr_synapse_idx].k1);
-  setParameter("k2 2->1", params_21[curr_synapse_idx].k2);
-  setParameter("s_slow 2->1", params_21[curr_synapse_idx].s_slow);
-  setParameter("V_slow 2->1", params_21[curr_synapse_idx].v_slow);
+  last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
 
   setParameter("E_syn 1->2", params_12[curr_synapse_idx].e_syn);
   setParameter("g_fast 1->2", params_12[curr_synapse_idx].g_fast);
@@ -526,6 +517,16 @@ void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
   setParameter("k2 1->2", params_12[curr_synapse_idx].k2);
   setParameter("s_slow 1->2", params_12[curr_synapse_idx].s_slow);
   setParameter("V_slow 1->2", params_12[curr_synapse_idx].v_slow);
+
+  setParameter("E_syn 2->1", params_21[curr_synapse_idx].e_syn);
+  setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
+  setParameter("s_fast 2->1", params_21[curr_synapse_idx].s_fast);
+  setParameter("V_fast 2->1", params_21[curr_synapse_idx].v_fast);
+  setParameter("g_slow 2->1", params_21[curr_synapse_idx].g_slow);
+  setParameter("k1 2->1", params_21[curr_synapse_idx].k1);
+  setParameter("k2 2->1", params_21[curr_synapse_idx].k2);
+  setParameter("s_slow 2->1", params_21[curr_synapse_idx].s_slow);
+  setParameter("V_slow 2->1", params_21[curr_synapse_idx].v_slow);
 }
 
 void BidirectionalChemicalSynapseGenetic::set_generations_completed(double generations)

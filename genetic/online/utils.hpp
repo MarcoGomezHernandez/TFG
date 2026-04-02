@@ -9,6 +9,7 @@ using namespace kfr;
 namespace GeneticPublicConfig
 {
     inline constexpr double ETA = 0.2;
+    inline constexpr double ACTIVE_WAIT_SECS = 0.01;
 
     inline constexpr double V_TH_TERM_1 = 8.0;
     inline constexpr double V_TH_TERM_2 = 4.0;
@@ -17,8 +18,6 @@ namespace GeneticPublicConfig
     inline constexpr double S_FAST_MAX_TERM = 13.72;
     inline constexpr double S_SLOW_MIN_TERM = 1.72;
     inline constexpr double S_SLOW_MAX_TERM = 3.43;
-
-    inline constexpr double E_SYN_TERM = 3.86;
 
     inline constexpr double LOG_K_MIN = std::log(0.0000001);
     inline constexpr double LOG_K_MAX = std::log(1.0);
@@ -29,8 +28,6 @@ namespace GeneticPublicConfig
 
 struct GeneticRanges
 {
-    double e_syn;
-
     double s_fast_min, s_fast_max;
     double s_slow_min, s_slow_max;
 
@@ -67,9 +64,6 @@ struct GeneticRanges
         constexpr double LOG_K_MIN = GeneticPublicConfig::LOG_K_MIN;
         constexpr double LOG_K_MAX = GeneticPublicConfig::LOG_K_MAX;
         constexpr double ETA = GeneticPublicConfig::ETA;
-
-        const double e_syn_final_term = GeneticPublicConfig::E_SYN_TERM * (v_post_max - v_post_min);
-        e_syn = search_phase ? (v_post_max + e_syn_final_term) : (v_post_min - e_syn_final_term);
 
         const double v_th_margin = (v_pre_range / GeneticPublicConfig::V_TH_TERM_1);
         const double v_th_max = v_pre_max + v_th_margin;

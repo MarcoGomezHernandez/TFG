@@ -261,12 +261,18 @@ bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> i
         return true;
     }
 
+    const std::chrono::duration<double> stabilization_duration(stabilization_time);
+    const std::chrono::duration<double> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_SECS);
+    size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+
     for (Individual &individual : individuals)
     {
         if (stop_genetic.load(std::memory_order_relaxed))
             return false;
 
-        const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+        if (!wait_until_RT_read_idx_or_stop(curr_synapse_idx))
+            return false;
+
         const size_t new_synapse_idx = 1 - curr_synapse_idx;
 
         if (use_syn_12)
@@ -286,12 +292,11 @@ bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> i
         }
 
         synapse_idx.store(new_synapse_idx, std::memory_order_release);
-
-        QMetaObject::invokeMethod(this, "update_params_gui", Qt::QueuedConnection);
+        curr_synapse_idx = new_synapse_idx;
 
         if (stabilization_time > 0.0)
         {
-            std::this_thread::sleep_for(std::chrono::duration<double>(stabilization_time));
+            std::this_thread::sleep_for(stabilization_duration);
         }
 
         storing_idx = 0;
@@ -305,7 +310,7 @@ bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> i
                 RT_storing.store(false, std::memory_order_relaxed);
                 return false;
             }
-            std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
+            std::this_thread::sleep_for(active_wait_duration);
         }
 
         individual.fitness = calc_fitness_from_sigs(fs, effective_pad, padded_buff);

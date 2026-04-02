@@ -73,6 +73,7 @@ private:
   bool genetic_running;
 
   std::atomic<size_t> synapse_idx;
+  std::atomic<size_t> last_synapse_idx_read_RT;
 
   std::atomic<bool> RT_storing;
   size_t storing_idx;
@@ -116,6 +117,7 @@ private:
   void set_params_read_only(bool read_only);
 
   void init_syn_params_and_vars(ChemicalSynapseParams &params);
+  bool wait_until_RT_read_idx_or_stop(size_t idx_to_achieve);
 
 private slots:
   void toggle_genetic_event(void);
