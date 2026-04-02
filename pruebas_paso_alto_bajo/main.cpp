@@ -11,8 +11,17 @@ int main(int argc, char *argv[])
 
     double fs, fc;
     int npoints, col;
-    try { fs = std::stod(argv[2]); fc = std::stod(argv[3]); npoints = std::stoi(argv[4]); col = std::stoi(argv[5]); }
-    catch (...) { return 1; }
+    try
+    {
+        fs = std::stod(argv[2]);
+        fc = std::stod(argv[3]);
+        npoints = std::stoi(argv[4]);
+        col = std::stoi(argv[5]);
+    }
+    catch (...)
+    {
+        return 1;
+    }
 
     std::ifstream file(argv[1]);
     std::string line;
@@ -44,12 +53,15 @@ int main(int argc, char *argv[])
     if (data.empty())
         return 1;
 
-    const size_t pad_len = 1000, N = data.size();
+    const size_t pad_len = 500, N = data.size();
     kfr::univector<double> padded(N + 2 * pad_len), onda_lenta(N);
     std::copy(data.begin(), data.end(), padded.begin() + pad_len);
-    for (size_t i = 0; i < pad_len; i++){
-        padded[pad_len - 1 - i] = data[i + 1];
-        padded[N + pad_len + i] = data[N - 2 - i];
+    const double left_edge_x2 = 2.0 * data[0];
+    const double right_edge_x2 = 2.0 * data[N - 1];
+    for (size_t i = 0; i < pad_len; i++)
+    {
+        padded[pad_len - 1 - i] = left_edge_x2 - data[i + 1];
+        padded[N + pad_len + i] = right_edge_x2 - data[N - 2 - i];
     }
     kfr::filtfilt(padded, kfr::to_sos<double>(kfr::iir_lowpass(kfr::butterworth(4), fc, fs)));
     std::copy(padded.begin() + pad_len, padded.end() - pad_len, onda_lenta.begin());

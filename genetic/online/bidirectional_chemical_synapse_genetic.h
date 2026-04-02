@@ -22,24 +22,15 @@
 #include <default_gui_model.h>
 #include <kfr/all.hpp>
 #include <thread>
+#include <random>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <vector>
+#include <span>
+#include "utils.hpp"
 
 using namespace kfr;
-
-struct ChemicalSynapseParams
-{
-  double e_syn;
-  double g_fast;
-  double s_fast;
-  double v_fast;
-  double g_slow;
-  double k1;
-  double k2;
-  double s_slow;
-  double v_slow;
-};
 
 class BidirectionalChemicalSynapseGenetic : public DefaultGUIModel
 {
@@ -62,7 +53,7 @@ private:
   unsigned int num_generations, population_size;
   double evaluation_time, stabilization_time;
   unsigned int search_phase;
-  double i_max_12, i_min_12, i_max_21, i_min_21;
+  double expected_i_max_12, expected_i_min_12, expected_i_max_21, expected_i_min_21;
 
   unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
   double v_max_1, v_min_1, v_max_2, v_min_2;
@@ -105,7 +96,22 @@ private:
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
-  void NRT_genetic(double period_t, double dt_factor_t, double v_max_1_t, double v_min_1_t, double v_max_2_t, double v_min_2_t);
+  double calc_fitness_from_sigs(double fs,
+                                size_t effective_pad,
+                                univector<double> &padded_buff);
+
+  bool calc_fitnesses(std::span<Individual> individuals,
+                      double fs,
+                      size_t effective_pad,
+                      univector<double> &padded_buff);
+
+  void NRT_genetic(double period_t, double dt_t);
+  std::vector<Individual> initialize_population(std::mt19937 &rng,
+                                                const GeneticRanges &ranges_12,
+                                                const GeneticRanges &ranges_21);
+
+  void crossover_individual(const Individual &a, const Individual &b, Individual &result);
+  void mutate_individual(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, const GeneticRanges &ranges_12, const GeneticRanges &ranges_21);
 
   void set_params_read_only(bool read_only);
 

@@ -13,8 +13,8 @@
 
 namespace GeneticConfig
 {
-    static constexpr size_t POPULATION_SIZE = 50;
-    static constexpr size_t NUM_GENERATIONS = 50;
+    static constexpr size_t POPULATION_SIZE = 30;
+    static constexpr size_t NUM_GENERATIONS = 30;
     static constexpr size_t NUM_ELITES = 2;
 
     static constexpr double OBSERVATION_TIME_DIVISOR = 3.0;
@@ -24,7 +24,7 @@ namespace GeneticConfig
 
     static constexpr double ETA = 0.2;
 
-    static constexpr double VTH_TERM = 7.0;
+    static constexpr double VTH_TERM = 4.0;
 
     static constexpr double SFAST_MIN_TERM = 4.12;
     static constexpr double SFAST_MAX_TERM = 13.72;
@@ -33,8 +33,8 @@ namespace GeneticConfig
 
     static constexpr double ESYN_TERM = 3.86;
 
-    static constexpr double K_MIN = 0.0000001;
-    static constexpr double K_MAX = 1.0;
+    static constexpr double LOG_K_MIN = std::log(0.0000001);
+    static constexpr double LOG_K_MAX = std::log(1.0);
 
     static const double LOG_G_MIN = std::log(0.001);
     static const double LOG_G_MAX = std::log(5.0);
@@ -45,7 +45,7 @@ namespace GeneticConstants
     static constexpr double ESYN_ANTIPHASE = HindmarshRose::MIN - (GeneticConfig::ESYN_TERM * (HindmarshRose::MAX - HindmarshRose::MIN));
     static constexpr double ESYN_PHASE = HindmarshRose::MAX + (GeneticConfig::ESYN_TERM * (HindmarshRose::MAX - HindmarshRose::MIN));
 
-    static constexpr double VFAST_MIN = HindmarshRose::MIN;
+    static constexpr double VFAST_MIN = HindmarshRose::MIN + ((HindmarshRose::MAX - HindmarshRose::MIN) / GeneticConfig::VTH_TERM);
     static constexpr double VFAST_MAX = HindmarshRose::MAX;
     static constexpr double VSLOW_MIN = HindmarshRose::MIN;
     static constexpr double VSLOW_MAX = HindmarshRose::MAX;
@@ -66,10 +66,10 @@ namespace GeneticConstants
     static const double LOG_GFAST_MUT_FACTOR = GeneticConfig::ETA * (LOG_GFAST_MAX - LOG_GFAST_MIN);
     static const double LOG_GSLOW_MUT_FACTOR = GeneticConfig::ETA * (LOG_GSLOW_MAX - LOG_GSLOW_MIN);
 
-    static const double LOG_K1_MIN = std::log(GeneticConfig::K_MIN);
-    static const double LOG_K1_MAX = std::log(GeneticConfig::K_MAX);
-    static const double LOG_K2_MIN = std::log(GeneticConfig::K_MIN);
-    static const double LOG_K2_MAX = std::log(GeneticConfig::K_MAX);
+    static const double LOG_K1_MIN = GeneticConfig::LOG_K_MIN;
+    static const double LOG_K1_MAX = GeneticConfig::LOG_K_MAX;
+    static const double LOG_K2_MIN = GeneticConfig::LOG_K_MIN;
+    static const double LOG_K2_MAX = GeneticConfig::LOG_K_MAX;
     static const double LOG_K1_MUT_FACTOR = GeneticConfig::ETA * (LOG_K1_MAX - LOG_K1_MIN);
     static const double LOG_K2_MUT_FACTOR = GeneticConfig::ETA * (LOG_K2_MAX - LOG_K2_MIN);
 }

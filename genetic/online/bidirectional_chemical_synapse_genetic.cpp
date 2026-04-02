@@ -34,8 +34,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Genetic individuals of the generation completed", "", DefaultGUIModel::STATE},
     {"Genetic num generations", "Number of generations for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Genetic population size", "Population size for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic individual evaluation time (s)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic individual stabilization time (s)", "Stabilization time for each individual; not included in evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic individual evaluation time (ms)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic individual stabilization time (ms)", "Stabilization time for each individual; not included in evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Genetic search phase (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Genetic current max to achieve 1->2", "In the scale of 2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Genetic current min to achieve 1->2", "In the scale of 2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -51,7 +51,7 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Voltage min 2", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Integration timestep
-    {"factor in dt = period (ms) * factor", "Factor for calculating dt form the period; depends on the magnitude of k1 and k2; default: dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"factor in dt (ms) = period (ms) * factor", "Factor for calculating dt form the period; dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Use fast/slow currents
     {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -252,17 +252,18 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
 
 void BidirectionalChemicalSynapseGenetic::initParameters(void)
 {
+  // Los params expected_i y v_max y min están pensados para la salida mV de la escala de la neurona Hindmarsh-Rose
   generations_completed = 0.0;
   individuals_completed = 0.0;
   num_generations = 30u;
   population_size = 30u;
-  evaluation_time = 2.0;
-  stabilization_time = 0.2;
+  evaluation_time = 2000.0;
+  stabilization_time = 200.0;
   search_phase = 1u;
-  i_max_12 = 2.0;
-  i_min_12 = -2.0;
-  i_max_21 = 2.0;
-  i_min_21 = -2.0;
+  expected_i_max_12 = 2.0;
+  expected_i_min_12 = -2.0;
+  expected_i_max_21 = 2.0;
+  expected_i_min_21 = -2.0;
   dynamic_v_min_max_1 = 0u;
   v_max_1 = 2.0;
   v_min_1 = -2.0;
@@ -292,15 +293,14 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
 
 void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynapseParams &params)
 {
-  // Estos pesos están pensados para la salida mV de la escala de la neurona Hindmarsh-Rose
-  params.e_syn = -1.92;
-  params.g_fast = 0.046;
-  params.s_fast = 0.44;
+  params.e_syn = 0.0;
+  params.g_fast = 0.0;
+  params.s_fast = 0.0;
   params.v_fast = 0.0;
-  params.g_slow = 0.208;
-  params.k1 = 0.7;
-  params.k2 = 0.7;
-  params.s_slow = 1.0;
+  params.g_slow = 0.0;
+  params.k1 = 0.0;
+  params.k2 = 0.0;
+  params.s_slow = 0.0;
   params.v_slow = 0.0;
 }
 
@@ -311,20 +311,20 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   case INIT:
   {
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
-    dt = period * dt_factor;                                   // ms by default
+    dt = period * dt_factor;                                // ms by default
 
     setState("Genetic generations completed", generations_completed);
     setState("Genetic individuals of the generation completed", individuals_completed);
 
     setParameter("Genetic num generations", num_generations);
     setParameter("Genetic population size", population_size);
-    setParameter("Genetic individual evaluation time (s)", evaluation_time);
-    setParameter("Genetic individual stabilization time (s)", stabilization_time);
+    setParameter("Genetic individual evaluation time (ms)", evaluation_time);
+    setParameter("Genetic individual stabilization time (ms)", stabilization_time);
     setParameter("Genetic search phase (1/0)", search_phase);
-    setParameter("Genetic current max to achieve 1->2", i_max_12);
-    setParameter("Genetic current min to achieve 1->2", i_min_12);
-    setParameter("Genetic current max to achieve 2->1", i_max_21);
-    setParameter("Genetic current min to achieve 2->1", i_min_21);
+    setParameter("Genetic current max to achieve 1->2", expected_i_max_12);
+    setParameter("Genetic current min to achieve 1->2", expected_i_min_12);
+    setParameter("Genetic current max to achieve 2->1", expected_i_max_21);
+    setParameter("Genetic current min to achieve 2->1", expected_i_min_21);
 
     setParameter("Dynamic voltage min and max 1 (1/0)", dynamic_v_min_max_1);
     setParameter("Voltage max 1", v_max_1);
@@ -340,7 +340,27 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Use I_fast 2->1 (1/0)", use_i_fast_21);
     setParameter("Use I_slow 2->1 (1/0)", use_i_slow_21);
 
-    update_params_gui();
+    const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+
+    setParameter("E_syn 2->1", params_21[curr_synapse_idx].e_syn);
+    setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
+    setParameter("s_fast 2->1", params_21[curr_synapse_idx].s_fast);
+    setParameter("V_fast 2->1", params_21[curr_synapse_idx].v_fast);
+    setParameter("g_slow 2->1", params_21[curr_synapse_idx].g_slow);
+    setParameter("k1 2->1", params_21[curr_synapse_idx].k1);
+    setParameter("k2 2->1", params_21[curr_synapse_idx].k2);
+    setParameter("s_slow 2->1", params_21[curr_synapse_idx].s_slow);
+    setParameter("V_slow 2->1", params_21[curr_synapse_idx].v_slow);
+
+    setParameter("E_syn 1->2", params_12[curr_synapse_idx].e_syn);
+    setParameter("g_fast 1->2", params_12[curr_synapse_idx].g_fast);
+    setParameter("s_fast 1->2", params_12[curr_synapse_idx].s_fast);
+    setParameter("V_fast 1->2", params_12[curr_synapse_idx].v_fast);
+    setParameter("g_slow 1->2", params_12[curr_synapse_idx].g_slow);
+    setParameter("k1 1->2", params_12[curr_synapse_idx].k1);
+    setParameter("k2 1->2", params_12[curr_synapse_idx].k2);
+    setParameter("s_slow 1->2", params_12[curr_synapse_idx].s_slow);
+    setParameter("V_slow 1->2", params_12[curr_synapse_idx].v_slow);
 
     break;
   }
@@ -350,13 +370,13 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     {
       num_generations = getParameter("Genetic num generations").toUInt();
       population_size = getParameter("Genetic population size").toUInt();
-      evaluation_time = getParameter("Genetic individual evaluation time (s)").toDouble();
-      stabilization_time = getParameter("Genetic individual stabilization time (s)").toDouble();
+      evaluation_time = getParameter("Genetic individual evaluation time (ms)").toDouble();
+      stabilization_time = getParameter("Genetic individual stabilization time (ms)").toDouble();
       search_phase = getParameter("Genetic search phase (1/0)").toUInt();
-      i_max_12 = getParameter("Genetic current max to achieve 1->2").toDouble();
-      i_min_12 = getParameter("Genetic current min to achieve 1->2").toDouble();
-      i_max_21 = getParameter("Genetic current max to achieve 2->1").toDouble();
-      i_min_21 = getParameter("Genetic current min to achieve 2->1").toDouble();
+      expected_i_max_12 = getParameter("Genetic current max to achieve 1->2").toDouble();
+      expected_i_min_12 = getParameter("Genetic current min to achieve 1->2").toDouble();
+      expected_i_max_21 = getParameter("Genetic current max to achieve 2->1").toDouble();
+      expected_i_min_21 = getParameter("Genetic current min to achieve 2->1").toDouble();
 
       dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
       if (!dynamic_v_min_max_1)
@@ -460,7 +480,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running = true;
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period, dt_factor, v_max_1, v_min_1, v_max_2, v_min_2);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period, dt);
   }
   else
   {
@@ -488,7 +508,6 @@ void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
 {
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
 
-  setParameter("E_syn 2->1", params_21[curr_synapse_idx].e_syn);
   setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
   setParameter("s_fast 2->1", params_21[curr_synapse_idx].s_fast);
   setParameter("V_fast 2->1", params_21[curr_synapse_idx].v_fast);
