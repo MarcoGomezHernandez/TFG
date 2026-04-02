@@ -106,7 +106,7 @@ private:
                       size_t effective_pad,
                       univector<double> &padded_buff);
 
-  void NRT_genetic(double period_t, double dt_t);
+  void NRT_genetic(double period_t);
   std::vector<Individual> initialize_population(std::mt19937 &rng,
                                                 const GeneticRanges &ranges_12,
                                                 const GeneticRanges &ranges_21);

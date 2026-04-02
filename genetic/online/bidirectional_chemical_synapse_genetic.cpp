@@ -87,10 +87,10 @@ static DefaultGUIModel::variable_t vars[] = {
 
     {"Voltage 1", "Membrane potential 1", DefaultGUIModel::INPUT},
     {"Voltage 2", "Membrane potential 2", DefaultGUIModel::INPUT},
-    {"Voltage max 1", "Dynamic max 1", DefaultGUIModel::INPUT},
-    {"Voltage min 1", "Dynamic min 1", DefaultGUIModel::INPUT},
-    {"Voltage max 2", "Dynamic max 2", DefaultGUIModel::INPUT},
-    {"Voltage min 2", "Dynamic min 2", DefaultGUIModel::INPUT},
+    {"Dynamic voltage max 1", "Dynamic max 1", DefaultGUIModel::INPUT},
+    {"Dynamic voltage min 1", "Dynamic min 1", DefaultGUIModel::INPUT},
+    {"Dynamic voltage max 2", "Dynamic max 2", DefaultGUIModel::INPUT},
+    {"Dynamic voltage min 2", "Dynamic min 2", DefaultGUIModel::INPUT},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
@@ -281,7 +281,9 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   use_i_slow_21 = 1u;
 
   init_syn_params_and_vars(params_12[0]);
+  init_syn_params_and_vars(params_12[1]);
   init_syn_params_and_vars(params_21[0]);
+  init_syn_params_and_vars(params_21[1]);
 
   m_slow_12 = 0.0;
   m_slow_21 = 0.0;
@@ -309,7 +311,7 @@ void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynap
 
 bool BidirectionalChemicalSynapseGenetic::wait_until_RT_read_idx_or_stop(size_t idx_to_achieve)
 {
-  const std::chrono::duration<double> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_SECS);
+  const std::chrono::duration<double, std::milli> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_MS);
 
   while (last_synapse_idx_read_RT.load(std::memory_order_relaxed) != idx_to_achieve)
   {
@@ -351,7 +353,7 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Voltage max 2", v_max_2);
     setParameter("Voltage min 2", v_min_2);
 
-    setParameter("factor in dt = period (ms) * factor", dt_factor);
+    setParameter("factor in dt (ms) = period (ms) * factor", dt_factor);
 
     setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
     setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
@@ -377,19 +379,23 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       expected_i_min_21 = getParameter("Genetic current min to achieve 2->1").toDouble();
 
       dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
+      const double aux_v_max_1 = getParameter("Voltage max 1").toDouble();
+      const double aux_v_min_1 = getParameter("Voltage min 1").toDouble();
       if (!dynamic_v_min_max_1)
       {
-        v_max_1 = getParameter("Voltage max 1").toDouble();
-        v_min_1 = getParameter("Voltage min 1").toDouble();
+        v_max_1 = aux_v_max_1;
+        v_min_1 = aux_v_min_1;
       }
       dynamic_v_min_max_2 = getParameter("Dynamic voltage min and max 2 (1/0)").toUInt();
+      const double aux_v_max_2 = getParameter("Voltage max 2").toDouble();
+      const double aux_v_min_2 = getParameter("Voltage min 2").toDouble();
       if (!dynamic_v_min_max_2)
       {
-        v_max_2 = getParameter("Voltage max 2").toDouble();
-        v_min_2 = getParameter("Voltage min 2").toDouble();
+        v_max_2 = aux_v_max_2;
+        v_min_2 = aux_v_min_2;
       }
 
-      double new_dt_factor = getParameter("factor in dt = period (ms) * factor").toDouble();
+      double new_dt_factor = getParameter("factor in dt (ms) = period (ms) * factor").toDouble();
       if (new_dt_factor != dt_factor)
       {
         dt_factor = new_dt_factor;
@@ -478,7 +484,7 @@ void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
     genetic_running = true;
     gentic_button->setText("Stop Genetic");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period, dt);
+    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period);
   }
   else
   {

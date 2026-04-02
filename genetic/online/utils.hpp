@@ -9,7 +9,7 @@ using namespace kfr;
 namespace GeneticPublicConfig
 {
     inline constexpr double ETA = 0.2;
-    inline constexpr double ACTIVE_WAIT_SECS = 0.01;
+    inline constexpr double ACTIVE_WAIT_MS = 10.0;
 
     inline constexpr double V_TH_TERM_1 = 8.0;
     inline constexpr double V_TH_TERM_2 = 4.0;
@@ -59,12 +59,8 @@ struct GeneticRanges
 
     void init(double v_pre_min,
               double v_pre_max,
-              double v_post_min,
-              double v_post_max,
-              double dt,
               unsigned int use_i_fast,
-              unsigned int use_i_slow,
-              unsigned int search_phase)
+              unsigned int use_i_slow)
     {
         const double v_pre_range = v_pre_max - v_pre_min;
 

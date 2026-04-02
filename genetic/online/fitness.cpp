@@ -261,8 +261,8 @@ bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> i
         return true;
     }
 
-    const std::chrono::duration<double> stabilization_duration(stabilization_time);
-    const std::chrono::duration<double> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_SECS);
+    const std::chrono::duration<double, std::milli> stabilization_duration(stabilization_time);
+    const std::chrono::duration<double, std::milli> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_MS);
     size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
 
     for (Individual &individual : individuals)
