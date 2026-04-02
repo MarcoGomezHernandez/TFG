@@ -28,34 +28,43 @@ namespace GeneticPublicConfig
 
 struct GeneticRanges
 {
-    double s_fast_min, s_fast_max;
-    double s_slow_min, s_slow_max;
+    struct ParamRange
+    {
+        double min;
+        double max;
+        double mut_factor;
 
-    double log_k1_min, log_k1_max;
-    double log_k2_min, log_k2_max;
-    double log_g_fast_min, log_g_fast_max;
-    double log_g_slow_min, log_g_slow_max;
+        ParamRange() = default;
 
-    double v_fast_min, v_fast_max;
-    double v_slow_min, v_slow_max;
+        ParamRange(double min_value,
+                   double max_value,
+                   double eta = GeneticPublicConfig::ETA)
+            : min(min_value),
+              max(max_value),
+              mut_factor(eta * (max_value - min_value))
+        {
+        }
+    };
 
-    double log_k1_mut_factor;
-    double log_k2_mut_factor;
-    double log_g_fast_mut_factor;
-    double log_g_slow_mut_factor;
-    double s_fast_mut_factor;
-    double s_slow_mut_factor;
-    double v_fast_mut_factor;
-    double v_slow_mut_factor;
+    ParamRange s_fast;
+    ParamRange s_slow;
 
-    init(double v_pre_min,
-         double v_pre_max,
-         double v_post_min,
-         double v_post_max,
-         double dt,
-         unsigned int use_i_fast,
-         unsigned int use_i_slow,
-         unsigned int search_phase)
+    ParamRange log_k1;
+    ParamRange log_k2;
+    ParamRange log_g_fast;
+    ParamRange log_g_slow;
+
+    ParamRange v_fast;
+    ParamRange v_slow;
+
+    void init(double v_pre_min,
+              double v_pre_max,
+              double v_post_min,
+              double v_post_max,
+              double dt,
+              unsigned int use_i_fast,
+              unsigned int use_i_slow,
+              unsigned int search_phase)
     {
         const double v_pre_range = v_pre_max - v_pre_min;
 
@@ -63,7 +72,6 @@ struct GeneticRanges
         constexpr double LOG_G_MAX = GeneticPublicConfig::LOG_G_MAX;
         constexpr double LOG_K_MIN = GeneticPublicConfig::LOG_K_MIN;
         constexpr double LOG_K_MAX = GeneticPublicConfig::LOG_K_MAX;
-        constexpr double ETA = GeneticPublicConfig::ETA;
 
         const double v_th_margin = (v_pre_range / GeneticPublicConfig::V_TH_TERM_1);
         const double v_th_max = v_pre_max + v_th_margin;
@@ -71,39 +79,26 @@ struct GeneticRanges
 
         if (use_i_fast)
         {
-            v_fast_max = v_th_max;
-            v_fast_min = v_th_min + ((v_th_max - v_th_min) / GeneticPublicConfig::V_TH_TERM_2);
-            v_fast_mut_factor = ETA * (v_fast_max - v_fast_min);
-
-            s_fast_max = GeneticPublicConfig::S_FAST_MAX_TERM / v_pre_range;
-            s_fast_min = GeneticPublicConfig::S_FAST_MIN_TERM / v_pre_range;
-            s_fast_mut_factor = ETA * (s_fast_max - s_fast_min);
-
-            log_g_fast_min = LOG_G_MIN;
-            log_g_fast_max = LOG_G_MAX;
-            log_g_fast_mut_factor = ETA * (log_g_fast_max - log_g_fast_min);
+            v_fast = ParamRange(v_th_min + ((v_th_max - v_th_min) / GeneticPublicConfig::V_TH_TERM_2),
+                                v_th_max);
+            s_fast = ParamRange(GeneticPublicConfig::S_FAST_MIN_TERM / v_pre_range,
+                                GeneticPublicConfig::S_FAST_MAX_TERM / v_pre_range);
+            log_g_fast = ParamRange(LOG_G_MIN,
+                                    LOG_G_MAX);
         }
 
         if (use_i_slow)
         {
-            v_slow_max = v_th_max;
-            v_slow_min = v_th_min;
-            v_slow_mut_factor = ETA * (v_slow_max - v_slow_min);
-
-            s_slow_max = GeneticPublicConfig::S_SLOW_MAX_TERM / v_pre_range;
-            s_slow_min = GeneticPublicConfig::S_SLOW_MIN_TERM / v_pre_range;
-            s_slow_mut_factor = ETA * (s_slow_max - s_slow_min);
-
-            log_g_slow_min = LOG_G_MIN;
-            log_g_slow_max = LOG_G_MAX;
-            log_g_slow_mut_factor = ETA * (log_g_slow_max - log_g_slow_min);
-
-            log_k1_min = LOG_K_MIN;
-            log_k1_max = LOG_K_MAX;
-            log_k1_mut_factor = ETA * (log_k1_max - log_k1_min);
-            log_k2_min = LOG_K_MIN;
-            log_k2_max = LOG_K_MAX;
-            log_k2_mut_factor = ETA * (log_k2_max - log_k2_min);
+            v_slow = ParamRange(v_th_min,
+                                v_th_max);
+            s_slow = ParamRange(GeneticPublicConfig::S_SLOW_MIN_TERM / v_pre_range,
+                                GeneticPublicConfig::S_SLOW_MAX_TERM / v_pre_range);
+            log_g_slow = ParamRange(LOG_G_MIN,
+                                    LOG_G_MAX);
+            log_k1 = ParamRange(LOG_K_MIN,
+                                LOG_K_MAX);
+            log_k2 = ParamRange(LOG_K_MIN,
+                                LOG_K_MAX);
         }
     }
 

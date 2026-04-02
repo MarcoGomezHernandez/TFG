@@ -33,6 +33,16 @@ struct ConstantSigFitnessVals
 
 struct SigBuffers
 {
+  SigBuffers(size_t size_to_reserve,
+             bool use_ifast,
+             bool use_islow)
+  {
+    if (use_ifast)
+      ifast_sig.resize(size_to_reserve);
+    if (use_islow)
+      islow_sig.resize(size_to_reserve);
+  }
+
   univector<double> ifast_sig;
   univector<double> islow_sig;
 };

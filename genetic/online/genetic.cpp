@@ -108,21 +108,21 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
         {
             double &g_fast = p.g_fast;
             double logval = std::log(g_fast);
-            logval += ndist(rng) * ranges.log_g_fast_mut_factor;
-            logval = bounce_clamp(logval, ranges.log_g_fast_min, ranges.log_g_fast_max);
+            logval += ndist(rng) * ranges.log_g_fast.mut_factor;
+            logval = bounce_clamp(logval, ranges.log_g_fast.min, ranges.log_g_fast.max);
             g_fast = std::exp(logval);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &s_fast = p.s_fast;
-            s_fast += ndist(rng) * ranges.s_fast_mut_factor;
-            s_fast = bounce_clamp(s_fast, ranges.s_fast_min, ranges.s_fast_max);
+            s_fast += ndist(rng) * ranges.s_fast.mut_factor;
+            s_fast = bounce_clamp(s_fast, ranges.s_fast.min, ranges.s_fast.max);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &v_fast = p.v_fast;
-            v_fast += ndist(rng) * ranges.v_fast_mut_factor;
-            v_fast = bounce_clamp(v_fast, ranges.v_fast_min, ranges.v_fast_max);
+            v_fast += ndist(rng) * ranges.v_fast.mut_factor;
+            v_fast = bounce_clamp(v_fast, ranges.v_fast.min, ranges.v_fast.max);
         }
     }
 
@@ -132,37 +132,37 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
         {
             double &g_slow = p.g_slow;
             double logval = std::log(g_slow);
-            logval += ndist(rng) * ranges.log_g_slow_mut_factor;
-            logval = bounce_clamp(logval, ranges.log_g_slow_min, ranges.log_g_slow_max);
+            logval += ndist(rng) * ranges.log_g_slow.mut_factor;
+            logval = bounce_clamp(logval, ranges.log_g_slow.min, ranges.log_g_slow.max);
             g_slow = std::exp(logval);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &v_slow = p.v_slow;
-            v_slow += ndist(rng) * ranges.v_slow_mut_factor;
-            v_slow = bounce_clamp(v_slow, ranges.v_slow_min, ranges.v_slow_max);
+            v_slow += ndist(rng) * ranges.v_slow.mut_factor;
+            v_slow = bounce_clamp(v_slow, ranges.v_slow.min, ranges.v_slow.max);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &k1 = p.k1;
             double logval = std::log(k1);
-            logval += ndist(rng) * ranges.log_k1_mut_factor;
-            logval = bounce_clamp(logval, ranges.log_k1_min, ranges.log_k1_max);
+            logval += ndist(rng) * ranges.log_k1.mut_factor;
+            logval = bounce_clamp(logval, ranges.log_k1.min, ranges.log_k1.max);
             k1 = std::exp(logval);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &k2 = p.k2;
             double logval = std::log(k2);
-            logval += ndist(rng) * ranges.log_k2_mut_factor;
-            logval = bounce_clamp(logval, ranges.log_k2_min, ranges.log_k2_max);
+            logval += ndist(rng) * ranges.log_k2.mut_factor;
+            logval = bounce_clamp(logval, ranges.log_k2.min, ranges.log_k2.max);
             k2 = std::exp(logval);
         }
         if (prob_dist(rng) < MUTATION_PROBABILITY)
         {
             double &s_slow = p.s_slow;
-            s_slow += ndist(rng) * ranges.s_slow_mut_factor;
-            s_slow = bounce_clamp(s_slow, ranges.s_slow_min, ranges.s_slow_max);
+            s_slow += ndist(rng) * ranges.s_slow.mut_factor;
+            s_slow = bounce_clamp(s_slow, ranges.s_slow.min, ranges.s_slow.max);
         }
     }
 }
@@ -177,29 +177,28 @@ struct OneDirectionInitializeDistributions
     std::uniform_real_distribution<double> dist_log_k1;
     std::uniform_real_distribution<double> dist_log_k2;
     std::uniform_real_distribution<double> dist_log_g_slow;
+
+    OneDirectionInitializeDistributions(unsigned int use_i_fast,
+                                        unsigned int use_i_slow,
+                                        const GeneticRanges &ranges)
+    {
+        if (use_i_fast)
+        {
+            dist_s_fast = std::uniform_real_distribution<double>(ranges.s_fast.min, ranges.s_fast.max);
+            dist_v_fast = std::uniform_real_distribution<double>(ranges.v_fast.min, ranges.v_fast.max);
+            dist_log_g_fast = std::uniform_real_distribution<double>(ranges.log_g_fast.min, ranges.log_g_fast.max);
+        }
+
+        if (use_i_slow)
+        {
+            dist_s_slow = std::uniform_real_distribution<double>(ranges.s_slow.min, ranges.s_slow.max);
+            dist_v_slow = std::uniform_real_distribution<double>(ranges.v_slow.min, ranges.v_slow.max);
+            dist_log_k1 = std::uniform_real_distribution<double>(ranges.log_k1.min, ranges.log_k1.max);
+            dist_log_k2 = std::uniform_real_distribution<double>(ranges.log_k2.min, ranges.log_k2.max);
+            dist_log_g_slow = std::uniform_real_distribution<double>(ranges.log_g_slow.min, ranges.log_g_slow.max);
+        }
+    }
 };
-
-static void initialize_one_direction_distributions(OneDirectionInitializeDistributions &dists,
-                                                   unsigned int use_i_fast,
-                                                   unsigned int use_i_slow,
-                                                   const GeneticRanges &ranges)
-{
-    if (use_i_fast)
-    {
-        dists.dist_s_fast = std::uniform_real_distribution<double>(ranges.s_fast_min, ranges.s_fast_max);
-        dists.dist_v_fast = std::uniform_real_distribution<double>(ranges.v_fast_min, ranges.v_fast_max);
-        dists.dist_log_g_fast = std::uniform_real_distribution<double>(ranges.log_g_fast_min, ranges.log_g_fast_max);
-    }
-
-    if (use_i_slow)
-    {
-        dists.dist_s_slow = std::uniform_real_distribution<double>(ranges.s_slow_min, ranges.s_slow_max);
-        dists.dist_v_slow = std::uniform_real_distribution<double>(ranges.v_slow_min, ranges.v_slow_max);
-        dists.dist_log_k1 = std::uniform_real_distribution<double>(ranges.log_k1_min, ranges.log_k1_max);
-        dists.dist_log_k2 = std::uniform_real_distribution<double>(ranges.log_k2_min, ranges.log_k2_max);
-        dists.dist_log_g_slow = std::uniform_real_distribution<double>(ranges.log_g_slow_min, ranges.log_g_slow_max);
-    }
-}
 
 static void initialize_individual_one_direction(ChemicalSynapseVariationParams &p,
                                                 std::mt19937 &rng,
@@ -231,15 +230,10 @@ inline std::vector<Individual> BidirectionalChemicalSynapseGenetic::initialize_p
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
 
-    OneDirectionInitializeDistributions dists_12;
-    OneDirectionInitializeDistributions dists_21;
+    OneDirectionInitializeDistributions dists_12(use_i_fast_12, use_i_slow_12, ranges_12);
+    OneDirectionInitializeDistributions dists_21(use_i_fast_21, use_i_slow_21, ranges_21);
 
     std::vector<Individual> population(population_size);
-
-    if (use_syn_12)
-        initialize_one_direction_distributions(dists_12, use_i_fast_12, use_i_slow_12, ranges_12);
-    if (use_syn_21)
-        initialize_one_direction_distributions(dists_21, use_i_fast_21, use_i_slow_21, ranges_21);
 
     for (Individual &ind : population)
     {
