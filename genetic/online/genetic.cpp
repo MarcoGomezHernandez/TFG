@@ -5,7 +5,7 @@
 
 namespace GeneticPrivateConfig
 {
-    static constexpr size_t NUM_ELITES = 3;
+    static constexpr size_t NUM_ELITES = 1;
 
     static constexpr double CROSSOVER_PROBABILITY = 0.9;
     static constexpr double MUTATION_PROBABILITY = 0.1;

@@ -57,6 +57,7 @@ private:
 
   unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
   double v_max_1, v_min_1, v_max_2, v_min_2;
+  double i_max_12, i_min_12, i_max_21, i_min_21;
 
   double dt, dt_factor;
 

@@ -27,6 +27,15 @@ namespace FitnessConfig
 namespace FitnessConstants
 {
     static constexpr double M_SLOW_INITIAL_VALUE = 0.0;
+    static constexpr double I_MAX = 4.0;
+    static constexpr double I_MIN = -4.0;
+}
+
+static double clamp_current_before_neuron_input(double i_val)
+{
+    constexpr double I_MAX = FitnessConstants::I_MAX;
+    constexpr double I_MIN = FitnessConstants::I_MIN;
+    return i_val >= I_MAX ? I_MAX : (i_val <= I_MIN ? I_MIN : i_val);
 }
 
 static double rescale_to_target(double value,
@@ -293,12 +302,14 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         for (; vpre_sig_i < vpre_sig_start_i; vpre_sig_i++)
         {
             synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], get_v_neur(model_neur));
-            model_neur.add_synaptic_input(-synapsis.get(i_enum));
+            const double i_val = clamp_current_before_neuron_input(synapsis.get(i_enum));
+            model_neur.add_synaptic_input(-i_val);
             model_neur.step(dt);
             for (size_t k = 1; k < points_factor; k++)
             {
                 synapsis.step(dt, interpolated_points_ptr[interp_pts_counter], get_v_neur(model_neur));
-                model_neur.add_synaptic_input(-synapsis.get(i_enum));
+                const double i_interp_val = clamp_current_before_neuron_input(synapsis.get(i_enum));
+                model_neur.add_synaptic_input(-i_interp_val);
                 model_neur.step(dt);
                 interp_pts_counter++;
             }
@@ -309,7 +320,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
         {
             const double v_post = get_v_neur(model_neur);
             synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
-            const double i_val = synapsis.get(i_enum);
+            const double i_val = clamp_current_before_neuron_input(synapsis.get(i_enum));
             model_neur.add_synaptic_input(-i_val);
             model_neur.step(dt);
             if (use_ifast)
@@ -319,7 +330,8 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
             for (size_t k = 1; k < points_factor; k++)
             {
                 synapsis.step(dt, interpolated_points_ptr[interp_pts_counter], get_v_neur(model_neur));
-                model_neur.add_synaptic_input(-synapsis.get(i_enum));
+                const double i_interp_val = clamp_current_before_neuron_input(synapsis.get(i_enum));
+                model_neur.add_synaptic_input(-i_interp_val);
                 model_neur.step(dt);
                 interp_pts_counter++;
             }
@@ -327,7 +339,7 @@ void calc_fitnesses(ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>
 
         const double v_post = get_v_neur(model_neur);
         synapsis.step(dt, vpre_sig_ptr[vpre_sig_i], v_post);
-        const double i_val = synapsis.get(i_enum);
+        const double i_val = clamp_current_before_neuron_input(synapsis.get(i_enum));
         model_neur.add_synaptic_input(-i_val);
         model_neur.step(dt);
         if (use_ifast)
