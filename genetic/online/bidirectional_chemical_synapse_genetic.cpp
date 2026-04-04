@@ -33,29 +33,29 @@ static DefaultGUIModel::variable_t vars[] = {
     // Genetic basic parameters
     {"Genetic generations completed", "", DefaultGUIModel::STATE},
     {"Genetic individuals of the generation completed", "", DefaultGUIModel::STATE},
-    {"Genetic num generations", "Number of generations for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic population size", "Population size for the genetic algorithm", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic individual evaluation time (ms)", "Individual evaluation time; does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic individual stabilization time (ms)", "Stabilization time for each individual; not included in evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic num generations", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Genetic population size", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Genetic individual evaluation time (ms)", "Does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic individual stabilization time (ms)", "Not included in evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Genetic search phase (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic current max to achieve 1->2", "In the scale of 2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic current min to achieve 1->2", "In the scale of 2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic current max to achieve 2->1", "In the scale of 1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic current min to achieve 2->1", "In the scale of 1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic current max to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic current min to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic current max to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic current min to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Genetic aux parameters
     {"Dynamic voltage min and max 1 (1/0)", "1 = Enable, 0 = Disable; necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage max 1", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Voltage min 1", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage max 1 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage min 1 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Dynamic voltage min and max 2 (1/0)", "1 = Enable, 0 = Disable; necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage max 2", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Voltage min 2", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage max 2 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage min 2 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Current clamps
-    {"Current max 1->2", "Fixed output clamp max for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current min 1->2", "Fixed output clamp min for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current max 2->1", "Fixed output clamp max for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current min 2->1", "Fixed output clamp min for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current max 1->2 (nA)", "Fixed output clamp max for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min 1->2 (nA)", "Fixed output clamp min for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current max 2->1 (nA)", "Fixed output clamp max for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current min 2->1 (nA)", "Fixed output clamp min for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Integration timestep
     {"factor in dt (ms) = period (ms) * factor", "Factor for calculating dt form the period; dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -67,36 +67,36 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
     // Config 1 -> 2
-    {"E_syn 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_fast 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_fast 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_fast 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"k1 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"k2 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_slow 1->2", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"E_syn 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_fast 1->2 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_fast 1->2 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_fast 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_slow 1->2 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"k1 1->2 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"k2 1->2 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_slow 1->2 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_slow 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Config 2 -> 1
-    {"E_syn 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_fast 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"k1 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"k2 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_slow 2->1", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"E_syn 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_fast 2->1 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_fast 2->1 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_fast 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_slow 2->1 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"k1 2->1 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"k2 2->1 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_slow 2->1 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_slow 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    {"Current 1->2", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
-    {"Current 2->1", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
+    {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
+    {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
 
-    {"Voltage 1", "Membrane potential 1", DefaultGUIModel::INPUT},
-    {"Voltage 2", "Membrane potential 2", DefaultGUIModel::INPUT},
-    {"Dynamic voltage max 1", "Dynamic max 1", DefaultGUIModel::INPUT},
-    {"Dynamic voltage min 1", "Dynamic min 1", DefaultGUIModel::INPUT},
-    {"Dynamic voltage max 2", "Dynamic max 2", DefaultGUIModel::INPUT},
-    {"Dynamic voltage min 2", "Dynamic min 2", DefaultGUIModel::INPUT},
+    {"Voltage 1 (V)", "Membrane potential 1", DefaultGUIModel::INPUT},
+    {"Voltage 2 (V)", "Membrane potential 2", DefaultGUIModel::INPUT},
+    {"Voltage max 1 (V)", "Dynamic max 1", DefaultGUIModel::INPUT},
+    {"Voltage min 1 (V)", "Dynamic min 1", DefaultGUIModel::INPUT},
+    {"Voltage max 2 (V)", "Dynamic max 2", DefaultGUIModel::INPUT},
+    {"Voltage min 2 (V)", "Dynamic min 2", DefaultGUIModel::INPUT},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
@@ -159,8 +159,7 @@ void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, dou
 
 double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params)
 {
-  return ((params.k1 * (1.0 - m_slow)) /
-          (1.0 + exp(params.s_slow * (params.v_slow - v_pre)))) -
+  return (params.k1 * (1.0 - m_slow) * chemical_sigmoid(params.s_slow, params.v_slow, v_pre)) -
          (params.k2 * m_slow);
 }
 
@@ -172,8 +171,7 @@ double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, doubl
 
 double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
-  return (params.g_fast * (v_post - params.e_syn)) /
-         (1.0 + exp(params.s_fast * (params.v_fast - v_pre)));
+  return params.g_fast * (v_post - params.e_syn) * chemical_sigmoid(params.s_fast, params.v_fast, v_pre);
 }
 
 void BidirectionalChemicalSynapseGenetic::execute(void)
@@ -355,22 +353,22 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Genetic individual evaluation time (ms)", evaluation_time);
     setParameter("Genetic individual stabilization time (ms)", stabilization_time);
     setParameter("Genetic search phase (1/0)", search_phase);
-    setParameter("Genetic current max to achieve 1->2", expected_i_max_12);
-    setParameter("Genetic current min to achieve 1->2", expected_i_min_12);
-    setParameter("Genetic current max to achieve 2->1", expected_i_max_21);
-    setParameter("Genetic current min to achieve 2->1", expected_i_min_21);
+    setParameter("Genetic current max to achieve 1->2 (nA)", expected_i_max_12);
+    setParameter("Genetic current min to achieve 1->2 (nA)", expected_i_min_12);
+    setParameter("Genetic current max to achieve 2->1 (nA)", expected_i_max_21);
+    setParameter("Genetic current min to achieve 2->1 (nA)", expected_i_min_21);
 
     setParameter("Dynamic voltage min and max 1 (1/0)", dynamic_v_min_max_1);
-    setParameter("Voltage max 1", v_max_1);
-    setParameter("Voltage min 1", v_min_1);
+    setParameter("Voltage max 1 (V)", v_max_1);
+    setParameter("Voltage min 1 (V)", v_min_1);
     setParameter("Dynamic voltage min and max 2 (1/0)", dynamic_v_min_max_2);
-    setParameter("Voltage max 2", v_max_2);
-    setParameter("Voltage min 2", v_min_2);
+    setParameter("Voltage max 2 (V)", v_max_2);
+    setParameter("Voltage min 2 (V)", v_min_2);
 
-    setParameter("Current max 1->2", i_max_12);
-    setParameter("Current min 1->2", i_min_12);
-    setParameter("Current max 2->1", i_max_21);
-    setParameter("Current min 2->1", i_min_21);
+    setParameter("Current max 1->2 (nA)", i_max_12);
+    setParameter("Current min 1->2 (nA)", i_min_12);
+    setParameter("Current max 2->1 (nA)", i_max_21);
+    setParameter("Current min 2->1 (nA)", i_min_21);
 
     setParameter("factor in dt (ms) = period (ms) * factor", dt_factor);
 
@@ -385,10 +383,21 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   }
   case MODIFY:
   {
-    i_max_12 = getParameter("Current max 1->2").toDouble();
-    i_min_12 = getParameter("Current min 1->2").toDouble();
-    i_max_21 = getParameter("Current max 2->1").toDouble();
-    i_min_21 = getParameter("Current min 2->1").toDouble();
+    const double new_i_max_12 = getParameter("Current max 1->2 (nA)").toDouble();
+    const double new_i_min_12 = getParameter("Current min 1->2 (nA)").toDouble();
+    const double new_i_max_21 = getParameter("Current max 2->1 (nA)").toDouble();
+    const double new_i_min_21 = getParameter("Current min 2->1 (nA)").toDouble();
+    if (new_i_max_12 != i_max_12 || new_i_min_12 != i_min_12 || new_i_max_21 != i_max_21 || new_i_min_21 != i_min_21)
+    {
+      i_max_12 = new_i_max_12;
+      i_min_12 = new_i_min_12;
+      i_max_21 = new_i_max_21;
+      i_min_21 = new_i_min_21;
+      if (genetic_running)
+      {
+        stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría la dinámica de evaluación de los individuos
+      }
+    }
 
     if (!genetic_running)
     {
@@ -397,26 +406,26 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       evaluation_time = getParameter("Genetic individual evaluation time (ms)").toDouble();
       stabilization_time = getParameter("Genetic individual stabilization time (ms)").toDouble();
       search_phase = getParameter("Genetic search phase (1/0)").toUInt();
-      expected_i_max_12 = getParameter("Genetic current max to achieve 1->2").toDouble();
-      expected_i_min_12 = getParameter("Genetic current min to achieve 1->2").toDouble();
-      expected_i_max_21 = getParameter("Genetic current max to achieve 2->1").toDouble();
-      expected_i_min_21 = getParameter("Genetic current min to achieve 2->1").toDouble();
+      expected_i_max_12 = getParameter("Genetic current max to achieve 1->2 (nA)").toDouble();
+      expected_i_min_12 = getParameter("Genetic current min to achieve 1->2 (nA)").toDouble();
+      expected_i_max_21 = getParameter("Genetic current max to achieve 2->1 (nA)").toDouble();
+      expected_i_min_21 = getParameter("Genetic current min to achieve 2->1 (nA)").toDouble();
 
       dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
-      const double aux_v_max_1 = getParameter("Voltage max 1").toDouble();
-      const double aux_v_min_1 = getParameter("Voltage min 1").toDouble();
+      const double new_v_max_1 = getParameter("Voltage max 1 (V)").toDouble();
+      const double new_v_min_1 = getParameter("Voltage min 1 (V)").toDouble();
       if (!dynamic_v_min_max_1)
       {
-        v_max_1 = aux_v_max_1;
-        v_min_1 = aux_v_min_1;
+        v_max_1 = new_v_max_1;
+        v_min_1 = new_v_min_1;
       }
       dynamic_v_min_max_2 = getParameter("Dynamic voltage min and max 2 (1/0)").toUInt();
-      const double aux_v_max_2 = getParameter("Voltage max 2").toDouble();
-      const double aux_v_min_2 = getParameter("Voltage min 2").toDouble();
+      const double new_v_max_2 = getParameter("Voltage max 2 (V)").toDouble();
+      const double new_v_min_2 = getParameter("Voltage min 2 (V)").toDouble();
       if (!dynamic_v_min_max_2)
       {
-        v_max_2 = aux_v_max_2;
-        v_min_2 = aux_v_min_2;
+        v_max_2 = new_v_max_2;
+        v_min_2 = new_v_min_2;
       }
 
       double new_dt_factor = getParameter("factor in dt (ms) = period (ms) * factor").toDouble();
@@ -433,25 +442,25 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
 
       const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
 
-      params_12[curr_synapse_idx].e_syn = getParameter("E_syn 1->2").toDouble();
-      params_12[curr_synapse_idx].g_fast = getParameter("g_fast 1->2").toDouble();
-      params_12[curr_synapse_idx].s_fast = getParameter("s_fast 1->2").toDouble();
-      params_12[curr_synapse_idx].v_fast = getParameter("V_fast 1->2").toDouble();
-      params_12[curr_synapse_idx].g_slow = getParameter("g_slow 1->2").toDouble();
-      params_12[curr_synapse_idx].k1 = getParameter("k1 1->2").toDouble();
-      params_12[curr_synapse_idx].k2 = getParameter("k2 1->2").toDouble();
-      params_12[curr_synapse_idx].s_slow = getParameter("s_slow 1->2").toDouble();
-      params_12[curr_synapse_idx].v_slow = getParameter("V_slow 1->2").toDouble();
+      params_12[curr_synapse_idx].e_syn = getParameter("E_syn 1->2 (V)").toDouble();
+      params_12[curr_synapse_idx].g_fast = getParameter("g_fast 1->2 (nS)").toDouble();
+      params_12[curr_synapse_idx].s_fast = getParameter("s_fast 1->2 (1/V)").toDouble();
+      params_12[curr_synapse_idx].v_fast = getParameter("V_fast 1->2 (V)").toDouble();
+      params_12[curr_synapse_idx].g_slow = getParameter("g_slow 1->2 (nS)").toDouble();
+      params_12[curr_synapse_idx].k1 = getParameter("k1 1->2 (1/ms)").toDouble();
+      params_12[curr_synapse_idx].k2 = getParameter("k2 1->2 (1/ms)").toDouble();
+      params_12[curr_synapse_idx].s_slow = getParameter("s_slow 1->2 (1/V)").toDouble();
+      params_12[curr_synapse_idx].v_slow = getParameter("V_slow 1->2 (V)").toDouble();
 
-      params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1").toDouble();
-      params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1").toDouble();
-      params_21[curr_synapse_idx].s_fast = getParameter("s_fast 2->1").toDouble();
-      params_21[curr_synapse_idx].v_fast = getParameter("V_fast 2->1").toDouble();
-      params_21[curr_synapse_idx].g_slow = getParameter("g_slow 2->1").toDouble();
-      params_21[curr_synapse_idx].k1 = getParameter("k1 2->1").toDouble();
-      params_21[curr_synapse_idx].k2 = getParameter("k2 2->1").toDouble();
-      params_21[curr_synapse_idx].s_slow = getParameter("s_slow 2->1").toDouble();
-      params_21[curr_synapse_idx].v_slow = getParameter("V_slow 2->1").toDouble();
+      params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1 (V)").toDouble();
+      params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1 (nS)").toDouble();
+      params_21[curr_synapse_idx].s_fast = getParameter("s_fast 2->1 (1/V)").toDouble();
+      params_21[curr_synapse_idx].v_fast = getParameter("V_fast 2->1 (V)").toDouble();
+      params_21[curr_synapse_idx].g_slow = getParameter("g_slow 2->1 (nS)").toDouble();
+      params_21[curr_synapse_idx].k1 = getParameter("k1 2->1 (1/ms)").toDouble();
+      params_21[curr_synapse_idx].k2 = getParameter("k2 2->1 (1/ms)").toDouble();
+      params_21[curr_synapse_idx].s_slow = getParameter("s_slow 2->1 (1/V)").toDouble();
+      params_21[curr_synapse_idx].v_slow = getParameter("V_slow 2->1 (V)").toDouble();
     }
 
     break;
@@ -527,9 +536,66 @@ void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
 
 void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
 {
-  for (std::pair<const QString, param_t> &elemento : parameter)
+  parameter["Genetic num generations"].edit->setReadOnly(read_only);
+  parameter["Genetic population size"].edit->setReadOnly(read_only);
+  parameter["Genetic individual evaluation time (ms)"].edit->setReadOnly(read_only);
+  parameter["Genetic individual stabilization time (ms)"].edit->setReadOnly(read_only);
+  parameter["Genetic search phase (1/0)"].edit->setReadOnly(read_only);
+  parameter["Genetic current max to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
+  parameter["Genetic current min to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
+  parameter["Genetic current max to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+  parameter["Genetic current min to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+
+  parameter["Dynamic voltage min and max 1 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Voltage max 1 (V)"].edit->setReadOnly(read_only);
+  parameter["Voltage min 1 (V)"].edit->setReadOnly(read_only);
+  parameter["Dynamic voltage min and max 2 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Voltage max 2 (V)"].edit->setReadOnly(read_only);
+  parameter["Voltage min 2 (V)"].edit->setReadOnly(read_only);
+
+  parameter["factor in dt (ms) = period (ms) * factor"].edit->setReadOnly(read_only);
+
+  parameter["Use I_fast 1->2 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Use I_slow 1->2 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Use I_fast 2->1 (1/0)"].edit->setReadOnly(read_only);
+  parameter["Use I_slow 2->1 (1/0)"].edit->setReadOnly(read_only);
+
+  if (use_i_fast_12 || use_i_slow_12)
   {
-    elemento.second.edit->setReadOnly(read_only);
+    parameter["E_syn 1->2 (V)"].edit->setReadOnly(read_only);
+    if (use_i_fast_12)
+    {
+      parameter["g_fast 1->2 (nS)"].edit->setReadOnly(read_only);
+      parameter["s_fast 1->2 (1/V)"].edit->setReadOnly(read_only);
+      parameter["V_fast 1->2 (V)"].edit->setReadOnly(read_only);
+    }
+    if (use_i_slow_12)
+    {
+      parameter["g_slow 1->2 (nS)"].edit->setReadOnly(read_only);
+      parameter["k1 1->2 (1/ms)"].edit->setReadOnly(read_only);
+      parameter["k2 1->2 (1/ms)"].edit->setReadOnly(read_only);
+      parameter["s_slow 1->2 (1/V)"].edit->setReadOnly(read_only);
+      parameter["V_slow 1->2 (V)"].edit->setReadOnly(read_only);
+    }
+  }
+
+  if (use_i_fast_21 || use_i_slow_21)
+  {
+    parameter["E_syn 2->1 (V)"].edit->setReadOnly(read_only);
+    if (use_i_fast_21)
+    {
+      parameter["g_fast 2->1 (nS)"].edit->setReadOnly(read_only);
+      parameter["s_fast 2->1 (1/V)"].edit->setReadOnly(read_only);
+      parameter["V_fast 2->1 (V)"].edit->setReadOnly(read_only);
+    }
+    if (use_i_slow_21)
+    {
+      parameter["g_slow 2->1 (nS)"].edit->setReadOnly(read_only);
+      parameter["k1 2->1 (1/ms)"].edit->setReadOnly(read_only);
+      parameter["k2 2->1 (1/ms)"].edit->setReadOnly(read_only);
+      parameter["s_slow 2->1 (1/V)"].edit->setReadOnly(read_only);
+      parameter["V_slow 2->1 (V)"].edit->setReadOnly(read_only);
+    }
   }
 }
 
@@ -538,30 +604,42 @@ void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
   last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
 
-  if (use_i_fast_12)
+  if (use_i_fast_12 || use_i_slow_12)
   {
-    setParameter("E_syn 1->2", params_12[curr_synapse_idx].e_syn);
-    setParameter("g_fast 1->2", params_12[curr_synapse_idx].g_fast);
-    setParameter("s_fast 1->2", params_12[curr_synapse_idx].s_fast);
-    setParameter("V_fast 1->2", params_12[curr_synapse_idx].v_fast);
-    setParameter("g_slow 1->2", params_12[curr_synapse_idx].g_slow);
-    setParameter("k1 1->2", params_12[curr_synapse_idx].k1);
-    setParameter("k2 1->2", params_12[curr_synapse_idx].k2);
-    setParameter("s_slow 1->2", params_12[curr_synapse_idx].s_slow);
-    setParameter("V_slow 1->2", params_12[curr_synapse_idx].v_slow);
+    setParameter("E_syn 1->2 (V)", params_12[curr_synapse_idx].e_syn);
+    if (use_i_fast_12)
+    {
+      setParameter("g_fast 1->2 (nS)", params_12[curr_synapse_idx].g_fast);
+      setParameter("s_fast 1->2 (1/V)", params_12[curr_synapse_idx].s_fast);
+      setParameter("V_fast 1->2 (V)", params_12[curr_synapse_idx].v_fast);
+    }
+    if (use_i_slow_12)
+    {
+      setParameter("g_slow 1->2 (nS)", params_12[curr_synapse_idx].g_slow);
+      setParameter("k1 1->2 (1/ms)", params_12[curr_synapse_idx].k1);
+      setParameter("k2 1->2 (1/ms)", params_12[curr_synapse_idx].k2);
+      setParameter("s_slow 1->2 (1/V)", params_12[curr_synapse_idx].s_slow);
+      setParameter("V_slow 1->2 (V)", params_12[curr_synapse_idx].v_slow);
+    }
   }
 
-  if (use_i_fast_21)
+  if (use_i_fast_21 || use_i_slow_21)
   {
-    setParameter("E_syn 2->1", params_21[curr_synapse_idx].e_syn);
-    setParameter("g_fast 2->1", params_21[curr_synapse_idx].g_fast);
-    setParameter("s_fast 2->1", params_21[curr_synapse_idx].s_fast);
-    setParameter("V_fast 2->1", params_21[curr_synapse_idx].v_fast);
-    setParameter("g_slow 2->1", params_21[curr_synapse_idx].g_slow);
-    setParameter("k1 2->1", params_21[curr_synapse_idx].k1);
-    setParameter("k2 2->1", params_21[curr_synapse_idx].k2);
-    setParameter("s_slow 2->1", params_21[curr_synapse_idx].s_slow);
-    setParameter("V_slow 2->1", params_21[curr_synapse_idx].v_slow);
+    setParameter("E_syn 2->1 (V)", params_21[curr_synapse_idx].e_syn);
+    if (use_i_fast_21)
+    {
+      setParameter("g_fast 2->1 (nS)", params_21[curr_synapse_idx].g_fast);
+      setParameter("s_fast 2->1 (1/V)", params_21[curr_synapse_idx].s_fast);
+      setParameter("V_fast 2->1 (V)", params_21[curr_synapse_idx].v_fast);
+    }
+    if (use_i_slow_21)
+    {
+      setParameter("g_slow 2->1 (nS)", params_21[curr_synapse_idx].g_slow);
+      setParameter("k1 2->1 (1/ms)", params_21[curr_synapse_idx].k1);
+      setParameter("k2 2->1 (1/ms)", params_21[curr_synapse_idx].k2);
+      setParameter("s_slow 2->1 (1/V)", params_21[curr_synapse_idx].s_slow);
+      setParameter("V_slow 2->1 (V)", params_21[curr_synapse_idx].v_slow);
+    }
   }
 }
 

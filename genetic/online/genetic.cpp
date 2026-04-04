@@ -9,8 +9,6 @@ namespace GeneticPrivateConfig
 
     static constexpr double CROSSOVER_PROBABILITY = 0.9;
     static constexpr double MUTATION_PROBABILITY = 0.1;
-
-    static constexpr double E_SYN_TERM = 3.86;
 }
 
 static double bounce_clamp(double value, double min, double max)
@@ -281,10 +279,27 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t)
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
 
+    size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
+    if (!wait_until_RT_read_idx_or_stop(curr_synapse_idx))
+    {
+        QMetaObject::invokeMethod(this, "stop_genetic_event_async", Qt::QueuedConnection);
+        return;
+    }
+    size_t new_synapse_idx = 1 - curr_synapse_idx;
+
     GeneticRanges ranges_12;
     if (use_syn_12)
     {
-        ranges_12.init(v_min_1, v_max_1, use_i_fast_12, use_i_slow_12);
+        ranges_12.init(v_min_1,
+                       v_max_1,
+                       v_min_2,
+                       v_max_2,
+                       expected_i_min_12,
+                       expected_i_max_12,
+                       use_i_fast_12,
+                       use_i_slow_12,
+                       search_phase);
+        params_12[new_synapse_idx].e_syn = ranges_12.e_syn;
         v_sig_1.resize(num_elements);
         if (use_i_fast_12)
             i_fast_sig_12.resize(num_elements);
@@ -295,38 +310,21 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t)
     GeneticRanges ranges_21;
     if (use_syn_21)
     {
-        ranges_21.init(v_min_2, v_max_2, use_i_fast_21, use_i_slow_21);
+        ranges_21.init(v_min_2,
+                       v_max_2,
+                       v_min_1,
+                       v_max_1,
+                       expected_i_min_21,
+                       expected_i_max_21,
+                       use_i_fast_21,
+                       use_i_slow_21,
+                       search_phase);
+        params_21[new_synapse_idx].e_syn = ranges_21.e_syn;
         v_sig_2.resize(num_elements);
         if (use_i_fast_21)
             i_fast_sig_21.resize(num_elements);
         if (use_i_slow_21)
             i_slow_sig_21.resize(num_elements);
-    }
-
-    size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
-    if (!wait_until_RT_read_idx_or_stop(curr_synapse_idx))
-    {
-        QMetaObject::invokeMethod(this, "stop_genetic_event_async", Qt::QueuedConnection);
-        return;
-    }
-    size_t new_synapse_idx = 1 - curr_synapse_idx;
-
-    constexpr double E_SYN_TERM = GeneticPrivateConfig::E_SYN_TERM;
-    double e_syn_final_term;
-
-    double e_syn_12 = 0.0;
-    if (use_syn_12)
-    {
-        e_syn_final_term = E_SYN_TERM * (v_max_2 - v_min_2);
-        e_syn_12 = search_phase ? (v_max_2 + e_syn_final_term) : (v_min_2 - e_syn_final_term);
-        params_12[new_synapse_idx].e_syn = e_syn_12;
-    }
-    double e_syn_21 = 0.0;
-    if (use_syn_21)
-    {
-        e_syn_final_term = E_SYN_TERM * (v_max_1 - v_min_1);
-        e_syn_21 = search_phase ? (v_max_1 + e_syn_final_term) : (v_min_1 - e_syn_final_term);
-        params_21[new_synapse_idx].e_syn = e_syn_21;
     }
 
     synapse_idx.store(new_synapse_idx, std::memory_order_release);
@@ -337,9 +335,9 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t)
     }
 
     if (use_syn_12)
-        params_12[curr_synapse_idx].e_syn = e_syn_12;
+        params_12[curr_synapse_idx].e_syn = ranges_12.e_syn;
     if (use_syn_21)
-        params_21[curr_synapse_idx].e_syn = e_syn_21;
+        params_21[curr_synapse_idx].e_syn = ranges_21.e_syn;
 
     synapse_idx.store(curr_synapse_idx, std::memory_order_release);
 

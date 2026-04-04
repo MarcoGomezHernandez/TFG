@@ -36,8 +36,8 @@ namespace GeneticConfig
     static constexpr double LOG_K_MIN = std::log(0.0000001);
     static constexpr double LOG_K_MAX = std::log(1.0);
 
-    static const double LOG_G_MIN = std::log(0.001);
-    static const double LOG_G_MAX = std::log(5.0);
+    static const double LOG_G_MIN = std::log(0.00001);
+    static const double LOG_G_MAX = std::log(3.0);
 }
 
 namespace GeneticConstants
