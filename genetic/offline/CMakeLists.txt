@@ -4,7 +4,7 @@ project(GeneticProject)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-Wall -O2 -march=native -DNDEBUG)
+add_compile_options(-O2 -march=native)
 
 include(FetchContent)
 FetchContent_Declare(

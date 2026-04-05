@@ -113,7 +113,7 @@ private:
                                                 const GeneticRanges &ranges_21);
 
   void crossover_individual(const Individual &a, const Individual &b, Individual &result);
-  void mutate_individual(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, const GeneticRanges &ranges_12, const GeneticRanges &ranges_21);
+  void mutate_individual(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double mutation_probability_per_gene, const GeneticRanges &ranges_12, const GeneticRanges &ranges_21);
 
   void set_params_read_only(bool read_only);
 

@@ -8,7 +8,7 @@ namespace GeneticPrivateConfig
     static constexpr size_t NUM_ELITES = 1;
 
     static constexpr double CROSSOVER_PROBABILITY = 0.9;
-    static constexpr double MUTATION_PROBABILITY = 0.1;
+    static constexpr double INDIVIDUAL_MUTATION_PROBABILITY = 0.2;
 }
 
 static double bounce_clamp(double value, double min, double max)
@@ -26,6 +26,18 @@ static double bounce_clamp(double value, double min, double max)
 static inline bool fitness_descending(const Individual &a, const Individual &b)
 {
     return a.fitness > b.fitness;
+}
+
+static size_t num_mutation_params_one_direction(unsigned int use_i_fast,
+                                                unsigned int use_i_slow)
+{
+    size_t num_params = 0;
+    if (use_i_fast)
+        num_params += 3;
+    if (use_i_slow)
+        num_params += 5;
+
+    return num_params;
 }
 
 static inline const Individual &roulette_select_one(const std::vector<Individual> &population,
@@ -96,13 +108,12 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
                                  std::uniform_real_distribution<double> &prob_dist,
                                  unsigned int use_i_fast,
                                  unsigned int use_i_slow,
+                                 double mutation_probability_per_gene,
                                  const GeneticRanges &ranges)
 {
-    constexpr double MUTATION_PROBABILITY = GeneticPrivateConfig::MUTATION_PROBABILITY;
-
     if (use_i_fast)
     {
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &g_fast = p.g_fast;
             double logval = std::log(g_fast);
@@ -110,13 +121,13 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
             logval = bounce_clamp(logval, ranges.log_g_fast.min, ranges.log_g_fast.max);
             g_fast = std::exp(logval);
         }
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &s_fast = p.s_fast;
             s_fast += ndist(rng) * ranges.s_fast.mut_factor;
             s_fast = bounce_clamp(s_fast, ranges.s_fast.min, ranges.s_fast.max);
         }
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &v_fast = p.v_fast;
             v_fast += ndist(rng) * ranges.v_fast.mut_factor;
@@ -126,7 +137,7 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
 
     if (use_i_slow)
     {
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &g_slow = p.g_slow;
             double logval = std::log(g_slow);
@@ -134,13 +145,13 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
             logval = bounce_clamp(logval, ranges.log_g_slow.min, ranges.log_g_slow.max);
             g_slow = std::exp(logval);
         }
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &v_slow = p.v_slow;
             v_slow += ndist(rng) * ranges.v_slow.mut_factor;
             v_slow = bounce_clamp(v_slow, ranges.v_slow.min, ranges.v_slow.max);
         }
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &k1 = p.k1;
             double logval = std::log(k1);
@@ -148,7 +159,7 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
             logval = bounce_clamp(logval, ranges.log_k1.min, ranges.log_k1.max);
             k1 = std::exp(logval);
         }
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &k2 = p.k2;
             double logval = std::log(k2);
@@ -156,7 +167,7 @@ static void mutate_one_direction(ChemicalSynapseVariationParams &p,
             logval = bounce_clamp(logval, ranges.log_k2.min, ranges.log_k2.max);
             k2 = std::exp(logval);
         }
-        if (prob_dist(rng) < MUTATION_PROBABILITY)
+        if (prob_dist(rng) < mutation_probability_per_gene)
         {
             double &s_slow = p.s_slow;
             s_slow += ndist(rng) * ranges.s_slow.mut_factor;
@@ -259,12 +270,15 @@ inline void BidirectionalChemicalSynapseGenetic::mutate_individual(Individual &i
                                                                    std::mt19937 &rng,
                                                                    std::normal_distribution<double> &ndist,
                                                                    std::uniform_real_distribution<double> &prob_dist,
+                                                                   double mutation_probability_per_gene,
                                                                    const GeneticRanges &ranges_12, const GeneticRanges &ranges_21)
 {
     if (use_i_fast_12 || use_i_slow_12)
-        mutate_one_direction(ind.variation_params_12, rng, ndist, prob_dist, use_i_fast_12, use_i_slow_12, ranges_12);
+        mutate_one_direction(ind.variation_params_12, rng, ndist, prob_dist, use_i_fast_12, use_i_slow_12,
+                             mutation_probability_per_gene, ranges_12);
     if (use_i_fast_21 || use_i_slow_21)
-        mutate_one_direction(ind.variation_params_21, rng, ndist, prob_dist, use_i_fast_21, use_i_slow_21, ranges_21);
+        mutate_one_direction(ind.variation_params_21, rng, ndist, prob_dist, use_i_fast_21, use_i_slow_21,
+                             mutation_probability_per_gene, ranges_21);
 }
 
 void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t)
@@ -368,6 +382,11 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t)
     std::uniform_real_distribution<double> roulette_dist;
     std::uniform_real_distribution<double> roulette_dist_no_p1;
 
+    const size_t num_params_12 = num_mutation_params_one_direction(use_i_fast_12, use_i_slow_12);
+    const size_t num_params_21 = num_mutation_params_one_direction(use_i_fast_21, use_i_slow_21);
+    const size_t num_params_total = num_params_12 + num_params_21;
+    const double mutation_probability_per_gene = num_params_total > 0 ? (GeneticPrivateConfig::INDIVIDUAL_MUTATION_PROBABILITY / static_cast<double>(num_params_total)) : 0.0;
+
     typename std::vector<Individual>::iterator pop_begin;
 
     for (size_t gen = 0; gen < num_generations; gen++)
@@ -413,7 +432,8 @@ void BidirectionalChemicalSynapseGenetic::NRT_genetic(double period_t)
                 child = p1;
             }
 
-            mutate_individual(child, rng, ndist, prob_dist, ranges_12, ranges_21);
+            mutate_individual(child, rng, ndist, prob_dist, mutation_probability_per_gene,
+                              ranges_12, ranges_21);
         }
 
         std::swap(population, new_population);

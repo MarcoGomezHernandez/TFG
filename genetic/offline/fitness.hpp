@@ -9,6 +9,15 @@ using namespace kfr;
 #include "utils.hpp"
 #include "scaling.hpp"
 
+namespace FitnessPublicConfig
+{
+  inline constexpr double EXPECTED_I_MIN_ANTIPHASE = 0.2;
+  inline constexpr double EXPECTED_I_MAX_ANTIPHASE = 0.8;
+
+  inline constexpr double EXPECTED_I_MIN_PHASE = -1.4;
+  inline constexpr double EXPECTED_I_MAX_PHASE = -0.4;
+}
+
 struct Individual
 {
   ChemicalSynapsisVariationParams params;

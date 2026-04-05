@@ -5,19 +5,13 @@
 #include <kfr/all.hpp>
 using namespace kfr;
 
-namespace FitnessConfig
+namespace FitnessPrivateConfig
 {
     static constexpr double SYN_RANGE_WEIGHT = 0.5;
     static constexpr double VPRE_SYN_COMP_WEIGHT = 0.5;
 
     static constexpr double IFAST_WEIGHT = 0.5;
     static constexpr double ISLOW_WEIGHT = 0.5;
-
-    static constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = 0.2;
-    static constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = 0.8;
-
-    static constexpr double I_RANGE_EXPECTED_MIN_PHASE = -1.4;
-    static constexpr double I_RANGE_EXPECTED_MAX_PHASE = -0.4;
 
     static constexpr double FILTER_FC = 0.3; // En KHz, es fija, la de las neuronas reales. Para que fs/fc=1000, cosa que vimos que es lo que debe salir, debemos poner un fs de 300 KHz, lo que implica un csv_step de 3.33... µs Usar 200000 puntos de esta duracion
     static constexpr double PAD_LEN_FACTOR = 1.5;
@@ -57,9 +51,9 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
 
     const size_t use_size = vpre_sig.size();
     const double fs = 1000.0 / csv_step; // fs en KHz, csv_step en µs
-    const double fc = FitnessConfig::FILTER_FC;
+    const double fc = FitnessPrivateConfig::FILTER_FC;
 
-    const size_t effective_pad = std::min(static_cast<size_t>(FitnessConfig::PAD_LEN_FACTOR * fs / fc), use_size - 1);
+    const size_t effective_pad = std::min(static_cast<size_t>(FitnessPrivateConfig::PAD_LEN_FACTOR * fs / fc), use_size - 1);
 
     univector<double> padded(use_size + (2 * effective_pad));
 
@@ -77,24 +71,24 @@ ConstantSigFitnessVals calc_const_sig_fitness_vals(
     }
 
     filtfilt(padded, to_sos<double>(iir_lowpass(
-                         butterworth(FitnessConfig::BUTTERWORTH_ORDER), fc, fs)));
+                         butterworth(FitnessPrivateConfig::BUTTERWORTH_ORDER), fc, fs)));
 
-    constexpr double I_RANGE_EXPECTED_MIN_PHASE = FitnessConfig::I_RANGE_EXPECTED_MIN_PHASE;
-    constexpr double I_RANGE_EXPECTED_MAX_PHASE = FitnessConfig::I_RANGE_EXPECTED_MAX_PHASE;
-    constexpr double I_RANGE_EXPECTED_MIN_ANTIPHASE = FitnessConfig::I_RANGE_EXPECTED_MIN_ANTIPHASE;
-    constexpr double I_RANGE_EXPECTED_MAX_ANTIPHASE = FitnessConfig::I_RANGE_EXPECTED_MAX_ANTIPHASE;
+    constexpr double EXPECTED_I_MIN_PHASE = FitnessPublicConfig::EXPECTED_I_MIN_PHASE;
+    constexpr double EXPECTED_I_MAX_PHASE = FitnessPublicConfig::EXPECTED_I_MAX_PHASE;
+    constexpr double EXPECTED_I_MIN_ANTIPHASE = FitnessPublicConfig::EXPECTED_I_MIN_ANTIPHASE;
+    constexpr double EXPECTED_I_MAX_ANTIPHASE = FitnessPublicConfig::EXPECTED_I_MAX_ANTIPHASE;
 
     double expected_i_min;
     double expected_i_max;
     if (search_phase)
     {
-        expected_i_min = I_RANGE_EXPECTED_MIN_PHASE;
-        expected_i_max = I_RANGE_EXPECTED_MAX_PHASE;
+        expected_i_min = EXPECTED_I_MIN_PHASE;
+        expected_i_max = EXPECTED_I_MAX_PHASE;
     }
     else
     {
-        expected_i_min = I_RANGE_EXPECTED_MIN_ANTIPHASE;
-        expected_i_max = I_RANGE_EXPECTED_MAX_ANTIPHASE;
+        expected_i_min = EXPECTED_I_MIN_ANTIPHASE;
+        expected_i_max = EXPECTED_I_MAX_ANTIPHASE;
     }
 
     const bool use_both = use_ifast && use_islow;
@@ -185,8 +179,8 @@ static double calc_range_score_component(double observed_min, double observed_ma
 
 static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_sig_fitness_vals, bool search_phase, bool use_ifast, bool use_islow, SigBuffers &buffers)
 {
-    constexpr double IFAST_WEIGHT = FitnessConfig::IFAST_WEIGHT;
-    constexpr double ISLOW_WEIGHT = FitnessConfig::ISLOW_WEIGHT;
+    constexpr double IFAST_WEIGHT = FitnessPrivateConfig::IFAST_WEIGHT;
+    constexpr double ISLOW_WEIGHT = FitnessPrivateConfig::ISLOW_WEIGHT;
 
     double vpre_syn_comp_accum = 0.0;
     double i_range_accum = 0.0;
@@ -234,8 +228,8 @@ static inline double fitness_from_sigs(const ConstantSigFitnessVals &const_vpre_
         total_weight += ISLOW_WEIGHT;
     }
 
-    const double final_score = ((FitnessConfig::SYN_RANGE_WEIGHT * i_range_accum) +
-                                (FitnessConfig::VPRE_SYN_COMP_WEIGHT * vpre_syn_comp_accum)) /
+    const double final_score = ((FitnessPrivateConfig::SYN_RANGE_WEIGHT * i_range_accum) +
+                                (FitnessPrivateConfig::VPRE_SYN_COMP_WEIGHT * vpre_syn_comp_accum)) /
                                total_weight;
 
     if (!(std::isfinite(final_score)) || final_score < 0.0)
