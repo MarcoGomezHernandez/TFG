@@ -54,6 +54,7 @@ private:
   double evaluation_time, stabilization_time;
   unsigned int search_phase;
   double expected_i_max_12, expected_i_min_12, expected_i_max_21, expected_i_min_21;
+  double fc_1, fc_2;
 
   unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
   double v_max_1, v_min_1, v_max_2, v_min_2;
@@ -99,20 +100,29 @@ private:
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
   double calc_fitness_from_sigs(double fs,
-                                size_t effective_pad,
-                                univector<double> &padded_buff);
+                                size_t effective_pad_12,
+                                size_t effective_pad_21,
+                                FitnessPadBuffers &pad_buffers);
 
   bool calc_fitnesses(std::span<Individual> individuals,
                       double fs,
-                      size_t effective_pad,
-                      univector<double> &padded_buff);
+                      size_t effective_pad_12,
+                      size_t effective_pad_21,
+                      FitnessPadBuffers &pad_buffers);
 
   void NRT_genetic(double period_t);
   std::vector<Individual> initialize_population(std::mt19937 &rng,
                                                 const GeneticRanges &ranges_12,
                                                 const GeneticRanges &ranges_21);
 
-  void crossover_individual(const Individual &a, const Individual &b, Individual &result);
+  void crossover_individual(const Individual &a,
+                            const Individual &b,
+                            Individual &result_1,
+                            Individual &result_2,
+                            bool has_second_individual,
+                            const GeneticRanges &ranges_12,
+                            const GeneticRanges &ranges_21,
+                            std::mt19937 &rng);
   void mutate_individual(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double mutation_probability_per_gene, const GeneticRanges &ranges_12, const GeneticRanges &ranges_21);
 
   void set_params_read_only(bool read_only);

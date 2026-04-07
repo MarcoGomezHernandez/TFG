@@ -42,6 +42,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Genetic current min to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Genetic current max to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Genetic current min to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic cutoff frequency 1 (kHz)", "To separate the I_fast and I_slow to search in synapse 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Genetic cutoff frequency 2 (kHz)", "To separate the I_fast and I_slow to search in synapse 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     // Genetic aux parameters
     {"Dynamic voltage min and max 1 (1/0)", "1 = Enable, 0 = Disable; necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -271,6 +273,8 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   expected_i_min_12 = 0.0;
   expected_i_max_21 = 0.0;
   expected_i_min_21 = 0.0;
+  fc_1 = FitnessPublicConfig::FILTER_FC;
+  fc_2 = FitnessPublicConfig::FILTER_FC;
 
   dynamic_v_min_max_1 = 0u;
   v_max_1 = 0.0;
@@ -357,6 +361,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     setParameter("Genetic current min to achieve 1->2 (nA)", expected_i_min_12);
     setParameter("Genetic current max to achieve 2->1 (nA)", expected_i_max_21);
     setParameter("Genetic current min to achieve 2->1 (nA)", expected_i_min_21);
+    setParameter("Genetic cutoff frequency 1 (kHz)", fc_1);
+    setParameter("Genetic cutoff frequency 2 (kHz)", fc_2);
 
     setParameter("Dynamic voltage min and max 1 (1/0)", dynamic_v_min_max_1);
     setParameter("Voltage max 1 (V)", v_max_1);
@@ -410,6 +416,8 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       expected_i_min_12 = getParameter("Genetic current min to achieve 1->2 (nA)").toDouble();
       expected_i_max_21 = getParameter("Genetic current max to achieve 2->1 (nA)").toDouble();
       expected_i_min_21 = getParameter("Genetic current min to achieve 2->1 (nA)").toDouble();
+      fc_1 = getParameter("Genetic cutoff frequency 1 (kHz)").toDouble();
+      fc_2 = getParameter("Genetic cutoff frequency 2 (kHz)").toDouble();
 
       dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
       const double new_v_max_1 = getParameter("Voltage max 1 (V)").toDouble();
@@ -545,6 +553,8 @@ void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
   parameter["Genetic current min to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
   parameter["Genetic current max to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
   parameter["Genetic current min to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+  parameter["Genetic cutoff frequency 1 (kHz)"].edit->setReadOnly(read_only);
+  parameter["Genetic cutoff frequency 2 (kHz)"].edit->setReadOnly(read_only);
 
   parameter["Dynamic voltage min and max 1 (1/0)"].edit->setReadOnly(read_only);
   parameter["Voltage max 1 (V)"].edit->setReadOnly(read_only);

@@ -58,6 +58,7 @@ static double calc_fitness_from_sigs_one_direction(
     univector<double> &i_slow_sig,
     size_t effective_pad,
     double fs,
+    double fc,
     unsigned int use_i_fast,
     unsigned int use_i_slow,
     unsigned int search_phase,
@@ -81,7 +82,7 @@ static double calc_fitness_from_sigs_one_direction(
     }
 
     filtfilt(padded_buff, to_sos<double>(iir_lowpass(
-                              butterworth(FitnessPrivateConfig::BUTTERWORTH_ORDER), FitnessPublicConfig::FILTER_FC, fs)));
+                              butterworth(FitnessPrivateConfig::BUTTERWORTH_ORDER), fc, fs)));
 
     const bool use_both = use_i_fast && use_i_slow;
 
@@ -189,8 +190,9 @@ static double calc_fitness_from_sigs_one_direction(
 }
 
 double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
-                                                                   size_t effective_pad,
-                                                                   univector<double> &padded_buff)
+                                                                   size_t effective_pad_12,
+                                                                   size_t effective_pad_21,
+                                                                   FitnessPadBuffers &pad_buffers)
 {
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
@@ -205,13 +207,14 @@ double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
             v_sig_1,
             i_fast_sig_12,
             i_slow_sig_12,
-            effective_pad,
+            effective_pad_12,
             fs,
+            fc_1,
             use_i_fast_12,
             use_i_slow_12,
             search_phase,
             expected_i_min_12, expected_i_max_12,
-            padded_buff);
+            pad_buffers.padded_buff_12);
 
         num_directions++;
     }
@@ -222,13 +225,14 @@ double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
             v_sig_2,
             i_fast_sig_21,
             i_slow_sig_21,
-            effective_pad,
+            effective_pad_21,
             fs,
+            fc_2,
             use_i_fast_21,
             use_i_slow_21,
             search_phase,
             expected_i_min_21, expected_i_max_21,
-            padded_buff);
+            pad_buffers.padded_buff_21);
 
         num_directions++;
     }
@@ -246,8 +250,9 @@ double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
 
 bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> individuals,
                                                          double fs,
-                                                         size_t effective_pad,
-                                                         univector<double> &padded_buff)
+                                                         size_t effective_pad_12,
+                                                         size_t effective_pad_21,
+                                                         FitnessPadBuffers &pad_buffers)
 {
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
@@ -275,21 +280,15 @@ bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> i
 
         const size_t new_synapse_idx = 1 - curr_synapse_idx;
 
-        if (use_syn_12)
-        {
-            apply_variation_params(params_12[new_synapse_idx],
-                                   individual.variation_params_12,
-                                   use_i_fast_12,
-                                   use_i_slow_12);
-        }
+        copy_individual_synapse_params_to_runtime(params_12[new_synapse_idx],
+                                                  individual.params_12,
+                                                  use_i_fast_12,
+                                                  use_i_slow_12);
 
-        if (use_syn_21)
-        {
-            apply_variation_params(params_21[new_synapse_idx],
-                                   individual.variation_params_21,
-                                   use_i_fast_21,
-                                   use_i_slow_21);
-        }
+        copy_individual_synapse_params_to_runtime(params_21[new_synapse_idx],
+                                                  individual.params_21,
+                                                  use_i_fast_21,
+                                                  use_i_slow_21);
 
         synapse_idx.store(new_synapse_idx, std::memory_order_release);
         curr_synapse_idx = new_synapse_idx;
@@ -313,7 +312,10 @@ bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> i
             std::this_thread::sleep_for(active_wait_duration);
         }
 
-        individual.fitness = calc_fitness_from_sigs(fs, effective_pad, padded_buff);
+        individual.fitness = calc_fitness_from_sigs(fs,
+                                                    effective_pad_12,
+                                                    effective_pad_21,
+                                                    pad_buffers);
 
         QMetaObject::invokeMethod(this, "set_individuals_completed", Qt::QueuedConnection,
                                   Q_ARG(double, individuals_completed + 1));
