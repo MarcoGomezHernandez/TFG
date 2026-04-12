@@ -16,7 +16,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bidirectional_chemical_synapse_genetic.h"
+#include "bidirectional_chemical_synapse_BO.h"
 #include <iostream>
 #include <chrono>
 #include <cmath>

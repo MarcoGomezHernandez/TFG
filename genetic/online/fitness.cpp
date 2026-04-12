@@ -4,7 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <kfr/all.hpp>
-#include "bidirectional_chemical_synapse_genetic.h"
+#include "bidirectional_chemical_synapse_BO.h"
 #include "utils.hpp"
 #include <concepts>
 using namespace kfr;

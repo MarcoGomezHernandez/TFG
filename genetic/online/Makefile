@@ -1,10 +1,10 @@
-PLUGIN_NAME = bidirectional_chemical_synapse_genetic
+PLUGIN_NAME = bidirectional_chemical_synapse_BO
 
-HEADERS = bidirectional_chemical_synapse_genetic.h\
+HEADERS = bidirectional_chemical_synapse_BO.h\
           utils.hpp\
 
-SOURCES = bidirectional_chemical_synapse_genetic.cpp\
-          moc_bidirectional_chemical_synapse_genetic.cpp\
+SOURCES = bidirectional_chemical_synapse_BO.cpp\
+          moc_bidirectional_chemical_synapse_BO.cpp\
           bayesian.cpp\
           fitness.cpp\
 
