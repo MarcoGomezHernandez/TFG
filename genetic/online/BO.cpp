@@ -1,7 +1,5 @@
-#include <cassert>
 #include <limbo/limbo.hpp>
 #include "bidirectional_chemical_synapse_BO.h"
-#include "utils.hpp"
 
 using namespace limbo;
 

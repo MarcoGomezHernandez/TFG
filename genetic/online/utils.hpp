@@ -2,11 +2,8 @@
 #define EVALUATION_UTILS_H
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <limits>
-#include <vector>
-#include <utility>
 #include <Eigen/Core>
 #include <kfr/all.hpp>
 

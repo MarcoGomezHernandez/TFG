@@ -17,9 +17,7 @@
  */
 
 #include "bidirectional_chemical_synapse_BO.h"
-#include <iostream>
 #include <chrono>
-#include <cmath>
 #include <algorithm>
 #include <main_window.h>
 

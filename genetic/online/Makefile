@@ -5,8 +5,8 @@ HEADERS = bidirectional_chemical_synapse_BO.h\
 
 SOURCES = bidirectional_chemical_synapse_BO.cpp\
           moc_bidirectional_chemical_synapse_BO.cpp\
-          bayesian.cpp\
-          fitness.cpp\
+          BO.cpp\
+          evaluation.cpp\
 
 LIBS = -lkfr_dsp_avx2 -lboost_serialization -lboost_filesystem -lboost_system -lnlopt -ltbb
 

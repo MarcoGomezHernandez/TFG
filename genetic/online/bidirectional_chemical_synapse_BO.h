@@ -23,10 +23,6 @@
 #include <kfr/all.hpp>
 #include <thread>
 #include <atomic>
-#include <mutex>
-#include <condition_variable>
-#include <vector>
-#include <span>
 #include "utils.hpp"
 
 class BidirectionalChemicalSynapseBO : public DefaultGUIModel
