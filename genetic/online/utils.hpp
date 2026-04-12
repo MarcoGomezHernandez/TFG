@@ -1,15 +1,17 @@
-#ifndef FITNESS_H
-#define FITNESS_H
+#ifndef EVALUATION_UTILS_H
+#define EVALUATION_UTILS_H
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
+#include <vector>
+#include <utility>
+#include <Eigen/Core>
 #include <kfr/all.hpp>
-using namespace kfr;
 
-namespace GeneticPublicConfig
+namespace BOPublicConfig
 {
-    inline constexpr double ETA = 0.2;
     inline constexpr double ACTIVE_WAIT_MS = 10.0;
 
     inline constexpr double V_MARGIN_FACTOR = 0.125;
@@ -23,53 +25,64 @@ namespace GeneticPublicConfig
     inline constexpr double S_SLOW_MAX_FACTOR = 3.43;
 
     inline constexpr double K1_FACTOR = 3.33;
-    inline constexpr double K2_FACTOR = 3.33;
+    inline constexpr double K1_MIN_FACTOR = 0.000001;
 
     inline constexpr double E_SYN_FAR_TERM = 3.86;
     inline constexpr double E_SYN_NEAR_TERM = 0.2;
 
-    inline constexpr double G_MIN_FACTOR = 0.0001;
-    inline constexpr double K1_MIN_FACTOR = 0.0000001;
-    inline constexpr double K2_MIN_FACTOR = 0.0000001;
+    inline constexpr double G_MIN_FACTOR = 0.001;
+
+    inline constexpr double R_MAX = 100.0;
+    inline constexpr double R_MIN = 0.01;
 }
 
-static inline double chemical_sigmoid(double s,
-                                      double v_threshold,
-                                      double v_pre)
+namespace BOPublicConstants
+{
+    inline constexpr double SMALL_LOG = std::numeric_limits<double>::min();
+    inline constexpr double SMALL_DIVISOR = std::numeric_limits<double>::epsilon();
+    inline constexpr double NEGATIVE_SMALL_DIVISOR = -SMALL_DIVISOR;
+}
+
+struct StopEvaluation
+{
+};
+
+static double chemical_sigmoid(double s,
+                               double v_threshold,
+                               double v_pre)
 {
     return 1.0 / (1.0 + std::exp(s * (v_threshold - v_pre)));
 }
 
-struct GeneticRanges
+static double safe_divisor(double divisor)
+{
+    return std::abs(divisor) < BOPublicConstants::SMALL_DIVISOR
+               ? (divisor < 0.0 ? BOPublicConstants::NEGATIVE_SMALL_DIVISOR : BOPublicConstants::SMALL_DIVISOR)
+               : divisor;
+}
+
+struct BOParamRanges
 {
     struct ParamRange
     {
         double min;
-        double max;
-        double mut_factor;
+        double range;
 
         ParamRange() = default;
 
-        ParamRange(double min_value,
-                   double max_value,
-                   double eta = GeneticPublicConfig::ETA)
-            : min(min_value),
-              max(max_value),
-              mut_factor(eta * (max_value - min_value))
+        ParamRange(double min, double max)
+            : min(min), range(max - min)
         {
         }
     };
 
     ParamRange s_fast;
     ParamRange s_slow;
-
     ParamRange e_syn;
-
     ParamRange log_k1;
-    ParamRange log_k2;
+    ParamRange log_R;
     ParamRange log_g_fast;
     ParamRange log_g_slow;
-
     ParamRange v_fast;
     ParamRange v_slow;
 
@@ -84,13 +97,16 @@ struct GeneticRanges
               unsigned int search_phase,
               double fc)
     {
-        constexpr double G_MIN_FACTOR = GeneticPublicConfig::G_MIN_FACTOR;
+        constexpr double G_MIN_FACTOR = BOPublicConfig::G_MIN_FACTOR;
+        constexpr double R_MIN = BOPublicConfig::R_MIN;
+        constexpr double SMALL_LOG = BOPublicConstants::SMALL_LOG;
+        constexpr double R_MAX = BOPublicConfig::R_MAX;
 
         const double v_pre_range = v_pre_max - v_pre_min;
         const double v_post_range = v_post_max - v_post_min;
 
-        const double e_syn_far_final_term = v_post_range * GeneticPublicConfig::E_SYN_FAR_TERM;
-        const double e_syn_near_final_term = v_post_range * GeneticPublicConfig::E_SYN_NEAR_TERM;
+        const double e_syn_far_final_term = v_post_range * BOPublicConfig::E_SYN_FAR_TERM;
+        const double e_syn_near_final_term = v_post_range * BOPublicConfig::E_SYN_NEAR_TERM;
         double e_syn_max = 0.0, e_syn_min = 0.0;
         if (search_phase)
         {
@@ -104,77 +120,104 @@ struct GeneticRanges
         }
         e_syn = ParamRange(e_syn_min, e_syn_max);
 
-        const double v_pre_margin = v_pre_range * GeneticPublicConfig::V_MARGIN_FACTOR;
+        const double v_pre_margin = v_pre_range * BOPublicConfig::V_MARGIN_FACTOR;
         const double v_pre_margin_max = v_pre_max + v_pre_margin;
         const double v_pre_margin_min = v_pre_min - v_pre_margin;
 
-        const double expected_i_margin = (expected_i_max - expected_i_min) * GeneticPublicConfig::EXPECTED_I_MARGIN_FACTOR;
+        const double expected_i_margin = (expected_i_max - expected_i_min) * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR;
         const double expected_i_margin_max = expected_i_max + expected_i_margin;
         const double expected_i_margin_min = expected_i_min - expected_i_margin;
+        const double safe_v_pre_range = safe_divisor(v_pre_range);
 
         if (use_i_fast)
         {
-            v_fast = ParamRange(v_pre_min + (v_pre_range * GeneticPublicConfig::V_FAST_MIN_FACTOR),
+            v_fast = ParamRange(v_pre_min + (v_pre_range * BOPublicConfig::V_FAST_MIN_FACTOR),
                                 v_pre_margin_max);
-            s_fast = ParamRange(GeneticPublicConfig::S_FAST_MIN_FACTOR / v_pre_range,
-                                GeneticPublicConfig::S_FAST_MAX_FACTOR / v_pre_range);
+            const double s_fast_max = BOPublicConfig::S_FAST_MAX_FACTOR / safe_v_pre_range;
+            s_fast = ParamRange(BOPublicConfig::S_FAST_MIN_FACTOR / safe_v_pre_range,
+                                s_fast_max);
 
-            const double sigmoid_fast_max = chemical_sigmoid(s_fast.max, v_fast.min, v_pre_max);
-            const double g_fast_max = std::max(std::abs(expected_i_margin_max / ((v_post_max - e_syn_min) * sigmoid_fast_max)),
-                                               std::abs(expected_i_margin_min / ((v_post_min - e_syn_max) * sigmoid_fast_max)));
+            const double sigmoid_fast_max = chemical_sigmoid(s_fast_max, v_fast.min, v_pre_max);
+            const double g_fast_max = std::max(std::abs(expected_i_margin_max / safe_divisor((v_post_max - e_syn_min) * sigmoid_fast_max)),
+                                               std::abs(expected_i_margin_min / safe_divisor((v_post_min - e_syn_max) * sigmoid_fast_max)));
             const double g_fast_min = g_fast_max * G_MIN_FACTOR;
-            log_g_fast = ParamRange(std::log(g_fast_min),
-                                    std::log(g_fast_max));
+            log_g_fast = ParamRange(std::log(g_fast_min == 0.0 ? SMALL_LOG : g_fast_min),
+                                    std::log(g_fast_max == 0.0 ? SMALL_LOG : g_fast_max));
         }
 
         if (use_i_slow)
         {
-            const double k1_max = GeneticPublicConfig::K1_FACTOR * fc;
-            const double k1_min = k1_max * GeneticPublicConfig::K1_MIN_FACTOR;
-            const double k2_max = GeneticPublicConfig::K2_FACTOR * fc;
-            const double k2_min = k2_max * GeneticPublicConfig::K2_MIN_FACTOR;
+            const double k1_max = BOPublicConfig::K1_FACTOR * fc;
+            const double k1_min = k1_max * BOPublicConfig::K1_MIN_FACTOR;
 
             v_slow = ParamRange(v_pre_margin_min,
                                 v_pre_margin_max);
-            s_slow = ParamRange(GeneticPublicConfig::S_SLOW_MIN_FACTOR / v_pre_range,
-                                GeneticPublicConfig::S_SLOW_MAX_FACTOR / v_pre_range);
+            const double s_slow_max = BOPublicConfig::S_SLOW_MAX_FACTOR / safe_v_pre_range;
+            s_slow = ParamRange(BOPublicConfig::S_SLOW_MIN_FACTOR / safe_v_pre_range,
+                                s_slow_max);
 
-            log_k1 = ParamRange(std::log(k1_min),
-                                std::log(k1_max));
-            log_k2 = ParamRange(std::log(k2_min),
-                                std::log(k2_max));
+            log_k1 = ParamRange(std::log(k1_min == 0.0 ? SMALL_LOG : k1_min),
+                                std::log(k1_max == 0.0 ? SMALL_LOG : k1_max));
 
-            const double m_max_term = k1_max * chemical_sigmoid(s_slow.max, v_slow.min, v_pre_max);
-            const double m_max = m_max_term / (m_max_term + k2_min);
+            log_R = ParamRange(std::log(R_MIN == 0.0 ? SMALL_LOG : R_MIN),
+                               std::log(R_MAX == 0.0 ? SMALL_LOG : R_MAX));
 
-            const double g_slow_max = std::max(std::abs(expected_i_margin_max / ((v_post_max - e_syn_min) * m_max)),
-                                               std::abs(expected_i_margin_min / ((v_post_min - e_syn_max) * m_max)));
+            const double k2_min = k1_min * R_MIN;
+
+            const double m_max_term = k1_max * chemical_sigmoid(s_slow_max, v_slow.min, v_pre_max);
+            const double m_max = m_max_term / safe_divisor(m_max_term + k2_min);
+
+            const double g_slow_max = std::max(std::abs(expected_i_margin_max / safe_divisor((v_post_max - e_syn_min) * m_max)),
+                                               std::abs(expected_i_margin_min / safe_divisor((v_post_min - e_syn_max) * m_max)));
             const double g_slow_min = g_slow_max * G_MIN_FACTOR;
 
-            log_g_slow = ParamRange(std::log(g_slow_min),
-                                    std::log(g_slow_max));
+            log_g_slow = ParamRange(std::log(g_slow_min == 0.0 ? SMALL_LOG : g_slow_min),
+                                    std::log(g_slow_max == 0.0 ? SMALL_LOG : g_slow_max));
         }
     }
 
-    GeneticRanges() = default;
+    BOParamRanges() = default;
 };
 
-namespace FitnessPublicConfig
+struct EvaluationPadBuffers
 {
-    inline constexpr double PAD_LEN_FACTOR = 1.5;
-    inline constexpr double FILTER_FC = 0.3; // En KHz, valor por defecto, ajustado para neurona viva
-};
+    kfr::univector<double> padded_buff_12;
+    kfr::univector<double> padded_buff_21;
 
-struct FitnessPadBuffers
-{
-    univector<double> padded_buff_12;
-    univector<double> padded_buff_21;
-
-    FitnessPadBuffers(size_t padded_buff_size_12,
-                      size_t padded_buff_size_21)
+    EvaluationPadBuffers(size_t padded_buff_size_12,
+                         size_t padded_buff_size_21)
         : padded_buff_12(padded_buff_size_12),
           padded_buff_21(padded_buff_size_21)
     {
+    }
+};
+
+struct StopFunctor
+{
+    static inline std::atomic<bool> *stop_BO_ptr = nullptr;
+
+    template <typename BO, typename AggregatorFunction>
+    bool operator()(const BO &bo, const AggregatorFunction &)
+    {
+        return stop_BO_ptr->load(std::memory_order_relaxed);
+    }
+};
+
+struct WeightedSumAggregator
+{
+    double w0;
+    double w1;
+    double total_w;
+
+    WeightedSumAggregator(double w0 = 0.5, double w1 = 0.5)
+        : w0(w0), w1(w1), total_w(w0 + w1)
+    {
+    }
+
+    double operator()(const Eigen::VectorXd &y) const
+    {
+        assert(y.size() == 2);
+        return ((w0 * y(0)) + (w1 * y(1))) / total_w;
     }
 };
 
@@ -191,50 +234,43 @@ struct ChemicalSynapseParams
     double v_slow;
 };
 
-struct IndividualChemicalSynapseParams
+struct Candidate
 {
-    double e_syn;
-    double log_g_fast;
-    double s_fast;
-    double v_fast;
-    double log_g_slow;
-    double log_k1;
-    double log_k2;
-    double s_slow;
-    double v_slow;
+    ChemicalSynapseParams params_12;
+    ChemicalSynapseParams params_21;
 };
 
-static inline void copy_individual_synapse_params_to_runtime(ChemicalSynapseParams &runtime_params,
-                                                             const IndividualChemicalSynapseParams &individual_params,
-                                                             unsigned int use_i_fast,
-                                                             unsigned int use_i_slow)
+struct ChemicalSynapseEvaluation
+{
+    double i_range_score;
+    double i_shape_score;
+};
+
+inline void copy_selected_synapse_params(ChemicalSynapseParams &runtime_params,
+                                         const ChemicalSynapseParams &params,
+                                         unsigned int use_i_fast,
+                                         unsigned int use_i_slow)
 {
     if (use_i_fast || use_i_slow)
     {
-        runtime_params.e_syn = individual_params.e_syn;
+        runtime_params.e_syn = params.e_syn;
+
         if (use_i_fast)
         {
-            runtime_params.g_fast = std::exp(individual_params.log_g_fast);
-            runtime_params.s_fast = individual_params.s_fast;
-            runtime_params.v_fast = individual_params.v_fast;
+            runtime_params.g_fast = params.g_fast;
+            runtime_params.s_fast = params.s_fast;
+            runtime_params.v_fast = params.v_fast;
         }
 
         if (use_i_slow)
         {
-            runtime_params.g_slow = std::exp(individual_params.log_g_slow);
-            runtime_params.v_slow = individual_params.v_slow;
-            runtime_params.k1 = std::exp(individual_params.log_k1);
-            runtime_params.k2 = std::exp(individual_params.log_k2);
-            runtime_params.s_slow = individual_params.s_slow;
+            runtime_params.g_slow = params.g_slow;
+            runtime_params.v_slow = params.v_slow;
+            runtime_params.k1 = params.k1;
+            runtime_params.k2 = params.k2;
+            runtime_params.s_slow = params.s_slow;
         }
     }
 }
-
-struct Individual
-{
-    IndividualChemicalSynapseParams params_12;
-    IndividualChemicalSynapseParams params_21;
-    double fitness;
-};
 
 #endif

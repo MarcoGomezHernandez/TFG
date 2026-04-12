@@ -13,5 +13,6 @@ Probar si funciona vectorizacion KFR en modulo de prueba
 La mejor opcion (que se prueba ahora y funciona) es hacer que se lance un hilo al pulsar un boton con la GUI, asi le paso lo que quiera y no esta todo el rato funcionando cuando queremos funcionamiento normal.
 
 Ojo, tuve que compilar kfr con cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+Ojo, que el undefined symbol pasa porque la funcion to_sos detecta automaticamente tu_arch(en mi caso avx2)::to_sos si no se pone nada. Debido a esto, no vale compilar con lkfr_dsp, sino que hay que cambiar dependiendo de la arch a -lkfr_dsp_(mi arch).
 
 Tuve que poner en el makefile -lkfr_dsp_avx2 en vez de -lkfr_dsp para que se adapte a mi arquitectura específica porque sino daba simbolos no encontrados.

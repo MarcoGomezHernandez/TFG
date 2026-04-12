@@ -23,52 +23,61 @@
 #include <algorithm>
 #include <main_window.h>
 
+namespace ModuleConfig
+{
+  static constexpr double FILTER_FC = 0.3;
+
+  static constexpr double M_SLOW_MARGIN = 1e-6;
+
+  static constexpr double I_SHAPE_WEIGHT = 0.5;
+  static constexpr double I_RANGE_WEIGH = 0.5;
+}
+
+namespace ModuleConstants
+{
+  static constexpr double M_SLOW_MIN = -ModuleConfig::M_SLOW_MARGIN;
+  static constexpr double M_SLOW_MAX = 1.0 + ModuleConfig::M_SLOW_MARGIN;
+}
+
 extern "C" Plugin::Object *
 createRTXIPlugin(void)
 {
-  return new BidirectionalChemicalSynapseGenetic();
+  return new BidirectionalChemicalSynapseBO();
 }
 
 static DefaultGUIModel::variable_t vars[] = {
-    // Genetic basic parameters
-    {"Genetic generations completed", "", DefaultGUIModel::STATE},
-    {"Genetic individuals of the generation completed", "", DefaultGUIModel::STATE},
-    {"Genetic num generations", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic population size", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic individual evaluation time (ms)", "Does not include stabilization time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic individual stabilization time (ms)", "Not included in evaluation time", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic search phase (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Genetic current max to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic current min to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic current max to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic current min to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic cutoff frequency 1 (kHz)", "To separate the I_fast and I_slow to search in synapse 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Genetic cutoff frequency 2 (kHz)", "To separate the I_fast and I_slow to search in synapse 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO evaluations completed", "Finishes when this is initial samples + iterations", DefaultGUIModel::STATE},
+    {"BO initial samples", "Number of initialization samples for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"BO iterations", "Number of BO iterations after initial sampling", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"BO evaluation time (ms)", "Time to record signals per evaluation", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO stabilization time (ms)", "Wait time after setting params before recording", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO search phase (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"BO current max to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO current min to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO current max to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO current min to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO cutoff frequency 1 (kHz)", "To separate the I_fast and I_slow for BO in synapse 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO cutoff frequency 2 (kHz)", "To separate the I_fast and I_slow for BO in synapse 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    // Genetic aux parameters
-    {"Dynamic voltage min and max 1 (1/0)", "1 = Enable, 0 = Disable; necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage max 1 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Voltage min 1 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic voltage min and max 2 (1/0)", "1 = Enable, 0 = Disable; necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage max 2 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Voltage min 2 (V)", "Necessary for the genetic", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic voltage min and max 1 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Voltage max 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage min 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic voltage min and max 2 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"Voltage max 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage min 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    // Current clamps
     {"Current max 1->2 (nA)", "Fixed output clamp max for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current min 1->2 (nA)", "Fixed output clamp min for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current max 2->1 (nA)", "Fixed output clamp max for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current min 2->1 (nA)", "Fixed output clamp min for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    // Integration timestep
     {"factor in dt (ms) = period (ms) * factor", "Factor for calculating dt form the period; dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    // Use fast/slow currents
     {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
-    // Config 1 -> 2
     {"E_syn 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"g_fast 1->2 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_fast 1->2 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -79,7 +88,6 @@ static DefaultGUIModel::variable_t vars[] = {
     {"s_slow 1->2 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"V_slow 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    // Config 2 -> 1
     {"E_syn 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"g_fast 2->1 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"s_fast 2->1 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -103,10 +111,10 @@ static DefaultGUIModel::variable_t vars[] = {
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
 
-BidirectionalChemicalSynapseGenetic::BidirectionalChemicalSynapseGenetic(void)
-    : DefaultGUIModel("RTHybrid Bidirectional Chemical Synapse Genetic", ::vars, ::num_vars)
+BidirectionalChemicalSynapseBO::BidirectionalChemicalSynapseBO(void)
+    : DefaultGUIModel("RTHybrid Bidirectional Chemical Synapse BO", ::vars, ::num_vars)
 {
-  setWhatsThis("<p><b>RTHybrid Bidirectional Chemical Synapse Genetic</b></p>");
+  setWhatsThis("<p><b>RTHybrid Bidirectional Chemical Synapse BO</b></p>");
   DefaultGUIModel::createGUI(vars, num_vars);
   initParameters();
   customizeGUI();
@@ -115,16 +123,16 @@ BidirectionalChemicalSynapseGenetic::BidirectionalChemicalSynapseGenetic(void)
   QTimer::singleShot(0, this, SLOT(resizeMe()));
 }
 
-BidirectionalChemicalSynapseGenetic::~BidirectionalChemicalSynapseGenetic(void)
+BidirectionalChemicalSynapseBO::~BidirectionalChemicalSynapseBO(void)
 {
-  if (genetic_NRT_thread.joinable())
+  if (BO_NRT_thread.joinable())
   {
-    stop_genetic.store(true, std::memory_order_relaxed);
-    genetic_NRT_thread.join();
+    stop_BO.store(true, std::memory_order_relaxed);
+    BO_NRT_thread.join();
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params)
+void BidirectionalChemicalSynapseBO::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params)
 {
   double apoyo, retorno;
   double k[6];
@@ -159,26 +167,27 @@ void BidirectionalChemicalSynapseGenetic::runge_kutta_65(double (*f)(double, dou
             k[5] * 0.035714285714285;
 }
 
-double BidirectionalChemicalSynapseGenetic::sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params)
+double BidirectionalChemicalSynapseBO::sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params)
 {
   return (params.k1 * (1.0 - m_slow) * chemical_sigmoid(params.s_slow, params.v_slow, v_pre)) -
          (params.k2 * m_slow);
 }
 
-double BidirectionalChemicalSynapseGenetic::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
+double BidirectionalChemicalSynapseBO::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
+  m_slow = std::clamp(m_slow, ModuleConstants::M_SLOW_MIN, ModuleConstants::M_SLOW_MAX);
   runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   return params.g_slow * m_slow * (v_post - params.e_syn);
 }
 
-double BidirectionalChemicalSynapseGenetic::compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params)
+double BidirectionalChemicalSynapseBO::compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
   return params.g_fast * (v_post - params.e_syn) * chemical_sigmoid(params.s_fast, params.v_fast, v_pre);
 }
 
-void BidirectionalChemicalSynapseGenetic::execute(void)
+void BidirectionalChemicalSynapseBO::execute(void)
 {
-  if (!genetic_running)
+  if (!BO_running)
   {
     if (dynamic_v_min_max_1)
     {
@@ -260,12 +269,11 @@ void BidirectionalChemicalSynapseGenetic::execute(void)
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::initParameters(void)
+void BidirectionalChemicalSynapseBO::initParameters(void)
 {
-  generations_completed = 0.0;
-  individuals_completed = 0.0;
-  num_generations = 20u;
-  population_size = 20u;
+  evaluations_completed = 0.0;
+  initial_samples = 40u;
+  iterations = 200u;
   evaluation_time = 2000.0;
   stabilization_time = 1000.0;
   search_phase = 1u;
@@ -273,8 +281,9 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   expected_i_min_12 = 0.0;
   expected_i_max_21 = 0.0;
   expected_i_min_21 = 0.0;
-  fc_1 = FitnessPublicConfig::FILTER_FC;
-  fc_2 = FitnessPublicConfig::FILTER_FC;
+  constexpr double FILTER_FC = ModuleConfig::FILTER_FC;
+  fc_1 = FILTER_FC;
+  fc_2 = FILTER_FC;
 
   dynamic_v_min_max_1 = 0u;
   v_max_1 = 0.0;
@@ -307,12 +316,18 @@ void BidirectionalChemicalSynapseGenetic::initParameters(void)
   synapse_idx.store(0, std::memory_order_relaxed);
   last_synapse_idx_read_RT.store(0, std::memory_order_relaxed);
 
-  stop_genetic.store(false, std::memory_order_relaxed);
+  stop_BO.store(false, std::memory_order_relaxed);
   RT_storing.store(false, std::memory_order_relaxed);
-  genetic_running = false;
+  BO_running = false;
+
+  StopFunctor::stop_BO_ptr = &stop_BO;
+
+  aggregator = WeightedSumAggregator(
+      ModuleConfig::I_RANGE_WEIGH,
+      ModuleConfig::I_SHAPE_WEIGHT);
 }
 
-void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynapseParams &params)
+void BidirectionalChemicalSynapseBO::init_syn_params_and_vars(ChemicalSynapseParams &params)
 {
   params.e_syn = 0.0;
   params.g_fast = 0.0;
@@ -325,13 +340,13 @@ void BidirectionalChemicalSynapseGenetic::init_syn_params_and_vars(ChemicalSynap
   params.v_slow = 0.0;
 }
 
-bool BidirectionalChemicalSynapseGenetic::wait_until_RT_read_idx_or_stop(size_t idx_to_achieve)
+bool BidirectionalChemicalSynapseBO::wait_until_RT_read_idx_or_stop(size_t idx_to_achieve)
 {
-  const std::chrono::duration<double, std::milli> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_MS);
+  const std::chrono::duration<double, std::milli> active_wait_duration(BOPublicConfig::ACTIVE_WAIT_MS);
 
   while (last_synapse_idx_read_RT.load(std::memory_order_relaxed) != idx_to_achieve)
   {
-    if (stop_genetic.load(std::memory_order_relaxed))
+    if (stop_BO.load(std::memory_order_relaxed))
       return false;
 
     std::this_thread::sleep_for(active_wait_duration);
@@ -340,29 +355,28 @@ bool BidirectionalChemicalSynapseGenetic::wait_until_RT_read_idx_or_stop(size_t 
   return true;
 }
 
-void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t flag)
+void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag)
 {
   switch (flag)
   {
   case INIT:
   {
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
-    dt = period * dt_factor;                                // ms by default
+    dt = period * dt_factor;                                // ms
 
-    setState("Genetic generations completed", generations_completed);
-    setState("Genetic individuals of the generation completed", individuals_completed);
+    setState("BO evaluations completed", evaluations_completed);
 
-    setParameter("Genetic num generations", num_generations);
-    setParameter("Genetic population size", population_size);
-    setParameter("Genetic individual evaluation time (ms)", evaluation_time);
-    setParameter("Genetic individual stabilization time (ms)", stabilization_time);
-    setParameter("Genetic search phase (1/0)", search_phase);
-    setParameter("Genetic current max to achieve 1->2 (nA)", expected_i_max_12);
-    setParameter("Genetic current min to achieve 1->2 (nA)", expected_i_min_12);
-    setParameter("Genetic current max to achieve 2->1 (nA)", expected_i_max_21);
-    setParameter("Genetic current min to achieve 2->1 (nA)", expected_i_min_21);
-    setParameter("Genetic cutoff frequency 1 (kHz)", fc_1);
-    setParameter("Genetic cutoff frequency 2 (kHz)", fc_2);
+    setParameter("BO initial samples", initial_samples);
+    setParameter("BO iterations", iterations);
+    setParameter("BO evaluation time (ms)", evaluation_time);
+    setParameter("BO stabilization time (ms)", stabilization_time);
+    setParameter("BO search phase (1/0)", search_phase);
+    setParameter("BO current max to achieve 1->2 (nA)", expected_i_max_12);
+    setParameter("BO current min to achieve 1->2 (nA)", expected_i_min_12);
+    setParameter("BO current max to achieve 2->1 (nA)", expected_i_max_21);
+    setParameter("BO current min to achieve 2->1 (nA)", expected_i_min_21);
+    setParameter("BO cutoff frequency 1 (kHz)", fc_1);
+    setParameter("BO cutoff frequency 2 (kHz)", fc_2);
 
     setParameter("Dynamic voltage min and max 1 (1/0)", dynamic_v_min_max_1);
     setParameter("Voltage max 1 (V)", v_max_1);
@@ -399,25 +413,25 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
       i_min_12 = new_i_min_12;
       i_max_21 = new_i_max_21;
       i_min_21 = new_i_min_21;
-      if (genetic_running)
+      if (BO_running)
       {
-        stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría la dinámica de evaluación de los individuos
+        stop_BO.store(true, std::memory_order_relaxed); // Porque cambiaría la dinámica de evaluación de los candidatos
       }
     }
 
-    if (!genetic_running)
+    if (!BO_running)
     {
-      num_generations = getParameter("Genetic num generations").toUInt();
-      population_size = getParameter("Genetic population size").toUInt();
-      evaluation_time = getParameter("Genetic individual evaluation time (ms)").toDouble();
-      stabilization_time = getParameter("Genetic individual stabilization time (ms)").toDouble();
-      search_phase = getParameter("Genetic search phase (1/0)").toUInt();
-      expected_i_max_12 = getParameter("Genetic current max to achieve 1->2 (nA)").toDouble();
-      expected_i_min_12 = getParameter("Genetic current min to achieve 1->2 (nA)").toDouble();
-      expected_i_max_21 = getParameter("Genetic current max to achieve 2->1 (nA)").toDouble();
-      expected_i_min_21 = getParameter("Genetic current min to achieve 2->1 (nA)").toDouble();
-      fc_1 = getParameter("Genetic cutoff frequency 1 (kHz)").toDouble();
-      fc_2 = getParameter("Genetic cutoff frequency 2 (kHz)").toDouble();
+      initial_samples = getParameter("BO initial samples").toUInt();
+      iterations = getParameter("BO iterations").toUInt();
+      evaluation_time = getParameter("BO evaluation time (ms)").toDouble();
+      stabilization_time = getParameter("BO stabilization time (ms)").toDouble();
+      search_phase = getParameter("BO search phase (1/0)").toUInt();
+      expected_i_max_12 = getParameter("BO current max to achieve 1->2 (nA)").toDouble();
+      expected_i_min_12 = getParameter("BO current min to achieve 1->2 (nA)").toDouble();
+      expected_i_max_21 = getParameter("BO current max to achieve 2->1 (nA)").toDouble();
+      expected_i_min_21 = getParameter("BO current min to achieve 2->1 (nA)").toDouble();
+      fc_1 = getParameter("BO cutoff frequency 1 (kHz)").toDouble();
+      fc_2 = getParameter("BO cutoff frequency 2 (kHz)").toDouble();
 
       dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
       const double new_v_max_1 = getParameter("Voltage max 1 (V)").toDouble();
@@ -484,9 +498,9 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
     {
       period = new_period;
       dt = period * dt_factor;
-      if (genetic_running)
+      if (BO_running)
       {
-        stop_genetic.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
+        stop_BO.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
       }
     }
 
@@ -503,58 +517,56 @@ void BidirectionalChemicalSynapseGenetic::update(DefaultGUIModel::update_flags_t
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::customizeGUI(void)
+void BidirectionalChemicalSynapseBO::customizeGUI(void)
 {
   QGridLayout *customlayout = DefaultGUIModel::getLayout();
-  gentic_button = new QPushButton("Start Genetic");
-  QObject::connect(gentic_button, SIGNAL(clicked()), this, SLOT(toggle_genetic_event()));
-  customlayout->addWidget(gentic_button, 0, 0);
+  BO_button = new QPushButton("Start BO");
+  QObject::connect(BO_button, SIGNAL(clicked()), this, SLOT(toggle_BO_event()));
+  customlayout->addWidget(BO_button, 0, 0);
   setLayout(customlayout);
 }
 
-void BidirectionalChemicalSynapseGenetic::toggle_genetic_event(void)
+void BidirectionalChemicalSynapseBO::toggle_BO_event(void)
 {
-  if (!genetic_running)
+  if (!BO_running)
   {
-    // Lógica para EMPEZAR
-    if (genetic_NRT_thread.joinable())
+    if (BO_NRT_thread.joinable())
     {
-      genetic_NRT_thread.join();
-      stop_genetic.store(false, std::memory_order_relaxed);
+      BO_NRT_thread.join();
+      stop_BO.store(false, std::memory_order_relaxed);
     }
-    genetic_running = true;
-    gentic_button->setText("Stop Genetic");
+    BO_running = true;
+    BO_button->setText("Stop BO");
     set_params_read_only(true);
-    genetic_NRT_thread = std::thread(&BidirectionalChemicalSynapseGenetic::NRT_genetic, this, period);
+    BO_NRT_thread = std::thread(&BidirectionalChemicalSynapseBO::NRT_BO, this, period);
   }
   else
   {
-    // Lógica para PARAR
-    stop_genetic.store(true, std::memory_order_relaxed);
+    stop_BO.store(true, std::memory_order_relaxed);
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::stop_genetic_event_async(void)
+void BidirectionalChemicalSynapseBO::stop_BO_event_async(void)
 {
   update_params_gui();
   set_params_read_only(false);
-  gentic_button->setText("Start Genetic");
-  genetic_running = false;
+  BO_button->setText("Start BO");
+  BO_running = false;
 }
 
-void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
+void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
 {
-  parameter["Genetic num generations"].edit->setReadOnly(read_only);
-  parameter["Genetic population size"].edit->setReadOnly(read_only);
-  parameter["Genetic individual evaluation time (ms)"].edit->setReadOnly(read_only);
-  parameter["Genetic individual stabilization time (ms)"].edit->setReadOnly(read_only);
-  parameter["Genetic search phase (1/0)"].edit->setReadOnly(read_only);
-  parameter["Genetic current max to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
-  parameter["Genetic current min to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
-  parameter["Genetic current max to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
-  parameter["Genetic current min to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
-  parameter["Genetic cutoff frequency 1 (kHz)"].edit->setReadOnly(read_only);
-  parameter["Genetic cutoff frequency 2 (kHz)"].edit->setReadOnly(read_only);
+  parameter["BO initial samples"].edit->setReadOnly(read_only);
+  parameter["BO iterations"].edit->setReadOnly(read_only);
+  parameter["BO evaluation time (ms)"].edit->setReadOnly(read_only);
+  parameter["BO stabilization time (ms)"].edit->setReadOnly(read_only);
+  parameter["BO search phase (1/0)"].edit->setReadOnly(read_only);
+  parameter["BO current max to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
+  parameter["BO current min to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
+  parameter["BO current max to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+  parameter["BO current min to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+  parameter["BO cutoff frequency 1 (kHz)"].edit->setReadOnly(read_only);
+  parameter["BO cutoff frequency 2 (kHz)"].edit->setReadOnly(read_only);
 
   parameter["Dynamic voltage min and max 1 (1/0)"].edit->setReadOnly(read_only);
   parameter["Voltage max 1 (V)"].edit->setReadOnly(read_only);
@@ -609,7 +621,7 @@ void BidirectionalChemicalSynapseGenetic::set_params_read_only(bool read_only)
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
+void BidirectionalChemicalSynapseBO::update_params_gui(void)
 {
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
   last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
@@ -653,12 +665,7 @@ void BidirectionalChemicalSynapseGenetic::update_params_gui(void)
   }
 }
 
-void BidirectionalChemicalSynapseGenetic::set_generations_completed(double generations)
+void BidirectionalChemicalSynapseBO::set_evaluations_completed(double evals)
 {
-  generations_completed = generations;
-}
-
-void BidirectionalChemicalSynapseGenetic::set_individuals_completed(double individuals)
-{
-  individuals_completed = individuals;
+  evaluations_completed = evals;
 }

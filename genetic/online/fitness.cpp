@@ -9,50 +9,57 @@
 #include <concepts>
 using namespace kfr;
 
-namespace FitnessPrivateConfig
+namespace EvaluationPrivateConfig
 {
-    static constexpr double SYN_RANGE_WEIGHT = 0.5;
-    static constexpr double VPRE_SYN_COMP_WEIGHT = 0.5;
-
-    static constexpr double IFAST_WEIGHT = 0.5;
-    static constexpr double ISLOW_WEIGHT = 0.5;
-
     static constexpr int BUTTERWORTH_ORDER = 4;
+    static constexpr double I_FAST_WEIGHT = 0.5;
+    static constexpr double I_SLOW_WEIGHT = 0.5;
+
+    static constexpr double K_DIVISOR = 1.5;
 }
 
-static inline double rescale_to_target(double value,
-                                       double src_min, double src_range,
-                                       double dst_min, double dst_range)
+static double rescale_to_target(double value,
+                                double src_min, double src_range,
+                                double dst_min, double dst_range)
 {
-    const double norm = (value - src_min) / src_range;
+    const double norm = (value - src_min) / safe_divisor(src_range);
     return dst_min + (norm * dst_range);
 }
 
 template <typename T>
     requires std::same_as<T, univector<double>> || std::same_as<T, univector_ref<double>>
-static inline double pearson_score(univector<double> &sig,
-                                   const T &ref_sig_centered,
-                                   double ref_sig_factor,
-                                   unsigned int search_phase)
+static double pearson_score(univector<double> &sig,
+                            const T &ref_sig_centered,
+                            double ref_sig_factor,
+                            unsigned int search_phase)
 {
     sig -= mean(sig);
     const double sig_factor = std::sqrt(sum(sqr(sig)));
-    const double r = sum(sig * ref_sig_centered) / (sig_factor * ref_sig_factor);
+    const double r = sum(sig * ref_sig_centered) / safe_divisor(sig_factor * ref_sig_factor);
     const double normalized = (r + 1.0) / 2.0;
     return search_phase ? 1.0 - normalized : normalized;
 }
 
-static inline double calc_range_score_component(double observed_min, double observed_max,
-                                                double expected_min, double expected_max,
-                                                double max_diff)
+static double bound_zero_to_infinite(double x, double k)
 {
-    return 1.0 - (((std::abs(observed_min - expected_min) +
-                    std::abs(observed_max - expected_max)) *
-                   0.5) /
-                  max_diff);
+    if (k == 0.0)
+        return -1.0;
+    return x / (x + k);
 }
 
-static double calc_fitness_from_sigs_one_direction(
+static double calc_range_score_component(double observed_min, double observed_max,
+                                         double expected_min, double expected_max)
+{
+    const double range = expected_max - expected_min;
+    const double expanded_range = range + (range * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR * 2.0);
+    const double k = expanded_range / EvaluationPrivateConfig::K_DIVISOR;
+    const double error = (std::abs(observed_min - expected_min) +
+                          std::abs(observed_max - expected_max)) *
+                         0.5;
+    return 1.0 - bound_zero_to_infinite(error, k);
+}
+
+static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
     univector<double> &vpre_sig,
     univector<double> &i_fast_sig,
     univector<double> &i_slow_sig,
@@ -82,15 +89,15 @@ static double calc_fitness_from_sigs_one_direction(
     }
 
     filtfilt(padded_buff, to_sos<double>(iir_lowpass(
-                              butterworth(FitnessPrivateConfig::BUTTERWORTH_ORDER), fc, fs)));
+                              butterworth(EvaluationPrivateConfig::BUTTERWORTH_ORDER), fc, fs)));
 
     const bool use_both = use_i_fast && use_i_slow;
 
-    constexpr double IFAST_WEIGHT = FitnessPrivateConfig::IFAST_WEIGHT;
-    constexpr double ISLOW_WEIGHT = FitnessPrivateConfig::ISLOW_WEIGHT;
+    constexpr double I_FAST_WEIGHT = EvaluationPrivateConfig::I_FAST_WEIGHT;
+    constexpr double I_SLOW_WEIGHT = EvaluationPrivateConfig::I_SLOW_WEIGHT;
 
-    double vpre_syn_comp_accum = 0.0;
-    double i_range_accum = 0.0;
+    double i_range_score_accum = 0.0;
+    double i_shape_score_accum = 0.0;
     double total_weight = 0.0;
 
     double vpre_min = 0.0, vpre_range = 0.0, expected_i_range = 0.0;
@@ -124,22 +131,21 @@ static double calc_fitness_from_sigs_one_direction(
         ref_i_fast_sig_aux -= mean(ref_i_fast_sig_aux);
         const double ref_i_fast_factor = std::sqrt(sum(sqr(ref_i_fast_sig_aux)));
 
-        const double comp_ifast = calc_range_score_component(
+        const double i_fast_range_score = calc_range_score_component(
             minof(i_fast_sig),
             maxof(i_fast_sig),
             ref_i_fast_min,
-            ref_i_fast_max,
-            ref_i_fast_max - ref_i_fast_min);
-        i_range_accum += IFAST_WEIGHT * comp_ifast;
+            ref_i_fast_max);
 
-        const double vpost_ifast_comp_score =
+        const double i_fast_shape_score =
             pearson_score(i_fast_sig,
                           ref_i_fast_sig_aux,
                           ref_i_fast_factor,
                           search_phase);
-        vpre_syn_comp_accum += IFAST_WEIGHT * vpost_ifast_comp_score;
 
-        total_weight += IFAST_WEIGHT;
+        i_range_score_accum += I_FAST_WEIGHT * i_fast_range_score;
+        i_shape_score_accum += I_FAST_WEIGHT * i_fast_shape_score;
+        total_weight += I_FAST_WEIGHT;
     }
 
     if (use_i_slow)
@@ -163,47 +169,96 @@ static double calc_fitness_from_sigs_one_direction(
         ref_i_slow_sig_aux -= mean(ref_i_slow_sig_aux);
         const double ref_i_slow_factor = std::sqrt(sum(sqr(ref_i_slow_sig_aux)));
 
-        const double comp_islow = calc_range_score_component(
+        const double i_slow_range_score = calc_range_score_component(
             minof(i_slow_sig),
             maxof(i_slow_sig),
             ref_i_slow_min,
-            ref_i_slow_max,
-            ref_i_slow_max - ref_i_slow_min);
-        i_range_accum += ISLOW_WEIGHT * comp_islow;
+            ref_i_slow_max);
 
-        const double vpost_islow_comp_score =
+        const double i_slow_shape_score =
             pearson_score(i_slow_sig,
                           ref_i_slow_sig_aux,
                           ref_i_slow_factor,
                           search_phase);
-        vpre_syn_comp_accum += ISLOW_WEIGHT * vpost_islow_comp_score;
 
-        total_weight += ISLOW_WEIGHT;
+        i_range_score_accum += I_SLOW_WEIGHT * i_slow_range_score;
+        i_shape_score_accum += I_SLOW_WEIGHT * i_slow_shape_score;
+        total_weight += I_SLOW_WEIGHT;
     }
 
-    if (total_weight == 0.0)
-        return 0.0;
-
-    return ((FitnessPrivateConfig::SYN_RANGE_WEIGHT * i_range_accum) +
-            (FitnessPrivateConfig::VPRE_SYN_COMP_WEIGHT * vpre_syn_comp_accum)) /
-           total_weight;
+    ChemicalSynapseEvaluation result;
+    result.i_range_score = i_range_score_accum / total_weight;
+    result.i_shape_score = i_shape_score_accum / total_weight;
+    return result;
 }
 
-double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
-                                                                   size_t effective_pad_12,
-                                                                   size_t effective_pad_21,
-                                                                   FitnessPadBuffers &pad_buffers)
+ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
+    const Candidate &candidate,
+    double fs,
+    size_t effective_pad_12,
+    size_t effective_pad_21,
+    EvaluationPadBuffers &pad_buffers,
+    size_t &curr_synapse_idx)
 {
+    if (stop_BO.load(std::memory_order_relaxed))
+        throw StopEvaluation();
+
     const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
     const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
 
-    double score_12 = 0.0;
-    double score_21 = 0.0;
+    if (!use_syn_12 && !use_syn_21)
+    {
+        QMetaObject::invokeMethod(this, "set_evaluations_completed", Qt::QueuedConnection,
+                                  Q_ARG(double, evaluations_completed + 1));
+        return ChemicalSynapseEvaluation{0.0, 0.0};
+    }
+
+    const std::chrono::duration<double, std::milli> active_wait_duration(BOPublicConfig::ACTIVE_WAIT_MS);
+
+    if (!wait_until_RT_read_idx_or_stop(curr_synapse_idx))
+        throw StopEvaluation();
+
+    const size_t new_synapse_idx = 1 - curr_synapse_idx;
+
+    copy_selected_synapse_params(params_12[new_synapse_idx],
+                                 candidate.params_12,
+                                 use_i_fast_12,
+                                 use_i_slow_12);
+
+    copy_selected_synapse_params(params_21[new_synapse_idx],
+                                 candidate.params_21,
+                                 use_i_fast_21,
+                                 use_i_slow_21);
+
+    synapse_idx.store(new_synapse_idx, std::memory_order_release);
+    curr_synapse_idx = new_synapse_idx;
+
+    if (stabilization_time > 0.0)
+    {
+        std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(stabilization_time));
+    }
+
+    storing_idx = 0;
+
+    RT_storing.store(true, std::memory_order_release);
+
+    while (RT_storing.load(std::memory_order_acquire))
+    {
+        if (stop_BO.load(std::memory_order_relaxed))
+        {
+            RT_storing.store(false, std::memory_order_relaxed);
+            throw StopEvaluation();
+        }
+        std::this_thread::sleep_for(active_wait_duration);
+    }
+
+    double i_range_score_accum = 0.0;
+    double i_shape_score_accum = 0.0;
     double num_directions = 0.0;
 
     if (use_syn_12)
     {
-        score_12 = calc_fitness_from_sigs_one_direction(
+        ChemicalSynapseEvaluation score_12 = evaluate_sigs_one_direction(
             v_sig_1,
             i_fast_sig_12,
             i_slow_sig_12,
@@ -215,13 +270,14 @@ double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
             search_phase,
             expected_i_min_12, expected_i_max_12,
             pad_buffers.padded_buff_12);
-
+        i_range_score_accum += score_12.i_range_score;
+        i_shape_score_accum += score_12.i_shape_score;
         num_directions++;
     }
 
     if (use_syn_21)
     {
-        score_21 = calc_fitness_from_sigs_one_direction(
+        ChemicalSynapseEvaluation score_21 = evaluate_sigs_one_direction(
             v_sig_2,
             i_fast_sig_21,
             i_slow_sig_21,
@@ -233,93 +289,19 @@ double BidirectionalChemicalSynapseGenetic::calc_fitness_from_sigs(double fs,
             search_phase,
             expected_i_min_21, expected_i_max_21,
             pad_buffers.padded_buff_21);
-
+        i_range_score_accum += score_21.i_range_score;
+        i_shape_score_accum += score_21.i_shape_score;
         num_directions++;
     }
 
-    if (num_directions == 0.0)
-        return 0.0;
+    const double i_range_score = i_range_score_accum / num_directions;
+    const double i_shape_score = i_shape_score_accum / num_directions;
+    ChemicalSynapseEvaluation result;
+    result.i_range_score = std::isfinite(i_range_score) ? i_range_score : 0.0;
+    result.i_shape_score = std::isfinite(i_shape_score) ? i_shape_score : 0.0;
 
-    const double final_score = (score_12 + score_21) / num_directions;
+    QMetaObject::invokeMethod(this, "set_evaluations_completed", Qt::QueuedConnection,
+                              Q_ARG(double, evaluations_completed + 1));
 
-    if (!(std::isfinite(final_score)) || final_score < 0.0)
-        return 0.0;
-
-    return final_score;
-}
-
-bool BidirectionalChemicalSynapseGenetic::calc_fitnesses(std::span<Individual> individuals,
-                                                         double fs,
-                                                         size_t effective_pad_12,
-                                                         size_t effective_pad_21,
-                                                         FitnessPadBuffers &pad_buffers)
-{
-    const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
-    const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
-
-    if (!use_syn_12 && !use_syn_21)
-    {
-        for (Individual &individual : individuals)
-        {
-            individual.fitness = 0.0;
-        }
-        return true;
-    }
-
-    const std::chrono::duration<double, std::milli> stabilization_duration(stabilization_time);
-    const std::chrono::duration<double, std::milli> active_wait_duration(GeneticPublicConfig::ACTIVE_WAIT_MS);
-    size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
-
-    for (Individual &individual : individuals)
-    {
-        if (stop_genetic.load(std::memory_order_relaxed))
-            return false;
-
-        if (!wait_until_RT_read_idx_or_stop(curr_synapse_idx))
-            return false;
-
-        const size_t new_synapse_idx = 1 - curr_synapse_idx;
-
-        copy_individual_synapse_params_to_runtime(params_12[new_synapse_idx],
-                                                  individual.params_12,
-                                                  use_i_fast_12,
-                                                  use_i_slow_12);
-
-        copy_individual_synapse_params_to_runtime(params_21[new_synapse_idx],
-                                                  individual.params_21,
-                                                  use_i_fast_21,
-                                                  use_i_slow_21);
-
-        synapse_idx.store(new_synapse_idx, std::memory_order_release);
-        curr_synapse_idx = new_synapse_idx;
-
-        if (stabilization_time > 0.0)
-        {
-            std::this_thread::sleep_for(stabilization_duration);
-        }
-
-        storing_idx = 0;
-
-        RT_storing.store(true, std::memory_order_release);
-
-        while (RT_storing.load(std::memory_order_acquire))
-        {
-            if (stop_genetic.load(std::memory_order_relaxed))
-            {
-                RT_storing.store(false, std::memory_order_relaxed);
-                return false;
-            }
-            std::this_thread::sleep_for(active_wait_duration);
-        }
-
-        individual.fitness = calc_fitness_from_sigs(fs,
-                                                    effective_pad_12,
-                                                    effective_pad_21,
-                                                    pad_buffers);
-
-        QMetaObject::invokeMethod(this, "set_individuals_completed", Qt::QueuedConnection,
-                                  Q_ARG(double, individuals_completed + 1));
-    }
-
-    return true;
+    return result;
 }

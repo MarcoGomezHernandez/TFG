@@ -16,13 +16,12 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef RTHYBRID_CHEMICAL_SYNAPSE_GENETIC_H
-#define RTHYBRID_CHEMICAL_SYNAPSE_GENETIC_H
+#ifndef RTHYBRID_BIDIRECTIONAL_CHEMICAL_SYNAPSE_BO_H
+#define RTHYBRID_BIDIRECTIONAL_CHEMICAL_SYNAPSE_BO_H
 
 #include <default_gui_model.h>
 #include <kfr/all.hpp>
 #include <thread>
-#include <random>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -30,27 +29,28 @@
 #include <span>
 #include "utils.hpp"
 
-using namespace kfr;
-
-class BidirectionalChemicalSynapseGenetic : public DefaultGUIModel
+class BidirectionalChemicalSynapseBO : public DefaultGUIModel
 {
 
   Q_OBJECT
 
 public:
-  BidirectionalChemicalSynapseGenetic(void);
-  virtual ~BidirectionalChemicalSynapseGenetic(void);
+  BidirectionalChemicalSynapseBO(void);
+  virtual ~BidirectionalChemicalSynapseBO(void);
 
   void execute(void);
   void createGUI(DefaultGUIModel::variable_t *, int);
   void customizeGUI(void);
 
+  friend struct EvaluationFunctor;
+
 protected:
   virtual void update(DefaultGUIModel::update_flags_t);
 
 private:
-  double generations_completed, individuals_completed;
-  unsigned int num_generations, population_size;
+  double evaluations_completed;
+  unsigned int initial_samples;
+  unsigned int iterations;
   double evaluation_time, stabilization_time;
   unsigned int search_phase;
   double expected_i_max_12, expected_i_min_12, expected_i_max_21, expected_i_min_21;
@@ -70,9 +70,9 @@ private:
   double m_slow_21, m_slow_12;
   double period;
 
-  std::thread genetic_NRT_thread;
-  std::atomic<bool> stop_genetic;
-  bool genetic_running;
+  std::thread BO_NRT_thread;
+  std::atomic<bool> stop_BO;
+  bool BO_running;
 
   std::atomic<size_t> synapse_idx;
   std::atomic<size_t> last_synapse_idx_read_RT;
@@ -81,14 +81,16 @@ private:
   size_t storing_idx;
   size_t num_elements;
 
-  univector<double> i_fast_sig_12;
-  univector<double> i_fast_sig_21;
-  univector<double> i_slow_sig_12;
-  univector<double> i_slow_sig_21;
-  univector<double> v_sig_1;
-  univector<double> v_sig_2;
+  kfr::univector<double> i_fast_sig_12;
+  kfr::univector<double> i_fast_sig_21;
+  kfr::univector<double> i_slow_sig_12;
+  kfr::univector<double> i_slow_sig_21;
+  kfr::univector<double> v_sig_1;
+  kfr::univector<double> v_sig_2;
 
-  QPushButton *gentic_button;
+  QPushButton *BO_button;
+
+  WeightedSumAggregator aggregator;
 
   void initParameters();
 
@@ -99,31 +101,19 @@ private:
 
   static double sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params);
 
-  double calc_fitness_from_sigs(double fs,
-                                size_t effective_pad_12,
-                                size_t effective_pad_21,
-                                FitnessPadBuffers &pad_buffers);
+  ChemicalSynapseEvaluation evaluate_candidate(
+      const Candidate &candidate,
+      double fs,
+      size_t effective_pad_12,
+      size_t effective_pad_21,
+      EvaluationPadBuffers &pad_buffers,
+      size_t &curr_synapse_idx);
 
-  bool calc_fitnesses(std::span<Individual> individuals,
-                      double fs,
-                      size_t effective_pad_12,
-                      size_t effective_pad_21,
-                      FitnessPadBuffers &pad_buffers);
+  Candidate decode_to_candidate(const Eigen::VectorXd &x,
+                                const BOParamRanges &ranges_12,
+                                const BOParamRanges &ranges_21);
 
-  void NRT_genetic(double period_t);
-  std::vector<Individual> initialize_population(std::mt19937 &rng,
-                                                const GeneticRanges &ranges_12,
-                                                const GeneticRanges &ranges_21);
-
-  void crossover_individual(const Individual &a,
-                            const Individual &b,
-                            Individual &result_1,
-                            Individual &result_2,
-                            bool has_second_individual,
-                            const GeneticRanges &ranges_12,
-                            const GeneticRanges &ranges_21,
-                            std::mt19937 &rng);
-  void mutate_individual(Individual &ind, std::mt19937 &rng, std::normal_distribution<double> &ndist, std::uniform_real_distribution<double> &prob_dist, double mutation_probability_per_gene, const GeneticRanges &ranges_12, const GeneticRanges &ranges_21);
+  void NRT_BO(double period_t);
 
   void set_params_read_only(bool read_only);
 
@@ -131,11 +121,10 @@ private:
   bool wait_until_RT_read_idx_or_stop(size_t idx_to_achieve);
 
 private slots:
-  void toggle_genetic_event(void);
-  void stop_genetic_event_async(void);
+  void toggle_BO_event(void);
+  void stop_BO_event_async(void);
   void update_params_gui(void);
-  void set_generations_completed(double generations);
-  void set_individuals_completed(double individuals);
+  void set_evaluations_completed(double evals);
 };
 
 #endif
