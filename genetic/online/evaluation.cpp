@@ -11,8 +11,6 @@ namespace EvaluationPrivateConfig
     static constexpr int BUTTERWORTH_ORDER = 4;
     static constexpr double I_FAST_WEIGHT = 0.5;
     static constexpr double I_SLOW_WEIGHT = 0.5;
-
-    static constexpr double K_DIVISOR = 1.5;
 }
 
 static double rescale_to_target(double value,
@@ -37,23 +35,15 @@ static double pearson_score(univector<double> &sig,
     return search_phase ? 1.0 - normalized : normalized;
 }
 
-static double bound_zero_to_infinite(double x, double k)
+static double range_score(double observed_min, double observed_max,
+                          double expected_min, double expected_max,
+                          double max_pts_dist)
 {
-    if (k == 0.0)
-        return -1.0;
-    return x / (x + k);
-}
-
-static double calc_range_score_component(double observed_min, double observed_max,
-                                         double expected_min, double expected_max)
-{
-    const double range = expected_max - expected_min;
-    const double expanded_range = range + (range * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR * 2.0);
-    const double k = expanded_range / EvaluationPrivateConfig::K_DIVISOR;
     const double error = (std::abs(observed_min - expected_min) +
                           std::abs(observed_max - expected_max)) *
                          0.5;
-    return 1.0 - bound_zero_to_infinite(error, k);
+    const double normalized_error = error / safe_divisor(max_pts_dist);
+    return 1.0 - normalized_error;
 }
 
 static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
@@ -68,6 +58,7 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
     unsigned int search_phase,
     double expected_i_min,
     double expected_i_max,
+    double max_i_dist,
     univector<double> &padded_buff)
 {
     const size_t use_size = vpre_sig.size();
@@ -111,28 +102,31 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
         univector<double> &ref_i_fast_sig_aux = vpre_sig;
         ref_i_fast_sig_aux -= padded_seg;
 
-        double ref_i_fast_min, ref_i_fast_max;
+        double ref_i_fast_min, ref_i_fast_max, max_i_fast_dist;
         if (use_both)
         {
             ref_i_fast_min = rescale_to_target(minof(ref_i_fast_sig_aux), vpre_min, vpre_range,
                                                expected_i_min, expected_i_range);
             ref_i_fast_max = rescale_to_target(maxof(ref_i_fast_sig_aux), vpre_min, vpre_range,
                                                expected_i_min, expected_i_range);
+            max_i_fast_dist = calculate_expected_i_max_dist(ref_i_fast_min, ref_i_fast_max);
         }
         else
         {
             ref_i_fast_min = expected_i_min;
             ref_i_fast_max = expected_i_max;
+            max_i_fast_dist = max_i_dist;
         }
 
         ref_i_fast_sig_aux -= mean(ref_i_fast_sig_aux);
         const double ref_i_fast_factor = std::sqrt(sum(sqr(ref_i_fast_sig_aux)));
 
-        const double i_fast_range_score = calc_range_score_component(
+        const double i_fast_range_score = range_score(
             minof(i_fast_sig),
             maxof(i_fast_sig),
             ref_i_fast_min,
-            ref_i_fast_max);
+            ref_i_fast_max,
+            max_i_fast_dist);
 
         const double i_fast_shape_score =
             pearson_score(i_fast_sig,
@@ -149,28 +143,31 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
     {
         univector_ref<double> &ref_i_slow_sig_aux = padded_seg;
 
-        double ref_i_slow_min, ref_i_slow_max;
+        double ref_i_slow_min, ref_i_slow_max, max_i_slow_dist;
         if (use_both)
         {
             ref_i_slow_min = rescale_to_target(minof(ref_i_slow_sig_aux), vpre_min, vpre_range,
                                                expected_i_min, expected_i_range);
             ref_i_slow_max = rescale_to_target(maxof(ref_i_slow_sig_aux), vpre_min, vpre_range,
                                                expected_i_min, expected_i_range);
+            max_i_slow_dist = calculate_expected_i_max_dist(ref_i_slow_min, ref_i_slow_max);
         }
         else
         {
             ref_i_slow_min = expected_i_min;
             ref_i_slow_max = expected_i_max;
+            max_i_slow_dist = max_i_dist;
         }
 
         ref_i_slow_sig_aux -= mean(ref_i_slow_sig_aux);
         const double ref_i_slow_factor = std::sqrt(sum(sqr(ref_i_slow_sig_aux)));
 
-        const double i_slow_range_score = calc_range_score_component(
+        const double i_slow_range_score = range_score(
             minof(i_slow_sig),
             maxof(i_slow_sig),
             ref_i_slow_min,
-            ref_i_slow_max);
+            ref_i_slow_max,
+            max_i_slow_dist);
 
         const double i_slow_shape_score =
             pearson_score(i_slow_sig,
@@ -195,6 +192,8 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
     size_t effective_pad_12,
     size_t effective_pad_21,
     EvaluationPadBuffers &pad_buffers,
+    double max_i_dist_12,
+    double max_i_dist_21,
     size_t &curr_synapse_idx)
 {
     if (stop_BO.load(std::memory_order_relaxed))
@@ -266,6 +265,7 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
             use_i_slow_12,
             search_phase,
             expected_i_min_12, expected_i_max_12,
+            max_i_dist_12,
             pad_buffers.padded_buff_12);
         i_range_score_accum += score_12.i_range_score;
         i_shape_score_accum += score_12.i_shape_score;
@@ -285,6 +285,7 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
             use_i_slow_21,
             search_phase,
             expected_i_min_21, expected_i_max_21,
+            max_i_dist_21,
             pad_buffers.padded_buff_21);
         i_range_score_accum += score_21.i_range_score;
         i_shape_score_accum += score_21.i_shape_score;

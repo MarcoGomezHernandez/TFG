@@ -50,24 +50,24 @@ static DefaultGUIModel::variable_t vars[] = {
     {"BO evaluation time (ms)", "Time to record signals per evaluation", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO stabilization time (ms)", "Wait time after setting params before recording", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO search phase (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"BO current max to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO current min to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"BO current max to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO current max to achieve 1->2 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO current min to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"BO current max to achieve 2->1 (nA)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO cutoff frequency 1 (kHz)", "To separate the I_fast and I_slow for BO in synapse 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO cutoff frequency 2 (kHz)", "To separate the I_fast and I_slow for BO in synapse 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Dynamic voltage min and max 1 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage max 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Voltage min 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage max 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Dynamic voltage min and max 2 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage max 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Voltage min 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Voltage max 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    {"Current max 1->2 (nA)", "Fixed output clamp max for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current min 1->2 (nA)", "Fixed output clamp min for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Current max 2->1 (nA)", "Fixed output clamp max for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current max 1->2 (nA)", "Fixed output clamp max for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current min 2->1 (nA)", "Fixed output clamp min for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Current max 2->1 (nA)", "Fixed output clamp max for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"factor in dt (ms) = period (ms) * factor", "Factor for calculating dt form the period; dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
@@ -101,10 +101,10 @@ static DefaultGUIModel::variable_t vars[] = {
 
     {"Voltage 1 (V)", "Membrane potential 1", DefaultGUIModel::INPUT},
     {"Voltage 2 (V)", "Membrane potential 2", DefaultGUIModel::INPUT},
-    {"Voltage max 1 (V)", "Dynamic max 1", DefaultGUIModel::INPUT},
     {"Voltage min 1 (V)", "Dynamic min 1", DefaultGUIModel::INPUT},
-    {"Voltage max 2 (V)", "Dynamic max 2", DefaultGUIModel::INPUT},
+    {"Voltage max 1 (V)", "Dynamic max 1", DefaultGUIModel::INPUT},
     {"Voltage min 2 (V)", "Dynamic min 2", DefaultGUIModel::INPUT},
+    {"Voltage max 2 (V)", "Dynamic max 2", DefaultGUIModel::INPUT},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
@@ -189,14 +189,14 @@ void BidirectionalChemicalSynapseBO::execute(void)
   {
     if (dynamic_v_min_max_1)
     {
-      v_max_1 = input(2);
-      v_min_1 = input(3);
+      v_min_1 = input(2);
+      v_max_1 = input(3);
     }
 
     if (dynamic_v_min_max_2)
     {
-      v_max_2 = input(4);
-      v_min_2 = input(5);
+      v_min_2 = input(4);
+      v_max_2 = input(5);
     }
   }
 
@@ -275,26 +275,26 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
   evaluation_time = 2000.0;
   stabilization_time = 1000.0;
   search_phase = 1u;
-  expected_i_max_12 = 0.0;
   expected_i_min_12 = 0.0;
-  expected_i_max_21 = 0.0;
+  expected_i_max_12 = 0.0;
   expected_i_min_21 = 0.0;
+  expected_i_max_21 = 0.0;
   constexpr double FILTER_FC = ModuleConfig::FILTER_FC;
   fc_1 = FILTER_FC;
   fc_2 = FILTER_FC;
 
   dynamic_v_min_max_1 = 0u;
-  v_max_1 = 0.0;
   v_min_1 = 0.0;
+  v_max_1 = 0.0;
 
   dynamic_v_min_max_2 = 0u;
-  v_max_2 = 0.0;
   v_min_2 = 0.0;
+  v_max_2 = 0.0;
 
-  i_max_12 = 0.0;
   i_min_12 = 0.0;
-  i_max_21 = 0.0;
+  i_max_12 = 0.0;
   i_min_21 = 0.0;
+  i_max_21 = 0.0;
 
   dt_factor = 1.0;
 
@@ -369,24 +369,24 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
     setParameter("BO evaluation time (ms)", evaluation_time);
     setParameter("BO stabilization time (ms)", stabilization_time);
     setParameter("BO search phase (1/0)", search_phase);
-    setParameter("BO current max to achieve 1->2 (nA)", expected_i_max_12);
     setParameter("BO current min to achieve 1->2 (nA)", expected_i_min_12);
-    setParameter("BO current max to achieve 2->1 (nA)", expected_i_max_21);
+    setParameter("BO current max to achieve 1->2 (nA)", expected_i_max_12);
     setParameter("BO current min to achieve 2->1 (nA)", expected_i_min_21);
+    setParameter("BO current max to achieve 2->1 (nA)", expected_i_max_21);
     setParameter("BO cutoff frequency 1 (kHz)", fc_1);
     setParameter("BO cutoff frequency 2 (kHz)", fc_2);
 
     setParameter("Dynamic voltage min and max 1 (1/0)", dynamic_v_min_max_1);
-    setParameter("Voltage max 1 (V)", v_max_1);
     setParameter("Voltage min 1 (V)", v_min_1);
+    setParameter("Voltage max 1 (V)", v_max_1);
     setParameter("Dynamic voltage min and max 2 (1/0)", dynamic_v_min_max_2);
-    setParameter("Voltage max 2 (V)", v_max_2);
     setParameter("Voltage min 2 (V)", v_min_2);
+    setParameter("Voltage max 2 (V)", v_max_2);
 
-    setParameter("Current max 1->2 (nA)", i_max_12);
     setParameter("Current min 1->2 (nA)", i_min_12);
-    setParameter("Current max 2->1 (nA)", i_max_21);
+    setParameter("Current max 1->2 (nA)", i_max_12);
     setParameter("Current min 2->1 (nA)", i_min_21);
+    setParameter("Current max 2->1 (nA)", i_max_21);
 
     setParameter("factor in dt (ms) = period (ms) * factor", dt_factor);
 
@@ -401,10 +401,10 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   }
   case MODIFY:
   {
-    const double new_i_max_12 = getParameter("Current max 1->2 (nA)").toDouble();
     const double new_i_min_12 = getParameter("Current min 1->2 (nA)").toDouble();
-    const double new_i_max_21 = getParameter("Current max 2->1 (nA)").toDouble();
+    const double new_i_max_12 = getParameter("Current max 1->2 (nA)").toDouble();
     const double new_i_min_21 = getParameter("Current min 2->1 (nA)").toDouble();
+    const double new_i_max_21 = getParameter("Current max 2->1 (nA)").toDouble();
     if (new_i_max_12 != i_max_12 || new_i_min_12 != i_min_12 || new_i_max_21 != i_max_21 || new_i_min_21 != i_min_21)
     {
       i_max_12 = new_i_max_12;
@@ -424,28 +424,28 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
       evaluation_time = getParameter("BO evaluation time (ms)").toDouble();
       stabilization_time = getParameter("BO stabilization time (ms)").toDouble();
       search_phase = getParameter("BO search phase (1/0)").toUInt();
-      expected_i_max_12 = getParameter("BO current max to achieve 1->2 (nA)").toDouble();
       expected_i_min_12 = getParameter("BO current min to achieve 1->2 (nA)").toDouble();
-      expected_i_max_21 = getParameter("BO current max to achieve 2->1 (nA)").toDouble();
+      expected_i_max_12 = getParameter("BO current max to achieve 1->2 (nA)").toDouble();
       expected_i_min_21 = getParameter("BO current min to achieve 2->1 (nA)").toDouble();
+      expected_i_max_21 = getParameter("BO current max to achieve 2->1 (nA)").toDouble();
       fc_1 = getParameter("BO cutoff frequency 1 (kHz)").toDouble();
       fc_2 = getParameter("BO cutoff frequency 2 (kHz)").toDouble();
 
       dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
-      const double new_v_max_1 = getParameter("Voltage max 1 (V)").toDouble();
       const double new_v_min_1 = getParameter("Voltage min 1 (V)").toDouble();
+      const double new_v_max_1 = getParameter("Voltage max 1 (V)").toDouble();
       if (!dynamic_v_min_max_1)
       {
-        v_max_1 = new_v_max_1;
         v_min_1 = new_v_min_1;
+        v_max_1 = new_v_max_1;
       }
       dynamic_v_min_max_2 = getParameter("Dynamic voltage min and max 2 (1/0)").toUInt();
-      const double new_v_max_2 = getParameter("Voltage max 2 (V)").toDouble();
       const double new_v_min_2 = getParameter("Voltage min 2 (V)").toDouble();
+      const double new_v_max_2 = getParameter("Voltage max 2 (V)").toDouble();
       if (!dynamic_v_min_max_2)
       {
-        v_max_2 = new_v_max_2;
         v_min_2 = new_v_min_2;
+        v_max_2 = new_v_max_2;
       }
 
       double new_dt_factor = getParameter("factor in dt (ms) = period (ms) * factor").toDouble();
@@ -559,19 +559,19 @@ void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
   parameter["BO evaluation time (ms)"].edit->setReadOnly(read_only);
   parameter["BO stabilization time (ms)"].edit->setReadOnly(read_only);
   parameter["BO search phase (1/0)"].edit->setReadOnly(read_only);
-  parameter["BO current max to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
   parameter["BO current min to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
-  parameter["BO current max to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+  parameter["BO current max to achieve 1->2 (nA)"].edit->setReadOnly(read_only);
   parameter["BO current min to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
+  parameter["BO current max to achieve 2->1 (nA)"].edit->setReadOnly(read_only);
   parameter["BO cutoff frequency 1 (kHz)"].edit->setReadOnly(read_only);
   parameter["BO cutoff frequency 2 (kHz)"].edit->setReadOnly(read_only);
 
   parameter["Dynamic voltage min and max 1 (1/0)"].edit->setReadOnly(read_only);
-  parameter["Voltage max 1 (V)"].edit->setReadOnly(read_only);
   parameter["Voltage min 1 (V)"].edit->setReadOnly(read_only);
+  parameter["Voltage max 1 (V)"].edit->setReadOnly(read_only);
   parameter["Dynamic voltage min and max 2 (1/0)"].edit->setReadOnly(read_only);
-  parameter["Voltage max 2 (V)"].edit->setReadOnly(read_only);
   parameter["Voltage min 2 (V)"].edit->setReadOnly(read_only);
+  parameter["Voltage max 2 (V)"].edit->setReadOnly(read_only);
 
   parameter["factor in dt (ms) = period (ms) * factor"].edit->setReadOnly(read_only);
 

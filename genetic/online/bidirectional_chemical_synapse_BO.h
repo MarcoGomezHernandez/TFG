@@ -49,12 +49,12 @@ private:
   unsigned int iterations;
   double evaluation_time, stabilization_time;
   unsigned int search_phase;
-  double expected_i_max_12, expected_i_min_12, expected_i_max_21, expected_i_min_21;
+  double expected_i_min_12, expected_i_max_12, expected_i_min_21, expected_i_max_21;
   double fc_1, fc_2;
 
   unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
-  double v_max_1, v_min_1, v_max_2, v_min_2;
-  double i_max_12, i_min_12, i_max_21, i_min_21;
+  double v_min_1, v_max_1, v_min_2, v_max_2;
+  double i_min_12, i_max_12, i_min_21, i_max_21;
 
   double dt, dt_factor;
 
@@ -103,6 +103,8 @@ private:
       size_t effective_pad_12,
       size_t effective_pad_21,
       EvaluationPadBuffers &pad_buffers,
+      double max_i_dist_12,
+      double max_i_dist_21,
       size_t &curr_synapse_idx);
 
   Candidate decode_to_candidate(const Eigen::VectorXd &x,

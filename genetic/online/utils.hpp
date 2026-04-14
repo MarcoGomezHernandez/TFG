@@ -9,6 +9,8 @@
 
 namespace BOPublicConfig
 {
+    inline constexpr double EXPECTED_I_MARGIN_RANGE_FACTOR = 0.8;
+
     inline constexpr double ACTIVE_WAIT_MS = 10.0;
 
     inline constexpr double V_MARGIN_FACTOR = 0.125;
@@ -44,14 +46,22 @@ struct StopEvaluation
 {
 };
 
-static double chemical_sigmoid(double s,
+inline double chemical_sigmoid(double s,
                                double v_threshold,
                                double v_pre)
 {
     return 1.0 / (1.0 + std::exp(s * (v_threshold - v_pre)));
 }
 
-static double safe_divisor(double divisor)
+inline double calculate_expected_i_max_dist(double expected_i_min,
+                                     double expected_i_max)
+{
+    const double range = expected_i_max - expected_i_min;
+    return (range + (range * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR * 2.0)) *
+           BOPublicConfig::EXPECTED_I_MARGIN_RANGE_FACTOR;
+}
+
+inline double safe_divisor(double divisor)
 {
     return std::abs(divisor) < BOPublicConstants::SMALL_DIVISOR
                ? (divisor < 0.0 ? BOPublicConstants::NEGATIVE_SMALL_DIVISOR : BOPublicConstants::SMALL_DIVISOR)
@@ -107,23 +117,23 @@ struct BOParamRanges
         double e_syn_max = 0.0, e_syn_min = 0.0;
         if (search_phase)
         {
-            e_syn_max = v_post_max + e_syn_far_final_term;
             e_syn_min = v_post_max + e_syn_near_final_term;
+            e_syn_max = v_post_max + e_syn_far_final_term;
         }
         else
         {
-            e_syn_max = v_post_min - e_syn_near_final_term;
             e_syn_min = v_post_min - e_syn_far_final_term;
+            e_syn_max = v_post_min - e_syn_near_final_term;
         }
         e_syn = ParamRange(e_syn_min, e_syn_max);
 
         const double v_pre_margin = v_pre_range * BOPublicConfig::V_MARGIN_FACTOR;
-        const double v_pre_margin_max = v_pre_max + v_pre_margin;
         const double v_pre_margin_min = v_pre_min - v_pre_margin;
+        const double v_pre_margin_max = v_pre_max + v_pre_margin;
 
         const double expected_i_margin = (expected_i_max - expected_i_min) * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR;
-        const double expected_i_margin_max = expected_i_max + expected_i_margin;
         const double expected_i_margin_min = expected_i_min - expected_i_margin;
+        const double expected_i_margin_max = expected_i_max + expected_i_margin;
         const double safe_v_pre_range = safe_divisor(v_pre_range);
 
         if (use_i_fast)

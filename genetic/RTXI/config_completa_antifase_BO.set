@@ -49,10 +49,10 @@
   <PARAM name="9 Source channel">1</PARAM>
   <PARAM name="Num Links">11</PARAM>
  </OBJECT>
- <OBJECT id="3" component="plugin" library="model_loader.so"/>
- <OBJECT id="4" component="plugin" library="module_installer.so"/>
- <OBJECT id="5" component="plugin" library="system_control.so"/>
- <OBJECT id="6" component="plugin" library="oscilloscope.so">
+ <OBJECT id="3" library="model_loader.so" component="plugin"/>
+ <OBJECT id="4" library="module_installer.so" component="plugin"/>
+ <OBJECT id="5" library="system_control.so" component="plugin"/>
+ <OBJECT id="6" library="oscilloscope.so" component="plugin">
   <PARAM name="Num Panels">2</PARAM>
   <OBJECT id="12" name="0">
    <PARAM name="0 ID">2</PARAM>
@@ -79,7 +79,7 @@
    <PARAM name="Paused">0</PARAM>
    <PARAM name="Refresh">250</PARAM>
    <PARAM name="Size">5001</PARAM>
-   <PARAM name="W">685</PARAM>
+   <PARAM name="W">669</PARAM>
    <PARAM name="X">1072</PARAM>
    <PARAM name="Y">5</PARAM>
   </OBJECT>
@@ -108,18 +108,18 @@
    <PARAM name="Paused">0</PARAM>
    <PARAM name="Refresh">250</PARAM>
    <PARAM name="Size">5001</PARAM>
-   <PARAM name="W">685</PARAM>
+   <PARAM name="W">669</PARAM>
    <PARAM name="X">1070</PARAM>
    <PARAM name="Y">467</PARAM>
   </OBJECT>
  </OBJECT>
- <OBJECT id="7" component="plugin" library="data_recorder.so">
+ <OBJECT id="7" library="data_recorder.so" component="plugin">
   <PARAM name="Num Panels">0</PARAM>
  </OBJECT>
- <OBJECT id="8" component="plugin" library="connector.so"/>
- <OBJECT id="9" component="plugin" library="performance_measurement.so"/>
- <OBJECT id="10" component="plugin" library="userprefs.so"/>
- <OBJECT id="2" component="plugin" library="rthybrid_hindmarsh_rose_1984_neuron.so">
+ <OBJECT id="8" library="connector.so" component="plugin"/>
+ <OBJECT id="9" library="performance_measurement.so" component="plugin"/>
+ <OBJECT id="10" library="userprefs.so" component="plugin"/>
+ <OBJECT id="2" library="rthybrid_hindmarsh_rose_1984_neuron.so" component="plugin">
   <PARAM name="Burst duration (s)">0.5</PARAM>
   <PARAM name="H">484</PARAM>
   <PARAM name="I">3.281</PARAM>
@@ -136,14 +136,14 @@
   <PARAM name="r">0.0021</PARAM>
   <PARAM name="s">1</PARAM>
   <PARAM name="s_points">6</PARAM>
-  <PARAM name="syn">0</PARAM>
-  <PARAM name="v">-1.35648</PARAM>
+  <PARAM name="syn">0.000342848</PARAM>
+  <PARAM name="v">-1.18592</PARAM>
   <PARAM name="x0">-0.712841</PARAM>
   <PARAM name="xr">-1.6</PARAM>
   <PARAM name="y0">-1.93688</PARAM>
   <PARAM name="z0">3.16568</PARAM>
  </OBJECT>
- <OBJECT id="11" component="plugin" library="rthybrid_hindmarsh_rose_1984_neuron.so">
+ <OBJECT id="11" library="rthybrid_hindmarsh_rose_1984_neuron.so" component="plugin">
   <PARAM name="Burst duration (s)">0.5</PARAM>
   <PARAM name="H">484</PARAM>
   <PARAM name="I">3.281</PARAM>
@@ -160,58 +160,58 @@
   <PARAM name="r">0.0021</PARAM>
   <PARAM name="s">1</PARAM>
   <PARAM name="s_points">6</PARAM>
-  <PARAM name="syn">0</PARAM>
-  <PARAM name="v">-1.35548</PARAM>
+  <PARAM name="syn">0.00086938</PARAM>
+  <PARAM name="v">-1.0773</PARAM>
   <PARAM name="x0">-0.712841</PARAM>
   <PARAM name="xr">-1.6</PARAM>
   <PARAM name="y0">-1.93688</PARAM>
   <PARAM name="z0">3.16568</PARAM>
  </OBJECT>
- <OBJECT id="15" component="plugin" library="rthybrid_burst_analysis.so">
-  <PARAM name="Amplitude (V)">3.4287</PARAM>
-  <PARAM name="Burst counter">0</PARAM>
-  <PARAM name="Burst duration (s)">1.477</PARAM>
+ <OBJECT id="15" library="rthybrid_burst_analysis.so" component="plugin">
+  <PARAM name="Amplitude (V)">3.43007</PARAM>
+  <PARAM name="Burst counter">3</PARAM>
+  <PARAM name="Burst duration (s)">1.44833</PARAM>
   <PARAM name="H">400</PARAM>
   <PARAM name="Is burst">0</PARAM>
-  <PARAM name="Lower threshold (V)">-1.3256</PARAM>
-  <PARAM name="Max (V)">1.76023</PARAM>
-  <PARAM name="Min (V)">-1.66847</PARAM>
+  <PARAM name="Lower threshold (V)">-1.32568</PARAM>
+  <PARAM name="Max (V)">1.76138</PARAM>
+  <PARAM name="Min (V)">-1.66869</PARAM>
   <PARAM name="Observation time (s)">5</PARAM>
-  <PARAM name="Points counter">957</PARAM>
-  <PARAM name="Upper threshold (V)">1.41736</PARAM>
+  <PARAM name="Points counter">4810</PARAM>
+  <PARAM name="Upper threshold (V)">1.41837</PARAM>
   <PARAM name="W">294</PARAM>
   <PARAM name="X">18</PARAM>
   <PARAM name="Y">523</PARAM>
   <PARAM name="paused">0</PARAM>
  </OBJECT>
- <OBJECT id="18" component="plugin" library="rthybrid_burst_analysis.so">
-  <PARAM name="Amplitude (V)">3.4287</PARAM>
-  <PARAM name="Burst counter">0</PARAM>
-  <PARAM name="Burst duration (s)">1.47567</PARAM>
+ <OBJECT id="18" library="rthybrid_burst_analysis.so" component="plugin">
+  <PARAM name="Amplitude (V)">3.50154</PARAM>
+  <PARAM name="Burst counter">2</PARAM>
+  <PARAM name="Burst duration (s)">1.57733</PARAM>
   <PARAM name="H">400</PARAM>
   <PARAM name="Is burst">0</PARAM>
-  <PARAM name="Lower threshold (V)">-1.3256</PARAM>
-  <PARAM name="Max (V)">1.76023</PARAM>
-  <PARAM name="Min (V)">-1.66847</PARAM>
+  <PARAM name="Lower threshold (V)">-1.39638</PARAM>
+  <PARAM name="Max (V)">1.755</PARAM>
+  <PARAM name="Min (V)">-1.74653</PARAM>
   <PARAM name="Observation time (s)">5</PARAM>
-  <PARAM name="Points counter">958</PARAM>
-  <PARAM name="Upper threshold (V)">1.41736</PARAM>
+  <PARAM name="Points counter">3808</PARAM>
+  <PARAM name="Upper threshold (V)">1.40485</PARAM>
   <PARAM name="W">294</PARAM>
   <PARAM name="X">762</PARAM>
   <PARAM name="Y">525</PARAM>
   <PARAM name="paused">0</PARAM>
  </OBJECT>
- <OBJECT id="13" component="plugin" library="bidirectional_chemical_synapse_genetic.so">
+ <OBJECT id="13" library="bidirectional_chemical_synapse_BO.so" component="plugin">
   <PARAM name="BO current max to achieve 1->2 (nA)">0.8</PARAM>
   <PARAM name="BO current max to achieve 2->1 (nA)">0.8</PARAM>
   <PARAM name="BO current min to achieve 1->2 (nA)">0.2</PARAM>
   <PARAM name="BO current min to achieve 2->1 (nA)">0.2</PARAM>
   <PARAM name="BO cutoff frequency 1 (kHz)">0.02</PARAM>
   <PARAM name="BO cutoff frequency 2 (kHz)">0.02</PARAM>
-  <PARAM name="BO evaluation time (ms)">1000</PARAM>
-  <PARAM name="BO evaluations completed">0</PARAM>
+  <PARAM name="BO evaluation time (ms)">2000</PARAM>
+  <PARAM name="BO evaluations completed">70</PARAM>
   <PARAM name="BO initial samples">20</PARAM>
-  <PARAM name="BO iterations">100</PARAM>
+  <PARAM name="BO iterations">50</PARAM>
   <PARAM name="BO search phase (1/0)">0</PARAM>
   <PARAM name="BO stabilization time (ms)">1000</PARAM>
   <PARAM name="Current max 1->2 (nA)">4</PARAM>
@@ -220,37 +220,37 @@
   <PARAM name="Current min 2->1 (nA)">-4</PARAM>
   <PARAM name="Dynamic voltage min and max 1 (1/0)">1</PARAM>
   <PARAM name="Dynamic voltage min and max 2 (1/0)">1</PARAM>
-  <PARAM name="E_syn 1->2 (V)">0</PARAM>
-  <PARAM name="E_syn 2->1 (V)">0</PARAM>
+  <PARAM name="E_syn 1->2 (V)">-11.5873</PARAM>
+  <PARAM name="E_syn 2->1 (V)">-8.37201</PARAM>
   <PARAM name="H">515</PARAM>
   <PARAM name="Use I_fast 1->2 (1/0)">1</PARAM>
-  <PARAM name="Use I_fast 2->1 (1/0)">1</PARAM>
-  <PARAM name="Use I_slow 1->2 (1/0)">1</PARAM>
+  <PARAM name="Use I_fast 2->1 (1/0)">0</PARAM>
+  <PARAM name="Use I_slow 1->2 (1/0)">0</PARAM>
   <PARAM name="Use I_slow 2->1 (1/0)">1</PARAM>
-  <PARAM name="V_fast 1->2 (V)">0</PARAM>
+  <PARAM name="V_fast 1->2 (V)">0.626069</PARAM>
   <PARAM name="V_fast 2->1 (V)">0</PARAM>
   <PARAM name="V_slow 1->2 (V)">0</PARAM>
-  <PARAM name="V_slow 2->1 (V)">0</PARAM>
+  <PARAM name="V_slow 2->1 (V)">1.22249</PARAM>
   <PARAM name="Voltage max 1 (V)">0</PARAM>
   <PARAM name="Voltage max 2 (V)">0</PARAM>
   <PARAM name="Voltage min 1 (V)">0</PARAM>
   <PARAM name="Voltage min 2 (V)">0</PARAM>
   <PARAM name="W">364</PARAM>
-  <PARAM name="X">347</PARAM>
-  <PARAM name="Y">7</PARAM>
+  <PARAM name="X">353</PARAM>
+  <PARAM name="Y">6</PARAM>
   <PARAM name="factor in dt (ms) = period (ms) * factor">1</PARAM>
-  <PARAM name="g_fast 1->2 (nS)">0</PARAM>
+  <PARAM name="g_fast 1->2 (nS)">0.182819</PARAM>
   <PARAM name="g_fast 2->1 (nS)">0</PARAM>
   <PARAM name="g_slow 1->2 (nS)">0</PARAM>
-  <PARAM name="g_slow 2->1 (nS)">0</PARAM>
+  <PARAM name="g_slow 2->1 (nS)">0.00122981</PARAM>
   <PARAM name="k1 1->2 (1/ms)">0</PARAM>
-  <PARAM name="k1 2->1 (1/ms)">0</PARAM>
+  <PARAM name="k1 2->1 (1/ms)">0.0601006</PARAM>
   <PARAM name="k2 1->2 (1/ms)">0</PARAM>
-  <PARAM name="k2 2->1 (1/ms)">0.00</PARAM>
+  <PARAM name="k2 2->1 (1/ms)">0.11698</PARAM>
   <PARAM name="paused">0</PARAM>
-  <PARAM name="s_fast 1->2 (1/V)">0</PARAM>
+  <PARAM name="s_fast 1->2 (1/V)">3.409</PARAM>
   <PARAM name="s_fast 2->1 (1/V)">0</PARAM>
   <PARAM name="s_slow 1->2 (1/V)">0</PARAM>
-  <PARAM name="s_slow 2->1 (1/V)">0</PARAM>
+  <PARAM name="s_slow 2->1 (1/V)">0.948349</PARAM>
  </OBJECT>
 </RTXI>

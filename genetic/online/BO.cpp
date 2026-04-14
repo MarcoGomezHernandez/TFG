@@ -5,7 +5,7 @@ using namespace limbo;
 
 namespace BOConfig
 {
-    inline constexpr double PAD_LEN_FACTOR = 1.5;
+    static constexpr double PAD_LEN_FACTOR = 1.5;
 
     static constexpr int HP_PERIOD_MIN = 1;
     static constexpr int HP_PERIOD_DIVISOR = 50;
@@ -81,6 +81,8 @@ struct EvaluationFunctor
                       size_t effective_pad_12_,
                       size_t effective_pad_21_,
                       EvaluationPadBuffers &pad_buffers_,
+                      double max_i_dist_12_,
+                      double max_i_dist_21_,
                       size_t curr_synapse_idx_)
         : module(module_),
           ranges_12(ranges_12_),
@@ -89,6 +91,8 @@ struct EvaluationFunctor
           effective_pad_12(effective_pad_12_),
           effective_pad_21(effective_pad_21_),
           pad_buffers(pad_buffers_),
+          max_i_dist_12(max_i_dist_12_),
+          max_i_dist_21(max_i_dist_21_),
           curr_synapse_idx(curr_synapse_idx_)
     {
     }
@@ -99,6 +103,7 @@ struct EvaluationFunctor
     double fs;
     size_t effective_pad_12, effective_pad_21;
     EvaluationPadBuffers &pad_buffers;
+    double max_i_dist_12, max_i_dist_21;
     mutable size_t curr_synapse_idx;
 
     BO_DYN_PARAM(int, dim_in);
@@ -113,6 +118,8 @@ struct EvaluationFunctor
                                                                           effective_pad_12,
                                                                           effective_pad_21,
                                                                           pad_buffers,
+                                                                          max_i_dist_12,
+                                                                          max_i_dist_21,
                                                                           curr_synapse_idx);
 
         Eigen::VectorXd y(dim_out());
@@ -303,6 +310,23 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
 
     EvaluationFunctor::set_dim_in(dim_in);
 
+    double max_i_dist_12 = 0.0;
+    if (use_syn_12)
+    {
+        if (use_i_fast_12 != use_i_slow_12)
+        {
+            max_i_dist_12 = calculate_expected_i_max_dist(expected_i_min_12, expected_i_max_12);
+        }
+    }
+    double max_i_dist_21 = 0.0;
+    if (use_syn_21)
+    {
+        if (use_i_fast_21 != use_i_slow_21)
+        {
+            max_i_dist_21 = calculate_expected_i_max_dist(expected_i_min_21, expected_i_max_21);
+        }
+    }
+
     EvaluationFunctor functor(*this,
                               ranges_12,
                               ranges_21,
@@ -310,6 +334,8 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
                               effective_pad_12,
                               effective_pad_21,
                               pad_buffers,
+                              max_i_dist_12,
+                              max_i_dist_21,
                               synapse_idx.load(std::memory_order_relaxed));
 
     QMetaObject::invokeMethod(this, "set_evaluations_completed", Qt::QueuedConnection,
