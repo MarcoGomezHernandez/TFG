@@ -21,28 +21,38 @@
 #include <algorithm>
 #include <main_window.h>
 
-namespace ModuleConfig
+namespace ModulePrivateConfig
 {
+  // Default cutoff frequency (kHz) used when separating I_fast/I_slow for BO scoring.
   static constexpr double FILTER_FC = 0.3;
 
+  // Small margin used when clamping the slow gating variable (avoids sticking at bounds).
   static constexpr double M_SLOW_MARGIN = 1e-6;
-
-  static constexpr double I_SHAPE_WEIGHT = 0.5;
-  static constexpr double I_RANGE_WEIGH = 0.5;
 }
 
 namespace ModuleConstants
 {
-  static constexpr double M_SLOW_MIN = -ModuleConfig::M_SLOW_MARGIN;
-  static constexpr double M_SLOW_MAX = 1.0 + ModuleConfig::M_SLOW_MARGIN;
+  // Slightly expanded clamp to keep numerical integrator stable.
+  static constexpr double M_SLOW_MIN = -ModulePrivateConfig::M_SLOW_MARGIN;
+  static constexpr double M_SLOW_MAX = 1.0 + ModulePrivateConfig::M_SLOW_MARGIN;
 }
 
 extern "C" Plugin::Object *
 createRTXIPlugin(void)
 {
+  // RTXI plugin factory.
   return new BidirectionalChemicalSynapseBO();
 }
 
+// GUI variables exposed to RTXI.
+// This list includes:
+// - BO configuration (initial samples, iterations, times, search phase, cutoffs)
+// - Target current bounds to achieve (expected min/max for both directions)
+// - Voltage bounds (fixed or dynamic) used for BO parameter-range initialization
+// - Output clamps (min/max current) for safety
+// - Component toggles (use fast/slow per direction)
+// - The actual synapse parameters (E_syn, g_*, s_*, V_*, k1/k2) per direction
+// - IO signals (voltages in, currents out)
 static DefaultGUIModel::variable_t vars[] = {
     {"BO evaluations completed", "Finishes when this is initial samples + iterations", DefaultGUIModel::STATE},
     {"BO initial samples", "Number of initialization samples for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -112,6 +122,7 @@ static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
 BidirectionalChemicalSynapseBO::BidirectionalChemicalSynapseBO(void)
     : DefaultGUIModel("RTHybrid Bidirectional Chemical Synapse BO", ::vars, ::num_vars)
 {
+  // Construct RTXI GUI and initialize parameters.
   setWhatsThis("<p><b>RTHybrid Bidirectional Chemical Synapse BO</b></p>");
   DefaultGUIModel::createGUI(vars, num_vars);
   initParameters();
@@ -125,6 +136,7 @@ BidirectionalChemicalSynapseBO::~BidirectionalChemicalSynapseBO(void)
 {
   if (BO_NRT_thread.joinable())
   {
+    // Ensure BO thread exits before destruction.
     stop_BO.store(true, std::memory_order_relaxed);
     BO_NRT_thread.join();
   }
@@ -132,6 +144,8 @@ BidirectionalChemicalSynapseBO::~BidirectionalChemicalSynapseBO(void)
 
 void BidirectionalChemicalSynapseBO::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params)
 {
+  // Fixed-step 6-stage Runge–Kutta integrator (coefficients are hard-coded).
+  // Used to integrate the slow synaptic gating variable ODE.
   double apoyo, retorno;
   double k[6];
 
@@ -167,12 +181,14 @@ void BidirectionalChemicalSynapseBO::runge_kutta_65(double (*f)(double, double, 
 
 double BidirectionalChemicalSynapseBO::sm_chemical_synapse_m(double m_slow, double v_pre, const ChemicalSynapseParams &params)
 {
+  // Slow gate dynamics: dm/dt = k1*(1-m)*sigmoid(...) - k2*m.
   return (params.k1 * (1.0 - m_slow) * chemical_sigmoid(params.s_slow, params.v_slow, v_pre)) -
          (params.k2 * m_slow);
 }
 
 double BidirectionalChemicalSynapseBO::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
+  // Clamp state, integrate ODE one step, and compute slow current.
   m_slow = std::clamp(m_slow, ModuleConstants::M_SLOW_MIN, ModuleConstants::M_SLOW_MAX);
   runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   return params.g_slow * m_slow * (v_post - params.e_syn);
@@ -180,11 +196,17 @@ double BidirectionalChemicalSynapseBO::compute_i_slow(double &m_slow, double v_p
 
 double BidirectionalChemicalSynapseBO::compute_i_fast(double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
+  // Fast current is instantaneous (sigmoid activation).
   return params.g_fast * (v_post - params.e_syn) * chemical_sigmoid(params.s_fast, params.v_fast, v_pre);
 }
 
 void BidirectionalChemicalSynapseBO::execute(void)
 {
+  // Real-time loop:
+  // - Reads inputs (voltages and optional dynamic bounds)
+  // - Computes bidirectional synaptic currents (fast + slow)
+  // - Applies output clamps
+  // - Optionally records signals into pre-allocated buffers when BO requests it
   if (!BO_running)
   {
     if (dynamic_v_min_max_1)
@@ -212,8 +234,12 @@ void BidirectionalChemicalSynapseBO::execute(void)
 
   double val_i_slow_12 = 0.0, val_i_fast_12 = 0.0, val_i_slow_21 = 0.0, val_i_fast_21 = 0.0;
 
+  // Handshake flags from NRT -> RT.
+  // Acquire ensures we see the latest `num_elements`/buffers before storing.
   const bool aux_RT_storing = RT_storing.load(std::memory_order_acquire);
+  // Acquire pairs with NRT release-store so RT sees a fully written params slot.
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+  // Inform NRT which slot RT is currently using (used to coordinate safe swaps).
   last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
 
   if (use_syn_12)
@@ -240,6 +266,7 @@ void BidirectionalChemicalSynapseBO::execute(void)
 
   if (aux_RT_storing)
   {
+    // Store samples until `num_elements` is reached, then clear the flag.
     if (storing_idx < num_elements)
     {
       if (use_syn_12)
@@ -262,6 +289,7 @@ void BidirectionalChemicalSynapseBO::execute(void)
     }
     else
     {
+      // Release so NRT sees all buffer writes before RT_storing becomes false.
       RT_storing.store(false, std::memory_order_release);
     }
   }
@@ -269,6 +297,12 @@ void BidirectionalChemicalSynapseBO::execute(void)
 
 void BidirectionalChemicalSynapseBO::initParameters(void)
 {
+  // Default BO configuration (modifiable via GUI when BO is stopped).
+  // - initial_samples/iterations: Limbo sampling schedule
+  // - evaluation_time/stabilization_time: capture timing in ms
+  // - search_phase: affects scoring polarity and E_syn search region
+  // - expected_i_*: target min/max currents to achieve (nA)
+  // - fc_1/fc_2: cutoff (kHz) used to separate I_fast/I_slow for scoring
   evaluations_completed = 0.0;
   initial_samples = 40u;
   iterations = 200u;
@@ -279,10 +313,11 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
   expected_i_max_12 = 0.0;
   expected_i_min_21 = 0.0;
   expected_i_max_21 = 0.0;
-  constexpr double FILTER_FC = ModuleConfig::FILTER_FC;
+  constexpr double FILTER_FC = ModulePrivateConfig::FILTER_FC;
   fc_1 = FILTER_FC;
   fc_2 = FILTER_FC;
 
+  // Voltage bounds used for BO range initialization (fixed or provided dynamically).
   dynamic_v_min_max_1 = 0u;
   v_min_1 = 0.0;
   v_max_1 = 0.0;
@@ -291,13 +326,16 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
   v_min_2 = 0.0;
   v_max_2 = 0.0;
 
+  // Output clamps (min/max) for each direction (nA).
   i_min_12 = 0.0;
   i_max_12 = 0.0;
   i_min_21 = 0.0;
   i_max_21 = 0.0;
 
+  // dt = period * dt_factor (ms). Changing dt affects ODE integration.
   dt_factor = 1.0;
 
+  // Enable/disable fast and slow components per direction.
   use_i_fast_12 = 1u;
   use_i_slow_12 = 1u;
   use_i_fast_21 = 1u;
@@ -311,18 +349,17 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
   m_slow_12 = 0.0;
   m_slow_21 = 0.0;
 
+  // Start on slot 0; NRT swaps between 0 and 1.
   synapse_idx.store(0, std::memory_order_relaxed);
   last_synapse_idx_read_RT.store(0, std::memory_order_relaxed);
 
+  // BO thread control + capture control.
   stop_BO.store(false, std::memory_order_relaxed);
   RT_storing.store(false, std::memory_order_relaxed);
   BO_running = false;
 
+  // Limbo stop criterion reads this flag.
   StopFunctor::stop_BO_ptr = &stop_BO;
-
-  aggregator = WeightedSumAggregator(
-      ModuleConfig::I_RANGE_WEIGH,
-      ModuleConfig::I_SHAPE_WEIGHT);
 }
 
 void BidirectionalChemicalSynapseBO::init_syn_params_and_vars(ChemicalSynapseParams &params)
@@ -342,6 +379,8 @@ bool BidirectionalChemicalSynapseBO::wait_until_RT_read_idx_or_stop(size_t idx_t
 {
   const std::chrono::duration<double, std::milli> active_wait_duration(BOPublicConfig::ACTIVE_WAIT_MS);
 
+  // Active-wait until RT confirms it has read `idx_to_achieve`.
+  // This prevents NRT from overwriting the slot currently being used by RT.
   while (last_synapse_idx_read_RT.load(std::memory_order_relaxed) != idx_to_achieve)
   {
     if (stop_BO.load(std::memory_order_relaxed))
@@ -359,6 +398,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   {
   case INIT:
   {
+    // Initial GUI population + derived timing (period/dt).
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     dt = period * dt_factor;                                // ms
 
@@ -401,6 +441,8 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   }
   case MODIFY:
   {
+    // Apply GUI changes.
+    // Some changes stop BO because they affect evaluation dynamics.
     const double new_i_min_12 = getParameter("Current min 1->2 (nA)").toDouble();
     const double new_i_max_12 = getParameter("Current max 1->2 (nA)").toDouble();
     const double new_i_min_21 = getParameter("Current min 2->1 (nA)").toDouble();
@@ -413,6 +455,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
       i_min_21 = new_i_min_21;
       if (BO_running)
       {
+        // Stopping BO here avoids mixing candidates evaluated under different clamps.
         stop_BO.store(true, std::memory_order_relaxed); // Porque cambiaría la dinámica de evaluación de los candidatos
       }
     }
@@ -491,6 +534,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
 
   case PERIOD:
   {
+    // RT period changed: dt and number of stored samples change -> stop BO.
     const double new_period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     if (new_period != period)
     {
@@ -498,6 +542,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
       dt = period * dt_factor;
       if (BO_running)
       {
+        // Stop BO to keep capture length consistent.
         stop_BO.store(true, std::memory_order_relaxed); // Porque cambiaría el número de puntos a almacenar
       }
     }
@@ -518,6 +563,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
 void BidirectionalChemicalSynapseBO::customizeGUI(void)
 {
   QGridLayout *customlayout = DefaultGUIModel::getLayout();
+  // Add a simple Start/Stop button to control the BO thread.
   BO_button = new QPushButton("Start BO");
   QObject::connect(BO_button, SIGNAL(clicked()), this, SLOT(toggle_BO_event()));
   customlayout->addWidget(BO_button, 0, 0);
@@ -528,6 +574,7 @@ void BidirectionalChemicalSynapseBO::toggle_BO_event(void)
 {
   if (!BO_running)
   {
+    // Start BO: ensure any previous thread is joined and clear stop flag.
     if (BO_NRT_thread.joinable())
     {
       BO_NRT_thread.join();
@@ -536,10 +583,12 @@ void BidirectionalChemicalSynapseBO::toggle_BO_event(void)
     BO_running = true;
     BO_button->setText("Stop BO");
     set_params_read_only(true);
+    // Launch NRT optimization loop; it uses atomics to coordinate with RT.
     BO_NRT_thread = std::thread(&BidirectionalChemicalSynapseBO::NRT_BO, this, period);
   }
   else
   {
+    // Request stop (actual thread exit is handled inside the BO loop).
     stop_BO.store(true, std::memory_order_relaxed);
   }
 }
@@ -554,6 +603,7 @@ void BidirectionalChemicalSynapseBO::stop_BO_event_async(void)
 
 void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
 {
+  // Lock GUI fields while BO is running to avoid inconsistent configurations.
   parameter["BO initial samples"].edit->setReadOnly(read_only);
   parameter["BO iterations"].edit->setReadOnly(read_only);
   parameter["BO evaluation time (ms)"].edit->setReadOnly(read_only);
@@ -621,7 +671,10 @@ void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
 
 void BidirectionalChemicalSynapseBO::update_params_gui(void)
 {
+  // Pull the currently active params slot into the GUI.
+  // Acquire ensures the slot contents are fully visible after NRT publishes it.
   const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_acquire);
+  // Handshake: let NRT know RT/GUI observed this slot.
   last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
 
   if (use_i_fast_12 || use_i_slow_12)
