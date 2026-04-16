@@ -6,12 +6,23 @@
 #include <cstddef>
 #include <concepts>
 #include <type_traits>
-#include <vector>
+#include <cmath>
 
 #include <DifferentialNeuronWrapper.h>
 #include <HindmarshRoseModel.h>
 #include <SystemWrapper.h>
 #include <RungeKutta4.h>
+
+namespace BOPublicConfig
+{
+    inline constexpr double EXPECTED_I_MARGIN_FACTOR = 0.5;
+}
+
+namespace BOPublicConstants
+{
+    inline constexpr double SMALL_DIVISOR = std::numeric_limits<double>::epsilon();
+    inline constexpr double NEGATIVE_SMALL_DIVISOR = -SMALL_DIVISOR;
+}
 
 namespace HindmarshRoseParams
 {
@@ -108,16 +119,24 @@ HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
     return NeuronType(args);
 }
 
-struct ChemicalSynapsisVariationParams
+inline double safe_divisor(double divisor)
 {
-    double gfast;
-    double gslow;
-    double sfast;
-    double Vfast;
-    double Vslow;
+    return std::abs(divisor) < BOPublicConstants::SMALL_DIVISOR
+               ? (divisor < 0.0 ? BOPublicConstants::NEGATIVE_SMALL_DIVISOR : BOPublicConstants::SMALL_DIVISOR)
+               : divisor;
+}
+
+struct ChemicalSynapseParams
+{
+    double e_syn;
+    double g_fast;
+    double s_fast;
+    double v_fast;
+    double g_slow;
     double k1;
     double k2;
-    double sslow;
+    double s_slow;
+    double v_slow;
 };
 
 namespace HindmarshRose

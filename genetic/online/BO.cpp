@@ -106,14 +106,14 @@ struct EvaluationFunctor
     // Bridges Limbo's evaluation API to the RTXI module.
     // Returns a 2D objective: [range_score, shape_score].
     EvaluationFunctor(BidirectionalChemicalSynapseBO &module_,
-                      BOParamRanges &ranges_12_,
-                      BOParamRanges &ranges_21_,
+                      const BOParamRanges &ranges_12_,
+                      const BOParamRanges &ranges_21_,
                       double fs_,
                       size_t effective_pad_12_,
                       size_t effective_pad_21_,
                       EvaluationPadBuffers &pad_buffers_,
-                      double max_i_dist_12_,
-                      double max_i_dist_21_,
+                      double i_dist_max_12_,
+                      double i_dist_max_21_,
                       size_t curr_synapse_idx_)
         : module(module_),
           ranges_12(ranges_12_),
@@ -122,19 +122,19 @@ struct EvaluationFunctor
           effective_pad_12(effective_pad_12_),
           effective_pad_21(effective_pad_21_),
           pad_buffers(pad_buffers_),
-          max_i_dist_12(max_i_dist_12_),
-          max_i_dist_21(max_i_dist_21_),
+          i_dist_max_12(i_dist_max_12_),
+          i_dist_max_21(i_dist_max_21_),
           curr_synapse_idx(curr_synapse_idx_)
     {
     }
 
     BidirectionalChemicalSynapseBO &module;
-    BOParamRanges &ranges_12;
-    BOParamRanges &ranges_21;
+    const BOParamRanges &ranges_12;
+    const BOParamRanges &ranges_21;
     double fs;
     size_t effective_pad_12, effective_pad_21;
     EvaluationPadBuffers &pad_buffers;
-    double max_i_dist_12, max_i_dist_21;
+    double i_dist_max_12, i_dist_max_21;
     mutable size_t curr_synapse_idx;
 
     BO_DYN_PARAM(int, dim_in);
@@ -151,11 +151,17 @@ struct EvaluationFunctor
                                                                           effective_pad_12,
                                                                           effective_pad_21,
                                                                           pad_buffers,
-                                                                          max_i_dist_12,
-                                                                          max_i_dist_21,
+                                                                          i_dist_max_12,
+                                                                          i_dist_max_21,
                                                                           curr_synapse_idx);
 
         const double y = ((evaluations.i_range_score * BOPrivateConfig::I_RANGE_WEIGH) + (evaluations.i_shape_score * BOPrivateConfig::I_SHAPE_WEIGHT)) / BOPrivateConstants::TOTAL_WEIGHT;
+
+        if (module.verbose.load(std::memory_order_relaxed))
+        {
+            std::cout << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
+        }
+
         return limbo::tools::make_vector(y);
     }
 };
@@ -242,7 +248,7 @@ Candidate BidirectionalChemicalSynapseBO::decode_to_candidate(const Eigen::Vecto
                                                               const BOParamRanges &ranges_12,
                                                               const BOParamRanges &ranges_21)
 {
-    Candidate candidate;
+    Candidate candidate{};
     size_t idx = 0;
     decode_to_params(x, idx, candidate.params_12,
                      use_i_fast_12, use_i_slow_12, ranges_12);
@@ -356,22 +362,22 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
 
     EvaluationFunctor::set_dim_in(dim_in);
 
-    double max_i_dist_12 = 0.0;
+    double i_dist_max_12 = 0.0;
     if (use_syn_12)
     {
         // If only one component is enabled, use the user-provided expected range directly.
         // If both are enabled, evaluate_sigs_one_direction computes per-component ranges.
         if (use_i_fast_12 != use_i_slow_12)
         {
-            max_i_dist_12 = calculate_expected_i_max_dist(expected_i_min_12, expected_i_max_12);
+            i_dist_max_12 = calculate_expected_i_dist_max(expected_i_min_12, expected_i_max_12);
         }
     }
-    double max_i_dist_21 = 0.0;
+    double i_dist_max_21 = 0.0;
     if (use_syn_21)
     {
         if (use_i_fast_21 != use_i_slow_21)
         {
-            max_i_dist_21 = calculate_expected_i_max_dist(expected_i_min_21, expected_i_max_21);
+            i_dist_max_21 = calculate_expected_i_dist_max(expected_i_min_21, expected_i_max_21);
         }
     }
 
@@ -382,8 +388,8 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
                               effective_pad_12,
                               effective_pad_21,
                               pad_buffers,
-                              max_i_dist_12,
-                              max_i_dist_21,
+                              i_dist_max_12,
+                              i_dist_max_21,
                               // Start from the current RT-visible params slot.
                               synapse_idx.load(std::memory_order_relaxed));
 
@@ -406,6 +412,11 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
     {
         QMetaObject::invokeMethod(this, "stop_BO_event_async", Qt::QueuedConnection);
         return;
+    }
+
+    if (verbose.load(std::memory_order_relaxed))
+    {
+        std::cout << "Best: " << opt.best_observation()(0) << std::endl;
     }
 
     Candidate best_candidate = decode_to_candidate(opt.best_sample(),

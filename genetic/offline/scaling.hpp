@@ -1,20 +1,11 @@
 #ifndef SCALING_H
 #define SCALING_H
 
-#include <string>
-#include <cmath>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include <limits>
-#include <cfloat>
-#include <array>
 #include <cstddef>
-#include <stdexcept>
-#include <iostream>
+#include <optional>
+#include <string>
 #include <kfr/all.hpp>
 using namespace kfr;
-#include "utils.hpp"
 
 enum NumericIntegrator
 {
@@ -32,12 +23,11 @@ struct ScaledSigResult
     univector<double> interpolated_points;
     size_t points_factor;
     double dt;
-    bool success;
 };
 
-ScaledSigResult scale_sig(
+std::optional<ScaledSigResult> scale_sig(
     const std::string &csv_path,
-    size_t column_i,
+    size_t column_idx,
     double csv_step,
     double start_time,
     double use_time,

@@ -26,6 +26,15 @@ static double rescale_to_target(double value,
     return dst_min + (norm * dst_range);
 }
 
+// Similar to rescale_to_target but assumes src_min=dst_min=0, so it's a pure gain.
+static double rescale_to_target_no_offset(double value,
+                                          double src_range,
+                                          double dst_range)
+{
+    const double norm = value / safe_divisor(src_range);
+    return norm * dst_range;
+}
+
 template <typename T>
     requires std::same_as<T, univector<double>> || std::same_as<T, univector_ref<double>>
 static double pearson_score(univector<double> &sig,
@@ -45,17 +54,17 @@ static double pearson_score(univector<double> &sig,
 // Scores how close the observed (min,max) is to the expected (min,max).
 static double range_score(double observed_min, double observed_max,
                           double expected_min, double expected_max,
-                          double max_pts_dist)
+                          double pts_dist_max)
 {
     const double error = (std::abs(observed_min - expected_min) +
                           std::abs(observed_max - expected_max)) *
                          0.5;
-    const double normalized_error = error / safe_divisor(max_pts_dist);
+    const double normalized_error = error / safe_divisor(pts_dist_max);
     return 1.0 - normalized_error;
 }
 
 static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
-    univector<double> &vpre_sig,
+    univector<double> &v_pre_sig,
     univector<double> &i_fast_sig,
     univector<double> &i_slow_sig,
     size_t effective_pad,
@@ -66,29 +75,29 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
     unsigned int search_phase,
     double expected_i_min,
     double expected_i_max,
-    double max_i_dist,
+    double i_dist_max,
     univector<double> &padded_buff)
 {
     // Pipeline:
-    // 1) Copy vpre into a padded buffer and mirror-pad edges (reduces filter transients)
+    // 1) Copy v_pre into a padded buffer and mirror-pad edges (reduces filter transients)
     // 2) Zero-phase low-pass filter (filtfilt) -> reference slow component
-    // 3) Reference fast component = (raw vpre) - (low-pass vpre)
+    // 3) Reference fast component = (raw v_pre) - (low-pass v_pre)
     // 4) Compute range + shape scores for enabled currents
-    const size_t use_size = vpre_sig.size();
+    const size_t use_size = v_pre_sig.size();
 
     univector_ref<double> padded_seg = padded_buff.slice(effective_pad, use_size);
-    process(padded_seg, vpre_sig);
+    process(padded_seg, v_pre_sig);
 
     double *padded_ptr = padded_buff.data();
-    const double *vpre_sig_ptr = vpre_sig.data();
-    const double left_edge_x2 = 2.0 * vpre_sig_ptr[0];
-    const double right_edge_x2 = 2.0 * vpre_sig_ptr[use_size - 1];
+    const double *v_pre_sig_ptr = v_pre_sig.data();
+    const double left_edge_x2 = 2.0 * v_pre_sig_ptr[0];
+    const double right_edge_x2 = 2.0 * v_pre_sig_ptr[use_size - 1];
     for (size_t i = 0; i < effective_pad; i++)
     {
         // Mirror padding around the endpoints: x[-i] = 2*x0 - x[i]
         // This keeps the first derivative closer to continuous at the edges.
-        padded_ptr[effective_pad - 1 - i] = left_edge_x2 - vpre_sig_ptr[i + 1];
-        padded_ptr[use_size + effective_pad + i] = right_edge_x2 - vpre_sig_ptr[use_size - 2 - i];
+        padded_ptr[effective_pad - 1 - i] = left_edge_x2 - v_pre_sig_ptr[i + 1];
+        padded_ptr[use_size + effective_pad + i] = right_edge_x2 - v_pre_sig_ptr[use_size - 2 - i];
     }
 
     // Zero-phase low-pass (slow component reference).
@@ -104,39 +113,45 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
     double i_shape_score_accum = 0.0;
     double total_weight = 0.0;
 
-    double vpre_min = 0.0, vpre_range = 0.0, expected_i_range = 0.0;
+    double v_pre_min = 0.0, v_pre_max = 0.0, v_pre_range = 0.0, expected_i_range = 0.0;
     if (use_both)
     {
         // When both components are enabled, we derive per-component expected ranges
         // by rescaling reference signals into the user-provided expected_i interval.
-        vpre_min = minof(vpre_sig);
-        const double vpre_max = maxof(vpre_sig);
-        vpre_range = vpre_max - vpre_min;
+        v_pre_min = minof(v_pre_sig);
+        v_pre_max = maxof(v_pre_sig);
+        v_pre_range = v_pre_max - v_pre_min;
         expected_i_range = expected_i_max - expected_i_min;
     }
 
     if (use_i_fast)
     {
-        // NOTE: vpre_sig is reused as a temporary buffer to avoid allocations.
-        // ref_i_fast_sig_aux := (raw_vpre - lowpass_vpre) -> high-frequency reference.
-        univector<double> &ref_i_fast_sig_aux = vpre_sig;
+        // NOTE: v_pre_sig is reused as a temporary buffer to avoid allocations.
+        // ref_i_fast_sig_aux := (raw_v_pre - lowpass_v_pre) -> high-frequency reference.
+        univector<double> &ref_i_fast_sig_aux = v_pre_sig;
         ref_i_fast_sig_aux -= padded_seg;
 
-        double ref_i_fast_min, ref_i_fast_max, max_i_fast_dist;
+        double ref_i_fast_min, ref_i_fast_max, i_fast_dist_max;
         if (use_both)
         {
-            // Rescale reference fast min/max into expected current bounds.
-            ref_i_fast_min = rescale_to_target(minof(ref_i_fast_sig_aux), vpre_min, vpre_range,
-                                               expected_i_min, expected_i_range);
-            ref_i_fast_max = rescale_to_target(maxof(ref_i_fast_sig_aux), vpre_min, vpre_range,
-                                               expected_i_min, expected_i_range);
-            max_i_fast_dist = calculate_expected_i_max_dist(ref_i_fast_min, ref_i_fast_max);
+            // Rescale reference fast min/max into expected current bounds, depending on search_phase. i_fast does not scale in offset beacuse represents de high frequencies. islow provides the offset wen both are used
+            if (search_phase)
+            {
+                ref_i_fast_min = rescale_to_target_no_offset(-maxof(ref_i_fast_sig_aux), v_pre_range, expected_i_range);
+                ref_i_fast_max = rescale_to_target_no_offset(-minof(ref_i_fast_sig_aux), v_pre_range, expected_i_range);
+            }
+            else
+            {
+                ref_i_fast_min = rescale_to_target_no_offset(minof(ref_i_fast_sig_aux), v_pre_range, expected_i_range);
+                ref_i_fast_max = rescale_to_target_no_offset(maxof(ref_i_fast_sig_aux), v_pre_range, expected_i_range);
+            }
+            i_fast_dist_max = calculate_expected_i_dist_max(ref_i_fast_min, ref_i_fast_max);
         }
         else
         {
             ref_i_fast_min = expected_i_min;
             ref_i_fast_max = expected_i_max;
-            max_i_fast_dist = max_i_dist;
+            i_fast_dist_max = i_dist_max;
         }
 
         ref_i_fast_sig_aux -= mean(ref_i_fast_sig_aux);
@@ -147,7 +162,7 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
             maxof(i_fast_sig),
             ref_i_fast_min,
             ref_i_fast_max,
-            max_i_fast_dist);
+            i_fast_dist_max);
 
         const double i_fast_shape_score =
             pearson_score(i_fast_sig,
@@ -162,24 +177,35 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
 
     if (use_i_slow)
     {
-        // Slow reference is the low-pass filtered vpre segment.
+        // Slow reference is the low-pass filtered v_pre segment.
         univector_ref<double> &ref_i_slow_sig_aux = padded_seg;
 
-        double ref_i_slow_min, ref_i_slow_max, max_i_slow_dist;
+        double ref_i_slow_min, ref_i_slow_max, i_slow_dist_max;
         if (use_both)
         {
-            // Rescale reference slow min/max into expected current bounds.
-            ref_i_slow_min = rescale_to_target(minof(ref_i_slow_sig_aux), vpre_min, vpre_range,
-                                               expected_i_min, expected_i_range);
-            ref_i_slow_max = rescale_to_target(maxof(ref_i_slow_sig_aux), vpre_min, vpre_range,
-                                               expected_i_min, expected_i_range);
-            max_i_slow_dist = calculate_expected_i_max_dist(ref_i_slow_min, ref_i_slow_max);
+            // Rescale reference slow min/max into expected current bounds, depending on search_phase. i_slow scales in offset because represents the low frequencies, that includes the offset of the signal
+            if (search_phase)
+            {
+                const double v_pre_min_to_use = -v_pre_max;
+                ref_i_slow_min = rescale_to_target(-maxof(ref_i_slow_sig_aux), v_pre_min_to_use, v_pre_range,
+                                                   expected_i_min, expected_i_range);
+                ref_i_slow_max = rescale_to_target(-minof(ref_i_slow_sig_aux), v_pre_min_to_use, v_pre_range,
+                                                   expected_i_min, expected_i_range);
+            }
+            else
+            {
+                ref_i_slow_min = rescale_to_target(minof(ref_i_slow_sig_aux), v_pre_min, v_pre_range,
+                                                   expected_i_min, expected_i_range);
+                ref_i_slow_max = rescale_to_target(maxof(ref_i_slow_sig_aux), v_pre_min, v_pre_range,
+                                                   expected_i_min, expected_i_range);
+            }
+            i_slow_dist_max = calculate_expected_i_dist_max(ref_i_slow_min, ref_i_slow_max);
         }
         else
         {
             ref_i_slow_min = expected_i_min;
             ref_i_slow_max = expected_i_max;
-            max_i_slow_dist = max_i_dist;
+            i_slow_dist_max = i_dist_max;
         }
 
         ref_i_slow_sig_aux -= mean(ref_i_slow_sig_aux);
@@ -190,7 +216,7 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
             maxof(i_slow_sig),
             ref_i_slow_min,
             ref_i_slow_max,
-            max_i_slow_dist);
+            i_slow_dist_max);
 
         const double i_slow_shape_score =
             pearson_score(i_slow_sig,
@@ -203,10 +229,8 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
         total_weight += I_SLOW_WEIGHT;
     }
 
-    ChemicalSynapseEvaluation result;
-    result.i_range_score = i_range_score_accum / total_weight;
-    result.i_shape_score = i_shape_score_accum / total_weight;
-    return result;
+    return ChemicalSynapseEvaluation(i_range_score_accum / total_weight,
+                                     i_shape_score_accum / total_weight);
 }
 
 ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
@@ -215,8 +239,8 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
     size_t effective_pad_12,
     size_t effective_pad_21,
     EvaluationPadBuffers &pad_buffers,
-    double max_i_dist_12,
-    double max_i_dist_21,
+    double i_dist_max_12,
+    double i_dist_max_21,
     size_t &curr_synapse_idx)
 {
     // Evaluation is called from the BO thread. It must cooperate with the RT loop.
@@ -296,7 +320,7 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
             use_i_slow_12,
             search_phase,
             expected_i_min_12, expected_i_max_12,
-            max_i_dist_12,
+            i_dist_max_12,
             pad_buffers.padded_buff_12);
         i_range_score_accum += score_12.i_range_score;
         i_shape_score_accum += score_12.i_shape_score;
@@ -317,7 +341,7 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
             use_i_slow_21,
             search_phase,
             expected_i_min_21, expected_i_max_21,
-            max_i_dist_21,
+            i_dist_max_21,
             pad_buffers.padded_buff_21);
         i_range_score_accum += score_21.i_range_score;
         i_shape_score_accum += score_21.i_shape_score;
@@ -326,13 +350,8 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
 
     const double i_range_score = i_range_score_accum / num_directions;
     const double i_shape_score = i_shape_score_accum / num_directions;
-    ChemicalSynapseEvaluation result;
-    // Avoid NaN/Inf propagating into BO.
-    result.i_range_score = std::isfinite(i_range_score) ? i_range_score : 0.0;
-    result.i_shape_score = std::isfinite(i_shape_score) ? i_shape_score : 0.0;
-
     QMetaObject::invokeMethod(this, "set_evaluations_completed", Qt::QueuedConnection,
                               Q_ARG(double, evaluations_completed + 1));
 
-    return result;
+    return ChemicalSynapseEvaluation(i_range_score, i_shape_score);
 }

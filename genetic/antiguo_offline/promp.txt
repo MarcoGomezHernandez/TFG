@@ -1,0 +1,6 @@
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DLIMBO_DIR=/home/marco/Documents/TFG/genetic/Limbo/limbo ..
+cmake --build .
+
+./bo ../PDtracesV.csv 0 0.008 0 100 300 400 50 350 0 0 1 2 0.3 0.2 0.8 -4.0 4.0 1
+./bo ../PDtracesV.csv 0 0.008 0 100 300 400 50 350 1 0 1 2 0.3 -1.4 -0.4 -4.0 4.0 1

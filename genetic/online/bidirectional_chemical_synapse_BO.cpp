@@ -79,6 +79,8 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Current min 2->1 (nA)", "Fixed output clamp min for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current max 2->1 (nA)", "Fixed output clamp max for current 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
+    {"Verbose (1/0)", "Enable/disable BO candidate evaluation logging", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+
     {"factor in dt (ms) = period (ms) * factor", "Factor for calculating dt form the period; dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -251,7 +253,7 @@ void BidirectionalChemicalSynapseBO::execute(void)
       val_i_fast_12 = compute_i_fast(v1, v2, curr_params_12);
   }
   const double val_i_12 = val_i_fast_12 + val_i_slow_12;
-  output(0) = val_i_12 >= i_max_12 ? i_max_12 : (val_i_12 <= i_min_12 ? i_min_12 : val_i_12);
+  output(0) = std::clamp(val_i_12, i_min_12, i_max_12);
 
   if (use_syn_21)
   {
@@ -262,7 +264,7 @@ void BidirectionalChemicalSynapseBO::execute(void)
       val_i_fast_21 = compute_i_fast(v2, v1, curr_params_21);
   }
   const double val_i_21 = val_i_fast_21 + val_i_slow_21;
-  output(1) = val_i_21 >= i_max_21 ? i_max_21 : (val_i_21 <= i_min_21 ? i_min_21 : val_i_21);
+  output(1) = std::clamp(val_i_21, i_min_21, i_max_21);
 
   if (aux_RT_storing)
   {
@@ -331,6 +333,9 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
   i_max_12 = 0.0;
   i_min_21 = 0.0;
   i_max_21 = 0.0;
+
+  // Verbose flag for BO candidate evaluation logging.
+  verbose.store(0u, std::memory_order_relaxed);
 
   // dt = period * dt_factor (ms). Changing dt affects ODE integration.
   dt_factor = 1.0;
@@ -428,6 +433,8 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
     setParameter("Current min 2->1 (nA)", i_min_21);
     setParameter("Current max 2->1 (nA)", i_max_21);
 
+    setParameter("Verbose (1/0)", verbose.load(std::memory_order_relaxed));
+
     setParameter("factor in dt (ms) = period (ms) * factor", dt_factor);
 
     setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
@@ -441,24 +448,13 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   }
   case MODIFY:
   {
-    // Apply GUI changes.
-    // Some changes stop BO because they affect evaluation dynamics.
-    const double new_i_min_12 = getParameter("Current min 1->2 (nA)").toDouble();
-    const double new_i_max_12 = getParameter("Current max 1->2 (nA)").toDouble();
-    const double new_i_min_21 = getParameter("Current min 2->1 (nA)").toDouble();
-    const double new_i_max_21 = getParameter("Current max 2->1 (nA)").toDouble();
-    if (new_i_max_12 != i_max_12 || new_i_min_12 != i_min_12 || new_i_max_21 != i_max_21 || new_i_min_21 != i_min_21)
-    {
-      i_max_12 = new_i_max_12;
-      i_min_12 = new_i_min_12;
-      i_max_21 = new_i_max_21;
-      i_min_21 = new_i_min_21;
-      if (BO_running)
-      {
-        // Stopping BO here avoids mixing candidates evaluated under different clamps.
-        stop_BO.store(true, std::memory_order_relaxed); // Porque cambiaría la dinámica de evaluación de los candidatos
-      }
-    }
+    // Apply GUI changes. Some changes are only allowed when BO is stopped to avoid conflicts with the BO thread and nonsenses i the BO.
+    i_min_12 = getParameter("Current min 1->2 (nA)").toDouble();
+    i_max_12 = getParameter("Current max 1->2 (nA)").toDouble();
+    i_min_21 = getParameter("Current min 2->1 (nA)").toDouble();
+    i_max_21 = getParameter("Current max 2->1 (nA)").toDouble();
+
+    verbose.store(getParameter("Verbose (1/0)").toUInt(), std::memory_order_relaxed);
 
     if (!BO_running)
     {

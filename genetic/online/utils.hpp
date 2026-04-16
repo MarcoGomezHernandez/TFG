@@ -43,8 +43,10 @@ namespace BOPublicConfig
     inline constexpr double G_MIN_FACTOR = 0.001;
 
     // Bounds for R = k2/k1 (dimensionless ratio in the slow gating ODE).
-    inline constexpr double R_MAX = 100.0;
+    inline constexpr double R_MAX = 40.0;
     inline constexpr double R_MIN = 0.01;
+
+    inline constexpr double VERY_BAD_RANGE_SCORE = -1e6;
 }
 
 namespace BOPublicConstants
@@ -70,8 +72,8 @@ inline double chemical_sigmoid(double s,
 
 // Computes a normalized "max distance" used when comparing expected vs observed min/max.
 // This includes margins around the expected current range.
-inline double calculate_expected_i_max_dist(double expected_i_min,
-                                     double expected_i_max)
+inline double calculate_expected_i_dist_max(double expected_i_min,
+                                            double expected_i_max)
 {
     const double range = expected_i_max - expected_i_min;
     return (range + (range * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR * 2.0)) *
@@ -284,6 +286,13 @@ struct ChemicalSynapseEvaluation
     // - i_shape_score: how well current waveforms match the reference shape
     double i_range_score;
     double i_shape_score;
+
+    ChemicalSynapseEvaluation(double i_range_score_ = 0.0,
+                              double i_shape_score_ = 0.0)
+        : i_range_score(std::isfinite(i_range_score_) ? i_range_score_ : BOPublicConfig::VERY_BAD_RANGE_SCORE),
+          i_shape_score(std::isfinite(i_shape_score_) ? i_shape_score_ : 0.0)
+    {
+    }
 };
 
 inline void copy_selected_synapse_params(ChemicalSynapseParams &runtime_params,

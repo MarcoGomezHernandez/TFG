@@ -79,6 +79,9 @@ private:
   // Output clamps for total current (safety bounds), per direction (nA).
   double i_min_12, i_max_12, i_min_21, i_max_21;
 
+  // Verbose flag for BO candidate evaluation logging.
+  std::atomic<unsigned int> verbose;
+
   // Integration timestep used by the slow synaptic gating ODE.
   double dt, dt_factor;
 
@@ -142,8 +145,8 @@ private:
       size_t effective_pad_12,
       size_t effective_pad_21,
       EvaluationPadBuffers &pad_buffers,
-      double max_i_dist_12,
-      double max_i_dist_21,
+      double i_dist_max_12,
+      double i_dist_max_21,
       size_t &curr_synapse_idx);
 
   // Decode normalized BO vector x\in[0,1]^d into physical synapse parameters.

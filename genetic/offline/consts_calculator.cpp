@@ -1,17 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <array>
-#include <algorithm>
-#include <limits>
 #include <iomanip>
-#include <cmath>
+#include <string>
 #include <stdexcept>
-#include <variant>
-
-#include <DifferentialNeuronWrapper.h>
-#include <HindmarshRoseModel.h>
-#include <SystemWrapper.h>
-#include <RungeKutta4.h>
 #include "scaling.hpp"
 #include "utils.hpp"
 
@@ -72,7 +64,7 @@ static inline MinMaxResult calculate_min_max(
 {
     if (observation_time <= 0 || dt <= 0 || stabilization_time < 0)
     {
-        throw std::runtime_error("observation_time and dt must be positive, stabilization_time non-negative");
+        throw std::invalid_argument("observation_time and dt must be positive, stabilization_time non-negative");
     }
 
     NeuronType neuron = create_neur(false);
