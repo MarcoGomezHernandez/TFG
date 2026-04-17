@@ -68,8 +68,8 @@ struct Params
 
     struct acqui_ei : public defaults::acqui_ei
     {
-        // Small jitter to keep EI exploration numerically robust.
-        BO_PARAM(double, jitter, 0.025);
+        // Balanced exploration-exploitation tradeoff (higher values encourage exploration).
+        BO_PARAM(double, jitter, 0.01);
     };
 
     struct opt_nloptnograd : public defaults::opt_nloptnograd
@@ -138,6 +138,7 @@ struct EvaluationFunctor
     EvaluationPadBuffers &pad_buffers;
     double i_dist_max_12, i_dist_max_21;
     mutable size_t curr_synapse_idx;
+    mutable size_t evaluation_count = 0;
 
     BO_DYN_PARAM(int, dim_in);
     BO_PARAM(int, dim_out, 1);
@@ -158,10 +159,11 @@ struct EvaluationFunctor
                                                                           curr_synapse_idx);
 
         const double y = ((evaluations.i_range_score * BOPrivateConfig::I_RANGE_WEIGH) + (evaluations.i_shape_score * BOPrivateConfig::I_SHAPE_WEIGHT)) / BOPrivateConstants::TOTAL_WEIGHT;
+        const size_t eval_idx = ++evaluation_count;
 
         if (module.verbose.load(std::memory_order_relaxed))
         {
-            std::cout << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
+            std::cout << "Evaluation " << eval_idx << ": " << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
         }
 
         return limbo::tools::make_vector(y);

@@ -91,7 +91,7 @@ struct Params
 
     struct acqui_ei : public defaults::acqui_ei
     {
-        // Small jitter to keep EI exploration numerically robust.
+        // Small jitter to keep EI explotation numerically robust.
         BO_PARAM(double, jitter, 0.003);
     };
 
