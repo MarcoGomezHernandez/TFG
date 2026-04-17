@@ -12,11 +12,11 @@ namespace BOPrivateConfig
     // Limbo hyper-parameter optimization (HP) period is clamped to at least this.
     static constexpr int HP_PERIOD_MIN = 1;
     // hp_period is computed as max(HP_PERIOD_MIN, iterations / HP_PERIOD_DIVISOR).
-    static constexpr int HP_PERIOD_DIVISOR = 50;
+    static constexpr int HP_PERIOD_DIVISOR = 25;
 
     // Internal optimizer iteration multipliers (scaled by BO input dimension).
-    static constexpr int RPROP_ITER_FACTOR = 30;
-    static constexpr int NLOPT_ITER_FACTOR = 100;
+    static constexpr int RPROP_ITER_FACTOR = 50;
+    static constexpr int NLOPT_ITER_FACTOR = 150;
 
     // Weights for the evaluation function of the BO (range vs shape).
     static constexpr double I_SHAPE_WEIGHT = 0.5;
@@ -32,71 +32,73 @@ struct Params
 {
     struct bayes_opt_bobase : public defaults::bayes_opt_bobase
     {
-        // Constrain the optimizer to [0, 1]^d (we decode to physical units manually).
+        // Constrain optimizer to [0,1]^d (decoded later to physical units).
         BO_PARAM(bool, bounded, true);
-        // Enable Limbo statistics (samples, observations, acquisitions, ...).
+        // Enable Limbo runtime statistics.
         BO_PARAM(bool, stats_enabled, true);
     };
 
     struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer
     {
-        // Frequency (in iterations) for GP hyper-parameter updates.
+        // Frequency (iterations) of GP hyper-parameter updates.
         BO_DYN_PARAM(int, hp_period);
     };
 
     struct init_lhs : public defaults::init_lhs
     {
-        // Number of initial Latin Hypercube samples.
+        // Number of Latin Hypercube initialization samples.
         BO_DYN_PARAM(int, samples);
     };
 
     struct kernel : public defaults::kernel
     {
-        // Observation noise assumed by the GP.
+        // Moderate noise beacause of stochasticity in evaluation (living neurons).
         BO_PARAM(double, noise, 0.05);
-        // Allow Limbo to optimize noise as a GP hyper-parameter.
         BO_PARAM(bool, optimize_noise, true);
     };
 
     struct kernel_squared_exp_ard : public defaults::kernel_squared_exp_ard
     {
-        // Initial dimension index used by ARD kernels (Limbo internal).
+        // Number of columns in the Λ matrix for characteristic length-scales.
+        // A value of 0 disables the Λ matrix, reverting to the standard ARD kernel.
         BO_PARAM(int, k, 0);
-        // Initial signal variance for the kernel.
-        BO_PARAM(double, sigma_sq, 0.5);
+        // Initial signal variance for the SE-ARD kernel.
+        BO_PARAM(double, sigma_sq, 1.0);
     };
 
-    struct acqui_gpucb : public defaults::acqui_gpucb
+    struct acqui_ei : public defaults::acqui_ei
     {
-        // Confidence parameter for GP-UCB acquisition.
-        BO_PARAM(double, delta, 0.1);
+        // Small jitter to keep EI exploration numerically robust.
+        BO_PARAM(double, jitter, 0.025);
     };
 
-    struct opt_nloptgrad : public defaults::opt_nloptgrad
+    struct opt_nloptnograd : public defaults::opt_nloptnograd
     {
-        // Iterations for gradient-based acquisition optimization (scaled by dim).
+        // Iteration budget for acquisition optimization.
         BO_DYN_PARAM(int, iterations);
-        // Disable NLOpt stopping tolerances (let iteration count control runtime).
+        // Disable function change tolerance-based early stopping.
         BO_PARAM(double, fun_tolerance, -1);
+        // Disable relative x-change tolerance-based early stopping.
         BO_PARAM(double, xrel_tolerance, -1);
     };
 
     struct opt_rprop : public defaults::opt_rprop
     {
-        // Iterations for Rprop hyper-parameter optimization (scaled by dim).
+        // Iteration budget for GP hyper-parameter optimization.
         BO_DYN_PARAM(int, iterations);
+        // Termination tolerance for the Rprop optimizer.
         BO_PARAM(double, eps_stop, 1e-6);
     };
 
     struct stop_maxiterations : public defaults::stop_maxiterations
     {
-        // Global BO iteration limit.
+        // Global BO iteration cap for the entire optimization loop.
         BO_DYN_PARAM(int, iterations);
     };
 
     struct mean_constant : public defaults::mean_constant
     {
-        // Constant mean function initial value.
+        // Constant prior mean value for the GP.
         BO_PARAM(double, constant, 0.5);
     };
 };
@@ -172,9 +174,11 @@ using Model_t = model::GP<
     mean::Constant<Params>,
     model::gp::KernelLFOpt<Params, opt::Rprop<Params>>>;
 
-using Acqui_t = acqui::GP_UCB<Params, Model_t>;
+// Expected-Improvement acquisition over the GP posterior.
+using Acqui_t = acqui::EI<Params, Model_t>;
 
-using AcquiOpt_t = opt::NLOptGrad<Params, nlopt::LD_LBFGS>;
+// Gradient-free acquisition optimizer (LN_SBPLX is a local, derivative-free method suitable for low-dimensional problems).
+using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::LN_SBPLX>;
 
 using Stat_t = boost::fusion::vector<
     stat::Samples<Params>,
@@ -203,7 +207,7 @@ BO_DECLARE_DYN_PARAM(int, Params::bayes_opt_boptimizer, hp_period);
 BO_DECLARE_DYN_PARAM(int, Params::init_lhs, samples);
 BO_DECLARE_DYN_PARAM(int, Params::stop_maxiterations, iterations);
 BO_DECLARE_DYN_PARAM(int, Params::opt_rprop, iterations);
-BO_DECLARE_DYN_PARAM(int, Params::opt_nloptgrad, iterations);
+BO_DECLARE_DYN_PARAM(int, Params::opt_nloptnograd, iterations);
 
 static double decode_param(double x_val, const BOParamRanges::ParamRange &range)
 {
@@ -358,7 +362,7 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
     Params::stop_maxiterations::set_iterations(iters);
     Params::bayes_opt_boptimizer::set_hp_period(std::max(BOPrivateConfig::HP_PERIOD_MIN, iters / BOPrivateConfig::HP_PERIOD_DIVISOR));
     Params::opt_rprop::set_iterations(BOPrivateConfig::RPROP_ITER_FACTOR * dim_in);
-    Params::opt_nloptgrad::set_iterations(BOPrivateConfig::NLOPT_ITER_FACTOR * dim_in);
+    Params::opt_nloptnograd::set_iterations(BOPrivateConfig::NLOPT_ITER_FACTOR * dim_in * dim_in);
 
     EvaluationFunctor::set_dim_in(dim_in);
 

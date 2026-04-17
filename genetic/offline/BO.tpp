@@ -21,7 +21,7 @@ namespace BOPrivateConfig
     static constexpr int HP_PERIOD_DIVISOR = 25;
     // Internal optimizer iteration multipliers (scaled by BO dimension).
     static constexpr int RPROP_ITER_FACTOR = 50;
-    static constexpr int NLOPT_ITER_FACTOR = 500;
+    static constexpr int NLOPT_ITER_FACTOR = 150;
 
     // Evaluation objective weights.
     static constexpr double I_SHAPE_WEIGHT = 0.5;
@@ -75,14 +75,17 @@ struct Params
 
     struct kernel : public defaults::kernel
     {
-        // Assume noiseless observations in offline deterministic evaluations.
-        BO_PARAM(double, noise, 0.0);
+        // Assume almost noiseless observations in offline deterministic evaluations.
+        BO_PARAM(double, noise, 1e-6);
         BO_PARAM(bool, optimize_noise, false);
     };
 
     struct kernel_squared_exp_ard : public defaults::kernel_squared_exp_ard
     {
+        // Number of columns in the Λ matrix for characteristic length-scales.
+        // A value of 0 disables the Λ matrix, reverting to the standard ARD kernel.
         BO_PARAM(int, k, 0);
+        // Initial signal variance for the SE-ARD kernel.
         BO_PARAM(double, sigma_sq, 1.0);
     };
 
@@ -96,7 +99,9 @@ struct Params
     {
         // Iteration budget for acquisition optimization.
         BO_DYN_PARAM(int, iterations);
+        // Disable function change tolerance-based early stopping.
         BO_PARAM(double, fun_tolerance, -1);
+        // Disable relative x-change tolerance-based early stopping.
         BO_PARAM(double, xrel_tolerance, -1);
     };
 
@@ -104,18 +109,19 @@ struct Params
     {
         // Iteration budget for GP hyper-parameter optimization.
         BO_DYN_PARAM(int, iterations);
+        // Termination tolerance for the Rprop optimizer.
         BO_PARAM(double, eps_stop, 1e-6);
     };
 
     struct stop_maxiterations : public defaults::stop_maxiterations
     {
-        // Global BO iteration cap.
+        // Global BO iteration cap for the entire optimization loop.
         BO_DYN_PARAM(int, iterations);
     };
 
     struct mean_constant : public defaults::mean_constant
     {
-        // Constant mean prior initialization.
+        // Constant prior mean value for the GP.
         BO_PARAM(double, constant, 0.5);
     };
 };
@@ -263,8 +269,8 @@ using Model_t = model::GP<
 // Expected-Improvement acquisition over the GP posterior.
 using Acqui_t = acqui::EI<Params, Model_t>;
 
-// Gradient-free acquisition optimizer (DIRECT-L randomized variant).
-using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+// Gradient-free acquisition optimizer (LN_SBPLX is a local, derivative-free method suitable for low-dimensional problems).
+using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::LN_SBPLX>;
 
 using Stat_t = boost::fusion::vector<
     stat::Samples<Params>,
@@ -589,7 +595,7 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
     Params::stop_maxiterations::set_iterations(iters);
     Params::bayes_opt_boptimizer::set_hp_period(std::max(BOPrivateConfig::HP_PERIOD_MIN, iters / BOPrivateConfig::HP_PERIOD_DIVISOR));
     Params::opt_rprop::set_iterations(BOPrivateConfig::RPROP_ITER_FACTOR * dim_in);
-    Params::opt_nloptnograd::set_iterations(BOPrivateConfig::NLOPT_ITER_FACTOR * dim_in);
+    Params::opt_nloptnograd::set_iterations(BOPrivateConfig::NLOPT_ITER_FACTOR * dim_in * dim_in);
 
     EvaluationFunctor<Integrator, NeuronType, ResetStateFuncType, GetVFuncType>::set_dim_in(dim_in);
 
