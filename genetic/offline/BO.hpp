@@ -9,6 +9,13 @@
 #include "utils.hpp"
 #include "evaluation.hpp"
 
+// Entry point for offline Bayesian Optimization of one chemical synapse direction.
+//
+// Workflow summary:
+// 1) Read and scale a reference pre-synaptic voltage trace from CSV.
+// 2) Build BO parameter ranges from signal/model constraints.
+// 3) Run Limbo BO to maximize a weighted score (range + shape).
+// 4) Decode and return the best physical synapse parameters.
 template <typename Integrator, typename NeuronType,
           CreateFunc<NeuronType> CreateFuncType,
           ResetStateFunc<NeuronType> ResetStateFuncType,

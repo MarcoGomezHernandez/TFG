@@ -8,13 +8,17 @@
 #include "scaling.hpp"
 #include "utils.hpp"
 
-namespace EvaluationPublicConfig {
+// Public constants for candidate-scoring helpers.
+namespace EvaluationPublicConfig
+{
     inline constexpr double VERY_BAD_RANGE_SCORE = -1e6;
 }
 
 struct ChemicalSynapseEvaluation
 {
+    // Score for matching expected current min/max bounds.
     double i_range_score;
+    // Score for matching current waveform shape.
     double i_shape_score;
 
     ChemicalSynapseEvaluation(double i_range_score_ = 0.0,
@@ -27,11 +31,13 @@ struct ChemicalSynapseEvaluation
 
 struct ConstantEvaluationVals
 {
+    // Centered reference signals + normalization factors for Pearson score.
     kfr::univector<double> ref_i_fast_sig_centered;
     double ref_i_fast_sig_factor;
     kfr::univector<double> ref_i_slow_sig_centered;
     double ref_i_slow_sig_factor;
 
+    // Expected ranges and normalization distances for range score.
     double ref_i_fast_min;
     double ref_i_fast_max;
     double i_fast_dist_max;
@@ -43,6 +49,7 @@ struct ConstantEvaluationVals
 
 struct EvaluationISigBuffers
 {
+    // Allocate only enabled component buffers to avoid unnecessary memory use.
     EvaluationISigBuffers(size_t size_to_reserve,
                           bool use_i_fast,
                           bool use_i_slow)
@@ -57,6 +64,7 @@ struct EvaluationISigBuffers
     kfr::univector<double> i_slow_sig;
 };
 
+// Precompute reference constants used by all candidate evaluations.
 ConstantEvaluationVals calc_constant_evaluation_vals(
     const kfr::univector_ref<double> &v_pre_sig,
     double v_pre_min,
@@ -72,6 +80,7 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
 template <typename Integrator, typename NeuronType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
+// Simulate a candidate in closed-loop and compute (range_score, shape_score).
 ChemicalSynapseEvaluation evaluate_candidate(
     const ChemicalSynapseParams &candidate,
     ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapse,

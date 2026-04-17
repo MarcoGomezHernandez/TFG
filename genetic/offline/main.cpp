@@ -14,6 +14,7 @@ typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main(int argc, char *argv[])
 {
+    // CLI arguments configure a full offline BO run.
     if (argc < 20)
     {
         std::cerr << "Usage: " << argv[0]
@@ -24,6 +25,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Parse CLI inputs.
     const std::string csv_path = argv[1];
     const size_t column_idx = static_cast<size_t>(std::atoi(argv[2]));
     const double csv_step = std::atof(argv[3]);
@@ -44,10 +46,12 @@ int main(int argc, char *argv[])
     const double i_max = std::atof(argv[18]);
     const bool verbose = (std::atoi(argv[19]) == 1);
 
+    // Measure full BO runtime.
     const std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
 
     try
     {
+        // Run BO and decode best normalized sample into physical params.
         const std::optional<ChemicalSynapseParams> best_params_opt = BO<Integrator, NeuronType>(
             csv_path, column_idx, csv_step, start_time, stabilization_time, evaluation_time,
             observation_time,
@@ -75,12 +79,14 @@ int main(int argc, char *argv[])
 
         if (!best_params_opt)
         {
+            // scale_sig can fail to select valid dt/points; report as BO failure.
             std::cerr << "Error: BO failed to produce parameters" << std::endl;
             std::cerr << "BO execution time (until failure): " << elapsed.count() << " s" << std::endl;
             return 1;
         }
 
         const ChemicalSynapseParams &best_params = *best_params_opt;
+        // Print in the same format expected by the downstream parametrization scripts.
         std::cout << "    Esyn_values = [" << best_params.e_syn << "]" << std::endl;
         std::cout << "    gfast_values = [" << best_params.g_fast << "]" << std::endl;
         std::cout << "    sfast_values = [" << best_params.s_fast << "]" << std::endl;
@@ -94,6 +100,7 @@ int main(int argc, char *argv[])
     }
     catch (const std::exception &e)
     {
+        // Keep elapsed time even on failure for diagnostics.
         const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
         const std::chrono::duration<double> elapsed = t_end - t_start;
         std::cerr << "Error: " << e.what() << std::endl;

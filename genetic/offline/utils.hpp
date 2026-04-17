@@ -15,17 +15,20 @@
 
 namespace BOPublicConfig
 {
+    // Margin around expected current bounds used by range-based scoring.
     inline constexpr double EXPECTED_I_MARGIN_FACTOR = 0.5;
 }
 
 namespace BOPublicConstants
 {
+    // Small epsilon values used to guard divisions near zero.
     inline constexpr double SMALL_DIVISOR = std::numeric_limits<double>::epsilon();
     inline constexpr double NEGATIVE_SMALL_DIVISOR = -SMALL_DIVISOR;
 }
 
 namespace HindmarshRoseParams
 {
+    // Canonical Hindmarsh-Rose model parameters.
     inline constexpr double e = 3.281;
     inline constexpr double mu = 0.0021;
     inline constexpr double S = 1.0;
@@ -39,6 +42,7 @@ namespace HindmarshRoseParams
 
 namespace HindmarshRoseInitialState
 {
+    // Default initial state used before each simulation/evaluation.
     inline constexpr double x = -0.712841;
     inline constexpr double y = -1.93688;
     inline constexpr double z = 3.16568;
@@ -47,6 +51,7 @@ namespace HindmarshRoseInitialState
 template <typename Integrator>
 using HindmarshRoseNeuron = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
 
+// Which synaptic component is optimized/evaluated.
 enum SynComponent
 {
     IFAST = 0,
@@ -56,22 +61,26 @@ enum SynComponent
 
 namespace GeneralConstants
 {
+    // Reusable finite extrema helpers.
     inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
     inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 }
 
 namespace SigConstants
 {
+    // Sentinel values for invalid dt/points selections.
     inline constexpr double INVALID_DT = -1.0;
     inline constexpr double INVALID_PTS = -1.0;
 }
 
 namespace SigPublicConfig
 {
+    // Relative thresholds used to detect burst transitions in voltage traces.
     inline constexpr double SIG_PERCENTAGE_MIN = 0.10;
     inline constexpr double SIG_PERCENTAGE_MAX = 0.90;
 }
 
+// Signature constraints used by generic BO/evaluation templates.
 template <typename F, typename NeuronType>
 concept CreateFunc = std::invocable<F, bool> && std::convertible_to<std::invoke_result_t<F, bool>, NeuronType>;
 
@@ -84,6 +93,7 @@ concept GetVFunc = std::invocable<F, const NeuronType &> && std::convertible_to<
 template <typename Integrator>
 inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
 {
+    // Restore deterministic state and clear injected current before simulation.
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     neuron.set(NeuronType::x, HindmarshRoseInitialState::x);
     neuron.set(NeuronType::y, HindmarshRoseInitialState::y);
@@ -94,12 +104,15 @@ inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
 template <typename Integrator>
 double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron)
 {
+    // Membrane voltage is represented by the x state in this model.
     return neuron.get(HindmarshRoseNeuron<Integrator>::x);
 }
 
 template <typename Integrator>
 HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 {
+    // `empty=true` builds a neuron with default-zero constructor args (used by synapse ctor).
+    // `empty=false` fills all HR parameters explicitly.
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     typename NeuronType::ConstructorArgs args;
 
@@ -121,6 +134,7 @@ HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 
 inline double safe_divisor(double divisor)
 {
+    // Keep sign while avoiding unstable divisions by values too close to zero.
     return std::abs(divisor) < BOPublicConstants::SMALL_DIVISOR
                ? (divisor < 0.0 ? BOPublicConstants::NEGATIVE_SMALL_DIVISOR : BOPublicConstants::SMALL_DIVISOR)
                : divisor;
@@ -128,6 +142,7 @@ inline double safe_divisor(double divisor)
 
 struct ChemicalSynapseParams
 {
+    // One-direction synapse parameters.
     double e_syn;
     double g_fast;
     double s_fast;
@@ -141,6 +156,7 @@ struct ChemicalSynapseParams
 
 namespace HindmarshRose
 {
+    // Offline min/max and dt<->points lookup tables for RK4 calibration.
     inline constexpr double MIN = -1.668473;
     inline constexpr double MAX = 1.764310;
     inline constexpr std::array<double, 144> DTS_RK4 = {

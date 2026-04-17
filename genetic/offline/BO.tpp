@@ -10,16 +10,24 @@
 
 using namespace limbo;
 
+// Offline BO implementation for one synapse direction.
+// It optimizes a normalized vector x in [0,1]^d and decodes x into
+// physical synapse parameters before evaluating each candidate by simulation.
+
 namespace BOPrivateConfig
 {
+    // Limbo hyper-parameter optimization period bounds.
     static constexpr int HP_PERIOD_MIN = 1;
     static constexpr int HP_PERIOD_DIVISOR = 25;
+    // Internal optimizer iteration multipliers (scaled by BO dimension).
     static constexpr int RPROP_ITER_FACTOR = 50;
     static constexpr int NLOPT_ITER_FACTOR = 500;
 
+    // Evaluation objective weights.
     static constexpr double I_SHAPE_WEIGHT = 0.5;
     static constexpr double I_RANGE_WEIGH = 0.5;
 
+    // Parameter-range initialization factors.
     static constexpr double V_FAST_MIN_FACTOR = 0.25;
     static constexpr double S_FAST_MIN_FACTOR = 4.12;
     static constexpr double S_FAST_MAX_FACTOR = 13.72;
@@ -36,8 +44,10 @@ namespace BOPrivateConfig
 
 namespace BOPrivateConstants
 {
+    // Normalization denominator for weighted objective.
     static constexpr double TOTAL_WEIGHT = BOPrivateConfig::I_SHAPE_WEIGHT + BOPrivateConfig::I_RANGE_WEIGH;
 
+    // Guard value to avoid log(0).
     static constexpr double SMALL_LOG = std::numeric_limits<double>::min();
 }
 
@@ -45,22 +55,27 @@ struct Params
 {
     struct bayes_opt_bobase : public defaults::bayes_opt_bobase
     {
+        // Constrain optimizer to [0,1]^d (decoded later to physical units).
         BO_PARAM(bool, bounded, true);
+        // Enable Limbo runtime statistics.
         BO_PARAM(bool, stats_enabled, true);
     };
 
     struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer
     {
+        // Frequency (iterations) of GP hyper-parameter updates.
         BO_DYN_PARAM(int, hp_period);
     };
 
     struct init_lhs : public defaults::init_lhs
     {
+        // Number of Latin Hypercube initialization samples.
         BO_DYN_PARAM(int, samples);
     };
 
     struct kernel : public defaults::kernel
     {
+        // Assume noiseless observations in offline deterministic evaluations.
         BO_PARAM(double, noise, 0.0);
         BO_PARAM(bool, optimize_noise, false);
     };
@@ -73,11 +88,13 @@ struct Params
 
     struct acqui_ei : public defaults::acqui_ei
     {
+        // Small jitter to keep EI exploration numerically robust.
         BO_PARAM(double, jitter, 0.003);
     };
 
     struct opt_nloptnograd : public defaults::opt_nloptnograd
     {
+        // Iteration budget for acquisition optimization.
         BO_DYN_PARAM(int, iterations);
         BO_PARAM(double, fun_tolerance, -1);
         BO_PARAM(double, xrel_tolerance, -1);
@@ -85,17 +102,20 @@ struct Params
 
     struct opt_rprop : public defaults::opt_rprop
     {
+        // Iteration budget for GP hyper-parameter optimization.
         BO_DYN_PARAM(int, iterations);
         BO_PARAM(double, eps_stop, 1e-6);
     };
 
     struct stop_maxiterations : public defaults::stop_maxiterations
     {
+        // Global BO iteration cap.
         BO_DYN_PARAM(int, iterations);
     };
 
     struct mean_constant : public defaults::mean_constant
     {
+        // Constant mean prior initialization.
         BO_PARAM(double, constant, 0.5);
     };
 };
@@ -104,6 +124,7 @@ static double chemical_sigmoid(double s,
                                double v_threshold,
                                double v_pre)
 {
+    // Logistic activation used by chemical synapse equations.
     return 1.0 / (1.0 + std::exp(s * (v_threshold - v_pre)));
 }
 
@@ -111,6 +132,7 @@ struct BOParamRanges
 {
     struct ParamRange
     {
+        // Decoding helper: decoded_value = min + x * range, with x in [0,1].
         double min;
         double range;
 
@@ -122,6 +144,7 @@ struct BOParamRanges
         }
     };
 
+    // Decoding ranges (log_* are optimized in log-domain for conditioning).
     ParamRange s_fast;
     ParamRange s_slow;
     ParamRange e_syn;
@@ -143,6 +166,7 @@ struct BOParamRanges
               bool search_phase,
               double fc)
     {
+        // Build parameter decoding ranges from voltage/current constraints.
         constexpr double G_MIN_FACTOR = BOPrivateConfig::G_MIN_FACTOR;
         constexpr double R_MIN = BOPrivateConfig::R_MIN;
         constexpr double SMALL_LOG = BOPrivateConstants::SMALL_LOG;
@@ -151,6 +175,7 @@ struct BOParamRanges
         const double v_pre_range = v_pre_max - v_pre_min;
         const double v_post_range = v_post_max - v_post_min;
 
+        // E_syn range depends on phase search direction relative to post voltage.
         const double e_syn_far_final_term = v_post_range * BOPrivateConfig::E_SYN_FAR_TERM;
         const double e_syn_near_final_term = v_post_range * BOPrivateConfig::E_SYN_NEAR_TERM;
         double e_syn_max = 0.0, e_syn_min = 0.0;
@@ -166,6 +191,7 @@ struct BOParamRanges
         }
         e_syn = ParamRange(e_syn_min, e_syn_max);
 
+        // Expand expected current range with a margin to avoid over-constraining BO.
         const double expected_i_margin = (expected_i_max - expected_i_min) * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR;
         const double expected_i_margin_min = expected_i_min - expected_i_margin;
         const double expected_i_margin_max = expected_i_max + expected_i_margin;
@@ -173,6 +199,7 @@ struct BOParamRanges
 
         if (use_i_fast)
         {
+            // Fast subset bounds.
             v_fast = ParamRange(v_pre_min + (v_pre_range * BOPrivateConfig::V_FAST_MIN_FACTOR),
                                 v_pre_max);
             const double s_fast_max = BOPrivateConfig::S_FAST_MAX_FACTOR / safe_v_pre_range;
@@ -180,15 +207,18 @@ struct BOParamRanges
                                 s_fast_max);
 
             const double sigmoid_fast_max = chemical_sigmoid(s_fast_max, v_fast.min, v_pre_max);
+            // Bound g_fast so expected current interval remains reachable at extremes.
             const double g_fast_max = std::max(std::abs(expected_i_margin_max / safe_divisor((v_post_max - e_syn_min) * sigmoid_fast_max)),
                                                std::abs(expected_i_margin_min / safe_divisor((v_post_min - e_syn_max) * sigmoid_fast_max)));
             const double g_fast_min = g_fast_max * G_MIN_FACTOR;
+            // Conductance optimized in log-domain for numerical stability.
             log_g_fast = ParamRange(std::log(g_fast_min == 0.0 ? SMALL_LOG : g_fast_min),
                                     std::log(g_fast_max == 0.0 ? SMALL_LOG : g_fast_max));
         }
 
         if (use_i_slow)
         {
+            // Slow subset bounds.
             const double k1_max = BOPrivateConfig::K1_FACTOR * fc;
             const double k1_min = k1_max * BOPrivateConfig::K1_MIN_FACTOR;
 
@@ -198,6 +228,7 @@ struct BOParamRanges
             s_slow = ParamRange(BOPrivateConfig::S_SLOW_MIN_FACTOR / safe_v_pre_range,
                                 s_slow_max);
 
+            // k1 and R = k2/k1 are optimized in log-domain.
             log_k1 = ParamRange(std::log(k1_min == 0.0 ? SMALL_LOG : k1_min),
                                 std::log(k1_max == 0.0 ? SMALL_LOG : k1_max));
 
@@ -207,8 +238,10 @@ struct BOParamRanges
             const double k2_min = k1_min * R_MIN;
 
             const double m_max_term = k1_max * chemical_sigmoid(s_slow_max, v_slow.min, v_pre_max);
+            // Conservative upper bound of steady-state m used to bound g_slow.
             const double m_max = m_max_term / safe_divisor(m_max_term + k2_min);
 
+            // Bound g_slow so expected current interval remains reachable at extremes.
             const double g_slow_max = std::max(std::abs(expected_i_margin_max / safe_divisor((v_post_max - e_syn_min) * m_max)),
                                                std::abs(expected_i_margin_min / safe_divisor((v_post_min - e_syn_max) * m_max)));
             const double g_slow_min = g_slow_max * G_MIN_FACTOR;
@@ -227,8 +260,10 @@ using Model_t = model::GP<
     mean::Constant<Params>,
     model::gp::KernelLFOpt<Params, opt::Rprop<Params>>>;
 
+// Expected-Improvement acquisition over the GP posterior.
 using Acqui_t = acqui::EI<Params, Model_t>;
 
+// Gradient-free acquisition optimizer (DIRECT-L randomized variant).
 using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
 
 using Stat_t = boost::fusion::vector<
@@ -253,6 +288,7 @@ using BO_t = bayes_opt::BOptimizer<
 
 static double decode_param(double x_val, const BOParamRanges::ParamRange &range)
 {
+    // Clamp to [0,1] then map to physical interval.
     return range.min + (std::clamp(x_val, 0.0, 1.0) * range.range);
 }
 
@@ -261,6 +297,7 @@ static ChemicalSynapseParams decode_to_candidate(const Eigen::VectorXd &x,
                                                  bool use_i_fast,
                                                  bool use_i_slow)
 {
+    // Decode normalized BO vector into one-direction synapse parameters.
     ChemicalSynapseParams candidate{};
     size_t idx = 0;
 
@@ -268,6 +305,7 @@ static ChemicalSynapseParams decode_to_candidate(const Eigen::VectorXd &x,
 
     if (use_i_fast)
     {
+        // Conductance optimized in log-domain -> exp back to linear.
         candidate.g_fast = std::exp(decode_param(x(idx++), ranges.log_g_fast));
         candidate.s_fast = decode_param(x(idx++), ranges.s_fast);
         candidate.v_fast = decode_param(x(idx++), ranges.v_fast);
@@ -278,6 +316,7 @@ static ChemicalSynapseParams decode_to_candidate(const Eigen::VectorXd &x,
         candidate.g_slow = std::exp(decode_param(x(idx++), ranges.log_g_slow));
         candidate.v_slow = decode_param(x(idx++), ranges.v_slow);
         candidate.k1 = std::exp(decode_param(x(idx++), ranges.log_k1));
+        // R = k2/k1 is optimized to avoid strongly coupled raw k1/k2 search.
         const double R = std::exp(decode_param(x(idx++), ranges.log_R));
         candidate.k2 = candidate.k1 * R;
         candidate.s_slow = decode_param(x(idx++), ranges.s_slow);
@@ -288,6 +327,7 @@ static ChemicalSynapseParams decode_to_candidate(const Eigen::VectorXd &x,
 
 struct EvaluationFunctorBase
 {
+    // Limbo dynamic parameter: BO input dimensionality.
     BO_DYN_PARAM(int, dim_in);
 };
 
@@ -297,6 +337,9 @@ template <typename Integrator, typename NeuronType,
 struct EvaluationFunctor : public EvaluationFunctorBase
 {
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
+
+    // Adapter between Limbo's optimizer interface and the domain evaluator.
+    // Holds references to simulation objects and precomputed scoring constants.
 
     EvaluationFunctor(ChemicalSynapsisType &synapse_,
                       NeuronType &model_neur_,
@@ -329,6 +372,7 @@ struct EvaluationFunctor : public EvaluationFunctorBase
           reset_state_neur(reset_state_neur_),
           get_v_neur(get_v_neur_)
     {
+        // Plain aggregate constructor used by Limbo callback wrapper.
     }
 
     ChemicalSynapsisType &synapse;
@@ -352,6 +396,7 @@ struct EvaluationFunctor : public EvaluationFunctorBase
 
     Eigen::VectorXd operator()(const Eigen::VectorXd &x) const
     {
+        // Evaluate one BO sample and return scalar objective as 1D vector.
         ChemicalSynapseParams candidate = decode_to_candidate(x, ranges, use_i_fast, use_i_slow);
 
         ChemicalSynapseEvaluation evaluations = evaluate_candidate(
@@ -373,9 +418,11 @@ struct EvaluationFunctor : public EvaluationFunctorBase
         const double y = ((evaluations.i_range_score * BOPrivateConfig::I_RANGE_WEIGH) +
                           (evaluations.i_shape_score * BOPrivateConfig::I_SHAPE_WEIGHT)) /
                          BOPrivateConstants::TOTAL_WEIGHT;
+        // Limbo maximizes this scalar objective.
 
         if (verbose)
         {
+            // Track per-evaluation objective decomposition.
             std::cout << "Evaluation " << ++evaluation_count << ": " << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
         }
 
@@ -393,6 +440,7 @@ BO_DECLARE_DYN_PARAM(int, Params::opt_nloptnograd, iterations);
 static inline size_t count_params(bool use_i_fast,
                                   bool use_i_slow)
 {
+    // e_syn is always optimized; fast contributes 3 vars, slow contributes 5.
     size_t num_params = 1;
     if (use_i_fast)
         num_params += 3;
@@ -431,6 +479,11 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
                                         double i_max,
                                         bool verbose)
 {
+    // Offline BO orchestration pipeline:
+    // 1) Load and scale external voltage trace.
+    // 2) Build parameter decoding ranges from observed signal + constraints.
+    // 3) Simulate candidates and compute range/shape score.
+    // 4) Return best decoded synapse parameters.
     if (csv_step <= 0.0 || evaluation_time <= 0.0 || observation_time <= 0.0 || stabilization_time < 0.0 || fc <= 0.0 || expected_i_min >= expected_i_max || i_min > i_max)
     {
         throw std::invalid_argument("Invalid arguments: csv_step, evaluation_time, observation_time, and fc must be positive; stabilization_time non-negative; expected_i_min must be less than expected_i_max; i_min must be less or equal to i_max");
@@ -447,7 +500,10 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
     const std::optional<ScaledSigResult> scaled_result_opt = scale_sig(
         csv_path, column_idx, csv_step, start_time, evaluation_time + stabilization_time,
         observation_time, integrator, model, check_drift);
+    // Note: scale_sig receives (evaluation + stabilization) time because both
+    // segments are simulated before scoring starts.
 
+    // Invalid scaling configuration (e.g. unsupported dt selection).
     if (!scaled_result_opt)
     {
         return std::nullopt;
@@ -455,18 +511,21 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
 
     const ScaledSigResult &scaled_result = *scaled_result_opt;
 
+    // Post-synaptic neuron is advanced during candidate simulation.
     NeuronType model_neur = create_neur(false);
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
     typename ChemicalSynapsisType::ConstructorArgs syn_args{};
     if (use_i_slow && !use_i_fast)
     {
+        // Disable fast branch physically in the synapse model.
         syn_args.params[ChemicalSynapsisType::gfast] = 0.0;
         syn_args.params[ChemicalSynapsisType::sfast] = 0.0;
         syn_args.params[ChemicalSynapsisType::Vfast] = 0.0;
     }
     else if (use_i_fast && !use_i_slow)
     {
+        // Disable slow branch physically in the synapse model.
         syn_args.params[ChemicalSynapsisType::gslow] = 0.0;
         syn_args.params[ChemicalSynapsisType::Vslow] = 0.0;
         syn_args.params[ChemicalSynapsisType::k1] = 0.0;
@@ -475,12 +534,16 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
     }
 
     ChemicalSynapsisType synapse(create_neur(true), neur_v_var, model_neur, neur_v_var, syn_args, syn_model_step_factor);
+    // Synapse takes (pre-neuron, pre-var, post-neuron, post-var, params, substeps).
 
+    // First segment is stabilization-only; second segment is scored.
     const size_t stabilization_points = static_cast<size_t>(stabilization_time / csv_step);
     const size_t evaluation_points = scaled_result.sig.size() - stabilization_points;
 
+    // Reused per-candidate output buffers.
     EvaluationISigBuffers buffers(evaluation_points, use_i_fast, use_i_slow);
 
+    // Scored segment of the pre-synaptic voltage trace.
     const kfr::univector_ref<const double> evaluation_v_pre_sig = scaled_result.sig.slice(stabilization_points, evaluation_points);
 
     double v_post_min, v_post_max;
@@ -498,11 +561,13 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
     const double evaluation_v_pre_max = kfr::maxof(evaluation_v_pre_sig);
 
     BOParamRanges ranges;
+    // Decode bounds are built from observed signal + target current constraints.
     ranges.init(evaluation_v_pre_min, evaluation_v_pre_max, v_post_min, v_post_max,
                 expected_i_min, expected_i_max,
                 use_i_fast, use_i_slow,
                 search_phase, fc);
 
+    // Precompute reference scoring vectors/constants once.
     const ConstantEvaluationVals constant_evaluation_vals = calc_constant_evaluation_vals(
         evaluation_v_pre_sig,
         evaluation_v_pre_min,
@@ -515,9 +580,11 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
         expected_i_max,
         search_phase);
 
+    // Dimensionality depends on enabled component subset.
     const int dim_in = static_cast<int>(count_params(use_i_fast, use_i_slow));
     const int iters = static_cast<int>(iterations);
 
+    // Map user CLI configuration into Limbo dynamic parameters.
     Params::init_lhs::set_samples(static_cast<int>(initial_samples));
     Params::stop_maxiterations::set_iterations(iters);
     Params::bayes_opt_boptimizer::set_hp_period(std::max(BOPrivateConfig::HP_PERIOD_MIN, iters / BOPrivateConfig::HP_PERIOD_DIVISOR));
@@ -544,12 +611,14 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
         get_v_neur);
 
     BO_t opt;
+    // Main optimization loop.
     opt.optimize(functor);
 
     if (verbose)
     {
         std::cout << "Best: " << opt.best_observation()(0) << std::endl;
     }
+    // Decode best normalized sample to physical synapse parameters.
     const ChemicalSynapseParams best_candidate = decode_to_candidate(opt.best_sample(), ranges, use_i_fast, use_i_slow);
 
     return best_candidate;

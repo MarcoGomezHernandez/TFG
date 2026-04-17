@@ -4,24 +4,31 @@ using namespace kfr;
 
 namespace EvaluationPrivateConfig
 {
+    // Padding length in samples: PAD_LEN_FACTOR * fs / fc.
+    // Larger padding reduces edge artifacts in filtfilt.
     static constexpr double PAD_LEN_FACTOR = 1.5;
 
+    // Butterworth order used by low-pass separation.
     static constexpr int BUTTERWORTH_ORDER = 4;
 
+    // Relative score weights when both components are enabled.
     static constexpr double I_FAST_WEIGHT = 0.5;
     static constexpr double I_SLOW_WEIGHT = 0.5;
 
+    // Extra scale for allowed min/max current mismatch distance.
     static constexpr double EXPECTED_I_MARGIN_RANGE_FACTOR = 0.8;
 }
 
 namespace EvaluationPrivateConstants
 {
+    // Initial condition for the slow synaptic gate state.
     static constexpr double M_SLOW_INITIAL_VALUE = 0.0;
 }
 
 static double calculate_expected_i_dist_max(double expected_i_min,
                                             double expected_i_max)
 {
+    // Normalize range-score error by an expanded target interval.
     const double range = expected_i_max - expected_i_min;
     return (range + (range * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR * 2.0)) *
            EvaluationPrivateConfig::EXPECTED_I_MARGIN_RANGE_FACTOR;
@@ -31,6 +38,7 @@ static double rescale_to_target(double value,
                                 double src_min, double src_range,
                                 double dst_min, double dst_range)
 {
+    // Affine mapping from source interval to destination interval.
     const double norm = (value - src_min) / safe_divisor(src_range);
     return dst_min + (norm * dst_range);
 }
@@ -39,6 +47,7 @@ static double rescale_to_target_no_offset(double value,
                                           double src_range,
                                           double dst_range)
 {
+    // Same as rescale_to_target with zero offsets in both domains.
     const double norm = value / safe_divisor(src_range);
     return norm * dst_range;
 }
@@ -48,6 +57,8 @@ static double pearson_score(univector<double> &sig,
                             double ref_sig_factor,
                             bool search_phase)
 {
+    // Pearson-based shape similarity normalized to [0,1].
+    // search_phase flips polarity when required by the search mode.
     sig -= mean(sig);
     const double sig_factor = std::sqrt(sum(sqr(sig)));
     const double r = sum(sig * ref_sig_centered) / safe_divisor(sig_factor * ref_sig_factor);
@@ -59,6 +70,7 @@ static double range_score(double observed_min, double observed_max,
                           double expected_min, double expected_max,
                           double pts_dist_max)
 {
+    // Compare observed vs expected extrema and convert to [~0,1] score.
     const double error = (std::abs(observed_min - expected_min) +
                           std::abs(observed_max - expected_max)) *
                          0.5;
@@ -78,10 +90,13 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
     double expected_i_max,
     bool search_phase)
 {
+    // Build reusable reference signals and normalization constants once.
+    // These values are candidate-independent and reused across all BO evaluations.
     ConstantEvaluationVals result;
 
     const double fs = 1.0 / safe_divisor(csv_step);
     const size_t use_size = v_pre_sig.size();
+    // Padding scales inversely with fc (lower fc -> longer impulse response).
     const size_t effective_pad = std::min(use_size - 1,
                                           static_cast<size_t>(EvaluationPrivateConfig::PAD_LEN_FACTOR * fs / safe_divisor(fc)));
     univector<double> padded(use_size + (2 * effective_pad));
@@ -95,28 +110,34 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
     const double right_edge_x2 = 2.0 * v_pre_sig_ptr[use_size - 1];
     for (size_t i = 0; i < effective_pad; i++)
     {
+        // Mirror padding around edges keeps first derivative smoother.
         padded_ptr[effective_pad - 1 - i] = left_edge_x2 - v_pre_sig_ptr[i + 1];
         padded_ptr[use_size + effective_pad + i] = right_edge_x2 - v_pre_sig_ptr[use_size - 2 - i];
     }
 
+    // Zero-phase low-pass yields slow component reference.
     filtfilt(padded, to_sos<double>(iir_lowpass(
-                              butterworth(EvaluationPrivateConfig::BUTTERWORTH_ORDER), fc, fs)));
+                         butterworth(EvaluationPrivateConfig::BUTTERWORTH_ORDER), fc, fs)));
 
     const bool use_both = use_i_fast && use_i_slow;
     double i_dist_max = 0.0;
     double v_pre_range = 0.0, expected_i_range = 0.0;
     if (use_both)
     {
+        // With both components active, each component gets its own expected range
+        // derived from the separated references.
         v_pre_range = v_pre_max - v_pre_min;
         expected_i_range = expected_i_max - expected_i_min;
     }
     else
     {
+        // If only one component is active, compare directly to user expected bounds.
         i_dist_max = calculate_expected_i_dist_max(expected_i_min, expected_i_max);
     }
 
     if (use_i_fast)
     {
+        // Fast reference is high-frequency residual: raw - low-pass.
         univector<double> &ref_i_fast_sig_centered = result.ref_i_fast_sig_centered;
         ref_i_fast_sig_centered = v_pre_sig - padded_seg;
 
@@ -125,6 +146,7 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
         double &i_fast_dist_max = result.i_fast_dist_max;
         if (use_both)
         {
+            // Derive expected fast extrema from rescaled reference component.
             if (search_phase)
             {
                 ref_i_fast_min = rescale_to_target_no_offset(-maxof(ref_i_fast_sig_centered), v_pre_range, expected_i_range);
@@ -139,17 +161,20 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
         }
         else
         {
+            // Single-component mode uses global expected current limits.
             ref_i_fast_min = expected_i_min;
             ref_i_fast_max = expected_i_max;
             i_fast_dist_max = i_dist_max;
         }
 
+        // Center once so each candidate only computes covariance terms.
         ref_i_fast_sig_centered -= mean(ref_i_fast_sig_centered);
         result.ref_i_fast_sig_factor = std::sqrt(sum(sqr(ref_i_fast_sig_centered)));
     }
 
     if (use_i_slow)
     {
+        // Slow reference is the filtered low-frequency component.
         univector<double> &ref_i_slow_sig_centered = result.ref_i_slow_sig_centered;
         ref_i_slow_sig_centered = padded_seg;
 
@@ -158,6 +183,7 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
         double &i_slow_dist_max = result.i_slow_dist_max;
         if (use_both)
         {
+            // Derive expected slow extrema from rescaled reference component.
             if (search_phase)
             {
                 const double v_pre_min_to_use = -v_pre_max;
@@ -177,11 +203,13 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
         }
         else
         {
+            // Single-component mode uses global expected current limits.
             ref_i_slow_min = expected_i_min;
             ref_i_slow_max = expected_i_max;
             i_slow_dist_max = i_dist_max;
         }
 
+        // Center once so each candidate only computes covariance terms.
         ref_i_slow_sig_centered -= mean(ref_i_slow_sig_centered);
         result.ref_i_slow_sig_factor = std::sqrt(sum(sqr(ref_i_slow_sig_centered)));
     }
@@ -208,10 +236,16 @@ ChemicalSynapseEvaluation evaluate_candidate(
     ResetStateFuncType reset_state_neur,
     GetVFuncType get_v_neur)
 {
+    // Candidate evaluation pipeline:
+    // 1) Load candidate params into synapse model.
+    // 2) Simulate stabilization segment (no scoring).
+    // 3) Simulate evaluation segment while storing i_fast/i_slow.
+    // 4) Compute weighted range + shape scores.
     using ChemicalSynapsisType = ChemicalSynapsis<NeuronType, NeuronType, Integrator, double>;
 
     const ChemicalSynapseParams &params = candidate;
 
+    // E_syn is always active regardless of component subset.
     synapse.set(ChemicalSynapsisType::Esyn, params.e_syn);
 
     double *i_fast_sig_ptr = nullptr;
@@ -219,6 +253,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
     {
         i_fast_sig_ptr = buffers.i_fast_sig.data();
 
+        // Configure fast-component parameters only when enabled.
         synapse.set(ChemicalSynapsisType::gfast, params.g_fast);
         synapse.set(ChemicalSynapsisType::sfast, params.s_fast);
         synapse.set(ChemicalSynapsisType::Vfast, params.v_fast);
@@ -229,6 +264,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
     {
         i_slow_sig_ptr = buffers.i_slow_sig.data();
 
+        // Configure slow-component parameters only when enabled.
         synapse.set(ChemicalSynapsisType::gslow, params.g_slow);
         synapse.set(ChemicalSynapsisType::Vslow, params.v_slow);
         synapse.set(ChemicalSynapsisType::sslow, params.s_slow);
@@ -236,6 +272,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
         synapse.set(ChemicalSynapsisType::k2, params.k2);
     }
 
+    // Reset slow gate and post-neuron state for deterministic evaluations.
     synapse.set(ChemicalSynapsisType::mslow, EvaluationPrivateConstants::M_SLOW_INITIAL_VALUE);
 
     reset_state_neur(model_neur);
@@ -249,17 +286,22 @@ ChemicalSynapseEvaluation evaluate_candidate(
     const double dt = scaled_result.dt;
     const double *v_pre_sig_ptr = scaled_result.sig.data();
     const double *interpolated_points_ptr = scaled_result.interpolated_points.data();
+    // `interpolated_points` stores (points_factor - 1) inner samples per segment.
 
     size_t interp_pts_counter = 0;
     size_t v_pre_sig_idx = 0;
+    // Warm-up phase: advance model without recording output currents.
     for (; v_pre_sig_idx < v_pre_sig_start_idx; v_pre_sig_idx++)
     {
         synapse.step(dt, v_pre_sig_ptr[v_pre_sig_idx], get_v_neur(model_neur));
+        // Clamp total synaptic current to requested safety bounds.
         const double i_val = std::clamp(synapse.get(i_enum), i_min, i_max);
+        // Sign convention: synapse current entering post-neuron is negated here.
         model_neur.add_synaptic_input(-i_val);
         model_neur.step(dt);
         for (size_t k = 1; k < points_factor; k++)
         {
+            // Integrate intermediate interpolated pre-synaptic samples.
             synapse.step(dt, interpolated_points_ptr[interp_pts_counter], get_v_neur(model_neur));
             const double i_interp_val = std::clamp(synapse.get(i_enum), i_min, i_max);
             model_neur.add_synaptic_input(-i_interp_val);
@@ -269,6 +311,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
     }
 
     size_t syn_sig_idx = 0;
+    // Evaluation phase: store component currents at each original sample.
     for (; v_pre_sig_idx < total_size - 1; v_pre_sig_idx++, syn_sig_idx++)
     {
         const double v_post = get_v_neur(model_neur);
@@ -276,6 +319,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
         const double i_val = std::clamp(synapse.get(i_enum), i_min, i_max);
         model_neur.add_synaptic_input(-i_val);
         model_neur.step(dt);
+        // Store separated currents at original-sample timestamps.
         if (use_i_fast)
             i_fast_sig_ptr[syn_sig_idx] = synapse.get(i_fast_enum);
         if (use_i_slow)
@@ -291,6 +335,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
     }
 
     const double v_post = get_v_neur(model_neur);
+    // Last sample is handled outside the loop to include the endpoint.
     synapse.step(dt, v_pre_sig_ptr[v_pre_sig_idx], v_post);
     const double i_val = std::clamp(synapse.get(i_enum), i_min, i_max);
     model_neur.add_synaptic_input(-i_val);
@@ -309,6 +354,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
 
     if (use_i_fast)
     {
+        // Fast contribution scores.
         univector<double> &i_fast_sig = buffers.i_fast_sig;
         const double i_fast_range_score = range_score(
             minof(i_fast_sig),
@@ -330,6 +376,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
 
     if (use_i_slow)
     {
+        // Slow contribution scores.
         univector<double> &i_slow_sig = buffers.i_slow_sig;
         const double i_slow_range_score = range_score(
             minof(i_slow_sig),
@@ -349,6 +396,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
         total_weight += I_SLOW_WEIGHT;
     }
 
+    // Return weighted averages over the enabled component subset.
     return ChemicalSynapseEvaluation(i_range_score_accum / total_weight,
                                      i_shape_score_accum / total_weight);
 }
