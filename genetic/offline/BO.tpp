@@ -33,8 +33,8 @@ namespace BOPrivateConfig
     static constexpr double S_FAST_MAX_FACTOR = 13.72;
     static constexpr double S_SLOW_MIN_FACTOR = 1.72;
     static constexpr double S_SLOW_MAX_FACTOR = 3.43;
-    static constexpr double K1_FACTOR = 3.33;
-    static constexpr double K1_MIN_FACTOR = 0.000001;
+    static constexpr double K1_MAX_FACTOR = 3.33;
+    static constexpr double K1_MIN_FACTOR = 3.33e-6;
     static constexpr double E_SYN_FAR_TERM = 3.86;
     static constexpr double E_SYN_NEAR_TERM = 0.2;
     static constexpr double G_MIN_FACTOR = 0.001;
@@ -225,8 +225,8 @@ struct BOParamRanges
         if (use_i_slow)
         {
             // Slow subset bounds.
-            const double k1_max = BOPrivateConfig::K1_FACTOR * fc;
-            const double k1_min = k1_max * BOPrivateConfig::K1_MIN_FACTOR;
+            const double k1_max = BOPrivateConfig::K1_MAX_FACTOR * fc;
+            const double k1_min = BOPrivateConfig::K1_MIN_FACTOR * fc;
 
             v_slow = ParamRange(v_pre_min,
                                 v_pre_max);

@@ -29,10 +29,10 @@ namespace BOPublicConfig
     inline constexpr double S_SLOW_MIN_FACTOR = 1.72;
     inline constexpr double S_SLOW_MAX_FACTOR = 3.43;
 
-    // k1 is scaled by cutoff frequency (fc) to keep time constants consistent.
-    inline constexpr double K1_FACTOR = 3.33;
-    // Lower bound factor for k1 (prevents degenerate near-zero dynamics).
-    inline constexpr double K1_MIN_FACTOR = 0.000001;
+    // k1 max is scaled by cutoff frequency (fc) to keep time constants consistent.
+    inline constexpr double K1_MAX_FACTOR = 3.33;
+    // k1 min is directly scaled by fc to prevent degenerate near-zero dynamics.
+    inline constexpr double K1_MIN_FACTOR = 3.33e-6;
 
     // How far/near the synaptic reversal potential (E_syn) is allowed from V_post.
     // (Scaled by the observed post-synaptic voltage range.)
@@ -191,9 +191,9 @@ struct BOParamRanges
 
         if (use_i_slow)
         {
-            // Slow component: k1 scales with fc; k2 = k1 * R with bounded ratio R.
-            const double k1_max = BOPublicConfig::K1_FACTOR * fc;
-            const double k1_min = k1_max * BOPublicConfig::K1_MIN_FACTOR;
+            // Slow component: k1 max scales with fc and k1 min is directly scaled by fc.
+            const double k1_max = BOPublicConfig::K1_MAX_FACTOR * fc;
+            const double k1_min = BOPublicConfig::K1_MIN_FACTOR * fc;
 
             // Slow threshold can cover the whole (margined) V_pre range.
             v_slow = ParamRange(v_pre_margin_min,
