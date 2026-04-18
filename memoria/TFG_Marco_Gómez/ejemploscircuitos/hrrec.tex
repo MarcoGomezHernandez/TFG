@@ -1,0 +1,19 @@
+
+El siguiente circuito monodireccional se ha realizado a partir de una grabación de la actividad de una neurona LP del circuito pilórico (Figura \ref{FIG:RECMODELSYN}) cuyos datos han sido aportados por el \textit{GNB}. Obviamente, esta sinapsis solo puede implementarse en un solo sentido. Al igual que antes, se ha construido la interacción con actividad tanto en antifase (Figura \ref{FIG:HRGRABMONSYNANTI}) como en fase (Figura \ref{FIG:HRGRABMONSYNFASE}). Los resultados demuestran que sí se puede establecer dicha sinapsis con un modelo y una neurona real (pues la grabación podría ser sustituida por dicha célula). La alimentación de los datos ocurre con la misma frecuencia ($10$ $kHz$) que la producida por una neurona viva. Las interacciones entre los plugins que implementan el ciclo-cerrado de la conexión se detallan en la Figura \ref{FIG:PLUGHRREC}.
+
+\begin{figure}[Esquema de conexión entre el la grabación LP y el model]{FIG:RECMODELSYN}{Conexión unidireccional entre la grabación de una neurona LP y el modelo de Hindmarsh-Rose.}
+    \image{0.25\textwidth}{}{recording-model}
+\end{figure}\textbf{}
+
+\begin{figure}[Conexión monodirecional grabación-modelo en antifase]{FIG:HRGRABMONSYNANTI}{Conexión en antifase de una grabación de una neurona LP (\textit{living\_neuron}) y el modelo de Hindmarsh-Rose (\textit{model\_neuron}). Al estar registrado a $10$ $kHz$, se realizan $10.000$ iteraciones por segundo.}
+    \image{0.9\textwidth}{}{v_hr-r_lp-syn_antiphase}
+\end{figure}
+
+
+\begin{figure}[Conexión monodireccional grabación-modelo en fase]{FIG:HRGRABMONSYNFASE}{Conexión en fase de una grabación de una neurona LP (\textit{living\_neuron}) y el modelo de Hindmarsh-Rose (\textit{model\_neuron}).}
+    \image{0.7\textwidth}{}{v_hr-r_lp-syn_phase}
+\end{figure}
+
+\begin{figure}[Esquema de conexión de plugins para la sinapsis entre el modelo y la grabación de la neurona]{FIG:PLUGHRREC}{Conexiones de plugins realizada para crear el circuito entre el modelo de Hindmarsh-Rose en ejecución en el ordenador y la grabación de la neurona.}
+    \image{0.6\textwidth}{}{hr-rec}
+\end{figure}\textbf{}
