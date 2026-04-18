@@ -69,7 +69,7 @@ struct Params
     struct acqui_ei : public defaults::acqui_ei
     {
         // Balanced exploration-exploitation tradeoff (higher values encourage exploration).
-        BO_PARAM(double, jitter, 0.01);
+        BO_PARAM(double, jitter, 0.001);
     };
 
     struct opt_nloptnograd : public defaults::opt_nloptnograd
