@@ -8,19 +8,22 @@
 #include "scaling.hpp"
 #include "utils.hpp"
 
-// Public constants for candidate-scoring helpers.
 namespace EvaluationPublicConfig
 {
+    // Puntuación de rango muy mala; se asigna si el resultado no es finito
     inline constexpr double VERY_BAD_RANGE_SCORE = -1e6;
 }
 
+// Resultado de evaluar un candidato de sinapsis: puntuaciones de rango y forma
 struct ChemicalSynapseEvaluation
 {
-    // Score for matching expected current min/max bounds.
+    // Puntuación de cuánto se acerca el rango [min,max] de la corriente al esperado
     double i_range_score;
-    // Score for matching current waveform shape.
+
+    // Puntuación de la correlación de Pearson entre la forma de onda de la corriente y la referencia
     double i_shape_score;
 
+    // Protección: si los valores no son finitos, se sustituyen por penalizaciones
     ChemicalSynapseEvaluation(double i_range_score_ = 0.0,
                               double i_shape_score_ = 0.0)
         : i_range_score(std::isfinite(i_range_score_) ? i_range_score_ : EvaluationPublicConfig::VERY_BAD_RANGE_SCORE),
@@ -29,27 +32,32 @@ struct ChemicalSynapseEvaluation
     }
 };
 
+// Valores constantes de evaluación precalculados una sola vez antes de la BO:
+// señales de referencia (centradas), factores de Pearson, y rangos esperados de corriente
 struct ConstantEvaluationVals
 {
-    // Centered reference signals + normalization factors for Pearson score.
+    // Señal de referencia i_fast centrada (media 0) y su factor sqrt(sum(x²)) para Pearson
     kfr::univector<double> ref_i_fast_sig_centered;
     double ref_i_fast_sig_factor;
+    // Señal de referencia i_slow centrada y su factor
     kfr::univector<double> ref_i_slow_sig_centered;
     double ref_i_slow_sig_factor;
 
-    // Expected ranges and normalization distances for range score.
+    // Rangos esperados de corriente para el cálculo de range_score
     double ref_i_fast_min;
     double ref_i_fast_max;
-    double i_fast_dist_max;
+    double i_fast_dist_max; // Distancia máxima admisible (para normalizar el error de rango)
 
     double ref_i_slow_min;
     double ref_i_slow_max;
     double i_slow_dist_max;
 };
 
+// Buffers preasignados para almacenar las señales de corriente simuladas de cada candidato
+// Se reutilizan en cada evaluación para evitar realocaciones
 struct EvaluationISigBuffers
 {
-    // Allocate only enabled component buffers to avoid unnecessary memory use.
+
     EvaluationISigBuffers(size_t size_to_reserve,
                           bool use_i_fast,
                           bool use_i_slow)
@@ -64,7 +72,8 @@ struct EvaluationISigBuffers
     kfr::univector<double> i_slow_sig;
 };
 
-// Precompute reference constants used by all candidate evaluations.
+// Precalcula los valores constantes de evaluación (señales de referencia y rangos)
+// a partir de la señal presináptica filtrada
 ConstantEvaluationVals calc_constant_evaluation_vals(
     const kfr::univector_ref<double> &v_pre_sig,
     double v_pre_min,
@@ -77,10 +86,12 @@ ConstantEvaluationVals calc_constant_evaluation_vals(
     double expected_i_max,
     bool search_phase);
 
+// Evalúa un candidato sináptico: simula la sinapsis con los parámetros dados,
+// recoge las corrientes i_fast/i_slow, y calcula las puntuaciones de rango y forma
 template <typename Integrator, typename NeuronType,
           ResetStateFunc<NeuronType> ResetStateFuncType,
           GetVFunc<NeuronType> GetVFuncType>
-// Simulate a candidate in closed-loop and compute (range_score, shape_score).
+
 ChemicalSynapseEvaluation evaluate_candidate(
     const ChemicalSynapseParams &candidate,
     ChemicalSynapsis<NeuronType, NeuronType, Integrator, double> &synapse,

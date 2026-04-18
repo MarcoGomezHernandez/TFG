@@ -15,20 +15,21 @@
 
 namespace BOPublicConfig
 {
-    // Margin around expected current bounds used by range-based scoring.
+    // Porcentaje de margen sobre el rango esperado de corriente para ampliar la zona de búsqueda
     inline constexpr double EXPECTED_I_MARGIN_FACTOR = 0.5;
 }
 
 namespace BOPublicConstants
 {
-    // Small epsilon values used to guard divisions near zero.
+    // Umbral mínimo para divisores; evita divisiones por cero
     inline constexpr double SMALL_DIVISOR = std::numeric_limits<double>::epsilon();
     inline constexpr double NEGATIVE_SMALL_DIVISOR = -SMALL_DIVISOR;
 }
 
+// Parámetros del modelo de neurona Hindmarsh-Rose
 namespace HindmarshRoseParams
 {
-    // Canonical Hindmarsh-Rose model parameters.
+
     inline constexpr double e = 3.281;
     inline constexpr double mu = 0.0021;
     inline constexpr double S = 1.0;
@@ -40,18 +41,20 @@ namespace HindmarshRoseParams
     inline constexpr double vh = 0.1;
 }
 
+// Estado inicial de la neurona Hindmarsh-Rose (valores de x, y, z ya estabilizados)
 namespace HindmarshRoseInitialState
 {
-    // Default initial state used before each simulation/evaluation.
+
     inline constexpr double x = -0.712841;
     inline constexpr double y = -1.93688;
     inline constexpr double z = 3.16568;
 }
 
+// Alias: neurona HR envuelta con un integrador numérico genérico
 template <typename Integrator>
 using HindmarshRoseNeuron = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double>>, Integrator>;
 
-// Which synaptic component is optimized/evaluated.
+// Componente sináptica a optimizar: solo ifast, solo islow, o ambas
 enum SynComponent
 {
     IFAST = 0,
@@ -61,39 +64,43 @@ enum SynComponent
 
 namespace GeneralConstants
 {
-    // Reusable finite extrema helpers.
+
     inline constexpr double DOUBLE_MAX = std::numeric_limits<double>::max();
     inline constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 }
 
 namespace SigConstants
 {
-    // Sentinel values for invalid dt/points selections.
+    // Valores centinela para dt y pts inválidos
     inline constexpr double INVALID_DT = -1.0;
     inline constexpr double INVALID_PTS = -1.0;
 }
 
 namespace SigPublicConfig
 {
-    // Relative thresholds used to detect burst transitions in voltage traces.
+    // Porcentajes del rango de la señal para definir los umbrales de detección de burst
+    // th_on = SIG_PERCENTAGE_MIN * rango + min,  th_up = SIG_PERCENTAGE_MAX * rango + min
     inline constexpr double SIG_PERCENTAGE_MIN = 0.10;
     inline constexpr double SIG_PERCENTAGE_MAX = 0.90;
 }
 
-// Signature constraints used by generic BO/evaluation templates.
+// Concepto: función que crea una neurona; recibe bool (true = vacía, false = con params)
 template <typename F, typename NeuronType>
 concept CreateFunc = std::invocable<F, bool> && std::convertible_to<std::invoke_result_t<F, bool>, NeuronType>;
 
+// Concepto: función que resetea el estado de una neurona
 template <typename F, typename NeuronType>
 concept ResetStateFunc = std::invocable<F, NeuronType &>;
 
+// Concepto: función que extrae el voltaje (variable x en HR) de una neurona
 template <typename F, typename NeuronType>
 concept GetVFunc = std::invocable<F, const NeuronType &> && std::convertible_to<std::invoke_result_t<F, const NeuronType &>, double>;
 
+// Resetea el estado de la neurona HR a los valores iniciales predefinidos
 template <typename Integrator>
 inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
 {
-    // Restore deterministic state and clear injected current before simulation.
+
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     neuron.set(NeuronType::x, HindmarshRoseInitialState::x);
     neuron.set(NeuronType::y, HindmarshRoseInitialState::y);
@@ -101,18 +108,19 @@ inline void reset_state_hindmarsh_rose(HindmarshRoseNeuron<Integrator> &neuron)
     neuron.reset_synaptic_input();
 }
 
+// Devuelve el potencial de membrana (variable x) de la neurona HR
 template <typename Integrator>
 double get_v_hindmarsh_rose(const HindmarshRoseNeuron<Integrator> &neuron)
 {
-    // Membrane voltage is represented by the x state in this model.
+
     return neuron.get(HindmarshRoseNeuron<Integrator>::x);
 }
 
+// Crea una neurona HR; si empty=true no asigna parámetros (neurona "vacía" para la post-sináptica)
 template <typename Integrator>
 HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
 {
-    // `empty=true` builds a neuron with default-zero constructor args (used by synapse ctor).
-    // `empty=false` fills all HR parameters explicitly.
+
     using NeuronType = HindmarshRoseNeuron<Integrator>;
     typename NeuronType::ConstructorArgs args;
 
@@ -132,33 +140,37 @@ HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
     return NeuronType(args);
 }
 
+// Divisor seguro: si |divisor| < epsilon, devuelve ±epsilon para evitar div/0
 inline double safe_divisor(double divisor)
 {
-    // Keep sign while avoiding unstable divisions by values too close to zero.
+
     return std::abs(divisor) < BOPublicConstants::SMALL_DIVISOR
                ? (divisor < 0.0 ? BOPublicConstants::NEGATIVE_SMALL_DIVISOR : BOPublicConstants::SMALL_DIVISOR)
                : divisor;
 }
 
+// Parámetros de una sinapsis química (ambas componentes fast y slow)
 struct ChemicalSynapseParams
 {
-    // One-direction synapse parameters.
-    double e_syn;
-    double g_fast;
-    double s_fast;
-    double v_fast;
-    double g_slow;
-    double k1;
-    double k2;
-    double s_slow;
-    double v_slow;
+
+    double e_syn;  // Potencial de reversa sináptico
+    double g_fast; // Conductancia de la componente rápida
+    double s_fast; // Pendiente de la sigmoide rápida
+    double v_fast; // Umbral de voltaje de la sigmoide rápida
+    double g_slow; // Conductancia de la componente lenta
+    double k1;     // Tasa de apertura del canal lento
+    double k2;     // Tasa de cierre del canal lento (k2 = k1 * R)
+    double s_slow; // Pendiente de la sigmoide lenta
+    double v_slow; // Umbral de voltaje de la sigmoide lenta
 };
 
 namespace HindmarshRose
 {
-    // Offline min/max and dt<->points lookup tables for RK4 calibration.
+    // Rango dinámico del modelo HR (mín y máx de la variable x) precalculado por consts_calculator
     inline constexpr double MIN = -1.668473;
     inline constexpr double MAX = 1.764310;
+    // Tablas precalculadas: DTS_RK4 = pasos de tiempo posibles,
+    // PTS_RK4 = puntos promedio por burst para cada dt (usadas para elegir el dt del modelo)
     inline constexpr std::array<double, 144> DTS_RK4 = {
         0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
         0.001300, 0.001400, 0.001500, 0.001600, 0.001800, 0.002000, 0.002200, 0.002500,

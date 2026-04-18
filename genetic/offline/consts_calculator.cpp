@@ -7,20 +7,19 @@
 #include "scaling.hpp"
 #include "utils.hpp"
 
-// Helper executable to regenerate calibration constants used by offline scaling:
-// - model voltage limits (MIN/MAX)
-// - dt lookup tables (DTS/PTS)
+// Programa auxiliar que precalcula las constantes del modelo neuronal
+// (min, max, y puntos promedio por burst para cada dt) que se usan en utils.hpp.
+// Se ejecuta una sola vez y su salida se copia al código fuente como tablas constantes.
 
 namespace ConstCalculatorConstants
 {
-    // Number of bursts used to average points-per-burst estimate.
-    // Higher values reduce variance but increase runtime.
+    // Número de bursts sobre los que promediar para calcular puntos/burst
     static constexpr int BURSTS_TO_AVERAGE = 20;
 }
 
 namespace ConstCalculatorConfig
 {
-    // Candidate dt values used to generate calibration lookup tables.
+    // Array de dts a evaluar (de fino a grueso)
     static constexpr std::array<double, 144> DTS = {
         0.000500, 0.000600, 0.000700, 0.000800, 0.000900, 0.001000, 0.001100, 0.001200,
         0.001300, 0.001400, 0.001500, 0.001600, 0.001800, 0.002000, 0.002200, 0.002500,
@@ -41,9 +40,8 @@ namespace ConstCalculatorConfig
         0.064900, 0.066500, 0.068200, 0.069900, 0.071700, 0.073600, 0.075600, 0.077700,
         0.079900, 0.082300, 0.084800, 0.087500, 0.090300, 0.093300, 0.096500, 0.100000};
 
-    // Observation/stabilization times for offline calibration runs (ms).
     static constexpr double OBSERVATION_TIME = 2000.0;
-    static constexpr double MINMAX_DT = DTS[0];
+    static constexpr double MINMAX_DT = DTS[0]; // El dt más fino para calcular min/max precisos
     static constexpr double STABILIZATION_TIME = 2000.0;
 }
 
@@ -51,19 +49,21 @@ static constexpr size_t DTS_SIZE = ConstCalculatorConfig::DTS.size();
 
 struct MinMaxResult
 {
-    // Absolute model voltage limits observed during calibration.
+
     double min;
     double max;
 };
 
 struct PtsResult
 {
-    // Points per burst for each dt candidate and list of invalid dt values.
-    // Invalid entries are those where no full burst was detected in observation time.
-    std::array<double, DTS_SIZE> pts;
-    std::vector<double> invalid_dts;
+
+    std::array<double, DTS_SIZE> pts; // Puntos promedio por burst para cada dt
+    std::vector<double> invalid_dts;  // dts donde no se detectaron bursts
 };
 
+// Simula la neurona con el dt más fino y registra su rango dinámico [min, max].
+// Se usa el dt más pequeño disponible para obtener la máxima precisión en los extremos.
+// La estabilización previa evita incluir el transitorio inicial del modelo.
 template <typename NeuronType, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
 static inline MinMaxResult calculate_min_max(
     CreateFuncType create_neur,
@@ -73,27 +73,30 @@ static inline MinMaxResult calculate_min_max(
     double dt,
     double stabilization_time)
 {
-    // Simulate neuron and estimate absolute min/max voltage bounds.
+
     if (observation_time <= 0 || dt <= 0 || stabilization_time < 0)
     {
         throw std::invalid_argument("observation_time and dt must be positive, stabilization_time non-negative");
     }
 
-    // Use a fully parameterized neuron instance (not empty ctor args).
     NeuronType neuron = create_neur(false);
 
     reset_state_neur(neuron);
 
+    // Fase de estabilización: avanza la neurona hasta que el transitorio inicial
+    // se disipe y la dinámica alcance el ciclo límite (atractor bursting)
     const size_t stabilization_steps = static_cast<size_t>(stabilization_time / dt);
-    // Warm-up phase.
+
     for (size_t i = 0; i < stabilization_steps; i++)
         neuron.step(dt);
 
-    // Start from extreme sentinels and tighten with observed samples.
+    // Inicializa min/max con valores extremos opuestos (sentinelas):
+    // min = +∞ para que cualquier valor real sea menor, max = -∞ análogamente
     double min = GeneralConstants::DOUBLE_MAX;
     double max = GeneralConstants::DOUBLE_MIN;
     const size_t obs_steps = static_cast<size_t>(observation_time / dt);
-    // Observation phase to capture extrema.
+
+    // Fase de observación: registra los extremos del voltaje en el ciclo límite
     for (size_t step = 0; step < obs_steps; step++)
     {
         neuron.step(dt);
@@ -113,6 +116,15 @@ static inline MinMaxResult calculate_min_max(
     return result;
 }
 
+// Para cada dt, simula la neurona y mide el número promedio de pasos de integración
+// que componen un burst completo. Esto produce la tabla PTS que se usa en select_dt.
+//
+// Método:
+//   1. Detecta bursts con histéresis (th_on = 10% del rango, th_up = 90%).
+//   2. Un burst se define como el intervalo entre dos cruces ascendentes de th_up.
+//   3. Se promedian BURSTS_TO_AVERAGE bursts para reducir variabilidad.
+//   4. bursts_seen empieza en -1: el primer cruce ascendente marca el inicio del
+//      primer burst pero NO contar como burst completo (el conteo de pasos empieza ahí).
 template <typename NeuronType, size_t N, CreateFunc<NeuronType> CreateFuncType, ResetStateFunc<NeuronType> ResetFuncType, GetVFunc<NeuronType> GetVFuncType>
 static inline PtsResult calculate_pts(
     CreateFuncType create_neur,
@@ -124,13 +136,15 @@ static inline PtsResult calculate_pts(
     double min_val,
     double max_val)
 {
-    // For each dt candidate, estimate average points per burst.
+
     NeuronType neuron = create_neur(false);
 
     PtsResult result;
 
     const double range = max_val - min_val;
-    // Hysteresis thresholds for robust burst transition detection.
+
+    // Umbrales de detección de burst por histéresis (mismas constantes que scaling.cpp)
+    // th_on: señal "activa" (baja, para permitir nuevo cruce); th_up: señal "arriba" (alta)
     const double th_on = SigPublicConfig::SIG_PERCENTAGE_MIN * range + min_val;
     const double th_up = SigPublicConfig::SIG_PERCENTAGE_MAX * range + min_val;
 
@@ -141,17 +155,23 @@ static inline PtsResult calculate_pts(
     {
         const double dt = dts[i];
 
+        // Resetea la neurona para cada dt (independizar las mediciones)
         reset_state_neur(neuron);
 
+        // Estabilización: deja que el transitorio se disipe antes de medir
         const size_t stabilization_steps = static_cast<size_t>(stabilization_time / dts[i]);
-        // Warm-up for this dt candidate.
+
         for (size_t j = 0; j < stabilization_steps; j++)
             neuron.step(dt);
 
         bool up = (get_v_neur(neuron) > th_up);
         double total_steps = 0;
-        // Start at -1 to ignore the potentially incomplete first burst segment.
+
+        // bursts_seen = -1: el primer cruce ascendente (burst 0) solo sirve para marcar
+        // el inicio del conteo. Los pasos acumulados antes de ese primer cruce se descartan
+        // porque corresponden a un burst parcial (empezamos a contar en un punto arbitrario).
         int bursts_seen = -1;
+        // Contador de pasos entre dos cruces ascendentes consecutivos = 1 burst completo
         size_t steps_in_current_burst = 0;
         double act_time = 0.0;
 
@@ -162,32 +182,39 @@ static inline PtsResult calculate_pts(
 
             double val = get_v_neur(neuron);
 
+            // Cruce ascendente del umbral superior → inicio de un nuevo burst
             if (!up && val > th_up)
             {
-                // New burst detected.
+
                 up = true;
                 bursts_seen++;
-                // Add completed burst length and reset counter for next burst.
+
+                // Acumula los pasos del burst que acaba de terminar.
+                // Cuando bursts_seen pasa de -1 a 0, total_steps += 0 (descarta el parcial).
+                // A partir de bursts_seen ≥ 1, total_steps acumula bursts completos.
                 total_steps += steps_in_current_burst;
+                // Reinicia el contador para el siguiente burst
                 steps_in_current_burst = 0;
             }
             else if (up && val < th_on)
             {
+                // Cruce descendente: habilita futura detección de nuevo cruce ascendente
                 up = false;
             }
 
+            // Se incrementa siempre, incluyendo paso actual (cuenta todos los pasos del burst)
             steps_in_current_burst++;
         }
 
         if (bursts_seen <= 0)
         {
-            // Mark candidate as unusable for dt selection.
+            // No se detectaron bursts completos con este dt → marca como inválido
             pts[i] = GeneralConstants::DOUBLE_MAX;
             invalid_dts.push_back(dts[i]);
         }
         else
         {
-            // Mean points-per-burst for this dt.
+            // Promedio: total_steps contiene la suma de pasos de bursts_seen bursts completos
             pts[i] = total_steps / static_cast<double>(bursts_seen);
         }
     }
@@ -197,7 +224,7 @@ static inline PtsResult calculate_pts(
 
 static inline std::string integrator_to_string(NumericIntegrator integrator)
 {
-    // String suffix used when printing constexpr table names.
+
     switch (integrator)
     {
     case RK4:
@@ -207,16 +234,17 @@ static inline std::string integrator_to_string(NumericIntegrator integrator)
     }
 }
 
+// Imprime las tablas en formato C++ para copiar a utils.hpp
 static inline void print_tables(const PtsResult &pr, NumericIntegrator integrator)
 {
-    // Emit C++ constexpr tables ready to paste into utils.hpp.
+
     const std::string integrator_str = integrator_to_string(integrator);
 
     const size_t ds_size_minus_1 = DTS_SIZE - 1;
     std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> DTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
-        // Break lines every 8 entries to keep generated code readable.
+
         if (i % 8 == 0)
             std::cout << "\n    ";
         std::cout << ConstCalculatorConfig::DTS[i];
@@ -229,7 +257,7 @@ static inline void print_tables(const PtsResult &pr, NumericIntegrator integrato
     std::cout << "inline constexpr std::array<double, " << DTS_SIZE << "> PTS_" << integrator_str << " = {";
     for (size_t i = 0; i < DTS_SIZE; i++)
     {
-        // Break lines every 8 entries to keep generated code readable.
+
         if (i % 8 == 0)
             std::cout << "\n    ";
         std::cout << pts[i];
@@ -255,11 +283,7 @@ typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main()
 {
-    // Standalone helper to regenerate MIN/MAX and DTS/PTS calibration tables.
-    // Typical workflow:
-    // 1) Estimate model absolute min/max.
-    // 2) Estimate points-per-burst for each dt candidate.
-    // 3) Print constexpr blocks to update utils.hpp.
+
     NumericIntegrator integrator = RK4;
 
     CreateFunc<NeuronType> auto create_func = &create_hindmarsh_rose<Integrator>;
@@ -269,6 +293,7 @@ int main()
     constexpr double OBSERVATION_TIME = ConstCalculatorConfig::OBSERVATION_TIME;
     constexpr double STABILIZATION_TIME = ConstCalculatorConfig::STABILIZATION_TIME;
 
+    // 1. Calcula el rango dinámico [min, max] de la neurona con el dt más fino
     MinMaxResult mmr = calculate_min_max<NeuronType>(
         create_func,
         reset_func,
@@ -277,12 +302,12 @@ int main()
         ConstCalculatorConfig::MINMAX_DT,
         STABILIZATION_TIME);
 
-    // Print in source-friendly format.
     std::cout << std::fixed << std::setprecision(6);
 
     std::cout << "inline constexpr double MIN = " << mmr.min << ";\n";
     std::cout << "inline constexpr double MAX = " << mmr.max << ";\n";
 
+    // 2. Calcula los puntos promedio por burst para cada dt
     PtsResult pr = calculate_pts<NeuronType>(
         create_func,
         reset_func,

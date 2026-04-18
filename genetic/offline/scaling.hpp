@@ -7,31 +7,35 @@
 #include <kfr/all.hpp>
 using namespace kfr;
 
-// Numeric integrators supported by the offline pipeline.
 enum NumericIntegrator
 {
     RK4
 };
 
-// Neuron models supported by the offline pipeline.
 enum NeuronModel
 {
     HINDMARSH_ROSE
 };
 
+// Resultado de escalar la señal del CSV al espacio del modelo neuronal
 struct ScaledSigResult
 {
-    // Input trace rescaled to the model voltage domain.
+    // Señal ya escalada al rango dinámico del modelo (ej: HR [-1.67, 1.76])
     univector<double> sig;
-    // Intermediate points linearly interpolated between consecutive input samples.
+
+    // Puntos intermedios interpolados linealmente entre cada par de muestras de sig,
+    // para sub-stepping del modelo sináptico dentro de cada paso de la señal
     univector<double> interpolated_points;
-    // Number of model integration points per input sample.
+
+    // Número de sub-pasos del modelo por cada muestra de sig (factor de interpolación)
     size_t points_factor;
-    // Integration step selected for the model simulation (ms).
+
+    // Paso temporal del modelo neuronal (ms) seleccionado para coincidir con el período de burst
     double dt;
 };
 
-// Read, scale, and resample a CSV voltage signal to the selected model/integrator.
+// Lee, escala y sub-muestrea una señal de un CSV para hacerla compatible con el modelo neuronal.
+// Devuelve nullopt si no se encuentra un dt adecuado para la frecuencia de burst.
 std::optional<ScaledSigResult> scale_sig(
     const std::string &csv_path,
     size_t column_idx,

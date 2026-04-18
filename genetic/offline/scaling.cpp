@@ -11,52 +11,52 @@
 
 using namespace kfr;
 
-// Signal preprocessing for offline BO.
-// Converts a raw external trace into:
-// - scaled signal in model voltage domain
-// - interpolation points for sub-step integration
-// - selected dt / points_factor consistent with model burst dynamics
-
 namespace SigPrivateConfig
 {
-    // Allowed relative mismatch between chosen points-per-burst and integer multiple.
+    // Tolerancia al seleccionar dt: se permite que la parte fraccionaria de
+    // (pts_burst_modelo / pts_real) sea hasta este factor * parte entera
     static constexpr double DT_SELECTION_TOLERANCE = 0.1;
 
-    // Drift compensation percentages for rolling min/max windows.
+    // Porcentaje de margen para corregir drift en los extremos min/max de la señal
     static constexpr double DRIFT_PERCENTAGE_MIN = 0.1;
     static constexpr double DRIFT_PERCENTAGE_MAX = 0.1;
-    // Number of detected bursts between drift recalibrations.
+
+    // Cada cuántos bursts (en puntos) se recalcula el escalado por drift
     static constexpr size_t DRIFT_N_BURST = 2;
 }
 
+// Factores de escalado lineal: valor_virtual = valor_real * scale + offset
 struct ScalingFactors
 {
-    // Affine transform: virtual = real * scale + offset.
+
     double scale_real_to_virtual;
     double offset_real_to_virtual;
 };
 
+// dt seleccionado del modelo y sus puntos promedio por burst asociados
 struct DTSelection
 {
-    // Selected integration step and matched points-per-burst table value.
+
     double dt;
     double pts_burst;
 };
 
+// Estadísticas de la señal real (del CSV)
 struct SigStats
 {
-    // Absolute/relative stats and estimated period from observation window.
-    double real_abs_min;
-    double real_abs_max;
-    double real_rel_min;
-    double real_rel_max;
-    double sig_period;
+
+    double real_abs_min; // Mínimo absoluto de la señal
+    double real_abs_max; // Máximo absoluto de la señal
+    double real_rel_min; // Umbral inferior de detección de burst (10% del rango)
+    double real_rel_max; // Umbral superior de detección de burst (90% del rango)
+    double sig_period;   // Período medio de la señal (tiempo entre bursts)
 };
 
+// Lee num_points valores de la columna column_idx de un CSV, empezando en start_idx
 static inline void read_csv_column(univector<double> &data, const std::string &csv_path, size_t column_idx,
                                    size_t start_idx, size_t num_points)
 {
-    // Read one CSV column in [start_idx, start_idx + num_points) into `data`.
+
     std::ifstream file(csv_path);
 
     if (!file.is_open())
@@ -77,7 +77,7 @@ static inline void read_csv_column(univector<double> &data, const std::string &c
     {
         if (current_line >= start_idx)
         {
-            // Reuse stringstream buffer line-by-line to avoid extra allocations.
+
             ss.str(line);
             ss.clear();
             size_t current_col = 0;
@@ -86,7 +86,7 @@ static inline void read_csv_column(univector<double> &data, const std::string &c
             {
                 if (current_col == column_idx)
                 {
-                    // Parse only requested column and append it.
+
                     data.push_back(std::stod(val));
                     break;
                 }
@@ -108,59 +108,84 @@ static inline void read_csv_column(univector<double> &data, const std::string &c
     file.close();
 }
 
+// Calcula el período medio de la señal (en tiempo) contando los cruces ascendentes del umbral th_up.
+// Usa histéresis con dos umbrales para evitar detecciones espurias por ruido:
+//   - th_up (90% del rango): umbral de cruce ascendente → marca inicio de burst
+//   - th_on (10% del rango): umbral de cruce descendente → permite un nuevo cruce ascendente
+// Sin histéresis, oscilaciones de ruido cerca del umbral generarían falsos cruces.
 static inline double sig_period(double observation_time, const univector_ref<const double> &sig,
                                 double th_up, double th_on)
 {
-    // Estimate signal period by counting low->high crossings with hysteresis.
-    // `th_up` and `th_on` reduce false transitions in noisy traces.
+
+    // Estado inicial: determina si la señal empieza "arriba" (ya dentro de un burst)
     bool up = (sig.front() > th_up);
-    // Number of completed upward transitions in the observation window.
+
     double changes = 0.0;
 
     for (const double val : sig)
     {
         if (!up && val > th_up)
         {
+            // Cruce ascendente: la señal sube por encima de th_up → nuevo burst detectado
             changes++;
             up = true;
         }
         else if (up && val < th_on)
         {
+            // Cruce descendente: la señal cae por debajo de th_on → sale del burst.
+            // Solo entonces se permite detectar otro cruce ascendente (histéresis).
             up = false;
         }
     }
 
-    // period = total_time / num_cycles.
+    // frecuencia_bursts = changes / observation_time  (bursts por unidad de tiempo)
+    // Período = 1 / frecuencia = observation_time / changes
     return 1.0 / (changes / observation_time);
 }
 
+// Calcula factores de escalado lineal del espacio real al virtual (modelo neuronal).
+// Mapea [real_min, real_max] → [virtual_min, virtual_max] con: v = r * scale + offset
+// Derivación del offset:
+//   virtual_min = real_min * scale + offset  →  offset = virtual_min - real_min * scale
 static ScalingFactors calculate_scaling(double virtual_min, double virtual_max,
                                         double real_min, double real_max)
 {
-    // Compute affine mapping from real-domain values to model-domain values.
-    // Endpoint mapping:
-    // real_min -> virtual_min, real_max -> virtual_max.
+
     const double virtual_range = virtual_max - virtual_min;
     const double real_range = real_max - real_min;
 
     ScalingFactors factors;
+    // scale = rango_virtual / rango_real (factor de proporcionalidad)
     const double scale_real_to_virtual = virtual_range / real_range;
     factors.scale_real_to_virtual = scale_real_to_virtual;
+    // offset para que real_min se mapee exactamente a virtual_min
     factors.offset_real_to_virtual = virtual_min - (real_min * scale_real_to_virtual);
 
     return factors;
 }
 
+// Selecciona el dt del modelo neuronal cuyo burst (en puntos) sea múltiplo cercano de pts_real.
+//
+// Contexto: la señal del CSV tiene un cierto período de burst (medido en muestras = pts_real).
+// El modelo neuronal, simulado con un determinado dt, produce bursts de pts[i] pasos.
+// Necesitamos un dt tal que un burst del modelo contenga un número entero (o casi) de
+// bursts de la señal real → así se alinean temporalmente.
+//
+// Algoritmo:
+//   1. Multiplica pts_real por factor creciente (1, 2, 3, ...) hasta alcanzar el rango de pts[]
+//   2. Para cada factor, busca de dt grande (computacionalmente barato) a dt pequeño (caro)
+//      el primer dt cuyo pts[i] > pts_real*factor
+//   3. Comprueba divisibilidad: pts[i] / pts_real ≈ entero (parte fraccional ≤ tolerancia * parte entera)
+//   4. Si encuentra uno con buena divisibilidad, lo acepta. Si no, sigue con el siguiente factor.
+//   5. Fallback: si ninguno tuvo buena divisibilidad, toma el último candidato encontrado.
 template <size_t N>
 static inline std::optional<DTSelection> select_dt_neuron_model(const std::array<double, N> &dts,
                                                                 const std::array<double, N> &pts,
                                                                 double pts_real)
 {
-    // Select dt from lookup tables so model points/burst approximates signal points/burst
-    // with near-integer interpolation factor.
-    // `aux` is the target points-per-burst we try to match in lookup table space.
+
     double aux = pts_real;
-    // `factor` explores integer multiples of pts_real to find near-integer ratios.
+
     double factor = 1.0;
     double intpart, fractpart;
     bool flag = false;
@@ -170,30 +195,37 @@ static inline std::optional<DTSelection> select_dt_neuron_model(const std::array
     double dt_candidate = INVALID_DT;
     double pts_burst_candidate = SigConstants::INVALID_PTS;
 
-    // First pass: search for a candidate whose ratio pts_model/pts_real is near-integer.
+    // Itera con factor creciente: busca que pts_real*factor sea alcanzable por algún pts[i].
+    // pts[0] corresponde al dt más fino (máximos pts por burst). Si aux >= pts[0],
+    // no tiene sentido seguir porque ningún dt producirá tantos puntos.
     while (aux < pts[0])
     {
-        // Try next multiple of the real signal points-per-burst.
+
         aux = pts_real * factor;
         factor += 1.0;
 
-        // Iterate from largest points-per-burst to smallest.
+        // Recorre las tablas en orden inverso (dt grande → dt pequeño, es decir,
+        // pts pequeño → pts grande). Busca el primer dt cuyo pts[i] supere aux.
+        // Esto prioriza dts grandes (simulación más barata) que aún cubran el burst.
         for (size_t i = N - 1; i >= 0; i--)
         {
             if (pts[i] > aux)
             {
-                // Keep the closest table entry above current target.
+
                 dt_candidate = dts[i];
                 pts_burst_candidate = pts[i];
 
+                // Test de divisibilidad: descomponemos pts_burst / pts_real en parte
+                // entera y fraccionaria. Si la parte fraccionaria es pequeña respecto
+                // a la entera, los bursts se alinean bien (ej: 3.02 → intpart=3, fract=0.02).
+                // Criterio: fract ≤ TOLERANCE * intpart (ej: 0.02 ≤ 0.1 * 3 = 0.3 → OK)
                 fractpart = std::modf(pts_burst_candidate / pts_real, &intpart);
 
-                // Prefer candidates with small fractional mismatch.
                 if (fractpart <= SigPrivateConfig::DT_SELECTION_TOLERANCE * intpart)
                 {
                     flag = true;
                 }
-                // Always break before i underflows (size_t loop).
+
                 break;
             }
         }
@@ -204,14 +236,16 @@ static inline std::optional<DTSelection> select_dt_neuron_model(const std::array
         }
     }
 
-    // Fallback: if near-integer criterion fails, keep best feasible candidate.
+    // Fallback: si ningún factor produjo buena divisibilidad, acepta el último candidato.
+    // Es posible que con todos los factores probados, el mejor dt sea "aceptable" aunque
+    // no ideal. Repite la búsqueda con el último aux para no quedarse sin resultado.
     if (!flag)
     {
         for (size_t i = N - 1; i >= 0; i--)
         {
             if (pts[i] > aux)
             {
-                // Best feasible fallback even if ratio is not near-integer.
+
                 dt_candidate = dts[i];
                 pts_burst_candidate = pts[i];
                 break;
@@ -231,9 +265,10 @@ static inline std::optional<DTSelection> select_dt_neuron_model(const std::array
     return selection;
 }
 
+// Despacha la selección de dt según modelo e integrador
 static inline std::optional<DTSelection> set_pts_burst(NeuronModel model, NumericIntegrator integrator, double pts_real)
 {
-    // Dispatch dt/points table by neuron model and numeric integrator.
+
     if (model == NeuronModel::HINDMARSH_ROSE)
     {
         if (integrator == NumericIntegrator::RK4)
@@ -251,48 +286,57 @@ static inline std::optional<DTSelection> set_pts_burst(NeuronModel model, Numeri
     }
 }
 
+// Recalcula el escalado cuando la señal presenta drift:
+// ajusta los extremos reales con un margen porcentual para que el escalado sea más robusto.
+// El margen "empuja" los umbrales rel_min/rel_max hacia el interior del rango,
+// evitando que el drift lleve la señal fuera de la zona detectada como burst.
 static inline ScalingFactors fix_drift(double model_abs_min, double model_abs_max, double window_min, double window_max, SigStats &stats)
 {
-    // Re-estimate scaling factors from a local window to compensate baseline drift.
+
+    // Recalcula factores scale/offset con los nuevos extremos de la ventana
     ScalingFactors factors = calculate_scaling(model_abs_min, model_abs_max, window_min, window_max);
 
     constexpr double DRIFT_PERCENTAGE_MIN = SigPrivateConfig::DRIFT_PERCENTAGE_MIN;
     constexpr double DRIFT_PERCENTAGE_MAX = SigPrivateConfig::DRIFT_PERCENTAGE_MAX;
 
-    // Update relative thresholds with sign-aware margins.
+    // Ajusta rel_min hacia arriba (reduce el rango válido de burst por abajo).
+    // El signo de window_min determina la dirección del margen:
+    //   - window_min > 0: sumar (ej: 0.5 + 0.5*0.1 = 0.55 → sube)
+    //   - window_min < 0: restar el producto negativo*0.1 (ej: -2 - (-2*0.1) = -2+0.2 = -1.8 → sube)
+    // En ambos casos, el resultado es un umbral más alto que window_min.
     if (window_min > 0)
     {
-        // If positive, push threshold slightly upward.
         stats.real_rel_min = window_min + (window_min * DRIFT_PERCENTAGE_MIN);
     }
     else
     {
-        // If negative, move threshold to more negative value.
         stats.real_rel_min = window_min - (window_min * DRIFT_PERCENTAGE_MIN);
     }
 
+    // Ajusta rel_max hacia abajo (reduce el rango válido de burst por arriba).
+    //   - window_max > 0: restar (ej: 2 - 2*0.1 = 1.8 → baja)
+    //   - window_max < 0: sumar el producto negativo*0.1 (ej: -0.5 + (-0.5*0.1) = -0.55 → baja)
+    // En ambos casos, el resultado es un umbral más bajo que window_max.
     if (window_max > 0)
     {
-        // If positive, pull threshold slightly downward.
         stats.real_rel_max = window_max - (window_max * DRIFT_PERCENTAGE_MAX);
     }
     else
     {
-        // If negative, move threshold to less negative value.
         stats.real_rel_max = window_max + (window_max * DRIFT_PERCENTAGE_MAX);
     }
 
     return factors;
 }
 
+// Inicializa las estadísticas de la señal: extremos, umbrales de burst y período
 static inline SigStats init_stats(const univector<double> &sig, size_t obs_points, double csv_step)
 {
-    // Extract observation statistics used for period estimation and scaling.
+
     const double observation_time_to_use = obs_points * csv_step;
 
     SigStats stats;
 
-    // Observation window is always taken from the beginning of the loaded segment.
     const univector_ref<const double> obs_sig = sig.slice(0, obs_points);
     const double abs_max = maxof(obs_sig);
     const double abs_min = minof(obs_sig);
@@ -301,7 +345,8 @@ static inline SigStats init_stats(const univector<double> &sig, size_t obs_point
     stats.real_abs_max = abs_max;
 
     const double range = abs_max - abs_min;
-    // Relative thresholds (10%-90% of range) for robust transition detection.
+
+    // Umbrales de detección de burst basados en porcentajes del rango
     const double real_rel_min = SigPublicConfig::SIG_PERCENTAGE_MIN * range + abs_min;
     const double real_rel_max = SigPublicConfig::SIG_PERCENTAGE_MAX * range + abs_min;
     stats.real_rel_min = real_rel_min;
@@ -312,6 +357,8 @@ static inline SigStats init_stats(const univector<double> &sig, size_t obs_point
     return stats;
 }
 
+// Función principal de escalado: lee señal del CSV, la escala al rango del modelo neuronal,
+// selecciona el dt adecuado y genera puntos interpolados para sub-stepping
 std::optional<ScaledSigResult> scale_sig(
     const std::string &csv_path,
     size_t column_idx,
@@ -323,11 +370,7 @@ std::optional<ScaledSigResult> scale_sig(
     NeuronModel model,
     bool check_drift)
 {
-    // Scaling pipeline:
-    // 1) Read CSV segment.
-    // 2) Estimate period and choose dt/points factor from calibration tables.
-    // 3) Rescale to model voltage range (with optional drift compensation).
-    // 4) Build per-interval interpolated points for inner integration steps.
+
     if (csv_step <= 0 || use_time <= 0 || observation_time <= 0 || start_time < 0 || column_idx < 0 || csv_path.empty())
     {
         throw std::invalid_argument("Invalid arguments: csv_step, use_time, observation_time must be positive, start_time and column_idx non-negative, csv_path non-empty");
@@ -338,7 +381,6 @@ std::optional<ScaledSigResult> scale_sig(
     univector<double> &sig = result.sig;
     univector<double> &interpolated_points = result.interpolated_points;
 
-    // Time-to-index conversion (floor behavior from static_cast).
     const size_t start_idx = static_cast<size_t>(start_time / csv_step);
     const size_t use_points = static_cast<size_t>(use_time / csv_step);
     if (use_points == 0)
@@ -351,14 +393,12 @@ std::optional<ScaledSigResult> scale_sig(
     {
         throw std::invalid_argument("observation_time is too short to read any points with given csv_step");
     }
-    // Need enough points for both:
-    // - observation window (period estimation)
-    // - use window (actual BO signal)
+
+    // Lee el máximo entre puntos de uso y de observación (la observación se usa para estadísticas)
     const size_t read_points = std::max(use_points, obs_points);
 
     read_csv_column(sig, csv_path, column_idx, start_idx, read_points);
 
-    // read_csv_column may return fewer points if file is shorter than requested.
     size_t sig_size = sig.size();
     if (sig_size == 0)
     {
@@ -367,21 +407,22 @@ std::optional<ScaledSigResult> scale_sig(
 
     SigStats stats = init_stats(sig, obs_points, csv_step);
 
-    // Keep only the segment requested for BO usage.
+    // Recorta la señal al tamaño de uso si se leyó más (por observación)
     if (sig_size > use_points)
     {
         sig.resize(use_points);
         sig_size = use_points;
     }
 
-    // External points per burst at original sampling step.
+    // Puntos por burst en la señal externa (CSV)
     const double external_pts_per_burst = stats.sig_period / csv_step;
 
+    // Busca el dt del modelo cuyo burst coincida en período con la señal externa
     std::optional<DTSelection> selection;
     double model_abs_min, model_abs_max;
     if (model == NeuronModel::HINDMARSH_ROSE)
     {
-        // Target model voltage interval for affine rescaling.
+
         model_abs_min = HindmarshRose::MIN;
         model_abs_max = HindmarshRose::MAX;
         selection = set_pts_burst(model, integrator, external_pts_per_burst);
@@ -393,15 +434,18 @@ std::optional<ScaledSigResult> scale_sig(
 
     if (!selection)
     {
-        // Could not find a valid dt candidate for this signal/model pair.
+        // No se encontró un dt compatible con la frecuencia de burst de la señal
         return std::nullopt;
     }
 
     result.dt = selection->dt;
 
-    // Integration sub-steps per original sample.
+    // Factor de sub-pasos: cuántos pasos del modelo se ejecutan por cada muestra del CSV.
+    // Ej: si el modelo con este dt necesita 84000 pasos/burst y la señal tiene 42000 muestras/burst,
+    // s_points = 84000/42000 = 2 → por cada muestra del CSV se dan 2 pasos del modelo.
+    // Esto permite que el modelo avance a su ritmo natural mientras procesa la señal externa.
     size_t s_points = static_cast<size_t>(selection->pts_burst / external_pts_per_burst);
-    // Keep at least one step per sample in degenerate cases.
+
     if (s_points == 0)
         s_points = 1;
 
@@ -410,71 +454,91 @@ std::optional<ScaledSigResult> scale_sig(
     double &real_abs_min = stats.real_abs_min;
     double &real_abs_max = stats.real_abs_max;
 
+    // Escalado lineal: mapea [real_min, real_max] → [model_min, model_max]
     ScalingFactors factors = calculate_scaling(model_abs_min, model_abs_max, real_abs_min, real_abs_max);
     double scale_real_to_virtual = factors.scale_real_to_virtual;
     double offset_real_to_virtual = factors.offset_real_to_virtual;
 
     if (check_drift)
     {
-        // Online-style drift correction: periodically update scaling with local windows.
+        // Corrección de drift: la señal biológica puede derivar lentamente (baseline shift).
+        // Cada DRIFT_N_BURST bursts (~2 ciclos de la señal), recalcula los factores de
+        // escalado usando los extremos observados en esa ventana, adaptándose al drift.
         size_t drift_counter = 0;
         constexpr double DOUBLE_MAX = GeneralConstants::DOUBLE_MAX;
         constexpr double DOUBLE_MIN = GeneralConstants::DOUBLE_MIN;
+        // Inicializa min/max invertidos para que la primera comparación siempre actualice
         double window_max = DOUBLE_MIN;
         double window_min = DOUBLE_MAX;
+        // Rango de la señal global: se usa para filtrar outliers (artefactos de medida)
         const double drift_aux_range = real_abs_max - real_abs_min;
 
         for (double &val : sig)
         {
-            // Keep local extrema within a bounded neighborhood to reject outliers.
+            // Actualiza window_min solo si val es un nuevo mínimo Y no es un outlier.
+            // Filtro de outliers: descarta valores que caigan más de un rango completo
+            // por debajo del mínimo global. Ej: si min=-2 y rango=3, descarta val < -5.
+            // Esto evita que artefactos puntuales distorsionen el escalado.
             if ((window_min > val) && (val > (real_abs_min - drift_aux_range)))
             {
                 window_min = val;
             }
+            // Análogo para window_max: descarta outliers por encima de max + rango
             if ((window_max < val) && (val < (real_abs_max + drift_aux_range)))
             {
                 window_max = val;
             }
 
+            // Cada N bursts (en puntos), si la ventana tiene datos válidos (no quedó en
+            // los valores centinela), recalcula el escalado con los nuevos extremos
             if (drift_counter >= (SigPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
                 window_max != DOUBLE_MIN && window_min != DOUBLE_MAX)
             {
-                // Recalibrate every N bursts (in source-sample units).
+
                 drift_counter = 0;
 
-                // Refit affine transform periodically from local window extrema.
+                // Recalcula scale/offset adaptados al drift actual y ajusta los umbrales
                 factors = fix_drift(model_abs_min, model_abs_max, window_min, window_max, stats);
                 scale_real_to_virtual = factors.scale_real_to_virtual;
                 offset_real_to_virtual = factors.offset_real_to_virtual;
 
+                // Resetea la ventana para la siguiente iteración
                 window_max = DOUBLE_MIN;
                 window_min = DOUBLE_MAX;
             }
 
             drift_counter++;
 
-            // Apply current affine mapping.
+            // Aplica el escalado actual (posiblemente actualizado por drift): real → virtual
             val = val * scale_real_to_virtual + offset_real_to_virtual;
         }
     }
     else
     {
-        // Global affine scaling for the whole signal.
+        // Sin drift: aplica escalado lineal uniforme a toda la señal
         sig = (sig * scale_real_to_virtual) + offset_real_to_virtual;
     }
 
-    // Precompute interpolated values between consecutive samples.
+    // Genera puntos interpolados linealmente entre muestras consecutivas de sig
+    // para sub-stepping del modelo sináptico.
+    // Ej con s_points=3: entre sig[i] y sig[i+1] se generan 2 puntos intermedios:
+    //   interp_1 = sig[i] + (1/3) * (sig[i+1] - sig[i])  → a 1/3 del camino
+    //   interp_2 = sig[i] + (2/3) * (sig[i+1] - sig[i])  → a 2/3 del camino
+    // La secuencia total por muestra sería: sig[i], interp_1, interp_2, sig[i+1], ...
+    // En evaluate_candidate: se usa sig[i] como primer paso y luego los interpolados.
     const size_t interpolated_size = (sig_size - 1) * (s_points - 1);
     interpolated_points.reserve(interpolated_size);
     const double *sig_ptr = sig.data();
 
     for (size_t i = 0; i < sig_size - 1; i++)
     {
-        // Create (s_points - 1) inner linear samples per original interval.
+        // j va de 1 a s_points-1 (j=0 sería sig[i], que ya existe; j=s_points sería sig[i+1])
         for (double j = 1.0; j < s_points; j++)
         {
-            // j is double to ensure floating-point interpolation ratio.
+            // alpha ∈ (0, 1): fracción del intervalo entre sig[i] y sig[i+1]
             double alpha = j / s_points;
+            // Interpolación lineal: sig[i] * (1 - alpha) + sig[i+1] * alpha
+            // Reescrita como: sig[i] + alpha * (sig[i+1] - sig[i])
             double interp_val = sig_ptr[i] + (alpha * (sig_ptr[i + 1] - sig_ptr[i]));
             interpolated_points.push_back(interp_val);
         }

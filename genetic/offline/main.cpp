@@ -14,7 +14,7 @@ typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main(int argc, char *argv[])
 {
-    // CLI arguments configure a full offline BO run.
+
     if (argc < 20)
     {
         std::cerr << "Usage: " << argv[0]
@@ -25,33 +25,32 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Parse CLI inputs.
+    // Parsea los argumentos de línea de comandos
     const std::string csv_path = argv[1];
     const size_t column_idx = static_cast<size_t>(std::atoi(argv[2]));
-    const double csv_step = std::atof(argv[3]);
-    const double start_time = std::atof(argv[4]);
-    const double stabilization_time = std::atof(argv[5]);
-    const double evaluation_time = std::atof(argv[6]);
-    const double observation_time = std::atof(argv[7]);
-    const size_t initial_samples = static_cast<size_t>(std::atoi(argv[8]));
-    const size_t iterations = static_cast<size_t>(std::atoi(argv[9]));
-    const bool search_phase = (std::atoi(argv[10]) == 1);
-    const bool check_drift = (std::atoi(argv[11]) == 1);
-    const int syn_model_step_factor = std::atoi(argv[12]);
-    const SynComponent syn_component = static_cast<SynComponent>(std::atoi(argv[13]));
-    const double fc = std::atof(argv[14]);
-    const double expected_i_min = std::atof(argv[15]);
-    const double expected_i_max = std::atof(argv[16]);
-    const double i_min = std::atof(argv[17]);
-    const double i_max = std::atof(argv[18]);
+    const double csv_step = std::atof(argv[3]);                                        // Paso temporal del CSV (ms)
+    const double start_time = std::atof(argv[4]);                                      // Tiempo de inicio de lectura del CSV (ms)
+    const double stabilization_time = std::atof(argv[5]);                              // Tiempo de estabilización antes de evaluar (ms)
+    const double evaluation_time = std::atof(argv[6]);                                 // Tiempo de evaluación de la sinapsis (ms)
+    const double observation_time = std::atof(argv[7]);                                // Tiempo para calcular estadísticas de la señal (ms)
+    const size_t initial_samples = static_cast<size_t>(std::atoi(argv[8]));            // Muestras iniciales LHS
+    const size_t iterations = static_cast<size_t>(std::atoi(argv[9]));                 // Iteraciones de BO
+    const bool search_phase = (std::atoi(argv[10]) == 1);                              // 1 = fase (excitadora), 0 = antifase (inhibidora)
+    const bool check_drift = (std::atoi(argv[11]) == 1);                               // Corrección de drift en la señal
+    const int syn_model_step_factor = std::atoi(argv[12]);                             // Sub-pasos del modelo sináptico por paso
+    const SynComponent syn_component = static_cast<SynComponent>(std::atoi(argv[13])); // 0=ifast, 1=islow, 2=both
+    const double fc = std::atof(argv[14]);                                             // Frecuencia de corte Butterworth (kHz)
+    const double expected_i_min = std::atof(argv[15]);                                 // Corriente mínima esperada (nA)
+    const double expected_i_max = std::atof(argv[16]);                                 // Corriente máxima esperada (nA)
+    const double i_min = std::atof(argv[17]);                                          // Clamp mínimo de salida (nA)
+    const double i_max = std::atof(argv[18]);                                          // Clamp máximo de salida (nA)
     const bool verbose = (std::atoi(argv[19]) == 1);
 
-    // Measure full BO runtime.
     const std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
 
     try
     {
-        // Run BO and decode best normalized sample into physical params.
+        // Lanza la optimización bayesiana offline
         const std::optional<ChemicalSynapseParams> best_params_opt = BO<Integrator, NeuronType>(
             csv_path, column_idx, csv_step, start_time, stabilization_time, evaluation_time,
             observation_time,
@@ -79,14 +78,15 @@ int main(int argc, char *argv[])
 
         if (!best_params_opt)
         {
-            // scale_sig can fail to select valid dt/points; report as BO failure.
+
             std::cerr << "Error: BO failed to produce parameters" << std::endl;
             std::cerr << "BO execution time (until failure): " << elapsed.count() << " s" << std::endl;
             return 1;
         }
 
+        // Imprime los mejores parámetros encontrados
         const ChemicalSynapseParams &best_params = *best_params_opt;
-        // Print in the same format expected by the downstream parametrization scripts.
+
         std::cout << "    Esyn_values = [" << best_params.e_syn << "]" << std::endl;
         std::cout << "    gfast_values = [" << best_params.g_fast << "]" << std::endl;
         std::cout << "    sfast_values = [" << best_params.s_fast << "]" << std::endl;
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     }
     catch (const std::exception &e)
     {
-        // Keep elapsed time even on failure for diagnostics.
+
         const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
         const std::chrono::duration<double> elapsed = t_end - t_start;
         std::cerr << "Error: " << e.what() << std::endl;
