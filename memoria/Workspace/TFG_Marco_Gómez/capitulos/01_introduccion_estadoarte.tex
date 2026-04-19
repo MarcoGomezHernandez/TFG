@@ -1,0 +1,147 @@
+
+Desde el origen de los primeros sistemas operativos, ha habido tareas que han demandado una ejecución precisa respecto a ciertas restricciones temporales. De esta necesidad, nacen los sistemas operativos de tiempo real (RTOS), donde se pueden implementar herramientas especializadas para gestionar dichas restricciones. Los circuitos biohíbridos formados por neuronas vivas y modelos neuronales que imitan su comportamiento son un ejemplo de sistema que ha de implementarse con software o hardware de tiempo real \cite{Amaducci2019,Amaducci2022}.
+
+Los circuitos biohíbridos tienen múltiples aplicaciones en neurociencia y en neurotecnología, pues brindan nuevas posibilidades para el estudio de la dinámica neuronal, y también abren nuevas perspectivas en el campo sanitario y de neurorrehabilitación permitiendo expandir el conocimiento y la comprensión del funcionamiento del sistema nervioso.
+
+No obstante, la conectividad neuronal biohíbrida presenta diversos retos, entre ellos el intercambio de información compatible y eficaz entre ambas partes. La diferencia entre los dos medios en los que la entidad viva y la entidad artificial residen, al ser uno biológico y otro digital (o electrónico), es un factor clave, pero también lo es la diferencia temporal en la que operan estas entidades. Los procesadores no siguen de forma continua la cronología de una neurona viva, pues mientras que en esta los tiempos no son estrictamente constantes (debido a distintos factores que pueden influenciar a la neurona), en los procesadores se sigue un \textit{clock} o reloj, que sincroniza sus acciones. Añadido a esto, está el planificador del sistema operativo, que a través de las interrupciones, puede afectar al flujo de respuesta del modelo artificial, tanto si este está siendo ejecutado en el propio ordenador  \cite{Amaducci2019, Cerqueira2013}, como si es tan solo un medio para conectar un \textit{modelo neuronal} (como el de Hodgkin–Huxley \cite{Hodgkin1990}) a la neurona viva. Para paliar con esto último, se usan los Sistemas Operativos de Tiempo Real (\textit{RTOS}).
+
+En los \textit{RTOS}, se pueden generar procesos que no respeten el curso natural del planificador, es decir, que tengan más precisión temporal de la que tendrían si fuese un Sistema Operativo de Propósito General (\textit{GPOS}). Esto permite que dicho proceso realice tareas con un margen temporal mucho más estrecho que un \textit{GPOS}, pues puede acabar de realizar la tarea antes de ser interrumpido, o dicho de otra forma, no se le interrumpe hasta que no acabe la tarea o hasta que otro proceso de mayor prioridad sea ejecutado. Por ello, estos sistemas son una buena opción para resolver el problema anteriormente planteado.
+
+Hay diversos factores a tratar sobre el sistema a elegir, a pesar de que se repasarán los más usados actualmente, el enfoque principal es el parche de Linux \textit{Preempt-RT} (concretamente en Debian), debido a su reciente fusión en \textit{mainline}. Este evento reciente, no solo marca un estándar en estos tipos de sistemas, sino que también facilita la instalación de un \textit{RTOS}, abriendo la puerta a que nuevos usuarios puedan desarrollar nuevas herramientas que faciliten o extiendan su uso, particularmente en el contexto de la neurotecnología.
+
+
+
+\section{Motivación del trabajo\label{SEC:MOTIVACION}}
+
+
+La interacción con células neuronales es una tarea que requiere restricciones temporales muy estrictas,
+por lo que para su estudio, se deben emplear sistemas y herramientas que permitan enviar y registrar
+señales en tiempo real, con precisión en la escala de los milisegundos, además de realizar los cálculos necesarios para implementar interacciones realistas con las neuronas vivas.
+Esta necesidad va en incremento, dada su implicación en múltiples aplicaciones. En estas, también se
+necesitan realizar otras tareas relacionadas con el análisis de la dinámica neuronal y el objetivo de los experimentos, por lo que no se puede
+dejar espacio al sistema operativo para que interrumpa los procesos encargados de realizarlas.
+
+Por tanto, es necesario investigar las distintas opciones y posibilidades
+que van surgiendo en relación a dichos sistemas de tiempo real, además de aquellas herramientas que faciliten las tareas
+anteriormente mencionadas y el mantenimiento a lo largo del tiempo de las mismas.
+
+
+\section{Formalización del problema\label{SEC:FORMALIZACION}}
+
+Antes de empezar el desarrollo sobre el tema a tratar en el contexto del diseño e implementación de circuitos biohíbridos, es necesario definir conceptos clave relacionados con esta neurotecnología.
+
+
+\subsection{Modelo neuronal\label{SS:MODELONEURONAL}}
+
+
+Un modelo neuronal es una formalización matemática del comportamiento de una neurona real, que trata de imitarla, estudiarla o comunicarse con ella. En su acepción más habitual es la modelización de la generación de potenciales de acción o \textit{spikes} \cite{Fortuna2023}. Este tipo de señales, generan una serie de picos, que hacen que las poblaciones neuronales se muevan entre estados. Dichos estados son lo que le da sentido a la comunicación neuronal \cite{Rabinovich2008}.
+
+Algunos de estos modelos, presentan un sistema dinámico con un régimen caótico, dicho régimen presenta oscilaciones, en los que hay un estado estable y uno inestable dentro de su espacio fásico \cite{Rulkov2002}. Debido a esto, para poder representarlos, se usan ecuaciones diferenciales.
+
+
+\subsection{Circuito biohíbrido\label{SS:CIRCUITOBIOHIBRIDO}}
+
+Un circuito biohíbrido es un circuito formado por una neurona artificial (modelo) y una neurona viva (neurona real). En este, el modelo puede ser o bien un programa, ejecutándose en un ordenador, o un circuito eléctrico, que represente mediante sus componentes las partes de la célula. El circuito híbrido, puede ser unidireccional (con la interacción ocurriendo en una sola dirección) o bidireccional \cite{ReyesSnchez2023}.
+
+
+\subsection{Interacción en ciclo cerrado\label{SS:CICLOCERRADO}}
+
+Una interacción biohíbrida en ciclo cerrado o \textit{closed-loop} \cite{Varona2016a}, es un tipo de circuito biohíbrido en el que el modelo y la neurona viva están conectados mediante una conexión bidireccional, por la que ambas envían y reciben información que permite coordinar su actividad conjunta \cite{Amaducci2022}.
+
+
+\section{Estado del Arte\label{SEC:ESTADODELARTE}}
+
+
+En este apartado se exponen una serie de secciones que representan diversos campos que se han explorado para la realización de este trabajo. Se realiza un repaso de los sistemas y herramientas en tiempo real, para la posterior elección de alguno de los mismos. Cabe destacar que se han segregado los kernels de los Sistemas Operativos como tal, para hacer una distinción entre aquellos sistemas que son un parche o se basan en Linux, y aquellos que han sido puramente desarrollados desde el inicio con el objetivo de ser \textit{RTOS}.
+
+
+\subsection{Sistemas Operativos\label{SS:SSOO}}
+
+
+Dentro de los \textit{RTOS}, las tareas deben cumplir con una restricción temporal. Según la manera de evaluar el cumplimiento de dicha restricción, es decir, su exactitud, estas pueden ser: por un lado \textit{Hard} y por otro \textit{Soft} y \textit{Firm}.
+
+En las \textit{Hard Tasks}, si no cumplen con la \textit{deadline} impuesta, provocan un fallo catastrófico en el peor de los casos, y en el mejor de ellos una degradación del sistema \cite{Lipari2015}. En las \textit{Soft Tasks}, se tolera que una fracción de las tareas puedan no llegar a cumplir la restricción temporal anteriormente impuesta \cite{Erickson2022}. En cambio, en las \textit{Firm Tasks}, por cada conjunto de tareas, al menos un número de ellas deben cumplir con la \textit{deadline} \cite{Behrouzian2020}.
+
+Para la implementación de circuitos biohíbridos con interacciones realistas, es necesario hacer uso de \textit{RTOS} orientados a las \textit{Hard} o \textit{Firm tasks}, puesto que los \textit{Hybrots} tienen ventanas de tiempo del orden de milisegundos o menos, dado el tiempo transcurrido entre la adquisición del impulso y la interacción con la neurona en los experimentos biológicos \cite{Amaducci2019}, por lo que necesitan atender todas las tareas dentro de dicha restricción (o al menos un gran número de ellas) para poder realizar la medición y sincronización con dichas células. Además de esto, se han elegido sistemas código abierto y uso gratuito, que pueden merecer la pena a la hora de explotar las capacidades de la computación en tiempo real.
+
+
+\subsubsection{Zephyr\label{SSS:ZEPHYR}}
+
+
+Este proyecto está apoyado por la \textit{Linux Foundation}, soporta una gran variedad de hardware y al ser de los más usados, está bien documentado \cite{ZephyrTeam2024}. Además tiene plena compatibilidad para compilar aplicaciones basadas en CMake \cite{ZephyrTeam2025}.
+
+
+\subsubsection{RT-Thread\label{SSS:RTTHREAD}}
+
+
+Es un sistema operativo \textit{Hard real-time} \cite{RT-ThreadTeam2025}, que se puede usar en dispositivos de bajos recursos \cite{RT-ThreadTeam2024}. Además de esto, cuenta con un curso gratuito en el portal de training de la \textit{Linux Foundation}. Esto hace que sea más fácil acercar el desarrollo en él que otros \textit{RTOS}, aunque la mayoría de soporte y usuarios que hay son de origen chino, lo cual impone una barrera de idioma a la hora de buscar y leer casos de uso y problemas que puedan haber tenido otros desarrolladores con dicho sistema.
+
+
+\subsection{Kernels de tiempo real\label{SS:KERNELS}}
+
+
+A continuación se repasarán brevemente algunos de los kernels que transforman Linux de un \textit{GPOS} a un \textit{RTOS}. Aquí se incluyen aquellos que se considerado más interesantes, ya sea por su popularidad, mantenimiento o influencia dentro del estándar.
+
+
+\subsubsection{RTLinux\label{SSS:RTLINUX}}
+
+
+\textit{RTLinux}, es un microkernel con un planificador de tiempo real que ejecuta Linux en un hilo de baja prioridad. Esto evita que el planificador de Linux interrumpa las tareas que se han de ejecutar en tiempo real. Tenía dos versiones, una open source y otra comercial \cite{Buttazzo2024}. Este sistema está descontinuado por la empresa que lo mantenía \cite{EmbLogic2011}, pero es necesaria su mención debido a su influencia sobre \textit{RTAI}.
+
+
+\subsubsection{RTAI\label{SSS:RTAI}}
+
+
+Este sistema empezó como una modificación de \textit{RTLinux}, pero posteriormente, debido a cierta incertidumbre con la licencia, se sustituyó por un nano-kernel llamado \textit{ADEOS} \cite{KarimYaghmour2002}. Este kernel permite mayor flexibilidad, dado que aprovecha el concepto de Capa de Abstracción de Hardware (\textit{HAL}) para atrapar y redirigir las interrupciones del sistema \cite{Buttazzo2024}.
+
+
+\subsubsection{Xenomai\label{SSS:XENOMAI}}
+
+
+Tras su lanzamiento, fue adoptado por \textit{RTAI}, dando lugar a \textit{RTAI/fusion}. A nivel individual, \textit{Xenomai} esta basado en una abstracción del núcleo de los \textit{RTOS}, que se puede usar para crear cualquier tipo de interfaz o \textit{skin} de tiempo real que posteriormente será expuesta como servicio \cite{DENXTeam2021}. Esto significa que las \textit{real-time tasks} son ejecutadas desde el espacio de usuario, pues envuelven al kernel en vez de formar parte del mismo.
+
+
+\subsubsection{Preempt-RT\label{SSS:PTREEMPTRT}}
+
+
+Era un conjunto de parches del kernel de Linux que trataban de convertirlo en un \textit{RTOS} mediante dos enfoques distintos. Uno era el uso de un microkernel, siguiendo la estrategia de \textit{RTAI}. El otro era modificar el código del kernel en sí mismo. Con el paso del tiempo, gran parte de los parches fueron reescritos, y en 2015, comenzaron esfuerzos desde la \textit{Linux Foundation} de comenzar el \textit{Real-Time Linux Collaborative Project}. Dicha iniciativa, posiciona el proyecto donde está ahora, recientemente fusionado con la \textit{mainline} de Linux el 30 de Septiembre de 2024 \cite{RTLdeveloperteam2022, RTLdeveloperteam2024}.
+
+Es por esto por lo que, \textit{Preempt-RT}, es la opción más atractiva para apostar en un futuro, pues al contar con el apoyo de la \textit{Linux Foundation} cuenta con soporte oficial y esto hace que tenga mayor potencial de mejora.
+
+
+\subsection{Herramientas para la creación de circuitos biohibridos\label{SS:HERRAMIENTAS}}
+
+
+Para poder hacer uso de las plenas capacidades de la computación \textit{real-time} para el estudio de los circuitos biohíbridos, no basta solo con alguno de los sistemas previamente mencionados, se necesita de herramientas específicas que hayan sido desarrolladas con el objetivo de interaccionar de manera determinista y en tiempo real con otros elementos. De las siguientes herramientas se han tenido en cuenta las que se usan comúnmente en la \textit{Escuela Politécnica Superior} de la \textit{UAM} para realizar experimentos con neuronas, o que hayan sido desarrollados por investigadores de esta.
+
+
+\subsubsection{RTHybrid\label{SSS:RTHYBRID}}
+
+
+\textit{RTHybrid} es una herramienta de tiempo real \textit{Open Source} para la investigación con neuronas \cite{Amaducci2019}. Al contrario que \textit{RTXI}, este sí soporta su uso tanto en \textit{Xenomai} como en \textit{Preempt-RT}. Trae de serie un conjunto de modelos neuronales a los que se les puede ajustar los parámetros iniciales, además de contar con un algoritmos de autocalibración para poder regular la amplitud, el desvío (o \textit{drift}) y la calibración automática de parámetros para poder trabajar en tiempo real \cite{ReyesSnchez2023}. Esta herramienta ha sido desarrollada en la escuela, y a pesar de ser una herramienta específica para los \textit{Hybrots} y contar con herramientas imprescindibles para la investigación sobre los mismos, no se le ha seguido dando soporte por el momento.
+
+
+\subsubsection{RTXI\label{SSS:RTXI}}
+
+
+\textit{RTXI} o \textit{Real-Time eXperiment Interface} es una aplicación de adquisición de datos y control para investigación biológica \cite{RTXIOrg2025}. Como ya se indicó previamente, el problema en cuestión es una \textit{Hard Task}, por lo que \textit{RTXI}, es un sistema orientado a tratar con dichas tareas. Sigue en mantenimiento, pero como era de esperar, no está pensado para ser ejecutado en un sistema con \textit{Preempt-RT}, sino con \textit{Xenomai}. Tiene una versión de \textit{POSIX} que puede ser ejecutada en un Linux estándar, pero al no hacer uso de las capacidades \textit{real-time}, se alcanzan picos de latencia y \textit{jitter} que no son deseables.
+
+
+\subsection{Aplicaciones y nuevas tecnologías\label{SS:APPSYNUEVASTECH}}
+
+
+La creación de circuitos biohíbridos tienen diversas aplicaciones tecnológicas. Entre ellas destacan la \textit{Organoid Intelligence}, disciplina en la cual se usan células neuronales para procesar información, usando una técnica similar al \textit{machine learning}, pero aplicada a neuronas reales, lo que facilita la resolución de problemas complejos \cite{Smirnova2023}. Creación de dispositivos \textit{SLC-MLC}, que hacen partícipes a las propias células en el almacenamiento de datos, mejorando en algunos casos el rendimiento y el coste energético \cite{Murugan2012}. Además ayudan al estudio y la comprensión de las neuronas y las estructuras funcionales que estas forman, facilitando en un futuro la creación de dispositivos que ayuden a personas con condiciones neurológicas a controlar o paliar con las mismas.
+
+
+\section{Objetivos\label{SEC:OBJETIVOS}}
+
+
+Los objetivos principales de este TFG son:
+
+\begin{enumerate}
+    \item Evaluar RTOS que puedan ser utilizados para experimentar y crear circuitos biohíbridos.
+    \item Identificar herramientas que puedan ser usadas para medir e interactuar con neuronas en tiempo real con la tecnología más actual.
+    \item Adaptar una de esas herramientas al paradigma actual de Linux-RT (Preempt-RT).
+    \item Exponer diversas pruebas de rendimiento para dichos sistemas.
+    \item Ejemplificar y validar circuitos biohíbridos representativos que se pueden crear con estas herramientas.
+\end{enumerate}
