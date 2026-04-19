@@ -1,0 +1,104 @@
+
+En este apartado se exponen el diseño y el desarrollo de las distintas modificaciones o creaciones de herramientas de tiempo real para la implementación de circuitos biohíbridos. En cada apartado se incluyen referencias al anexo con su repositorio correspondiente y, en caso de que se crea conveniente, un pequeño fragmento de código para contextualizar mejor la implementación.
+
+
+\section{RTXI para Preempt-RT\label{SEC:RTXIPREEMPTRT}}
+
+Como ya se ha comentado previamente, \textit{RTXI} es una aplicación para realizar experimentos en tiempo real usada por investigadores de la Escuela Politécnica Superior de la Universidad Autónoma de Madrid. Por ello se ha trabajado sobre la misma, desarrollando dos módulos para que puedan ser usados con el kernel de Linux \textit{Preempt-RT}. \textit{RTXI} ya cuenta con una version para \textit{POSIX} (aunque esta no puede operar en restricciones temporales muy estrictas), por lo que la implementación ha sido relativamente sencilla, implementando un módulo para la gestión de hilos \textit{realtime} `rtos\_preempt\_rt.cpp`, siguiendo los pasos indicados en la documentación de la Linux Foundation \cite{TheLinuxFundation2023}. El otro módulo, `fifo\_preempt\_rt.cpp`, no difiere mucho de la implementación de \textit{POSIX} en el proyecto (`fifo\_posix.cpp`), pero se ha dejado creado por si en un futuro se necesita especializar algún parámetro en las colas de tiempo real.
+
+Además de esto, se ha modificado el script de instalación y los archivos CMakeLists.txt para que se pueda seleccionar la nueva versión de \textit{RTXI} (Repositorio \ref{SEC:RTXIPREEMPTREPO}).
+
+No obstante, ha habido algunas dificultades para poder hacer posible el uso de dicha herramienta en su versión más reciente (3.2.X), pues el programa ha sufrido algunos cambios críticos que se comentarán a continuación.
+
+
+\section{Plugins\label{SEC:PLUGINS}}
+
+
+El grupo de investigación \href{http://arantxa.ii.uam.es/~gnb/}{\textit{GNB}}, cuenta con una serie de plugins para \textit{RTXI}, que extraen algunas de las funcionalidades de \textit{RTHybrid} \cite{Reyes-Sanchez2020, Amaducci2019} y hacen uso de ellas en \textit{RTXI}. Dichos plugins presentan un inconveniente a la hora de usarlos en versiones superiores a la 3.0.0, pues en esta actualización la clase en la que se basan, `DefaultGuiModel`, ha sido retirada por completo \cite{RTXI2023}. Esto hace que no se puedan compilar ni usar con las nuevas versiones de \textit{RTXI}.
+
+Por ello, se han migrado todos los plugins de la anterior versión a la nueva (Repositorio \ref{SEC:RTHPRTXI3REPO}). Para realizar dicha migración, se ha usado el script `create\_template\_plugin.sh`, que genera una plantilla para el plugin. Con esta base se han ido completando los plugins reciclando el código de la anterior versión, pero bajo las nuevas clases de `widgets.cpp`, que dividen la funcionalidad del módulo en `Panel` (para la GUI), `Component` (para la lógica) y `Plugin` (para el propio \textit{RTXI}).
+
+La adversidad más remarcable durante la implementación ha sido mostrar las variables en la GUI, pues los `STATES` que se usaban anteriormente, ahora solo pueden ser enteros sin signo, por lo que se han tenido que usar colas y un temporizador para ir pasando los valores de interés a la GUI. Esta idea, se ha obtenido analizando los componentes base de \textit{RTXI}, en concreto el \textit{RT Benchmarks} (localizado en el directorio `plugins/performance\_measurement/` de \textit{RTXI}).
+
+
+\section{Comprobación del ciclo\label{SEC:COMPROBARCICLO}}
+
+
+En las últimas actualizaciones de \textit{RTXI}, se incluye una nueva funcionalidad, que se realiza de forma inevitable cada vez que se hace una conexión, la función `find\_cycle`. Esta función busca si hay un ciclo en las conexiones que se realizan en \textit{RTXI} entre plugins, y en caso de que lo haya, se evita que se llegue a crear (Código \ref{COD:CHECKCYCLE}).
+
+Esto supone un problema para usar las herramientas empleadas hasta ahora, y para crear cualquier circuito de ciclo cerrado con esta herramienta. Por ello se han aportado dos soluciones, una es una versión con dicha directiva eliminada, y la otra es la modificación de la estructura de las conexiones de los "bloques" (así es como se refiere a los registros I/O \textit{RTXI}), creando una variable booleana llamada `check\_cycle` que indica que se debe revisar si la conexión ocasiona un ciclo. Por otro lado, se ha añadido un botón al componente `Connector`, llamado `Check Cycle`, este representa el valor para comprobar la conexión, de manera que si este está desactivado, no se buscarán ciclos (Repositorio \ref{SEC:RTXIPREEMPTREPO}).
+
+No obstante, la modificación con el botón no está recomendada en la versión actual, dado que la función que se usa para buscar un ciclo es recursiva, por lo que si se desactiva la variable, se crea un ciclo y luego se intenta crear otro con dicha variable activa, se entra en una recursión infinita y el programa termina con `Segmentation fault`. Esto no pasa en la versión en la que la comprobación ha sido desactivada, dado que no se busca en ninguna conexión si se ha creado un ciclo. Sin embargo, hay otro problema mayor ligado a los ciclos cerrados en \textit{RTXI}, y es que es importante realizar las conexiones de cualquier otro componente base de la aplicación antes de realizar la conexión en ciclo entre los plugins, es decir, si se desea visualizar una frecuencia con el \textit{Oscilloscope}, recoger datos con el \textit{Data Recorder} o mostrar datos con el \textit{RT Benchmarks}, se deben de instanciar estos primero, pues si durante el ciclo cerrado se interactúa con dichos componentes, los plugins conectados al ciclo quedarán inutilizables, obligando al usuario a o bien eliminarlos y cargarlos de nuevo, o bien a liberar las conexiones relacionadas en el ciclo cerrado y las realizadas en el \textit{Oscilloscope} y el \textit{Data Recorder}, en el caso de \textit{RT Benchmarks} basta con cerrarlo.
+
+Estos problemas nacen de la manera en la que \textit{RTXI} concibe las conexiones con los plugins, pues durante su ejecución, realiza una búsqueda topológica basándose en las conexiones, y esto se hace usando  \textit{Directed Acyclic Graphs} (\textit{DAGs}), especificado por el propio mantenedor principal del proyecto en Github \cite{IvanFValerio2024}. Como solución a esto, se puede, o bien usar otro ordenador para instanciar ahí la neurona modelo, o bien usar los propios canales de la DAQ para transmitir la información entre los dos plugins cuya conexión generaría el ciclo, dado que este ciclo cerrado solo se genera si no hay un dispositivo entre ambos plugins (Sección \ref{SS:HRHRELECTRO}).
+
+\CPPCode[COD:CHECKCYCLE]{Comprueba si hay un ciclo.}{En esta figura se muestra parte del código de la función `connect`, de \textit{RTXI}.}{rtxi/src/rt.cpp}{65}{68}{1}
+
+
+
+\section{Modelo de Hindmarsh-Rose\label{SEC:HINDMARSHROSE}}
+
+
+Para la validación de este sistema, se ha hecho uso de un modelo matemático que simula el comportamiento de una neurona, este es el modelo de Hindmarsh-Rose, que es capaz de generar ráfagas de potenciales o \textit{spikes} tanto de duración regular como irregular.  El modelo consiste del siguiente conjunto de ecuaciones diferenciales no lineales acopladas, como se puede ver a continuación.
+
+\begin{equation} {Sistema de ecuaciones diferenciales del modelo neuronal de Hindmarsh-Rose.}
+    \begin{aligned}
+        \frac{dx(t)}{dt}               & = y(t) + 3x^2(t) - x^3(t) - z(t) + e \\
+        \frac{dy(t)}{dt}               & = 1 - 5x^2(t) - y(t)                 \\
+        \frac{1}{\mu} \frac{dz(t)}{dt} & = - z(t) + S[x(t) + 1.6]
+    \end{aligned}
+\end{equation}
+
+
+La variable $x$ representa el potencial de membrana de la neurona, las variables $y$ y $z$ representan la acción combinada de canales iónicos, siendo $y$ de acción rápida y $z$ de acción lenta. En la primera ecuación $e$ es un estímulo externo a la neurona, $\mu$ es la constante de tiempo de la dinámica lenta y $S$ es un parámetro que controla la influencia de la variable rápida $x$ en la lenta $z$ \cite{Hindmarsh1984}. El valor de $e$, hace que el modelo siga un patrón regular (Figura \ref{FIG:HRREG}) o que entre en modo caótico (Figura \ref{FIG:HRCHAO})
+
+
+\begin{figure}[Ejecución de Hindmarsh-Rose Regular]{FIG:HRREG}{Ejecución del modelo de Hindmarsh-Rose con una $e <= 3$ con el programa \textit{Pico Neuron} (Sección \ref{SEC:PICONEURON}).}
+    \image{0.9\textwidth}{}{hindmarsh-rose}
+\end{figure}
+
+
+\begin{figure}[Ejecución de Hindmarsh-Rose Caótico]{FIG:HRCHAO}{Ejecución del modelo de Hindmarsh-Rose con una $e > 3$ con el programa \textit{Pico Neuron} (Sección \ref{SEC:PICONEURON}).}
+    \image{0.9\textwidth}{}{hindmarsh-rose-chaotic}
+\end{figure}
+
+\section{Sinapsis eléctrica\label{SEC:SINAPSISELECTRICA}}
+
+
+Para establecer intercambio de información entre una neurona y otra descritas por un modelo neuronal, o en los circuitos biohíbridos, entre neurona y modelo, en este trabajo se usa la sinapsis eléctrica implementada como una corriente proporcional a la diferencia de voltaje entre las dos neuronas conectadas\cite{Reyes-Sanchez2020}. Dicha sinapsis puede ser unidireccional en caso de que solo una neurona aplique corriente (Figura \ref{FIG:SYNUNI}) y bidireccional en el caso de que ambas lo hagan (Figura \ref{FIG:SYNBI}). Además, dependiendo del signo de la corriente,  la actividad de las neuronas podrá estar en fase, si las ráfagas de las neuronas se sincronizan para que ocurran a la vez, o en antifase, si estas ráfagas inhiben la actividad de la otra neurona para que sucedan en instantes distintos generando una secuencia alternante.
+
+\begin{figure}[Esquema de sinapsis unidireccional]{FIG:SYNUNI}{Sinapsis en la que solo una neurona aplica corriente frente a otra, la neurona presináptica es la que envía la corriente y la postsináptica es la que la recibe.}
+    \image{0.2\textwidth}{}{unidirectional-syn}
+\end{figure}
+
+\begin{figure}[Esquema de sinapsis bidireccional]{FIG:SYNBI}{Sinapsis en la que ambas neuronas aplican corrientes entre sí, por lo que ambas son presinápticas y postsinápticas.}
+    \image{0.2\textwidth}{}{bidirectional-syn}
+\end{figure}
+
+\section{Pico Neuron\label{SEC:PICONEURON}}
+
+
+Para experimentar respecto al uso de hardware de tiempo real y la ejecución del modelo de Hindmarsh-Rose, se ha creado un programa llamado \textit{Pico Neuron} (Repositorio \ref{SEC:PICONEURONREPO}). Dicho programa crea un archivo binario que puede ser introducido en una Raspberry Pi Pico W o en una Raspberry Pi Pico 2 (dependiendo del parámetro que se le pase al compilar). Dicho programa ejecuta un modelo neuronal y proporcional el voltaje generado por el mismo utilizando 6 pines (3 para una salida y 3 para otra). El único problema es que esta salida está limitada por la tasa de baudios, pero es una herramienta que merece la pena explorar para el diseño de circuitos biohíbridos debido a su bajo coste y su amplia flexibilidad.
+
+Dada la naturaleza de la Raspberry Pi Pico, todos los parámetros de configuración van dentro de un archivo, definiendo las variables en tiempo de compilación. La elección de archivo se realiza pasando un parámetro al compilar. Además, en el mismo apéndice que contiene el repositorio de \textit{Pico Neuron}, se encuentra \textit{Pico Neuron Serial} (Repositorio \ref{SEC:PICONEURONREPO}), un programa que lee un puerto con un hilo en tiempo real para obtener los datos generados por el modelo de la Raspberry Pi Pico (Figuras \ref{FIG:HRREG}, \ref{FIG:HRCHAO}).
+
+\section{Circuito biológico\label{SEC:CIRCBIO}}
+
+
+Para poder diseñar e implementar un circuito biohíbrido, se ha de tener en cuenta el tipo de neurona con la que se va a interactuar y su circuito natural. Uno de los circuitos más estudiados y usados en la comunidad de neurociencia es el ganglio estomatogástrico (\textit{STG}) de los crustáceos, en concreto su circuito pilórico (pues es un \textit{CPG} o generador central de patrones) (Figura \ref{FIG:CPGPILORIC}) en el que sus neuronas generan secuencias rítmicas robustas, incluso cuando se encuentra aislado del resto del sistema nervioso \cite{Selverston2000, Szcs2000}. En el CPG pilórico se conocen todas las neuronas y todas las conexiones. Esto facilita la interacción con elementos artificiales en circuitos biohíbridos, ya que la actividad de las neuronas vivas puede registrarse con precisión y utilizarse para establecer acoplamientos eléctricos o químicos mediante herramientas de simulación en tiempo real. Es importante recalcar que, además de la calibración temporal de los modelos, hay que realizar una calibración en amplitud de sus señales, y que esta puede ser específica para cada preparación \cite{Reyes-Sanchez2020, ReyesSnchez2023}.
+
+Por tanto, un \textit{CPG} es un circuito que genera de forma autónoma ritmos consistentes de activaciones secuenciales de neuronas. Dichas activaciones secuenciales están generadas por la inhibición mutua de neuronas \cite{Selverston2000, ReyesSnchez2023}.
+
+Es posible aislar el \textit{STG} de un cangrejo y mantenerlo vivo, registrando la actividad eléctrica de sus neuronas e inyectando corriente de acuerdo a un modelo de sinapsis con microelectrodos \cite{Reyes-Sanchez2020}. Mediante programas como \textit{RTXI} y protocolos como \textit{dynamic clamp}, se pueden incorporar neuronas artificiales al circuito vivo interactuando  en bucle cerrado con estas neuronas biológicas \cite{Amaducci2022, Reyes-Sanchez2020} (Figura \ref{FIG:SETUP}).
+
+Como ha sido mencionado previamente, las interacciones entre el modelo y la neurona se pueden construir mediante modelos de sinapsis eléctricas o sinapsis químicas que simulan la corriente que se produce en este tipo de conexiones. A pesar de que se han implementado ambos plugins (Sección \ref{SEC:PLUGINS}), por simplicidad se ha usado solo la sinapsis eléctrica en los circuitos biohíbridos de este trabajo (Sección \ref{SEC:EJEMPLOSCIRCUITOSBIOHIBRIDOS}).
+
+\begin{figure}[CPG pilorico]{FIG:CPGPILORIC}{En la figura se muestra el circuito pilórico de un cangrejo bajo el microscopio. Las células circulares son neuronas, a los lados se pueden observar dos electrodos, uno de registro y otro de estimulación, convergentes en una neurona.}
+    \image{0.7\textwidth}{}{cpg-piloric}
+\end{figure}
+
+\begin{figure}[Setup de electrodos intra y extracelulares]{FIG:SETUP}{Setup del circuito pilórico \textit{STG} con los electrodos que permiten implementar un circuito biohíbrido registrando voltaje e introduciendo corriente en las neuronas.}
+    \image{0.7\textwidth}{}{setup}
+\end{figure}
+
+

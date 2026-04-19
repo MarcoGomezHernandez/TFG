@@ -1,0 +1,209 @@
+
+En los siguientes apartados se exponen los resultados para validar el uso de \textit{RTXI} con \textit{Preempt-RT} en el contexto de la implementación de circuitos biohíbridos. Para ello se dividen dichos resultados en dos secciones. La primera muestra distintas pruebas de rendimiento realizadas tanto con \textit{RTXI} como con la suite de Linux \textit{rt-tests} (concretamente con \textit{cyclictest}), así como una posible mejora respecto a los picos de latencia. La segunda expone dos circuitos implementados con \textit{RTXI}, que contienen un componente que puede ser sustituido por una neurona biológica.
+
+\section{Pruebas de rendimiento y latencia\label{SEC:PRUEVASRENDIMIENTOLATENCIA}}
+
+
+Para asegurar que el sistema es determinista y es un \textit{RTOS} con el kernel de \textit{Preempt-RT}, se han realizado una serie de pruebas con diversas herramientas. En caso de tener que seleccionar una latencia máxima para alguna prueba, se ha elegido $100$ $\mu s$, puesto que en los circuitos biohíbridos se suele trabajar a $10$ $kHz$ \cite{Amaducci2019}.
+
+Todos los datos y gráficas, junto con los scripts que los generan (o en el caso de los datos, el procedimiento que hay que realizar para generarlos) se encuentran en su carpeta correspondiente bajo el directorio `performance-tests` en el repositorio de datos (Repositorio \ref{SEC:DATOSREPO}). En esta memoria solo se reportan las pruebas más relevantes.
+
+El ordenador con el que se han hecho las pruebas cuenta con un procesador \textit{AMD Ryzen 5 5600X} con $16$ $GB$ de RAM.
+
+\subsection{RT-Benchmarks\label{SS:RTBENCHMARKS}}
+
+\textit{RT-Benchmarks} es una herramienta proporcionada por \textit{RTXI} que sirve para realizar algunas mediciones del sistema operativo. Dichas mediciones, se pueden escribir en un archivo \textit{HDF5} mediante el componente \textit{Data Recorder}, el cual, para realizar sus medidas, obtiene el tiempo en nanosegundos (Código \ref{COD:GETTIME}). Esto lo hace justo antes del inicio de un periodo e inmediatamente después del mismo (Código \ref{COD:GETTICKS}), estos valores los referencia como punteros para que puedan ser usados por el medidor (Código \ref{COD:PROVTICKSPTRS}). Se entiende como periodo el momento en el que se ejecutan los eventos en \textit{RTXI}.
+
+Para la realización de las pruebas, se han probado 5 prioridades para el hilo \textit{realtime} del módulo implementado para \textit{Preempt-RT}, $80$, $85$, $90$, $95$ y $99$, siendo la $80$ la más baja y la $90$ la más alta. Esto ha servido para determinar cual es la prioridad más óptima para los hilos de tiempo real implementados en el programa. Para cada prioridad, se han realizado dos ejecuciones de cinco minutos, una estado de reposo y otra mientras se ejecutaba también el comando `stress` con cuatro \textit{workers} ejecutando `sqrt()`, veinte ejecutando `malloc()`/ `free()` y reservando $128$ $MB$ por \textit{worker}.
+
+Las distintas mediciones que se han registrado vienen explicadas a continuación junto con sus resultados, su significado está descrito en el código del propio módulo \textit{RT Benchmarks} (Código \ref{COD:MODULEMEASURE}). Cabe destacar que no se han puesto todas las gráficas relacionadas con todas las prioridades, sino que se han seleccionado algunas de las más relevantes, el resto se encuentran en el repositorio de datos (Repositorio \ref{SEC:DATOSREPO}).
+
+\CPPCode[COD:GETTIME]{Obtención del tiempo en \textit{Preempt-RT}.}{En esta figura se muestra el código de la función `getTime`, del módulo desarrollado para \textit{RTXI}.}{rtxi-preempt-rt/src/rtos_preempt_rt.cpp}{127}{133}{1}
+
+\CPPCode[COD:GETTICKS]{Obtención del tiempo previo y posterior al periodo.}{En esta figura se muestra el código de la función `getPeriodTicksCMD`, de \textit{RTXI}.}{rtxi/src/rt.cpp}{424}{441}{1}
+
+\CPPCode[COD:PROVTICKSPTRS]{Exposición de los punteros de tiempo.}{En esta figura se muestra el código de la función `provideTimetickPointers`, de \textit{RTXI}.}{rtxi/src/rt.cpp}{777}{799}{1}
+
+\CPPCode[COD:MODULEMEASURE]{Cálculo de las distintas métricas.}{En esta figura se muestra parte del código de la función `execute` de `PerformanceMeasurement`, clase que implementa el módulo \textit{RT Benchmarks} de \textit{RTXI}.}{rtxi/plugins/performance_measurement/performance_measurement.cpp}{122}{136}{1}
+
+
+\subsubsection{Duration\label{SSS:DURATION}}
+
+
+Es la diferencia entre el tiempo final y el tiempo de inicio, es decir, el tiempo transcurrido entre el instante justo antes del actual periodo y justo después del mismo.
+
+Como se puede observar en la prueba sin estrés, la duración es siempre de menos de $30$ $\mu s$ (Figura \ref{FIG:DURNOESS}).  No obstante, durante la ejecución del programa \textit{stress}, la duración llega a los $100$ $\mu s$ y, en algunos casos, sobrepasa dicho límite (Figura \ref{FIG:DURESS}). Aunque puedan parecer muchos en la gráfica junto con todas las prioridades, es algo puramente visual, dado que el número de fallos (periodos que no cumplirían la restricción temporal) que sobre pasan $120$ $\mu s$ en prioridades mayores a $80$, es menor de $20$ (Figura \ref{FIG:DUREX120}).
+
+La mejor prioridad según su media y su desviación típica es la $90$ (Figura \ref{FIG:DISTDUR90}).
+
+\begin{figure}[Duration sin estrés]{FIG:DURNOESS}{Valores de de tiempo medio de ejecución sin \textit{stress} de distintas prioridades, siendo todos estos menores de $30$ $\mu s$.}
+    \image{0.7\textwidth}{}{duration-no-stress}
+\end{figure}
+
+\begin{figure}[Duration con estrés]{FIG:DURESS}{Valores de de tiempo medio de ejecución con \textit{stress} de distintas prioridades, a pesar de que algunas exceden la franja de tiempo deseable, no son muchas (y están bajo una situación de estrés computacional que no se va a dar en una ejecución normal).}
+    \image{0.7\textwidth}{}{duration-stress}
+\end{figure}
+
+\begin{figure}[Número de duration mayor que 120]{FIG:DUREX120}{Valores de \textit{duration} de más de $120$ $\mu s$.}
+    \image{0.7\textwidth}{}{duration-exceeds-120}
+\end{figure}
+
+\begin{figure}[Distribución de duration con prioridad 90]{FIG:DISTDUR90}{Distribución de \textit{duration} con prioridad $90$.}
+    \image{0.7\textwidth}{}{duration-distribution-priority-90}
+\end{figure}
+
+
+
+\subsubsection{Time Step\label{SSS:TIMESTEP}}
+
+
+El \textit{time step} es la diferencia entre el tiempo de inicio actual y el anterior, esto es, el intervalo entre los dos instantes justo antes de iniciar el periodo. En las gráficas de distribution se aprecia que los valores rondan los $100$ $\mu s$, pues tienen una desviación típica de $1.05$ $\mu s$ en el caso de la prioridad $80$ y $90$ (Figura \ref{FIG:DISTTSTEP90}).
+
+\begin{figure}[Distribución de time step con prioridad 90]{FIG:DISTTSTEP90}{Distribución de \textit{time step} con prioridad $90$.}
+    \image{0.7\textwidth}{}{time_step-distribution-priority-90}
+\end{figure}
+
+
+\subsubsection{Latency\label{SSS:LATENCY}}
+
+
+Latency es la diferencia entre el \textit{time step} y el periodo, por lo que describe el desfase entre ejecuciones. Aquí se pueden comparar los resultados que muestra la página oficial de \textit{RTXI} con los obtenidos. Esta vez, la que mejores resultados ha obtenido es la prioridad $80$ (Figura \ref{FIG:DISTLAT80}). En este caso, es normal que dé resultados peores, pues el stress test que se ha realizado es bastante más agresivo, usando los parámetros que se usa en su script se obtienen resultados que sí respetan la restricción de los $100$ $\mu s$ (Figura \ref{FIG:DISTLAT90RTXI}), además de tener una media de $0.15$ $\mu s$.
+
+Cabe destacar que es de esperar que bajo esta prueba se obtengan algunos valores mucho más altos que los que muestra \textit{RTXI} en su página, pues en este caso no se está corriendo un simple comando sino la aplicación entera con \textit{realtime threads}. A pesar de eso, la media y la desviación típica son menores que en las pruebas que ellos muestran.
+
+\begin{figure}[Distribución de latency con prioridad 80]{FIG:DISTLAT80}{Distribución de \textit{latency} con prioridad $80$.}
+    \image{0.7\textwidth}{}{latency-distribution-priority-80}
+\end{figure}
+
+\begin{figure}[Distribución de latency con prioridad 90]{FIG:DISTLAT90RTXI}{Distribución de \textit{latency} con prioridad $90$ usando los parámetros de stress del script de \textit{RTXI}.}
+    \image{0.7\textwidth}{}{latency-distribution-rtxi-test}
+\end{figure}
+
+
+
+\subsubsection{Jitter\label{SSS:JITTER}}
+
+
+Es la desviación estándar de la latencia, por lo que representa cuantos $\mu s$ se desvía el sistema de la media. Esto es de utilidad para ver como evoluciona según la prioridad el programa. En este caso, la prioridad $80$ es la que peor comportamiento tiene respecto a esta métrica (Figura \ref{FIG:JITESS}).
+
+\begin{figure}[Jitter con estrés]{FIG:JITESS}{Valores de \textit{jitter} con \textit{stress}.}
+    \image{0.7\textwidth}{}{jitter-stress}
+\end{figure}
+
+
+
+
+\subsection{RT-Tests - Cyclictest\label{SS:CYCLICTEST}}
+
+La \textit{Linux Foundation} proporciona una serie de tests que prueban las características \textit{realtime} de Linux, esta suite de tests se llama \href{https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git}{\textit{rt-tests}}.
+De estos, se han escogido \textit{cyclictest} para complementar el resto de pruebas, pues la latencia es el factor más importante a tener en cuenta a la hora de realizar una conexión biohíbrida, dado que si no se respetan bien las restricciones temporales, se corre el riesgo de no poder realizar las mediciones y llevar a cabo las interacciones de forma correcta.
+
+\textit{Cyclictest} es un programa que mide la diferencia entre el tiempo que tiene como objetivo despertarse un hilo y el tiempo en el que realmente se despierta, esto es, mide el tiempo real que el hilo pasa dormido, pues al contrario que en \textit{RTXI} (Código \ref{COD:NANOSLEEPPREEMPT}), aunque se pierda una \textit{deadline}, continúa la ejecución para medir de manera rigurosa cuándo se habría despertado. Esto se debe a que se hace uso de la flag `TIMER\_ABSTIME` (Código \ref{COD:NANOSLEEPCYCLIC}). De ahí la diferencia de los resultados con los de \textit{RT-Benchmarks} (Sección \ref{SS:RTBENCHMARKS}).
+
+Se han realizado dos ejecuciones, una en una sola CPU y otra en todas las disponibles. Cada ejecución dura $10$ minutos, se le ha dado prioridad $90$ e intervalos de $100$ $\mu s$. Durante cada ejecución se ha ejecutado paralelamente el comando \textit{stress} con los parámetros del script de \textit{RTXI}. Todo esto está recogido en el script del repositorio de datos (Repositorio \ref{SEC:DATOSREPO}) bajo el directorio `performance-tests/cyclictest/scripts`.
+
+Como se puede apreciar, los resultados de ambos tests son similares, siendo un poco mejores los de un solo core (Figura \ref{FIG:CYCLICTEST1CPU}), con una latencia media de $2.27$ $\mu s$ y una desviación típica de $0.51$ $\mu s$. En el test con todos los cores (cinco en este caso), se obtienen resultados un poco más elevados (Figura \ref{FIG:CYCLICTEST5CPUS}). Esto posiblemente se deba a que, al estar todos los cores ocupados, se tienen que repartir la carga del \textit{stress test}.
+
+\begin{figure}[Ejecución de cylictest con 5 cores]{FIG:CYCLICTEST5CPUS}{Test de latencia \textit{cyclictest} con 5 cores.}
+    \image{0.7\textwidth}{}{cyclictest-max-cores}
+\end{figure}
+
+\begin{figure}[Ejecución de cylictest con un core]{FIG:CYCLICTEST1CPU}{Test de latencia \textit{cyclictest} con un core.}
+    \image{0.7\textwidth}{}{cyclictest-one-core}
+\end{figure}
+
+\CPPCode[COD:NANOSLEEPCYCLIC]{Función clock\_nanosleep de \textit{cyclictest}.}{En esta figura se muestra el código de la función `clock\_nanosleep`, de \textit{cyclictest}.}{cyclictest/src/cyclictest.c}{150}{164}{1}
+
+\CPPCode[COD:NANOSLEEPPREEMPT]{Función clock\_nanosleep de \textit{RTXI Preempt-RT}.}{En esta figura se muestra el código de la función `clock\_nanosleep`, del módulo desarrollado para \textit{RTXI}.}{rtxi-preempt-rt/src/rtos_preempt_rt.cpp}{127}{133}{1}
+
+
+
+\subsection{Aislamiento de CPU\label{SS:AISLAMIENTOCPU}}
+
+
+El aislamiento de CPU es una técnica que consiste en dedicar los recursos de un solo core para una tarea concreta \cite{Amaducci2022}. Como se ha visto en los resultados, la media y la desviación típica son bastante aceptables; no obstante, el caso peor de algunas de las ejecuciones, llega hasta $40$ $\mu s$. Para abordar esto, se ha decidido aislar uno de los cores del resto de tareas. Para ello, se han seguido los pasos que se proporcionan en el tutorial de aislamiento de CPU en el repositorio de tutoriales (Repositorio \ref{SEC:UTILESYREPORTSREPO}, \textit{CPU isolation} en la lista de \textit{Contents} en el apartado de \textit{Tutorials and Reports}).
+
+Tras aislar el procesador y usarlo para ejecutar los procesos (\textit{RTXI} o \textit{cyclictest}), los resultados mejoran notablemente con respecto al caso peor, aunque la media sube ligeramente (Figura \ref{FIG:CYCLICTESTISOCPU}).
+
+\begin{figure}[Ejecución de cylictest con un core aislado]{FIG:CYCLICTESTISOCPU}{Test de latencia \textit{cyclictest} con un core aislado.}
+    \image{0.7\textwidth}{}{cyclictest-isolated-core}
+\end{figure}
+
+
+\subsection{Resultados y conclusiones\label{SS:RESULTADOS}}
+
+
+La latencia media dentro de \textit{RTXI} es bastante buena, al rondar los $15$ $\mu s$ (Figura \ref{FIG:CYCLICTESTRTXI}), no obstante, el caso peor, aunque sea solo uno, posee una latencia demasiado grande, por lo que es recomendable o deseable aislar el procesador para evitar dichos casos en la medida de lo posible (Figura \ref{FIG:CYCLICTESTRTXIISO}).
+
+\begin{figure}[Prueba de latencia RTXI]{FIG:CYCLICTESTRTXI}{Prueba de latencia \textit{RTXI}.}
+    \image{0.7\textwidth}{}{latency-distribution-rtxi-test}
+\end{figure}
+
+\begin{figure}[Prueba de latencia RTXI con un core aislado]{FIG:CYCLICTESTRTXIISO}{Prueba de latencia \textit{RTXI} con un core aislado.}
+    \image{0.7\textwidth}{}{latency-distribution-rtxi-test-isolated}
+\end{figure}
+
+
+\section{Validación con neuronas electrónicas y mediante circuitos biohíbridos\label{SEC:EJEMPLOSCIRCUITOSBIOHIBRIDOS}}
+
+
+A continuación se mostrarán algunos de los circuitos con biohíbridos que se pueden construir para demostrar el correcto funcionamiento de la implementación de \textit{RTXI Preempt-RT}. Por motivos de simplicidad y de calendario en el laboratorio del GNB, dichos circuitos no son realmente biohíbridos (el segundo podría ser considerado como tal, aunque offline y unidireccional). Sin embargo, sí poseen características de restricciones temporales equivalentes a las de dichos experimentos. La traslación a experimentos con neuronas reales en ciclo-cerrado de los protocolos desarrollados son inmediatas. Todos los datos y scripts que generan las gráficas se encuentran en el repositorio de datos (Repositorio \ref{SEC:DATOSREPO}), concretamente bajo el directorio `neuron-circuits/rtxi`. En el `README.md` vienen diagramas y los parámetros usados para cada circuito.
+
+
+\subsection{Sinapsis bidireccional entre el modelo de Hindmarsh-Rose y la neurona electrónica\label{SS:HRHRELECTRO}}
+
+
+Este circuito se implementa conectando la neurona electrónica del laboratorio del \textit{GNB} \cite{Szcs2000} a la \textit{DAQ Board} (Figura \ref{FIG:MODELELECTROSYN}) y luego conectando de forma bidireccional, con sinapsis eléctrica, el modelo de Hindmarsh-Rose \cite{Hindmarsh1984, Golowasch1999} mediante la \textit{DAQ Board} y viceversa. Si la corriente de la sinapsis es negativa (este es un parámetro ajustable en el plugin), la actividad de las neuronas estará en antifase, esto significa que será en forma de secuencia bifásica alternante, es decir, cada neurona se activa después de que termina la inhibición de la otra (Figura \ref{FIG:HRELECTBISYNANTI}). Por otro lado, si la corriente es positiva, la actividad estará en fase y ambas neuronas se sincronizarán (Figura \ref{FIG:HRELECTBISYNFASE}), ya que por la sinapsis eléctrica fluye corriente para igualar los potenciales de las neuronas. Este comportamiento entre modelo y neurona electrónica, sugiere que se podrían obtener unos resultados análogos con una neurona viva \cite{Pinto2000}, dado que las figuras mencionadas validan la eficacia de la implementación en tiempo real para dichas interacciones. La comunicación entre los plugins que implementan el ciclo-cerrado de la conexión se detalla en la Figura \ref{FIG:PLUGHREHR}.
+
+\begin{figure}[Esquema de la conexión entre el modelo y la neurona electrónica]{FIG:MODELELECTROSYN}{Conexíon entre el modelo de Hindmarsh-Rose en ejecución en el ordenador y el de la neurona electrónica.}
+    \image{0.3\textwidth}{}{model-electronic}
+\end{figure}\textbf{}
+
+\begin{figure}[Conexión bidireccional modelo-electrónica en antifase]{FIG:HRELECTBISYNANTI}{Conexión en antifase del modelo Hindmarsh-Rose (\textit{model\_neuron}) y de la neurona electrónica (\textit{living\_neuron}).}
+    \image{0.9\textwidth}{}{v_hr-e_hr-syn_antiphase}
+\end{figure}
+
+\begin{figure}[Conexión bidireccional modelo-electrónica en fase]{FIG:HRELECTBISYNFASE}{Conexión en fase del modelo Hindmarsh-Rose (\textit{model\_neuron}) y de la neurona electrónica (\textit{living\_neuron}).}
+    \image{0.9\textwidth}{}{v_hr-e_hr-syn_phase}
+\end{figure}
+
+\begin{figure}[Esquema de conexión de plugins para crear el circuito entre el modelo y la neurona electrónica]{FIG:PLUGHREHR}{Conexiones de plugins realizada para establecer la connectividad entre el modelo de Hindmarsh-Rose en ejecución en el ordenador y el de la neurona electrónica.}
+    \image{0.5\textwidth}{}{hr-ehr}
+\end{figure}\textbf{}
+
+Este circuito se ha probado también enviando la señal del modelo neuronal a través de la \textit{DAQ Board}, debido a la problemática de \textit{RTXI} con la conexión de los plugins en ciclo que se ha comentado con anterioridad. Para ello, se ha realizado un puente entre una de las salidas de la tarjeta y se ha conectado a una de las entradas. Los parámetros usados en esta ejecución han sido distintos, pero igualmente se consigue tanto la interacción en fase (Figura \ref{FIG:HRELECTBISYNANTIFORD}) como en antifase (Figura \ref{FIG:HRELECTBISYNFASEFORD}). Las conexiones de los plugins se detallan en la Figura \ref{FIG:PLUGHREHRDAQ}.
+
+\begin{figure}[Sinapsis bidireccional modelo-electrónica en antifase con forwarding]{FIG:HRELECTBISYNANTIFORD}{Sinapsis en antifase del modelo Hindmarsh-Rose (\textit{model\_neuron}) y de la neurona electrónica (\textit{living\_neuron}) pasando la conexión por la \textit{DAQ Board}.}
+    \image{0.9\textwidth}{}{v_hr-e_hr-daq_forwarding-syn_antiphase}
+\end{figure}
+
+\begin{figure}[Sinapsis bidireccional modelo-electrónica en fase con forwarding]{FIG:HRELECTBISYNFASEFORD}{Sinapsis en fase del modelo Hindmarsh-Rose (\textit{model\_neuron}) y de la neurona electrónica (\textit{living\_neuron}) pasando la conexión por la \textit{DAQ Board}.}
+    \image{0.9\textwidth}{}{v_hr-e_hr-daq_forwarding-syn_phase}
+\end{figure}
+
+\begin{figure}[Esquema de conexión de plugins para la sinapsis entre el modelo y la neurona electrónica con DAQ forwarding]{FIG:PLUGHREHRDAQ}{Conexiones de plugins realizada para crear el circuito entre el modelo de Hindmarsh-Rose en ejecución en el ordenador y el de la neurona electrónica pasando la salida del modelo por la \textit{DAQ Board} para evitar el ciclo.}
+    \image{0.5\textwidth}{}{hr-ehr-daq}
+\end{figure}\textbf{}
+
+
+\subsection{Sinapsis unidireccional entre el modelo de Hindmarsh-Rose y la grabación de neurona real\label{SS:HRREC}}
+
+
+El siguiente circuito monodireccional se ha realizado a partir de una grabación de la actividad de una neurona LP del circuito pilórico (Figura \ref{FIG:RECMODELSYN}) cuyos datos han sido aportados por el \textit{GNB}. Obviamente, esta sinapsis solo puede implementarse en un solo sentido. Al igual que antes, se ha construido la interacción con actividad tanto en antifase (Figura \ref{FIG:HRGRABMONSYNANTI}) como en fase (Figura \ref{FIG:HRGRABMONSYNFASE}). Los resultados demuestran que sí se puede establecer dicha sinapsis con un modelo y una neurona real (pues la grabación podría ser sustituida por dicha célula). La alimentación de los datos ocurre con la misma frecuencia ($10$ $kHz$) que la producida por una neurona viva. Las interacciones entre los plugins que implementan el ciclo-cerrado de la conexión se detallan en la Figura \ref{FIG:PLUGHRREC}.
+
+\begin{figure}[Esquema de conexión entre el la grabación LP y el model]{FIG:RECMODELSYN}{Conexión unidireccional entre la grabación de una neurona LP y el modelo de Hindmarsh-Rose.}
+    \image{0.25\textwidth}{}{recording-model}
+\end{figure}\textbf{}
+
+\begin{figure}[Conexión monodirecional grabación-modelo en antifase]{FIG:HRGRABMONSYNANTI}{Conexión en antifase de una grabación de una neurona LP (\textit{living\_neuron}) y el modelo de Hindmarsh-Rose (\textit{model\_neuron}). Al estar registrado a $10$ $kHz$, se realizan $10.000$ iteraciones por segundo.}
+    \image{0.9\textwidth}{}{v_hr-r_lp-syn_antiphase}
+\end{figure}
+
+
+\begin{figure}[Conexión monodireccional grabación-modelo en fase]{FIG:HRGRABMONSYNFASE}{Conexión en fase de una grabación de una neurona LP (\textit{living\_neuron}) y el modelo de Hindmarsh-Rose (\textit{model\_neuron}).}
+    \image{0.7\textwidth}{}{v_hr-r_lp-syn_phase}
+\end{figure}
+
+\begin{figure}[Esquema de conexión de plugins para la sinapsis entre el modelo y la grabación de la neurona]{FIG:PLUGHRREC}{Conexiones de plugins realizada para crear el circuito entre el modelo de Hindmarsh-Rose en ejecución en el ordenador y la grabación de la neurona.}
+    \image{0.6\textwidth}{}{hr-rec}
+\end{figure}\textbf{}
