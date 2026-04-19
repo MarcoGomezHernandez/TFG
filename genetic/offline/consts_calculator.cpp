@@ -91,7 +91,7 @@ static inline MinMaxResult calculate_min_max(
         neuron.step(dt);
 
     // Inicializa min/max con valores extremos opuestos (sentinelas):
-    // min = +∞ para que cualquier valor real sea menor, max = -∞ análogamente
+    // min = +inf para que cualquier valor real sea menor, max = -inf analogamente
     double min = GeneralConstants::DOUBLE_MAX;
     double max = GeneralConstants::DOUBLE_MIN;
     const size_t obs_steps = static_cast<size_t>(observation_time / dt);
@@ -182,7 +182,7 @@ static inline PtsResult calculate_pts(
 
             double val = get_v_neur(neuron);
 
-            // Cruce ascendente del umbral superior → inicio de un nuevo burst
+            // Cruce ascendente del umbral superior -> inicio de un nuevo burst
             if (!up && val > th_up)
             {
 
@@ -191,7 +191,7 @@ static inline PtsResult calculate_pts(
 
                 // Acumula los pasos del burst que acaba de terminar.
                 // Cuando bursts_seen pasa de -1 a 0, total_steps += 0 (descarta el parcial).
-                // A partir de bursts_seen ≥ 1, total_steps acumula bursts completos.
+                // A partir de bursts_seen >= 1, total_steps acumula bursts completos.
                 total_steps += steps_in_current_burst;
                 // Reinicia el contador para el siguiente burst
                 steps_in_current_burst = 0;
@@ -208,7 +208,7 @@ static inline PtsResult calculate_pts(
 
         if (bursts_seen <= 0)
         {
-            // No se detectaron bursts completos con este dt → marca como inválido
+            // No se detectaron bursts completos con este dt -> marca como inválido
             pts[i] = GeneralConstants::DOUBLE_MAX;
             invalid_dts.push_back(dts[i]);
         }

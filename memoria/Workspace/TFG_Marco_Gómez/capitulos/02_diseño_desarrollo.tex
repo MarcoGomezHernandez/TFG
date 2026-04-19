@@ -1,0 +1,301 @@
+
+La parametrización automatizada de modelos de sinapsis químicas para circuitos neuronales biohíbridos impone desafíos que transcienden la mera traducción de ecuaciones diferenciales a código computacional. Requiere una orquestación precisa entre la teoría de sistemas dinámicos no lineales, el procesamiento digital de señales (DSP), algoritmos de optimización probabilística y la ingeniería de software de tiempo real estricto \cite{Reyes-Sanchez2020, Buttazzo2024}.
+
+El desarrollo se articula en torno a dos infraestructuras complementarias: una arquitectura de simulación en diferido (\textit{offline}), diseñada para la validación algorítmica sobre señales biológicas pre-registradas; y un módulo de experimentación en vivo (\textit{online}), integrado en el framework RTXI 2.3, preparado para gobernar un protocolo bidireccional de \textit{Dynamic Clamp} bajo las exigencias de un sistema operativo Linux parcheado con \textit{Preempt-RT} \cite{Amaducci2019}.
+
+Las divergencias fundamentales entre ambas arquitecturas se resumen a continuación. En las siguientes secciones se desglosa la selección de los modelos neuronales y sinápticos, el diseño de la función objetivo manejada mediante Optimización Bayesiana, la gestión de hilos y memoria sin bloqueos (\textit{lock-free}), y el protocolo experimental \textit{in vivo}.
+
+\begin{itemize}
+    \item \textbf{Integrador neuronal:} RK4 iterativo en offline; RK4 delegado a RTXI en online. Equilibrio coste--precisión en ventanas de milisegundos.
+    \item \textbf{Integrador de $m_{slow}$:} Interpolación lineal con sub-stepping en offline; RK 6(5) (Dormand-Prince) sin sub-stepping en online (véase la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA}).
+    \item \textbf{Concurrencia:} Secuencial unihilo en offline; double-buffering atómico RT/NRT en online para evitar inversión de prioridad \cite{Buttazzo2024}.
+    \item \textbf{DSP (KFR):} Escalado por interpolación en offline; filtro Butterworth paso bajo de cuarto orden en online para aislar la envolvente lenta utilizada en la correlación de Pearson \cite{KFRLib2023}.
+\end{itemize}
+
+
+\section{Modelos Computacionales\label{SEC:MODELOS_COMPUTACIONALES}}
+
+La viabilidad de un circuito biohíbrido radica en la selección de modelos matemáticos que satisfagan dos premisas contrapuestas: poseer la riqueza fenomenológica necesaria para mimetizar la dinámica celular y, simultáneamente, exhibir un coste computacional reducido para ser integrados numéricamente en ventanas temporales del orden de microsegundos \cite{Fortuna2023, Hodgkin1990}.
+
+\subsection{Neurona de Hindmarsh-Rose (HR) Modificada\label{SUBSEC:HINDMARSH_ROSE}}
+
+El modelo clásico de Hodgkin-Huxley, aunque biofísicamente detallado, adolece de una alta dimensionalidad que penaliza su desempeño en entornos de tiempo real. Por consiguiente, se ha seleccionado el modelo de Hindmarsh-Rose (HR) \cite{Hindmarsh1984}, un modelo fenomenológico de tres dimensiones capaz de replicar regímenes de disparo simple (\textit{spiking}), ráfagas periódicas (\textit{bursting}) y caos determinista \cite{Rulkov2002}.
+
+El sistema dinámico continuo empleado se define por el siguiente conjunto de ecuaciones diferenciales ordinarias acopladas no lineales:
+
+\begin{equation}[EQ:HR_SYSTEM]{Sistema de ecuaciones del modelo de Hindmarsh-Rose modificado.}
+    \boxed{
+        \begin{aligned}
+            \frac{dx(t)}{dt}               & = y(t) + 3x^2(t) - x^3(t) - z(t) + e \\[4pt]
+            \frac{dy(t)}{dt}               & = 1 - 5x^2(t) - y(t)                 \\[4pt]
+            \frac{1}{\mu} \frac{dz(t)}{dt} & = -v_h \cdot z(t) + S[x(t) - x_r]
+        \end{aligned}
+    }
+\end{equation}
+
+Donde $x(t)$ modela un análogo adimensional del potencial de membrana. La variable $y(t)$ representa una corriente de recuperación rápida asociada al flujo iónico transmembrana, responsable de la repolarización tras un potencial de acción. La variable $z(t)$ actúa como corriente de adaptación lenta, comparable a las dinámicas de iones de calcio, modulando la transición entre el estado de reposo y los ciclos activos de ráfagas. La corriente externa inyectada viene dada por el parámetro de bifurcación $e$.
+
+Una modificación introducida en este trabajo reside en la EDO de la dinámica lenta $z(t)$. Se ha incluido el hiperparámetro $v_h$ ajustado a $v_h = 0{,}1$, frente al valor convencional de $1{,}0$. Esta reducción en la tasa de decaimiento ralentiza la transición del ciclo de histéresis de la neurona artificial. La justificación es biológica: las neuronas del sistema estomatogástrico (STG) presentan períodos de oscilación del orden de $0{,}5$ a $2{,}0$~Hz \cite{Golowasch1999}. Al hacer $v_h=0{,}1$, el atractor de ráfagas se dilata temporalmente, facilitando un emparejamiento de frecuencias entre el sustrato artificial y la célula biológica sin alterar las bases de tiempo mediante escalares agresivos.
+
+La configuración de parámetros fijada en el código C++ (Código~\ref{COD:HRPARAMS}) se resume en la Tabla~\ref{TB:HR_PARAMS}.
+
+\begin{table}[Parámetros del modelo HR modificado]{TB:HR_PARAMS}{Espacio de parámetros constantes para el modelo modificado de Hindmarsh-Rose y su relevancia computacional.}
+    \begin{tabular}{lcl}
+        \hline
+        \textbf{Símbolo} & \textbf{Valor}  & \textbf{Relevancia}                                    \\
+        \hline \hline
+        $e$              & $3{,}281$       & Estímulo externo: régimen de \textit{bursting} rítmico \\
+        $\mu$            & $0{,}0021$      & Separación de escalas rápida/lenta                     \\
+        $S$              & $1{,}0$         & Acoplamiento: saturación del canal $z$                 \\
+        $a, b$           & $1{,}0;\ 3{,}0$ & Polinomio cúbico en $\dot{x}$                          \\
+        $c, d$           & $1{,}0;\ 5{,}0$ & Polinomio cuadrático en $\dot{y}$                      \\
+        $x_r$            & $-1{,}6$        & Potencial de referencia (reposo)                       \\
+        $v_h$            & $0{,}1$         & Modificador de retardo (corriente lenta)               \\
+        \hline
+    \end{tabular}
+\end{table}
+
+La versión \textit{offline} resuelve las ecuaciones utilizando un integrador explícito de Runge-Kutta de 4º orden (RK4), implementado mediante el patrón de diseño \textit{Curiously Recurring Template Pattern} (CRTP) en C++ para maximizar el rendimiento al evitar llamadas a funciones virtuales. El sistema se parametriza genéricamente mediante \textit{Templates} y \textit{Concepts} de C++20, permitiendo sustituir modelos neuronales sin modificar la lógica del evaluador.
+
+
+\subsection{Sinapsis Química Graduada Bidireccional\label{SUBSEC:SINAPSIS_QUIMICA}}
+
+En las redes neuronales del ganglio estomatogástrico, el mecanismo de acoplamiento predominante es la transmisión sináptica química graduada inhibitoria \cite{Golowasch1999}. En este régimen, la liberación del neurotransmisor ocurre de forma continua y proporcional a la despolarización presináptica. El modelo de sinapsis implementado se escinde en dos componentes paralelas \cite{Reyes-Sanchez2020}:
+
+\begin{equation}[EQ:ISYN]{Corriente sináptica total como suma de componentes rápida y lenta.}
+    \boxed{I_{syn} = I_{fast} + I_{slow}}
+\end{equation}
+
+La componente rápida responde instantáneamente al potencial presináptico mediante una función sigmoidea:
+
+\begin{equation}[EQ:IFAST]{Componente rápida de la corriente sináptica graduada.}
+    \boxed{I_{fast} = g_{fast} \cdot \frac{V_{post} - E_{syn}}{1 + \exp\left( s_{fast} \cdot (V_{fast} - V_{pre}) \right)}}
+\end{equation}
+
+Donde $g_{fast}$ es la conductancia máxima, $E_{syn}$ el potencial de reversión, $V_{fast}$ el voltaje de semi-activación y $s_{fast}$ la pendiente de la sigmoide.
+
+La componente lenta está gobernada por la variable de estado $m_{slow}$:
+
+\begin{equation}[EQ:ISLOW]{Componente lenta de la corriente sináptica.}
+    \boxed{I_{slow} = g_{slow} \cdot m_{slow}(t) \cdot (V_{post} - E_{syn})}
+\end{equation}
+
+\begin{equation}[EQ:DMSLOW]{Ecuación diferencial de la variable de compuerta lenta $m_{slow}$.}
+    \boxed{\frac{dm_{slow}(t)}{dt} = \frac{k_1 \cdot (1 - m_{slow}(t))}{1 + \exp\left( s_{slow} \cdot (V_{slow} - V_{pre}) \right)} - k_2 \cdot m_{slow}(t)}
+\end{equation}
+
+Los parámetros $k_1$ y $k_2$ representan las tasas cinéticas de activación y desactivación de los canales sinápticos lentos.
+
+En la simulación \textit{offline}, la integración de $m_{slow}$ se realiza con RK4 y técnicas de sobremuestreo temporal (\textit{sub-stepping}), necesarias porque la señal presináptica proviene de un CSV con granulación muestral gruesa ($5$--$10$~kHz, $dt \approx 0{,}1$~ms) que debe interpolarse a la resolución del integrador del modelo HR ($dt \approx 0{,}001$~ms). Sin embargo, en el módulo RTXI (\textit{online}), el \textit{sub-stepping} resulta innecesario por la naturaleza matemática de las ecuaciones sinápticas. La derivada de $m_{slow}$ (Ecuación~\ref{EQ:DMSLOW}) depende del voltaje presináptico $V_{pre}$ exclusivamente a través de funciones sigmoideas $\sigma(V_{pre})$, que son suaves y acotadas en $[0, 1]$: variaciones intra-período de $V_{pre}$ producen cambios despreciables en $dm_{slow}/dt$. Dado que RTXI proporciona $V_{pre}$ muestra a muestra a la frecuencia del \textit{hardware timer}, no es necesario reconstruir la trayectoria intra-muestra del voltaje mediante interpolación. Para compensar la ausencia de sub-pasos, se emplea un integrador explícito de Runge-Kutta de orden 6(5) --- Dormand-Prince --- (Código~\ref{COD:RK65}), que efectúa seis evaluaciones funcionales estáticas por cada periodo del \textit{hardware timer}, proporcionando precisión de orden superior con un coste computacional fijo y determinista \cite{Buttazzo2024}.
+
+
+\section{Optimización Bayesiana y Función de Evaluación\label{SEC:OPTIMIZACION_BO}}
+
+La sintonización del conjunto de hiperparámetros sinápticos $\{g_{fast}, s_{fast}, V_{fast}, g_{slow}, s_{slow}, V_{slow}, k_1, k_2, E_{syn}\}$ debe alinearse con el espacio fásico singular de la neurona biológica conectada en cada instante. El ajuste empírico por fuerza bruta resulta insostenible: la inyección prolongada de parámetros subóptimos puede inducir degradación celular. El diseño delega la búsqueda paramétrica a un marco de Optimización Bayesiana (BO), instrumentado mediante la librería C++ \textit{Limbo} \cite{Cully2018}.
+
+La BO es idónea para funciones objetivo de tipo \textit{black-box} sin derivada analítica, con topologías no convexas y evaluación costosa. Limbo aproxima la función de coste mediante Procesos Gaussianos (GP), calculando media predictiva y varianza asociada, y emplea la función de adquisición \textit{Expected Improvement} (EI) para decidir la siguiente combinación paramétrica a evaluar. La configuración de Limbo se detalla en los Códigos~\ref{COD:LIMBOCFGOFF} y~\ref{COD:LIMBOCFGON} para las versiones \textit{offline} y \textit{online} respectivamente.
+
+
+\subsection{Arquitectura de la Función de Evaluación\label{SUBSEC:FITNESS_FUNCTION}}
+
+La función de evaluación devuelve una métrica escalar ponderada $F_{total}$:
+
+\begin{equation}[EQ:FTOTAL]{Función de fitness total como media ponderada de las puntuaciones de rango y forma.}
+    \boxed{F_{total} = w_R \cdot Score_{Rango} + w_S \cdot Score_{Forma}}
+\end{equation}
+
+Los pesos $w_R$ y $w_S$ están fijados simétricamente en $0{,}5$.
+
+
+\subsubsection{Procesamiento de Señal (DSP) con KFR\label{SSUBSEC:DSP_KFR}}
+
+La señal de voltaje biológica presenta oscilaciones subumbrales de baja frecuencia y perturbaciones de alta frecuencia relativas a los potenciales de acción. La arquitectura implementa una descomposición espectral utilizando \textit{KFR} \cite{KFRLib2023}, una librería C++ de DSP que aprovecha instrucciones SIMD. El preprocesamiento ejecuta un filtro de Butterworth paso bajo de cuarto orden, seleccionado por su respuesta maximamente plana en la banda de paso. La frecuencia de corte típica es $f_c \approx 0{,}3$~kHz.
+
+\begin{itemize}
+    \item \textbf{Señal de Referencia Lenta ($\tilde{V}_{pre}^{slow}$):} Salida directa del filtrado de Butterworth sobre $V_{pre}$. Se usa como patrón para correlacionar con $I_{slow}$.
+    \item \textbf{Señal de Referencia Rápida ($\tilde{V}_{pre}^{fast}$):} Residuo de alta frecuencia ($V_{pre} - \tilde{V}_{pre}^{slow}$), que aísla las ráfagas y sirve como patrón para $I_{fast}$.
+\end{itemize}
+
+
+\subsubsection{Cálculo de Métricas y Patrones Dinámicos\label{SSUBSEC:METRICAS}}
+
+La sincronización en el circuito CPG busca inducir un fenómeno de \textbf{fase} o \textbf{antifase}. El \textit{Score de Forma} emplea el Coeficiente de Correlación de Pearson:
+
+\begin{itemize}
+    \item \textbf{Antifase:} La correlación de Pearson se aplica directamente entre las corrientes sintetizadas y las señales preprocesadas correspondientes.
+    \item \textbf{Fase:} Se busca anticorrelación (correlación de Pearson negativa).
+\end{itemize}
+
+El \textit{Score de Rango} computa el error absoluto medio entre las cotas reales alcanzadas por la corriente ($\min(I_{syn}), \max(I_{syn})$) y un recinto de seguridad acotado por el usuario, con un factor de relajación configurado en el código.
+
+
+\subsection{Definición de Rangos de Exploración\label{SUBSEC:PRIORS}}
+
+El hiperespacio de 9 parámetros sinápticos requiere restricciones basadas en conocimiento \textit{a priori}. La matriz de límites (\texttt{BOParamRanges}, Código~\ref{COD:BOPARAMRANGES}) define cotas calculadas a partir de la estadística descriptiva de los potenciales $V_{pre}$ e $I_{esperado}$:
+
+\begin{itemize}
+    \item \textbf{Umbrales de Activación ($V_{fast}, V_{slow}$):} El umbral rápido se confina al segmento de despolarización activa; su base inferior se define como $V_{pre,min} + \Delta V_{pre} \cdot 0{,}25$, garantizando que la sigmoide rápida solo responda a potenciales de acción. El umbral lento cubre todo el rango de $V_{pre}$, ya que la cinética lenta puede activarse a cualquier nivel de despolarización. En la versión \textit{online}, se añade un margen adicional de $\pm 12{,}5\%$ del rango de $V_{pre}$ en ambos umbrales para compensar la variabilidad intrínseca de la señal biológica real.
+    \item \textbf{Sensibilidades ($s_{fast}, s_{slow}$):} Se escalan de forma inversamente proporcional al rango de voltaje ($1 / \Delta V_{pre}$), normalizando la pendiente de las sigmoides al rango dinámico observado.
+    \item \textbf{Conductancias ($g_{fast}, g_{slow}$):} La búsqueda se realiza en espacio logarítmico para explorar órdenes de magnitud equitativamente. Los límites se derivan invirtiendo las ecuaciones de corriente en el peor caso de \textit{driving force} $(V_{post} - E_{syn})$ y activación sigmoidea máxima.
+\end{itemize}
+
+
+\section{Implementación Offline: Evaluación en Simulador\label{SEC:IMPLEMENTACION_OFFLINE}}
+
+La implementación \textit{offline} consiste en una aplicación C++ independiente, desprovista del contenedor RTXI, construida sobre librerías estándares. Su objetivo es ejecutar campañas de validación del diseño de la BO frente a datos pre-grabados (formato CSV) \cite{Reyes-Sanchez2020}.
+
+La arquitectura se basa en un sistema modular mediante \textit{Templates} del estándar C++20. El evaluador de sinapsis y los integradores aceptan sus rutinas de derivación mediante parámetros de plantilla fuertemente tipados, permitiendo incrustar modelos neuronales alternativos simplemente satisfaciendo los \textit{Concepts} del evaluador.
+
+
+\subsection{Procesamiento de Señal: Escalado de Dominio\label{SUBSEC:SCALING}}
+
+Los registros biológicos (en milivoltios) deben transducirse al espacio adimensional del modelo HR para que la neurona artificial pueda procesarlos. Este escalado comprende dos transformaciones complementarias, descritas en detalle por Reyes-Sánchez \textit{et al.} \cite{Reyes-Sanchez2020}.
+
+\subsubsection{Escalado Vertical (de Amplitud)\label{SSUBSEC:ESCALADO_VERTICAL}}
+
+La transformación afín mapea el rango dinámico de la señal biológica $[V_{min}^{real}, V_{max}^{real}]$ al rango del atractor del modelo HR $[V_{min}^{HR}, V_{max}^{HR}]$ (típicamente $x_{min} \approx -1{,}6$, $x_{max} \approx 1{,}8$):
+
+\begin{equation}[EQ:ESCALADO]{Transformación afín para escalar la señal biológica al espacio del modelo.}
+    \boxed{v_{virtual} = v_{real} \cdot \alpha + \beta, \quad \text{donde } \alpha = \frac{\Delta V^{HR}}{\Delta V^{real}}, \quad \beta = V_{min}^{HR} - V_{min}^{real} \cdot \alpha}
+\end{equation}
+
+El factor $\alpha$ preserva la proporción entre rangos dinámicos, mientras que el offset $\beta$ alinea los mínimos. Los extremos $V_{min}^{real}$ y $V_{max}^{real}$ se obtienen de una ventana de observación inicial de la señal del CSV. Para mitigar el \textit{drift} estacionario (desplazamiento lento de la línea base biológica), los factores de escalado se recalculan cada dos ciclos completos de \textit{burst}, empleando los extremos locales de cada ventana con un margen del $\pm 10\%$ que evita que artefactos puntuales distorsionen la transformación \cite{Reyes-Sanchez2020}.
+
+\subsubsection{Escalado Temporal (de Frecuencia)\label{SSUBSEC:ESCALADO_TEMPORAL}}
+
+El modelo HR, simulado con un paso de integración $dt$, produce ráfagas cuyo período (en número de pasos) depende de $dt$. El objetivo es seleccionar un $dt$ tal que el período de \textit{burst} del modelo sea un múltiplo entero del período de \textit{burst} de la señal biológica (medido en número de muestras del CSV). El período de la señal biológica se mide mediante detección de cruces ascendentes con histéresis, empleando umbrales al $10\%$ y $90\%$ del rango dinámico de la señal para evitar detecciones espurias por ruido \cite{Reyes-Sanchez2020}. El factor de sub-pasos resultante $N_{factor}$ determina cuántos pasos del integrador se ejecutan por cada muestra del CSV:
+
+\begin{equation}[EQ:NFACTOR]{Factor de sub-pasos para alineación temporal.}
+    \boxed{N_{factor} = \left\lfloor \frac{\text{pts\_burst\_modelo}(dt)}{\text{pts\_burst\_señal}} \right\rfloor}
+\end{equation}
+
+
+\subsection{Sobremuestreo Temporal e Interpolación Lineal\label{SUBSEC:SUBSTEPPING}}
+
+Los datos biológicos presentan una granulación muestral de $5$ a $10$~kHz ($dt \approx 0{,}1$~ms), mientras que el integrador RK4 del modelo HR requiere $dt \approx 0{,}001$~ms. La versión \textit{offline} implementa un algoritmo de \textit{sub-stepping} que genera $N_{factor} - 1$ puntos intermedios entre cada par de muestras consecutivas mediante interpolación lineal:
+
+\begin{equation}[EQ:INTERP]{Interpolación lineal entre muestras consecutivas para sub-stepping.}
+    \boxed{V_{interp}(k) = V(t) + \frac{k}{N_{factor}} \cdot [V(t+1) - V(t)], \quad \forall k \in \{1, ..., N_{factor}-1\}}
+\end{equation}
+
+
+\subsection{Justificación del Diseño de la Configuración de Limbo\label{SUBSEC:LIMBO_JUSTIFICACION}}
+
+La configuración del pipeline de Optimización Bayesiana en Limbo \cite{Cully2018} se compone de varios módulos interdependientes cuya parametrización requiere una justificación rigurosa. A continuación se detallan las decisiones de diseño para cada componente.
+
+\subsubsection{Modelo Sustituto: Proceso Gaussiano (GP)\label{SSUBSEC:GP_CONFIG}}
+
+El modelo sustituto elegido es un Proceso Gaussiano con kernel \textit{Squared Exponential} con \textit{Automatic Relevance Determination} (SE-ARD). Esta elección se fundamenta en:
+
+\begin{itemize}
+    \item \textbf{SE-ARD frente a SE isotrópico:} El kernel SE-ARD asigna una escala de longitud independiente ($\ell_i$) a cada dimensión del espacio paramétrico. Dado que los 9 parámetros sinápticos operan en escalas muy dispares (conductancias en nanosiemens frente a pendientes en $\text{V}^{-1}$), un kernel isotrópico subestimaría la sensibilidad en las dimensiones de menor rango, deteriorando la capacidad predictiva del GP.
+    \item \textbf{Varianza de señal ($\sigma^2 = 1{,}0$):} Se fija la varianza de señal inicial del kernel en $1{,}0$ como prior no informativo. El optimizador de hiperparámetros (Rprop) la ajusta durante la ejecución.
+    \item \textbf{Media constante ($\mu_0 = 0{,}5$):} La función media del GP se fija en $0{,}5$, correspondiente al punto medio del rango de fitness $[0, 1]$. Esto evita un sesgo inicial hacia valores altos o bajos, permitiendo que las primeras observaciones del LHS definan la topología del surrogate sin interferencia del prior.
+\end{itemize}
+
+\subsubsection{Ruido Observacional: Offline vs Online\label{SSUBSEC:NOISE_CONFIG}}
+
+La configuración del ruido del kernel presenta la divergencia más crítica entre ambas arquitecturas:
+
+\begin{itemize}
+    \item \textbf{Offline (\texttt{noise} $= 10^{-6}$, \texttt{optimize\_noise} = false):} La señal de entrada proviene de un CSV pre-grabado: cada evaluación con los mismos parámetros produce idéntico resultado. El sistema es determinista, por lo que el ruido observacional se fija en un valor prácticamente nulo ($10^{-6}$, suficiente para evitar singularidades numéricas en la factorización de Cholesky) y se deshabilita su optimización. Permitir que el GP infiera ruido en un sistema determinista induciría sobresuavizado del surrogate, perdiendo resolución en los picos del landscape de fitness.
+    \item \textbf{Online (\texttt{noise} $= 0{,}05$, \texttt{optimize\_noise} = true):} La señal biológica \textit{in vivo} es intrínsecamente estocástica: ruido térmico del amplificador, variabilidad intrínseca de los canales iónicos, y fluctuaciones del potencial sináptico. Dos evaluaciones con parámetros idénticos producirán fitness distintos. Se establece un prior de ruido elevado ($0{,}05$) y se habilita su optimización, permitiendo que el GP adapte la componente de ruido a la variabilidad real observada durante la campaña. Esto evita que el GP sobreajuste a observaciones ruidosas, manteniendo una estimación de incertidumbre calibrada.
+\end{itemize}
+
+\subsubsection{Función de Adquisición: Expected Improvement (EI)\label{SSUBSEC:EI_CONFIG}}
+
+Se seleccionó \textit{Expected Improvement} (EI) frente a alternativas como GP-UCB por su comportamiento superior en espacios de alta dimensionalidad con evaluaciones costosas. El hiperparámetro clave es el \textit{jitter} ($\xi$), que controla el equilibrio exploración/explotación:
+
+\begin{itemize}
+    \item \textbf{Offline ($\xi = 0{,}003$):} Valor moderado que favorece la exploración del espacio paramétrico. En el modo offline no existe restricción temporal: se dispone de tiempo ilimitado para evaluar candidatos, por lo que se prioriza descubrir regiones prometedoras del landscape antes de explotarlas. Un jitter demasiado bajo convergiría prematuramente a un óptimo local.
+    \item \textbf{Online ($\xi = 0{,}001$):} Valor reducido que intensifica la explotación. La viabilidad del tejido biológico impone una ventana temporal limitada ($\sim$30--60 minutos antes de la degradación celular). Cada evaluación requiere segundos de adquisición en tiempo real. Por tanto, se prioriza refinar rápidamente los mejores candidatos encontrados, asumiendo que el muestreo inicial (LHS) ya ha proporcionado suficiente cobertura del espacio.
+\end{itemize}
+
+\subsubsection{Optimizadores Internos\label{SSUBSEC:OPTIMIZERS_CONFIG}}
+
+Limbo emplea dos optimizadores internos cuya configuración escala con la dimensionalidad:
+
+\begin{itemize}
+    \item \textbf{Rprop (hiperparámetros del GP):} Algoritmo de gradiente con paso adaptativo. Las iteraciones se fijan como $50 \times d$, donde $d$ es la dimensión del espacio. La tolerancia de parada se establece en $10^{-6}$ para garantizar convergencia precisa de las escalas de longitud ARD. La re-optimización de hiperparámetros se ejecuta cada $\max(1, N_{iter}/25)$ iteraciones de la BO, equilibrando coste computacional y fidelidad del modelo.
+    \item \textbf{NLOpt Subplex (maximización de EI):} Optimizador sin gradiente para encontrar el máximo de la función de adquisición sobre el hipercubo $[0,1]^d$. Las iteraciones se fijan como $150 \times d^2$, escalando cuadráticamente con la dimensión para garantizar cobertura suficiente del espacio de búsqueda de la adquisición. Se deshabilitan las tolerancias de función y posición relativa ($-1$) para forzar que el optimizador agote todas las iteraciones asignadas, evitando terminación prematura en landscapes multimodales.
+\end{itemize}
+
+\subsubsection{Inicialización: Latin Hypercube Sampling (LHS)\label{SSUBSEC:LHS_CONFIG}}
+
+El muestreo inicial emplea \textit{Latin Hypercube Sampling}, que garantiza cobertura uniforme de cada dimensión marginal. El número de muestras iniciales es configurable por el usuario (típicamente 40 offline, ajustable online según la ventana temporal disponible). El LHS opera sobre el hipercubo normalizado $[0,1]^d$; la decodificación a parámetros reales se realiza mediante la transformación lineal (o log-lineal para conductancias) definida en \texttt{BOParamRanges}.
+
+A continuación se resume la parametrización del pipeline de BO, donde $d$ denota la dimensión del espacio de búsqueda (número de parámetros sinápticos activos) y $N$ el número total de iteraciones configuradas por el usuario. La configuración completa puede consultarse en los Códigos~\ref{COD:LIMBOCFGOFF} y~\ref{COD:LIMBOCFGON}.
+
+\paragraph{Componentes compartidos (offline y online):}
+\begin{itemize}
+    \item \textbf{Kernel:} SE-ARD con varianza de señal $\sigma^2 = 1{,}0$ (prior no informativo) y media constante $\mu_0 = 0{,}5$ (punto medio del rango de fitness).
+    \item \textbf{Función de adquisición:} Expected Improvement (EI).
+    \item \textbf{Optimizador Rprop} (hiperparámetros del GP): $50 \times d$ iteraciones, tolerancia $10^{-6}$, re-optimización cada $\max(1, N/25)$ iteraciones.
+    \item \textbf{Optimizador NLOpt Subplex} (maximización de EI): $150 \times d^2$ iteraciones sin tolerancias de parada.
+    \item \textbf{Inicialización LHS:} configurable por el usuario (típicamente 40 muestras offline).
+\end{itemize}
+
+\paragraph{Divergencias offline $\to$ online:}
+\begin{itemize}
+    \item \textbf{Ruido del kernel (\textit{noise}):} $10^{-6}$ fijo en offline (sistema determinista) $\to$ $0{,}05$ optimizable en online (señal biológica estocástica). Véase la Sección~\ref{SSUBSEC:NOISE_CONFIG}.
+    \item \textbf{\textit{Jitter} de EI ($\xi$):} $0{,}003$ en offline (exploración amplia, sin restricción temporal) $\to$ $0{,}001$ en online (explotación intensiva por degradación celular). Véase la Sección~\ref{SSUBSEC:EI_CONFIG}.
+    \item \textbf{Criterio de parada:} \texttt{MaxIterations} en offline $\to$ \texttt{MaxIterations} + \texttt{StopFunctor} en online, permitiendo cancelación interactiva desde la GUI de RTXI.
+\end{itemize}
+
+
+\section{Implementación Online: Integración Biohíbrida (RTXI 2.3)\label{SEC:IMPLEMENTACION_ONLINE}}
+
+El despliegue \textit{in vivo} requirió la refactorización hacia un diseño de C++ con hilos asíncronos concurrentes y colas \textit{lock-free}. La implementación es gobernada por RTXI bajo \textit{Preempt-RT} \cite{Amaducci2019, Buttazzo2024}.
+
+La complejidad radica en combinar la Optimización Bayesiana---con un gran coste en álgebra matricial---con un hilo maestro que dispone de microsegundos para ejecutar la rutina antes del vencimiento del \textit{tick} de control ($\sim 10$--$20$~kHz).
+
+
+\subsection{Sincronización Dual de Hilos RT vs NRT\label{SUBSEC:SINCRO_HILOS}}
+
+Se instrumentó una arquitectura de segregación de concurrencia con dos entidades funcionales asíncronas (Código~\ref{COD:EXECUTE} y Código~\ref{COD:NRTBO}):
+
+\begin{itemize}
+    \item \textbf{Hilo de Tiempo Real (RT):} La función \texttt{execute()} de RTXI, gestionada bajo máxima prioridad (\textit{Sched\_FIFO}). Lee la placa DAQ, evalúa las ecuaciones de la red sináptica con RK6(5), inyecta corriente al hardware y transcribe los vectores a buffers circulares para la validación posterior.
+    \item \textbf{Hilo de Tiempo No Real (NRT):} Subproceso POSIX (\texttt{BO\_NRT\_thread}) bajo las prioridades del planificador CFS. Opera el control asíncrono de Limbo, resolviendo las aproximaciones del GP, computando penalizaciones con KFR, y determinando el próximo salto hiperparamétrico.
+\end{itemize}
+
+
+\subsection{Double-Buffering Atómico (Lock-Free)\label{SUBSEC:DOUBLE_BUFFERING}}
+
+Un control basado en \textit{Mutex} causaría inversión de prioridades \cite{Buttazzo2024}. El trasvase entre \texttt{execute()} y el NRT se diseñó mediante \textbf{Double-Buffering Atómico sin Bloqueo} (Código~\ref{COD:DOUBLEBUF}).
+
+El diseño emplea arreglos dobles de parámetros (\texttt{params\_12} y \texttt{params\_21}) indexados por \texttt{std::atomic<size\_t> synapse\_idx}:
+
+\begin{enumerate}
+    \item El hilo RT emplea la dirección apuntada por la lectura del índice atómico con \texttt{memory\_order\_acquire}.
+    \item El NRT escribe la nueva configuración en el índice opuesto (\texttt{1 - curr\_synapse\_idx}).
+    \item Tras finalizar, el NRT ejecuta \texttt{synapse\_idx.store(new\_idx, std::memory\_order\_release)}.
+    \item El RT detecta el cambio en el siguiente periodo: la permuta ocurre en un solo \textit{tick} sin bloqueos ni condiciones de carrera.
+\end{enumerate}
+
+Para los buffers de datos, la lógica emplea \texttt{std::atomic<bool> RT\_storing} como banderín de sincronización entre ambos hilos.
+
+
+\subsection{Configuración Bayesiana para Señales In Vivo\label{SUBSEC:BO_ONLINE_CONFIG}}
+
+La naturaleza ruidosa de las señales biológicas requiere ajustes en la configuración de Limbo (Código~\ref{COD:LIMBOCFGON}):
+
+\begin{itemize}
+    \item \textbf{Ruido del Kernel (\textit{noise}):} Se instancia en $0{,}05$ con \texttt{optimize\_noise = true}, para que el GP asuma la variabilidad intrínseca de la señal.
+    \item \textbf{Restricción de Búsqueda (\textit{jitter}):} Reducido a $0{,}001$, forzando una política de explotación intensiva del dominio funcional, dado que el tiempo de viabilidad del tejido biológico es limitado.
+\end{itemize}
+
+
+\section{Diseño del Experimento In Vivo\label{SEC:EXPERIMENTO_INVIVO}}
+
+La eficacia del sustrato algorítmico se valida bajo protocolos electrofisiológicos de ciclo cerrado con neuronas del Sistema Nervioso Estomatogástrico (STG) del cangrejo \textit{Carcinus maenas} \cite{Reyes-Sanchez2020, ReyesSnchez2023}.
+
+El STG aloja el circuito pilórico, un generador central de patrones (CPG) que preserva su dinámica endógena rítmica \textit{in vitro} mediante la inhibición recíproca entre las neuronas PD, PY y LP \cite{Golowasch1999}. El experimento establece una conexión biohíbrida mediada por RTXI, implementando \textit{Dynamic Clamp}.
+
+\textbf{Protocolo funcional:}
+\begin{enumerate}
+    \item \textbf{Calibración estacionaria inicial:} El plugin de RTXI opera en ciclo abierto, leyendo los picos de la neurona y trazando la periodicidad natural. La media algorítmica escala el atractor del modelo HR.
+    \item \textbf{Encendido bidireccional de la BO:} Se cierra el bucle biohíbrido. Las salidas del RK6(5) son inyectadas a la célula biológica; Limbo invoca la primera predicción mediante \textit{Latin Hypercube Sampling} (LHS).
+    \item \textbf{Bucle predictivo hasta convergencia:} Tras un tramo de estabilización, el módulo recolecta datos y la NRT activa la correlación de Pearson. El sistema reconfigura iterativamente los parámetros, convergiendo típicamente antes del minuto \cite{ReyesSnchez2023}.
+    \item \textbf{Evaluación final:} Un ensayo exitoso demuestra anclaje rítmico sostenido: el modelo HR y la neurona LP se entrelazan inyectándose repolarizaciones inducidas, instaurando una dinámica de antifase estable \cite{Reyes-Sanchez2020}.
+\end{enumerate}

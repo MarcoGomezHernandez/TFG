@@ -15,7 +15,7 @@ namespace BOPrivateConfig
 
     // Factores para escalar las iteraciones de los optimizadores internos con la dimensión
     static constexpr int RPROP_ITER_FACTOR = 50;  // iters_rprop = 50 * dim
-    static constexpr int NLOPT_ITER_FACTOR = 150; // iters_nlopt = 150 * dim²
+    static constexpr int NLOPT_ITER_FACTOR = 150; // iters_nlopt = 150 * dim^2
 
     // Pesos relativos de la puntuación de rango y forma en el fitness total
     static constexpr double I_SHAPE_WEIGHT = 0.5;
@@ -71,7 +71,7 @@ struct Params
     // Función de adquisición Expected Improvement
     struct acqui_ei : public defaults::acqui_ei
     {
-        // Jitter (ξ) más bajo que offline: menos exploración, más explotación online
+        // Jitter (xi) más bajo que offline: menos exploración, más explotación online
         BO_PARAM(double, jitter, 0.001);
     };
 
@@ -232,7 +232,7 @@ static double decode_param(double x_val, const BOParamRanges::ParamRange &range)
     return range.min + (std::clamp(x_val, 0.0, 1.0) * range.range);
 }
 
-// Decodifica parámetros de una dirección sináptica (1→2 o 2→1).
+// Decodifica parámetros de una dirección sináptica (1->2 o 2->1).
 // Los parámetros en log-space se des-logaritmizan con exp().
 // idx se pasa por referencia para avanzar el puntero en el vector de Limbo.
 static void decode_to_params(const Eigen::VectorXd &x,
@@ -276,7 +276,7 @@ Candidate BidirectionalChemicalSynapseBO::decode_to_candidate(const Eigen::Vecto
 {
     Candidate candidate{};
     size_t idx = 0;
-    // Primero los parámetros de la dirección 1→2, luego 2→1 (orden fijo en el vector)
+    // Primero los parámetros de la dirección 1->2, luego 2->1 (orden fijo en el vector)
     decode_to_params(x, idx, candidate.params_12,
                      use_i_fast_12, use_i_slow_12, ranges_12);
     decode_to_params(x, idx, candidate.params_21,
@@ -387,7 +387,7 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
             i_slow_sig_21.resize(num_elements);
     }
 
-    // Dimensión total = params(1→2) + params(2→1)
+    // Dimensión total = params(1->2) + params(2->1)
     const int dim_in = static_cast<int>(count_params_one_direction(use_i_fast_12, use_i_slow_12) + count_params_one_direction(use_i_fast_21, use_i_slow_21));
     const int iters = static_cast<int>(iterations);
 

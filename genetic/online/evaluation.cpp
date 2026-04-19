@@ -35,7 +35,7 @@ static double rescale_to_target_no_offset(double value,
 
 // Puntuación de forma mediante correlación de Pearson.
 // Centra la señal, calcula r, normaliza a [0,1].
-// Si search_phase: invierte el resultado (busca anti-correlación → fase)
+// Si search_phase: invierte el resultado (busca anti-correlación -> fase)
 template <typename T>
     requires std::same_as<T, univector<double>> || std::same_as<T, univector_ref<double>>
 static double pearson_score(univector<double> &sig,
@@ -46,7 +46,7 @@ static double pearson_score(univector<double> &sig,
 
     sig -= mean(sig); // Centra la señal candidata
     const double sig_factor = std::sqrt(sum(sqr(sig)));
-    // Coeficiente de Pearson r ∈ [-1, 1]
+    // Coeficiente de Pearson r in [-1, 1]
     const double r = sum(sig * ref_sig_centered) / safe_divisor(sig_factor * ref_sig_factor);
     // Normaliza a [0,1]
     const double normalized = (r + 1.0) / 2.0;
@@ -65,7 +65,7 @@ static double range_score(double observed_min, double observed_max,
     return 1.0 - normalized_error;
 }
 
-// Evalúa las señales de una sola dirección sináptica (1→2 o 2→1):
+// Evalúa las señales de una sola dirección sináptica (1->2 o 2->1):
 // 1. Filtra v_pre con Butterworth pasa-bajos (filtfilt con padding reflectivo)
 // 2. Obtiene referencia i_fast (residuo alta frecuencia) e i_slow (componente filtrada)
 // 3. Si se usan ambas, reescala los rangos esperados proporcionalmente
@@ -241,7 +241,7 @@ static ChemicalSynapseEvaluation evaluate_sigs_one_direction(
 }
 
 // ==========================================
-//  evaluate_candidate: sincronización NRT → RT y evaluación bidireccional
+//  evaluate_candidate: sincronización NRT -> RT y evaluación bidireccional
 // ==========================================
 // Este método se llama desde el hilo NRT (dentro de la BO) para cada candidato:
 // 1. Comprueba si se ha solicitado parar

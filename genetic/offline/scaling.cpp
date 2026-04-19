@@ -110,8 +110,8 @@ static inline void read_csv_column(univector<double> &data, const std::string &c
 
 // Calcula el período medio de la señal (en tiempo) contando los cruces ascendentes del umbral th_up.
 // Usa histéresis con dos umbrales para evitar detecciones espurias por ruido:
-//   - th_up (90% del rango): umbral de cruce ascendente → marca inicio de burst
-//   - th_on (10% del rango): umbral de cruce descendente → permite un nuevo cruce ascendente
+//   - th_up (90% del rango): umbral de cruce ascendente -> marca inicio de burst
+//   - th_on (10% del rango): umbral de cruce descendente -> permite un nuevo cruce ascendente
 // Sin histéresis, oscilaciones de ruido cerca del umbral generarían falsos cruces.
 static inline double sig_period(double observation_time, const univector_ref<const double> &sig,
                                 double th_up, double th_on)
@@ -126,13 +126,13 @@ static inline double sig_period(double observation_time, const univector_ref<con
     {
         if (!up && val > th_up)
         {
-            // Cruce ascendente: la señal sube por encima de th_up → nuevo burst detectado
+            // Cruce ascendente: la señal sube por encima de th_up -> nuevo burst detectado
             changes++;
             up = true;
         }
         else if (up && val < th_on)
         {
-            // Cruce descendente: la señal cae por debajo de th_on → sale del burst.
+            // Cruce descendente: la señal cae por debajo de th_on -> sale del burst.
             // Solo entonces se permite detectar otro cruce ascendente (histéresis).
             up = false;
         }
@@ -144,9 +144,9 @@ static inline double sig_period(double observation_time, const univector_ref<con
 }
 
 // Calcula factores de escalado lineal del espacio real al virtual (modelo neuronal).
-// Mapea [real_min, real_max] → [virtual_min, virtual_max] con: v = r * scale + offset
+// Mapea [real_min, real_max] -> [virtual_min, virtual_max] con: v = r * scale + offset
 // Derivación del offset:
-//   virtual_min = real_min * scale + offset  →  offset = virtual_min - real_min * scale
+//   virtual_min = real_min * scale + offset  ->  offset = virtual_min - real_min * scale
 static ScalingFactors calculate_scaling(double virtual_min, double virtual_max,
                                         double real_min, double real_max)
 {
@@ -169,13 +169,13 @@ static ScalingFactors calculate_scaling(double virtual_min, double virtual_max,
 // Contexto: la señal del CSV tiene un cierto período de burst (medido en muestras = pts_real).
 // El modelo neuronal, simulado con un determinado dt, produce bursts de pts[i] pasos.
 // Necesitamos un dt tal que un burst del modelo contenga un número entero (o casi) de
-// bursts de la señal real → así se alinean temporalmente.
+// bursts de la señal real -> así se alinean temporalmente.
 //
 // Algoritmo:
 //   1. Multiplica pts_real por factor creciente (1, 2, 3, ...) hasta alcanzar el rango de pts[]
 //   2. Para cada factor, busca de dt grande (computacionalmente barato) a dt pequeño (caro)
 //      el primer dt cuyo pts[i] > pts_real*factor
-//   3. Comprueba divisibilidad: pts[i] / pts_real ≈ entero (parte fraccional ≤ tolerancia * parte entera)
+//   3. Comprueba divisibilidad: pts[i] / pts_real ~ entero (parte fraccional <= tolerancia * parte entera)
 //   4. Si encuentra uno con buena divisibilidad, lo acepta. Si no, sigue con el siguiente factor.
 //   5. Fallback: si ninguno tuvo buena divisibilidad, toma el último candidato encontrado.
 template <size_t N>
@@ -204,8 +204,8 @@ static inline std::optional<DTSelection> select_dt_neuron_model(const std::array
         aux = pts_real * factor;
         factor += 1.0;
 
-        // Recorre las tablas en orden inverso (dt grande → dt pequeño, es decir,
-        // pts pequeño → pts grande). Busca el primer dt cuyo pts[i] supere aux.
+        // Recorre las tablas en orden inverso (dt grande -> dt pequeño, es decir,
+        // pts pequeño -> pts grande). Busca el primer dt cuyo pts[i] supere aux.
         // Esto prioriza dts grandes (simulación más barata) que aún cubran el burst.
         for (size_t i = N - 1; i >= 0; i--)
         {
@@ -217,8 +217,8 @@ static inline std::optional<DTSelection> select_dt_neuron_model(const std::array
 
                 // Test de divisibilidad: descomponemos pts_burst / pts_real en parte
                 // entera y fraccionaria. Si la parte fraccionaria es pequeña respecto
-                // a la entera, los bursts se alinean bien (ej: 3.02 → intpart=3, fract=0.02).
-                // Criterio: fract ≤ TOLERANCE * intpart (ej: 0.02 ≤ 0.1 * 3 = 0.3 → OK)
+                // a la entera, los bursts se alinean bien (ej: 3.02 -> intpart=3, fract=0.02).
+                // Criterio: fract <= TOLERANCE * intpart (ej: 0.02 <= 0.1 * 3 = 0.3 -> OK)
                 fractpart = std::modf(pts_burst_candidate / pts_real, &intpart);
 
                 if (fractpart <= SigPrivateConfig::DT_SELECTION_TOLERANCE * intpart)
@@ -301,8 +301,8 @@ static inline ScalingFactors fix_drift(double model_abs_min, double model_abs_ma
 
     // Ajusta rel_min hacia arriba (reduce el rango válido de burst por abajo).
     // El signo de window_min determina la dirección del margen:
-    //   - window_min > 0: sumar (ej: 0.5 + 0.5*0.1 = 0.55 → sube)
-    //   - window_min < 0: restar el producto negativo*0.1 (ej: -2 - (-2*0.1) = -2+0.2 = -1.8 → sube)
+    //   - window_min > 0: sumar (ej: 0.5 + 0.5*0.1 = 0.55 -> sube)
+    //   - window_min < 0: restar el producto negativo*0.1 (ej: -2 - (-2*0.1) = -2+0.2 = -1.8 -> sube)
     // En ambos casos, el resultado es un umbral más alto que window_min.
     if (window_min > 0)
     {
@@ -314,8 +314,8 @@ static inline ScalingFactors fix_drift(double model_abs_min, double model_abs_ma
     }
 
     // Ajusta rel_max hacia abajo (reduce el rango válido de burst por arriba).
-    //   - window_max > 0: restar (ej: 2 - 2*0.1 = 1.8 → baja)
-    //   - window_max < 0: sumar el producto negativo*0.1 (ej: -0.5 + (-0.5*0.1) = -0.55 → baja)
+    //   - window_max > 0: restar (ej: 2 - 2*0.1 = 1.8 -> baja)
+    //   - window_max < 0: sumar el producto negativo*0.1 (ej: -0.5 + (-0.5*0.1) = -0.55 -> baja)
     // En ambos casos, el resultado es un umbral más bajo que window_max.
     if (window_max > 0)
     {
@@ -442,7 +442,7 @@ std::optional<ScaledSigResult> scale_sig(
 
     // Factor de sub-pasos: cuántos pasos del modelo se ejecutan por cada muestra del CSV.
     // Ej: si el modelo con este dt necesita 84000 pasos/burst y la señal tiene 42000 muestras/burst,
-    // s_points = 84000/42000 = 2 → por cada muestra del CSV se dan 2 pasos del modelo.
+    // s_points = 84000/42000 = 2 -> por cada muestra del CSV se dan 2 pasos del modelo.
     // Esto permite que el modelo avance a su ritmo natural mientras procesa la señal externa.
     size_t s_points = static_cast<size_t>(selection->pts_burst / external_pts_per_burst);
 
@@ -454,7 +454,7 @@ std::optional<ScaledSigResult> scale_sig(
     double &real_abs_min = stats.real_abs_min;
     double &real_abs_max = stats.real_abs_max;
 
-    // Escalado lineal: mapea [real_min, real_max] → [model_min, model_max]
+    // Escalado lineal: mapea [real_min, real_max] -> [model_min, model_max]
     ScalingFactors factors = calculate_scaling(model_abs_min, model_abs_max, real_abs_min, real_abs_max);
     double scale_real_to_virtual = factors.scale_real_to_virtual;
     double offset_real_to_virtual = factors.offset_real_to_virtual;
@@ -509,7 +509,7 @@ std::optional<ScaledSigResult> scale_sig(
 
             drift_counter++;
 
-            // Aplica el escalado actual (posiblemente actualizado por drift): real → virtual
+            // Aplica el escalado actual (posiblemente actualizado por drift): real -> virtual
             val = val * scale_real_to_virtual + offset_real_to_virtual;
         }
     }
@@ -522,8 +522,8 @@ std::optional<ScaledSigResult> scale_sig(
     // Genera puntos interpolados linealmente entre muestras consecutivas de sig
     // para sub-stepping del modelo sináptico.
     // Ej con s_points=3: entre sig[i] y sig[i+1] se generan 2 puntos intermedios:
-    //   interp_1 = sig[i] + (1/3) * (sig[i+1] - sig[i])  → a 1/3 del camino
-    //   interp_2 = sig[i] + (2/3) * (sig[i+1] - sig[i])  → a 2/3 del camino
+    //   interp_1 = sig[i] + (1/3) * (sig[i+1] - sig[i])  -> a 1/3 del camino
+    //   interp_2 = sig[i] + (2/3) * (sig[i+1] - sig[i])  -> a 2/3 del camino
     // La secuencia total por muestra sería: sig[i], interp_1, interp_2, sig[i+1], ...
     // En evaluate_candidate: se usa sig[i] como primer paso y luego los interpolados.
     const size_t interpolated_size = (sig_size - 1) * (s_points - 1);
@@ -535,7 +535,7 @@ std::optional<ScaledSigResult> scale_sig(
         // j va de 1 a s_points-1 (j=0 sería sig[i], que ya existe; j=s_points sería sig[i+1])
         for (double j = 1.0; j < s_points; j++)
         {
-            // alpha ∈ (0, 1): fracción del intervalo entre sig[i] y sig[i+1]
+            // alpha in (0, 1): fracción del intervalo entre sig[i] y sig[i+1]
             double alpha = j / s_points;
             // Interpolación lineal: sig[i] * (1 - alpha) + sig[i+1] * alpha
             // Reescrita como: sig[i] + alpha * (sig[i+1] - sig[i])

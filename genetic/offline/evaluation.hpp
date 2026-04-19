@@ -36,7 +36,7 @@ struct ChemicalSynapseEvaluation
 // señales de referencia (centradas), factores de Pearson, y rangos esperados de corriente
 struct ConstantEvaluationVals
 {
-    // Señal de referencia i_fast centrada (media 0) y su factor sqrt(sum(x²)) para Pearson
+    // Señal de referencia i_fast centrada (media 0) y su factor sqrt(sum(x^2)) para Pearson
     kfr::univector<double> ref_i_fast_sig_centered;
     double ref_i_fast_sig_factor;
     // Señal de referencia i_slow centrada y su factor

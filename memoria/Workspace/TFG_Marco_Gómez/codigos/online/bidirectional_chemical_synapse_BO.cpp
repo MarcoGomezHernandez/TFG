@@ -249,7 +249,7 @@ void BidirectionalChemicalSynapseBO::execute(void)
   // Confirma al hilo NRT que ya leyó este índice (para que pueda escribir el alterno)
   last_synapse_idx_read_RT.store(curr_synapse_idx, std::memory_order_relaxed);
 
-  // --- Cálculo de corrientes sinápticas dirección 1→2 ---
+  // --- Cálculo de corrientes sinápticas dirección 1->2 ---
   if (use_syn_12)
   {
     const ChemicalSynapseParams &curr_params_12 = params_12[curr_synapse_idx];
@@ -261,7 +261,7 @@ void BidirectionalChemicalSynapseBO::execute(void)
   const double val_i_12 = val_i_fast_12 + val_i_slow_12;
   output(0) = std::clamp(val_i_12, i_min_12, i_max_12);
 
-  // --- Cálculo de corrientes sinápticas dirección 2→1 ---
+  // --- Cálculo de corrientes sinápticas dirección 2->1 ---
   if (use_syn_21)
   {
     const ChemicalSynapseParams &curr_params_21 = params_21[curr_synapse_idx];
@@ -403,7 +403,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   case INIT:
   {
 
-    period = RT::System::getInstance()->getPeriod() * 1e-6; // ns → ms
+    period = RT::System::getInstance()->getPeriod() * 1e-6; // ns -> ms
     dt = period * dt_factor;                                // dt del RK6(5) para m_slow
 
     setState("BO evaluations completed", evaluations_completed);

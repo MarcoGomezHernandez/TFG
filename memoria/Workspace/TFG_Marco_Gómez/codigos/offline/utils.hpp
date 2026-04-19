@@ -140,7 +140,7 @@ HindmarshRoseNeuron<Integrator> create_hindmarsh_rose(bool empty)
     return NeuronType(args);
 }
 
-// Divisor seguro: si |divisor| < epsilon, devuelve ±epsilon para evitar div/0
+// Divisor seguro: si |divisor| < epsilon, devuelve +-epsilon para evitar div/0
 inline double safe_divisor(double divisor)
 {
 

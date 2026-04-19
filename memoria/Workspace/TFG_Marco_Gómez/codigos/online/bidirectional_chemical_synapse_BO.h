@@ -94,7 +94,7 @@ private:
   std::atomic<bool> stop_BO; // Flag de cancelación
   bool BO_running;           // true mientras la BO está activa
 
-  // --- Variables de sincronización RT ↔ NRT ---
+  // --- Variables de sincronización RT <-> NRT ---
   // synapse_idx: índice del buffer activo (0 o 1); escrito por NRT con release,
   //              leído por RT con acquire
   std::atomic<size_t> synapse_idx;

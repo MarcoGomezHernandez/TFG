@@ -12,7 +12,7 @@ namespace BOPublicConfig
     // Factor de reducción de la distancia máxima de rango esperada
     inline constexpr double EXPECTED_I_MARGIN_RANGE_FACTOR = 0.8;
 
-    // Tiempo de espera activa (ms) entre comprobaciones de sincronización NRT ↔ RT
+    // Tiempo de espera activa (ms) entre comprobaciones de sincronización NRT <-> RT
     inline constexpr double ACTIVE_WAIT_MS = 10.0;
 
     // Margen de voltaje añadido a los extremos de v_pre para v_fast y v_slow online
@@ -25,14 +25,14 @@ namespace BOPublicConfig
     // Porcentaje de margen sobre el rango esperado de corriente para ampliar la zona de búsqueda de g
     inline constexpr double EXPECTED_I_MARGIN_FACTOR = 0.5;
 
-    // s_fast ∈ [S_FAST_MIN_FACTOR, S_FAST_MAX_FACTOR] / rango_v_pre
+    // s_fast in [S_FAST_MIN_FACTOR, S_FAST_MAX_FACTOR] / rango_v_pre
     inline constexpr double S_FAST_MIN_FACTOR = 4.12;
     inline constexpr double S_FAST_MAX_FACTOR = 13.72;
-    // s_slow ∈ [S_SLOW_MIN_FACTOR, S_SLOW_MAX_FACTOR] / rango_v_pre
+    // s_slow in [S_SLOW_MIN_FACTOR, S_SLOW_MAX_FACTOR] / rango_v_pre
     inline constexpr double S_SLOW_MIN_FACTOR = 1.72;
     inline constexpr double S_SLOW_MAX_FACTOR = 3.43;
 
-    // k1 ∈ [K1_MIN_FACTOR * fc, K1_MAX_FACTOR * fc]
+    // k1 in [K1_MIN_FACTOR * fc, K1_MAX_FACTOR * fc]
     inline constexpr double K1_MAX_FACTOR = 3.33;
 
     inline constexpr double K1_MIN_FACTOR = 3.33e-6;
@@ -44,7 +44,7 @@ namespace BOPublicConfig
     // g_min = g_max * G_MIN_FACTOR
     inline constexpr double G_MIN_FACTOR = 0.001;
 
-    // R = k2/k1 ∈ [R_MIN, R_MAX]
+    // R = k2/k1 in [R_MIN, R_MAX]
     inline constexpr double R_MAX = 40.0;
     inline constexpr double R_MIN = 0.01;
 
@@ -83,7 +83,7 @@ inline double calculate_expected_i_dist_max(double expected_i_min,
            BOPublicConfig::EXPECTED_I_MARGIN_RANGE_FACTOR;
 }
 
-// Divisor seguro: si |divisor| < epsilon, devuelve ±epsilon para evitar div/0
+// Divisor seguro: si |divisor| < epsilon, devuelve +-epsilon para evitar div/0
 inline double safe_divisor(double divisor)
 {
 
@@ -140,30 +140,30 @@ struct BOParamRanges
         const double v_pre_range = v_pre_max - v_pre_min;
         const double v_post_range = v_post_max - v_post_min;
 
-        // e_syn: excitadora → por encima de v_post_max; inhibidora → por debajo de v_post_min
+        // e_syn: excitadora -> por encima de v_post_max; inhibidora -> por debajo de v_post_min
         const double e_syn_far_final_term = v_post_range * BOPublicConfig::E_SYN_FAR_TERM;
         const double e_syn_near_final_term = v_post_range * BOPublicConfig::E_SYN_NEAR_TERM;
         double e_syn_max = 0.0, e_syn_min = 0.0;
         if (search_phase)
         {
-            // Excitadora: e_syn > v_post → (v_post - e_syn) < 0 → corriente entrante
+            // Excitadora: e_syn > v_post -> (v_post - e_syn) < 0 -> corriente entrante
             e_syn_min = v_post_max + e_syn_near_final_term;
             e_syn_max = v_post_max + e_syn_far_final_term;
         }
         else
         {
-            // Inhibidora: e_syn < v_post → (v_post - e_syn) > 0 → corriente saliente
+            // Inhibidora: e_syn < v_post -> (v_post - e_syn) > 0 -> corriente saliente
             e_syn_min = v_post_min - e_syn_far_final_term;
             e_syn_max = v_post_min - e_syn_near_final_term;
         }
         e_syn = ParamRange(e_syn_min, e_syn_max);
 
-        // Margen de ±V_MARGIN_FACTOR sobre v_pre para compensar variabilidad de la señal biológica real
+        // Margen de +-V_MARGIN_FACTOR sobre v_pre para compensar variabilidad de la señal biológica real
         const double v_pre_margin = v_pre_range * BOPublicConfig::V_MARGIN_FACTOR;
         const double v_pre_margin_min = v_pre_min - v_pre_margin;
         const double v_pre_margin_max = v_pre_max + v_pre_margin;
 
-        // Margen sobre la corriente esperada (±EXPECTED_I_MARGIN_FACTOR del rango) para ampliar la búsqueda de g
+        // Margen sobre la corriente esperada (+-EXPECTED_I_MARGIN_FACTOR del rango) para ampliar la búsqueda de g
         const double expected_i_margin = (expected_i_max - expected_i_min) * BOPublicConfig::EXPECTED_I_MARGIN_FACTOR;
         const double expected_i_margin_min = expected_i_min - expected_i_margin;
         const double expected_i_margin_max = expected_i_max + expected_i_margin;
@@ -181,10 +181,10 @@ struct BOParamRanges
 
             // Sigmoide máxima: mayor pendiente (s_fast_max), umbral más bajo (v_fast.min), voltaje más alto (v_pre_max)
             const double sigmoid_fast_max = chemical_sigmoid(s_fast_max, v_fast.min, v_pre_max);
-            // g_fast_max: invierte g = I / (σ * (v_post - e_syn)) en los dos extremos de driving force (peor caso)
+            // g_fast_max: invierte g = I / (sigma * (v_post - e_syn)) en los dos extremos de driving force (peor caso)
             const double g_fast_max = std::max(std::abs(expected_i_margin_max / safe_divisor((v_post_max - e_syn_min) * sigmoid_fast_max)),
                                                std::abs(expected_i_margin_min / safe_divisor((v_post_min - e_syn_max) * sigmoid_fast_max)));
-            // g_fast_min = g_fast_max * G_MIN_FACTOR → cubre ~3 órdenes de magnitud
+            // g_fast_min = g_fast_max * G_MIN_FACTOR -> cubre ~3 órdenes de magnitud
             const double g_fast_min = g_fast_max * G_MIN_FACTOR;
             // Log-space para exploración uniforme en varias órdenes de magnitud
             log_g_fast = ParamRange(std::log(g_fast_min == 0.0 ? SMALL_LOG : g_fast_min),
@@ -208,13 +208,13 @@ struct BOParamRanges
             // log_k1: en log-space porque abarca ~6 órdenes de magnitud
             log_k1 = ParamRange(std::log(k1_min == 0.0 ? SMALL_LOG : k1_min),
                                 std::log(k1_max == 0.0 ? SMALL_LOG : k1_max));
-            // log_R: R = k2/k1 en log-space; R grande → m_slow pequeño, R pequeño → m_slow grande
+            // log_R: R = k2/k1 en log-space; R grande -> m_slow pequeño, R pequeño -> m_slow grande
             log_R = ParamRange(std::log(R_MIN == 0.0 ? SMALL_LOG : R_MIN),
                                std::log(R_MAX == 0.0 ? SMALL_LOG : R_MAX));
 
-            // k2_min para calcular m_max (peor caso: k2 mínimo → m_slow máximo)
+            // k2_min para calcular m_max (peor caso: k2 mínimo -> m_slow máximo)
             const double k2_min = k1_min * R_MIN;
-            // m_max: estado estacionario máximo de m_slow → m_ss = (k1*σ) / (k1*σ + k2) con k1 max, σ max, k2 min
+            // m_max: estado estacionario máximo de m_slow -> m_ss = (k1*sigma) / (k1*sigma + k2) con k1 max, sigma max, k2 min
             const double m_max_term = k1_max * chemical_sigmoid(s_slow_max, v_slow.min, v_pre_max);
             const double m_max = m_max_term / safe_divisor(m_max_term + k2_min);
 
@@ -257,7 +257,7 @@ struct StopFunctor
     template <typename BO, typename AggregatorFunction>
     bool operator()(const BO &bo, const AggregatorFunction &)
     {
-        // Devuelve true si se ha solicitado parar → Limbo detiene la optimización
+        // Devuelve true si se ha solicitado parar -> Limbo detiene la optimización
         return stop_BO_ptr->load(std::memory_order_relaxed);
     }
 };
@@ -277,7 +277,7 @@ struct ChemicalSynapseParams
     double v_slow; // Umbral de voltaje de la sigmoide lenta
 };
 
-// Candidato bidireccional: parámetros para las dos sinapsis (1→2 y 2→1)
+// Candidato bidireccional: parámetros para las dos sinapsis (1->2 y 2->1)
 struct Candidate
 {
 

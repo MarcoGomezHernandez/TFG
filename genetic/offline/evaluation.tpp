@@ -57,7 +57,7 @@ static double rescale_to_target_no_offset(double value,
 
 // Calcula la puntuación de forma mediante correlación de Pearson.
 // Centra la señal, calcula r, lo normaliza a [0,1].
-// Si search_phase=true invierte (busca anti-correlación → fase)
+// Si search_phase=true invierte (busca anti-correlación -> fase)
 static double pearson_score(univector<double> &sig,
                             const univector<double> &ref_sig_centered,
                             double ref_sig_factor,
@@ -66,7 +66,7 @@ static double pearson_score(univector<double> &sig,
 
     sig -= mean(sig); // Centra la señal candidata
     const double sig_factor = std::sqrt(sum(sqr(sig)));
-    // Coeficiente de Pearson r ∈ [-1, 1]
+    // Coeficiente de Pearson r in [-1, 1]
     const double r = sum(sig * ref_sig_centered) / safe_divisor(sig_factor * ref_sig_factor);
     // Normaliza a [0, 1]: (r+1)/2
     const double normalized = (r + 1.0) / 2.0;

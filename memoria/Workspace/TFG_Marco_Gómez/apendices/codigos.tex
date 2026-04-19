@@ -1,0 +1,38 @@
+
+En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo de la memoria. Las rutas son relativas al directorio \texttt{codigos/} del proyecto. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
+
+\section{Código de la versión offline\label{SEC:CODIGOS_OFFLINE}}
+
+
+\subsection{Modelo de Hindmarsh-Rose\label{SUBSEC:COD_HR}}
+
+\CPPCode[COD:HRPARAMS]{Parámetros del modelo de Hindmarsh-Rose.}{Namespace con las constantes del modelo HR modificado, incluyendo el hiperparámetro $v_h = 0{,}1$ que dilata temporalmente el atractor de ráfagas.}{offline/utils.hpp}{29}{42}{1}
+
+
+\subsection{Optimización Bayesiana offline\label{SUBSEC:COD_BO_OFF}}
+
+\CPPCode[COD:LIMBOCFGOFF]{Configuración de Limbo para la versión offline.}{Estructura \texttt{Params} con la configuración del kernel del GP (\texttt{noise} $= 10^{-6}$, \texttt{optimize\_noise} = false), la función de adquisición EI (\texttt{jitter} $= 0{,}003$), y los optimizadores internos.}{offline/BO.tpp}{68}{143}{1}
+
+\CPPCode[COD:BOPARAMRANGES]{Rangos de búsqueda de los parámetros sinápticos (función \texttt{init}).}{Método \texttt{init()} de \texttt{BOParamRanges}, que calcula los límites de búsqueda para cada parámetro basándose en la estadística de $V_{pre}$ y la corriente esperada. Los parámetros de conductancia se parametrizan en espacio logarítmico.}{offline/BO.tpp}{184}{290}{1}
+
+
+\section{Código de la versión online (RTXI)\label{SEC:CODIGOS_ONLINE}}
+
+
+\subsection{Módulo RTXI: hilo de tiempo real\label{SUBSEC:COD_RT}}
+
+\CPPCode[COD:RK65]{Integrador Runge-Kutta de orden 6(5) para $m_{slow}$.}{Implementación del RK6(5) que integra la variable de compuerta lenta sin sub-stepping, garantizando un bloque de código determinista para el hilo de tiempo real.}{online/bidirectional_chemical_synapse_BO.cpp}{140}{178}{1}
+
+\CPPCode[COD:EXECUTE]{Función \texttt{execute()} del hilo RT.}{Función principal del hilo de tiempo real: lee la DAQ, calcula las corrientes sinápticas con los parámetros del double-buffer activo, y almacena las señales cuando el hilo NRT lo solicita.}{online/bidirectional_chemical_synapse_BO.cpp}{210}{307}{1}
+
+
+\subsection{Sincronización y double-buffering\label{SUBSEC:COD_SYNC}}
+
+\CPPCode[COD:DOUBLEBUF]{Declaración del double-buffer atómico.}{Variables de sincronización entre hilos RT y NRT: \texttt{synapse\_idx} (índice del buffer activo), \texttt{last\_synapse\_idx\_read\_RT} (confirmación de lectura), y \texttt{RT\_storing} (banderín de recogida de datos).}{online/bidirectional_chemical_synapse_BO.h}{83}{109}{1}
+
+
+\subsection{Optimización Bayesiana online\label{SUBSEC:COD_BO_ON}}
+
+\CPPCode[COD:LIMBOCFGON]{Configuración de Limbo para la versión online.}{Estructura \texttt{Params} con configuración adaptada a señales ruidosas \textit{in vivo}: \texttt{noise} $= 0{,}05$, \texttt{optimize\_noise} = true, \texttt{jitter} $= 0{,}001$.}{online/BO.cpp}{33}{104}{1}
+
+\CPPCode[COD:NRTBO]{Bucle principal de BO en el hilo NRT (extracto).}{Función \texttt{NRT\_BO}: configura rangos de búsqueda, inicializa Limbo, ejecuta la optimización, y publica los mejores parámetros al hilo RT vía double-buffering atómico.}{online/BO.cpp}{311}{493}{1}
