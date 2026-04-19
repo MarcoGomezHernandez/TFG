@@ -1,0 +1,13 @@
+\textit{RT-Benchmarks} es una herramienta proporcionada por \textit{RTXI} que sirve para realizar algunas mediciones del sistema operativo. Dichas mediciones, se pueden escribir en un archivo \textit{HDF5} mediante el componente \textit{Data Recorder}, el cual, para realizar sus medidas, obtiene el tiempo en nanosegundos (Código \ref{COD:GETTIME}). Esto lo hace justo antes del inicio de un periodo e inmediatamente después del mismo (Código \ref{COD:GETTICKS}), estos valores los referencia como punteros para que puedan ser usados por el medidor (Código \ref{COD:PROVTICKSPTRS}). Se entiende como periodo el momento en el que se ejecutan los eventos en \textit{RTXI}. 
+
+Para la realización de las pruebas, se han probado 5 prioridades para el hilo \textit{realtime} del módulo implementado para \textit{Preempt-RT}, $80$, $85$, $90$, $95$ y $99$, siendo la $80$ la más baja y la $90$ la más alta. Esto ha servido para determinar cual es la prioridad más óptima para los hilos de tiempo real implementados en el programa. Para cada prioridad, se han realizado dos ejecuciones de cinco minutos, una estado de reposo y otra mientras se ejecutaba también el comando `stress` con cuatro \textit{workers} ejecutando `sqrt()`, veinte ejecutando `malloc()`/ `free()` y reservando $128$ $MB$ por \textit{worker}.
+
+Las distintas mediciones que se han registrado vienen explicadas a continuación junto con sus resultados, su significado está descrito en el código del propio módulo \textit{RT Benchmarks} (Código \ref{COD:MODULEMEASURE}). Cabe destacar que no se han puesto todas las gráficas relacionadas con todas las prioridades, sino que se han seleccionado algunas de las más relevantes, el resto se encuentran en el repositorio de datos (Repositorio \ref{SEC:DATOSREPO}). 
+
+\CPPCode[COD:GETTIME]{Obtención del tiempo en \textit{Preempt-RT}.}{En esta figura se muestra el código de la función `getTime`, del módulo desarrollado para \textit{RTXI}.}{rtxi-preempt-rt/src/rtos_preempt_rt.cpp}{127}{133}{1}
+
+\CPPCode[COD:GETTICKS]{Obtención del tiempo previo y posterior al periodo.}{En esta figura se muestra el código de la función `getPeriodTicksCMD`, de \textit{RTXI}.}{rtxi/src/rt.cpp}{424}{441}{1}
+
+\CPPCode[COD:PROVTICKSPTRS]{Exposición de los punteros de tiempo.}{En esta figura se muestra el código de la función `provideTimetickPointers`, de \textit{RTXI}.}{rtxi/src/rt.cpp}{777}{799}{1}
+
+\CPPCode[COD:MODULEMEASURE]{Cálculo de las distintas métricas.}{En esta figura se muestra parte del código de la función `execute` de `PerformanceMeasurement`, clase que implementa el módulo \textit{RT Benchmarks} de \textit{RTXI}.}{rtxi/plugins/performance_measurement/performance_measurement.cpp}{122}{136}{1}

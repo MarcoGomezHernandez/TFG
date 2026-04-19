@@ -1,0 +1,10 @@
+
+Para establecer intercambio de información entre una neurona y otra descritas por un modelo neuronal, o en los circuitos biohíbridos, entre neurona y modelo, en este trabajo se usa la sinapsis eléctrica implementada como una corriente proporcional a la diferencia de voltaje entre las dos neuronas conectadas\cite{Reyes-Sanchez2020}. Dicha sinapsis puede ser unidireccional en caso de que solo una neurona aplique corriente (Figura \ref{FIG:SYNUNI}) y bidireccional en el caso de que ambas lo hagan (Figura \ref{FIG:SYNBI}). Además, dependiendo del signo de la corriente,  la actividad de las neuronas podrá estar en fase, si las ráfagas de las neuronas se sincronizan para que ocurran a la vez, o en antifase, si estas ráfagas inhiben la actividad de la otra neurona para que sucedan en instantes distintos generando una secuencia alternante.  
+
+\begin{figure}[Esquema de sinapsis unidireccional]{FIG:SYNUNI}{Sinapsis en la que solo una neurona aplica corriente frente a otra, la neurona presináptica es la que envía la corriente y la postsináptica es la que la recibe.}
+    \image{0.2\textwidth}{}{unidirectional-syn}
+\end{figure}
+
+\begin{figure}[Esquema de sinapsis bidireccional]{FIG:SYNBI}{Sinapsis en la que ambas neuronas aplican corrientes entre sí, por lo que ambas son presinápticas y postsinápticas.}
+    \image{0.2\textwidth}{}{bidirectional-syn}
+\end{figure}

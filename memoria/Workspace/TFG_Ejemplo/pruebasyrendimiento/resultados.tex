@@ -1,0 +1,10 @@
+
+La latencia media dentro de \textit{RTXI} es bastante buena, al rondar los $15$ $\mu s$ (Figura \ref{FIG:CYCLICTESTRTXI}), no obstante, el caso peor, aunque sea solo uno, posee una latencia demasiado grande, por lo que es recomendable o deseable aislar el procesador para evitar dichos casos en la medida de lo posible (Figura \ref{FIG:CYCLICTESTRTXIISO}).
+
+\begin{figure}[Prueba de latencia RTXI]{FIG:CYCLICTESTRTXI}{Prueba de latencia \textit{RTXI}.}
+    \image{0.7\textwidth}{}{latency-distribution-rtxi-test}
+\end{figure}
+
+\begin{figure}[Prueba de latencia RTXI con un core aislado]{FIG:CYCLICTESTRTXIISO}{Prueba de latencia \textit{RTXI} con un core aislado.}
+    \image{0.7\textwidth}{}{latency-distribution-rtxi-test-isolated}
+\end{figure}

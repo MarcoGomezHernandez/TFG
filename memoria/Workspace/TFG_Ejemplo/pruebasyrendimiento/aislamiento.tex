@@ -1,0 +1,8 @@
+
+El aislamiento de CPU es una técnica que consiste en dedicar los recursos de un solo core para una tarea concreta \cite{Amaducci2022}. Como se ha visto en los resultados, la media y la desviación típica son bastante aceptables; no obstante, el caso peor de algunas de las ejecuciones, llega hasta $40$ $\mu s$. Para abordar esto, se ha decidido aislar uno de los cores del resto de tareas. Para ello, se han seguido los pasos que se proporcionan en el tutorial de aislamiento de CPU en el repositorio de tutoriales (Repositorio \ref{SEC:UTILESYREPORTSREPO}, \textit{CPU isolation} en la lista de \textit{Contents} en el apartado de \textit{Tutorials and Reports}).
+
+Tras aislar el procesador y usarlo para ejecutar los procesos (\textit{RTXI} o \textit{cyclictest}), los resultados mejoran notablemente con respecto al caso peor, aunque la media sube ligeramente (Figura \ref{FIG:CYCLICTESTISOCPU}).
+
+\begin{figure}[Ejecución de cylictest con un core aislado]{FIG:CYCLICTESTISOCPU}{Test de latencia \textit{cyclictest} con un core aislado.}
+    \image{0.7\textwidth}{}{cyclictest-isolated-core}
+\end{figure}

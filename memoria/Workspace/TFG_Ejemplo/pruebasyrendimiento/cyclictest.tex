@@ -1,0 +1,21 @@
+La \textit{Linux Foundation} proporciona una serie de tests que prueban las características \textit{realtime} de Linux, esta suite de tests se llama \href{https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git}{\textit{rt-tests}}. 
+De estos, se han escogido \textit{cyclictest} para complementar el resto de pruebas, pues la latencia es el factor más importante a tener en cuenta a la hora de realizar una conexión biohíbrida, dado que si no se respetan bien las restricciones temporales, se corre el riesgo de no poder realizar las mediciones y llevar a cabo las interacciones de forma correcta.
+
+\textit{Cyclictest} es un programa que mide la diferencia entre el tiempo que tiene como objetivo despertarse un hilo y el tiempo en el que realmente se despierta, esto es, mide el tiempo real que el hilo pasa dormido, pues al contrario que en \textit{RTXI} (Código \ref{COD:NANOSLEEPPREEMPT}), aunque se pierda una \textit{deadline}, continúa la ejecución para medir de manera rigurosa cuándo se habría despertado. Esto se debe a que se hace uso de la flag `TIMER\_ABSTIME` (Código \ref{COD:NANOSLEEPCYCLIC}). De ahí la diferencia de los resultados con los de \textit{RT-Benchmarks} (Sección \ref{SS:RTBENCHMARKS}).
+
+Se han realizado dos ejecuciones, una en una sola CPU y otra en todas las disponibles. Cada ejecución dura $10$ minutos, se le ha dado prioridad $90$ e intervalos de $100$ $\mu s$. Durante cada ejecución se ha ejecutado paralelamente el comando \textit{stress} con los parámetros del script de \textit{RTXI}. Todo esto está recogido en el script del repositorio de datos (Repositorio \ref{SEC:DATOSREPO}) bajo el directorio `performance-tests/cyclictest/scripts`.
+
+Como se puede apreciar, los resultados de ambos tests son similares, siendo un poco mejores los de un solo core (Figura \ref{FIG:CYCLICTEST1CPU}), con una latencia media de $2.27$ $\mu s$ y una desviación típica de $0.51$ $\mu s$. En el test con todos los cores (cinco en este caso), se obtienen resultados un poco más elevados (Figura \ref{FIG:CYCLICTEST5CPUS}). Esto posiblemente se deba a que, al estar todos los cores ocupados, se tienen que repartir la carga del \textit{stress test}. 
+
+\begin{figure}[Ejecución de cylictest con 5 cores]{FIG:CYCLICTEST5CPUS}{Test de latencia \textit{cyclictest} con 5 cores.}
+    \image{0.7\textwidth}{}{cyclictest-max-cores}
+\end{figure}
+
+\begin{figure}[Ejecución de cylictest con un core]{FIG:CYCLICTEST1CPU}{Test de latencia \textit{cyclictest} con un core.}
+    \image{0.7\textwidth}{}{cyclictest-one-core}
+\end{figure}
+
+\CPPCode[COD:NANOSLEEPCYCLIC]{Función clock\_nanosleep de \textit{cyclictest}.}{En esta figura se muestra el código de la función `clock\_nanosleep`, de \textit{cyclictest}.}{cyclictest/src/cyclictest.c}{150}{164}{1}
+
+\CPPCode[COD:NANOSLEEPPREEMPT]{Función clock\_nanosleep de \textit{RTXI Preempt-RT}.}{En esta figura se muestra el código de la función `clock\_nanosleep`, del módulo desarrollado para \textit{RTXI}.}{rtxi-preempt-rt/src/rtos_preempt_rt.cpp}{127}{133}{1}
+
