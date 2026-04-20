@@ -1,7 +1,7 @@
 
 La parametrización automatizada de modelos de sinapsis químicas para circuitos neuronales biohíbridos impone desafíos que transcienden la mera traducción de ecuaciones diferenciales a código computacional. Requiere una orquestación precisa entre la teoría de sistemas dinámicos no lineales, el procesamiento digital de señales (DSP), algoritmos de optimización probabilística y la ingeniería de software de tiempo real estricto \cite{Reyes-Sanchez2020, Buttazzo2024}.
 
-El desarrollo se articula en torno a dos infraestructuras complementarias: una arquitectura de simulación en diferido (\textit{offline}), diseñada para la validación algorítmica sobre señales biológicas pre-registradas; y un módulo de experimentación en vivo (\textit{online}), integrado en el framework RTXI 2.3, preparado para gobernar un protocolo bidireccional de \textit{Dynamic Clamp} bajo las exigencias de un sistema operativo Linux parcheado con \textit{Preempt-RT} \cite{Amaducci2019}.
+El desarrollo se articula en torno a dos infraestructuras complementarias: una arquitectura de simulación en diferido (\textit{offline}), diseñada para la validación algorítmica sobre señales biológicas pre-registradas; y un módulo de experimentación en vivo (\textit{online}), integrado en el framework RTXI 2.3 \cite{Amaducci2019}. Se ha seleccionado la versión 2.3 de RTXI por compatibilidad con el ecosistema de software del laboratorio del GNB, que incluye los plugins de \textit{Dynamic Clamp} y las rutinas de RTHybrid validadas sobre esta versión \cite{Amaducci2022}. Las pruebas del módulo \textit{online} con neuronas simuladas se han ejecutado sobre el framework de tiempo real \textit{Xenomai} \cite{Xenomai2024}, el \textit{RTOS} nativo de RTXI 2.3, que implementa una arquitectura de doble kernel para garantizar latencias deterministas del orden de microsegundos.
 
 Las divergencias fundamentales entre ambas arquitecturas se resumen a continuación. En las siguientes secciones se desglosa la selección de los modelos neuronales y sinápticos, el diseño de la función objetivo manejada mediante Optimización Bayesiana, la gestión de hilos y memoria sin bloqueos (\textit{lock-free}), y el protocolo experimental \textit{in vivo}.
 
@@ -85,6 +85,15 @@ La componente lenta está gobernada por la variable de estado $m_{slow}$:
 \end{equation}
 
 Los parámetros $k_1$ y $k_2$ representan las tasas cinéticas de activación y desactivación de los canales sinápticos lentos.
+
+Este modelo de sinapsis exhibe lo que se conoce como \textbf{holgura paramétrica} (\textit{parametric sloppiness}): múltiples combinaciones de los 9 parámetros sinápticos pueden producir dinámicas de corriente sináptica prácticamente indistinguibles \cite{Gutenkunst2007}. Este fenómeno, ampliamente documentado en modelos de sistemas biológicos, implica que el paisaje de fitness presenta valles degenerados donde la función objetivo varía mínimamente a lo largo de ciertas direcciones del espacio paramétrico. Para mitigar su impacto, la configuración de la Optimización Bayesiana incorpora varias estrategias complementarias:
+
+\begin{itemize}
+    \item \textbf{Kernel SE-ARD:} Las escalas de longitud independientes por dimensión ($\ell_i$) permiten al Proceso Gaussiano detectar qué parámetros son más sensibles (\textit{stiff}) y cuáles más holgados (\textit{sloppy}), adaptando la resolución del modelo sustituto a cada eje del espacio.
+    \item \textbf{Exploración en espacio logarítmico:} Los parámetros con mayor holgura---conductancias ($g_{fast}$, $g_{slow}$), tasa cinética ($k_1$) y ratio $R = k_2/k_1$---se parametrizan en escala logarítmica, comprimiendo el espacio de búsqueda en las dimensiones más degeneradas y facilitando una exploración equitativa a lo largo de órdenes de magnitud.
+    \item \textbf{Función de fitness compuesta:} La combinación de \textit{Score de Rango} y \textit{Score de Forma} (correlación de Pearson) rompe parte de la degeneración, discriminando entre soluciones que coinciden en amplitud pero difieren en morfología temporal.
+    \item \textbf{Rangos de búsqueda informados:} Las cotas de cada parámetro se derivan de la estadística de $V_{pre}$ y de las corrientes esperadas, restringiendo la búsqueda a regiones biofísicamente plausibles y reduciendo el volumen del hiperespacio holgado.
+\end{itemize}
 
 En la simulación \textit{offline}, la integración de $m_{slow}$ se realiza con RK4 y técnicas de sobremuestreo temporal (\textit{sub-stepping}), necesarias porque la señal presináptica proviene de un CSV con granulación muestral gruesa ($5$--$10$~kHz, $dt \approx 0{,}1$~ms) que debe interpolarse a la resolución del integrador del modelo HR ($dt \approx 0{,}001$~ms). Sin embargo, en el módulo RTXI (\textit{online}), el \textit{sub-stepping} resulta innecesario por la naturaleza matemática de las ecuaciones sinápticas. La derivada de $m_{slow}$ (Ecuación~\ref{EQ:DMSLOW}) depende del voltaje presináptico $V_{pre}$ exclusivamente a través de funciones sigmoideas $\sigma(V_{pre})$, que son suaves y acotadas en $[0, 1]$: variaciones intra-período de $V_{pre}$ producen cambios despreciables en $dm_{slow}/dt$. Dado que RTXI proporciona $V_{pre}$ muestra a muestra a la frecuencia del \textit{hardware timer}, no es necesario reconstruir la trayectoria intra-muestra del voltaje mediante interpolación. Para compensar la ausencia de sub-pasos, se emplea un integrador explícito de Runge-Kutta de orden 6(5) --- Dormand-Prince --- (Código~\ref{COD:RK65}), que efectúa seis evaluaciones funcionales estáticas por cada periodo del \textit{hardware timer}, proporcionando precisión de orden superior con un coste computacional fijo y determinista \cite{Buttazzo2024}.
 
@@ -223,24 +232,6 @@ Limbo emplea dos optimizadores internos cuya configuración escala con la dimens
 \subsubsection{Inicialización: Latin Hypercube Sampling (LHS)\label{SSUBSEC:LHS_CONFIG}}
 
 El muestreo inicial emplea \textit{Latin Hypercube Sampling}, que garantiza cobertura uniforme de cada dimensión marginal. El número de muestras iniciales es configurable por el usuario (típicamente 40 offline, ajustable online según la ventana temporal disponible). El LHS opera sobre el hipercubo normalizado $[0,1]^d$; la decodificación a parámetros reales se realiza mediante la transformación lineal (o log-lineal para conductancias) definida en \texttt{BOParamRanges}.
-
-A continuación se resume la parametrización del pipeline de BO, donde $d$ denota la dimensión del espacio de búsqueda (número de parámetros sinápticos activos) y $N$ el número total de iteraciones configuradas por el usuario. La configuración completa puede consultarse en los Códigos~\ref{COD:LIMBOCFGOFF} y~\ref{COD:LIMBOCFGON}.
-
-\paragraph{Componentes compartidos (offline y online):}
-\begin{itemize}
-    \item \textbf{Kernel:} SE-ARD con varianza de señal $\sigma^2 = 1{,}0$ (prior no informativo) y media constante $\mu_0 = 0{,}5$ (punto medio del rango de fitness).
-    \item \textbf{Función de adquisición:} Expected Improvement (EI).
-    \item \textbf{Optimizador Rprop} (hiperparámetros del GP): $50 \times d$ iteraciones, tolerancia $10^{-6}$, re-optimización cada $\max(1, N/25)$ iteraciones.
-    \item \textbf{Optimizador NLOpt Subplex} (maximización de EI): $150 \times d^2$ iteraciones sin tolerancias de parada.
-    \item \textbf{Inicialización LHS:} configurable por el usuario (típicamente 40 muestras offline).
-\end{itemize}
-
-\paragraph{Divergencias offline $\to$ online:}
-\begin{itemize}
-    \item \textbf{Ruido del kernel (\textit{noise}):} $10^{-6}$ fijo en offline (sistema determinista) $\to$ $0{,}05$ optimizable en online (señal biológica estocástica). Véase la Sección~\ref{SSUBSEC:NOISE_CONFIG}.
-    \item \textbf{\textit{Jitter} de EI ($\xi$):} $0{,}003$ en offline (exploración amplia, sin restricción temporal) $\to$ $0{,}001$ en online (explotación intensiva por degradación celular). Véase la Sección~\ref{SSUBSEC:EI_CONFIG}.
-    \item \textbf{Criterio de parada:} \texttt{MaxIterations} en offline $\to$ \texttt{MaxIterations} + \texttt{StopFunctor} en online, permitiendo cancelación interactiva desde la GUI de RTXI.
-\end{itemize}
 
 
 \section{Implementación Online: Integración Biohíbrida (RTXI 2.3)\label{SEC:IMPLEMENTACION_ONLINE}}

@@ -11,9 +11,9 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \subsection{Optimización Bayesiana offline\label{SUBSEC:COD_BO_OFF}}
 
-\CPPCode[COD:LIMBOCFGOFF]{Configuración de Limbo para la versión offline.}{Estructura \texttt{Params} con la configuración del kernel del GP (\texttt{noise} $= 10^{-6}$, \texttt{optimize\_noise} = false), la función de adquisición EI (\texttt{jitter} $= 0{,}003$), y los optimizadores internos.}{offline/BO.tpp}{68}{143}{1}
+\CPPCode[COD:LIMBOCFGOFF]{Configuración de Limbo para la versión offline (extracto).}{Extracto de la estructura \texttt{Params}: configuración del kernel del GP (\texttt{noise} $= 10^{-6}$, \texttt{optimize\_noise} = false) y la función de adquisición EI (\texttt{jitter} $= 0{,}003$). La configuración completa se encuentra en el repositorio (Apéndice~\ref{SEC:PARAMETRIZACIONREPO}).}{offline/BO.tpp}{68}{98}{68}
 
-\CPPCode[COD:BOPARAMRANGES]{Rangos de búsqueda de los parámetros sinápticos (función \texttt{init}).}{Método \texttt{init()} de \texttt{BOParamRanges}, que calcula los límites de búsqueda para cada parámetro basándose en la estadística de $V_{pre}$ y la corriente esperada. Los parámetros de conductancia se parametrizan en espacio logarítmico.}{offline/BO.tpp}{184}{290}{1}
+\CPPCode[COD:BOPARAMRANGES]{Rangos de búsqueda de los parámetros sinápticos (extracto de \texttt{init}).}{Extracto del método \texttt{init()} de \texttt{BOParamRanges}: cálculo de los rangos de $e_{syn}$ y la componente rápida ($v_{fast}$, $s_{fast}$, $g_{fast}$). La componente lenta sigue un patrón análogo. Los parámetros de conductancia se parametrizan en espacio logarítmico.}{offline/BO.tpp}{184}{249}{184}
 
 
 \section{Código de la versión online (RTXI)\label{SEC:CODIGOS_ONLINE}}
@@ -23,7 +23,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \CPPCode[COD:RK65]{Integrador Runge-Kutta de orden 6(5) para $m_{slow}$.}{Implementación del RK6(5) que integra la variable de compuerta lenta sin sub-stepping, garantizando un bloque de código determinista para el hilo de tiempo real.}{online/bidirectional_chemical_synapse_BO.cpp}{140}{178}{1}
 
-\CPPCode[COD:EXECUTE]{Función \texttt{execute()} del hilo RT.}{Función principal del hilo de tiempo real: lee la DAQ, calcula las corrientes sinápticas con los parámetros del double-buffer activo, y almacena las señales cuando el hilo NRT lo solicita.}{online/bidirectional_chemical_synapse_BO.cpp}{210}{307}{1}
+\CPPCode[COD:EXECUTE]{Función \texttt{execute()} del hilo RT (extracto).}{Núcleo de la función de tiempo real: lectura del double-buffer atómico y cálculo de las corrientes sinápticas bidireccionales. La lógica de almacenamiento de señales para la BO se omite por brevedad.}{online/bidirectional_chemical_synapse_BO.cpp}{240}{274}{240}
 
 
 \subsection{Sincronización y double-buffering\label{SUBSEC:COD_SYNC}}
@@ -33,6 +33,6 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \subsection{Optimización Bayesiana online\label{SUBSEC:COD_BO_ON}}
 
-\CPPCode[COD:LIMBOCFGON]{Configuración de Limbo para la versión online.}{Estructura \texttt{Params} con configuración adaptada a señales ruidosas \textit{in vivo}: \texttt{noise} $= 0{,}05$, \texttt{optimize\_noise} = true, \texttt{jitter} $= 0{,}001$.}{online/BO.cpp}{33}{104}{1}
+\CPPCode[COD:LIMBOCFGON]{Configuración de Limbo para la versión online (extracto).}{Extracto de la estructura \texttt{Params} online: kernel con \texttt{noise} $= 0{,}05$ y \texttt{optimize\_noise} = true (señal biológica ruidosa), y función de adquisición EI con \texttt{jitter} $= 0{,}001$ (explotación intensiva). La configuración completa se encuentra en el repositorio.}{online/BO.cpp}{33}{76}{33}
 
-\CPPCode[COD:NRTBO]{Bucle principal de BO en el hilo NRT (extracto).}{Función \texttt{NRT\_BO}: configura rangos de búsqueda, inicializa Limbo, ejecuta la optimización, y publica los mejores parámetros al hilo RT vía double-buffering atómico.}{online/BO.cpp}{311}{493}{1}
+\CPPCode[COD:NRTBO]{Bucle principal de BO en el hilo NRT (extracto).}{Extracto de la función \texttt{NRT\_BO}: configuración de rangos de búsqueda bidireccionales, inicialización de parámetros dinámicos de Limbo, y preparación del functor de evaluación. La publicación final de los mejores parámetros al hilo RT vía double-buffering se encuentra en el repositorio (Apéndice~\ref{SEC:PARAMETRIZACIONREPO}).}{online/BO.cpp}{311}{400}{311}
