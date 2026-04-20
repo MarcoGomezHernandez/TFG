@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 df = pd.read_csv('data/hindmarsh-rose_modified.csv')
 
 # Configuración y renderizado de la gráfica
-plt.figure(figsize=(14, 5), dpi=600)
+plt.figure(figsize=(6.5, 3.5), dpi=600)
 plt.plot(df['t'], df['x'], color='dodgerblue', linewidth=0.8)
 
-plt.title('Hindmarsh-Rose Modificada', fontsize=12)
-plt.xlabel('Tiempo/t (unidades adimensionales)', fontsize=10)
-plt.ylabel('Voltaje/x(t) (unidades adimensionales)', fontsize=10)
+plt.title('Hindmarsh-Rose Modificada', fontsize=8)
+plt.xlabel('Tiempo/t (unidades adimensionales)', fontsize=7)
+plt.ylabel('Voltaje/x(t) (unidades adimensionales)', fontsize=7)
+
+plt.xticks(fontsize=7)
+plt.yticks(fontsize=7)
 
 plt.xlim(df['t'].min(), df['t'].max())
 plt.ylim(df['x'].min(), df['x'].max())
