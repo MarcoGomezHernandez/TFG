@@ -35,6 +35,10 @@ El sistema dinámico continuo empleado se define por el siguiente conjunto de ec
 
 Donde $x(t)$ modela un análogo adimensional del potencial de membrana. La variable $y(t)$ representa una corriente de recuperación rápida asociada al flujo iónico transmembrana, responsable de la repolarización tras un potencial de acción. La variable $z(t)$ actúa como corriente de adaptación lenta, comparable a las dinámicas de iones de calcio, modulando la transición entre el estado de reposo y los ciclos activos de ráfagas. La corriente externa inyectada viene dada por el parámetro de bifurcación $e$.
 
+\begin{figure}[Dinámica de la neurona HR modificada]{FIG:HR_ROSE}{Dinámica temporal de la neurona de Hindmarsh-Rose modificada con los parámetros mostrados en la Tabla~\ref{TB:HR_PARAMS}. Se aprecia el patrón de ráfagas del potencial $x(t)$ que caracteriza la versión mejorada del modelo.}
+    \image{0.9\textwidth}{}{hindmarsh-rose_modified}
+\end{figure}
+
 Una modificación introducida en este trabajo reside en la EDO de la dinámica lenta $z(t)$. Se ha incluido el hiperparámetro $v_h$ ajustado a $v_h = 0{,}1$, frente al valor convencional de $1{,}0$. Esta reducción en la tasa de decaimiento ralentiza la transición del ciclo de histéresis de la neurona artificial. La justificación es biológica: las neuronas del sistema estomatogástrico (STG) presentan períodos de oscilación del orden de $0{,}5$ a $2{,}0$~Hz \cite{Golowasch1999}. Al hacer $v_h=0{,}1$, el atractor de ráfagas se dilata temporalmente, facilitando un emparejamiento de frecuencias entre el sustrato artificial y la célula biológica sin alterar las bases de tiempo mediante escalares agresivos.
 
 La configuración de parámetros fijada en el código C++ (Código~\ref{COD:HRPARAMS}) se resume en la Tabla~\ref{TB:HR_PARAMS}.

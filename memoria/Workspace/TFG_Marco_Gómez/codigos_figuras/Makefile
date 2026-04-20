@@ -8,7 +8,7 @@ SCRIPTS_DIR = scripts
 DATA_DIR = data
 FIGURES_DIR = figures
 
-HRM_TARGET = hindmarsh_rose_improved
+HRM_TARGET = hindmarsh-rose_modified
 HRM_SIM_BIN = $(BIN_DIR)/$(HRM_TARGET)_sim
 HRM_SIM_SRC = $(SRC_DIR)/$(HRM_TARGET)_sim.cpp
 HRM_PLOT_SCRIPT = $(SCRIPTS_DIR)/$(HRM_TARGET)_plot.py

@@ -42,7 +42,7 @@ int main()
         n.step(step);
     }
 
-    std::ofstream out("data/hindmarsh_rose_improved.csv");
+    std::ofstream out("data/hindmarsh-rose_modified.csv");
     out << "t,x,y,z\n";
 
     // 2. Simulación con subsampling
