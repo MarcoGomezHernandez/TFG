@@ -1,0 +1,9 @@
+e_syn: 15.0
+g_fast: 0.033
+s_fast: 3.0
+v_fast: 1.2
+g_slow: 0.1
+k1: 0.02
+k2: 0.01
+s_slow: 1.0
+v_slow: 0.0
