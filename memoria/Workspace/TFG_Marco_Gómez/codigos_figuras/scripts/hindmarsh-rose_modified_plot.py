@@ -13,7 +13,7 @@ plt.plot(df['t'], df['x'], color='dodgerblue', linewidth=0.6)
 
 plt.title('Hindmarsh-Rose Modificada', fontsize=8)
 plt.xlabel('Tiempo/t (ms adim.)', fontsize=7)
-plt.ylabel('Voltaje/x(t) (V adim.)', fontsize=7)
+plt.ylabel('Voltaje/x(t) (mV adim.)', fontsize=7)
 
 plt.xticks(fontsize=7)
 plt.yticks(fontsize=7)

@@ -47,6 +47,11 @@ createRTXIPlugin(void)
 // Definición de todos los parámetros, estados, entradas y salidas del módulo RTXI
 static DefaultGUIModel::variable_t vars[] = {
     {"BO evaluations completed", "Finishes when this is initial samples + iterations", DefaultGUIModel::STATE},
+    {"I_fast 1->2 (nA)", "", DefaultGUIModel::STATE},
+    {"I_slow 1->2 (nA)", "", DefaultGUIModel::STATE},
+    {"I_fast 2->1 (nA)", "", DefaultGUIModel::STATE},
+    {"I_slow 2->1 (nA)", "", DefaultGUIModel::STATE},
+
     {"BO initial samples", "Number of initialization samples for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"BO iterations", "Number of BO iterations after initial sampling", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"BO evaluation time (ms)", "Time to record signals per evaluation", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -59,12 +64,18 @@ static DefaultGUIModel::variable_t vars[] = {
     {"BO cutoff frequency 1 (kHz)", "To separate the I_fast and I_slow for BO in synapse 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"BO cutoff frequency 2 (kHz)", "To separate the I_fast and I_slow for BO in synapse 2->1", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    {"Dynamic voltage min and max 1 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage min 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Voltage max 1 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Dynamic voltage min and max 2 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
-    {"Voltage min 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"Voltage max 2 (V)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic V_pre min and max 1->2 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"V_pre min 1->2 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_pre max 1->2 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic V_post min and max 1->2 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"V_post min 1->2 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_post max 1->2 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic V_pre min and max 2->1 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"V_pre min 2->1 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_pre max 2->1 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"Dynamic V_post min and max 2->1 (1/0)", "1 = Enable, 0 = Disable; necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
+    {"V_post min 2->1 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_post max 2->1 (mV)", "Necessary for BO", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Current min 1->2 (nA)", "Fixed output clamp min for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"Current max 1->2 (nA)", "Fixed output clamp max for current 1->2", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
@@ -80,44 +91,50 @@ static DefaultGUIModel::variable_t vars[] = {
     {"Use I_fast 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_slow 2->1 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
-    {"E_syn 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_fast 1->2 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_fast 1->2 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_fast 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_slow 1->2 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"E_syn 1->2 (mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_fast 1->2 (uS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_fast 1->2 (1/mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_fast 1->2 (mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_slow 1->2 (uS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"k1 1->2 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"k2 1->2 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_slow 1->2 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_slow 1->2 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_slow 1->2 (1/mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_slow 1->2 (mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
-    {"E_syn 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_fast 2->1 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_fast 2->1 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_fast 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"g_slow 2->1 (nS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"E_syn 2->1 (mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_fast 2->1 (uS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_fast 2->1 (1/mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_fast 2->1 (mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"g_slow 2->1 (uS)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"k1 2->1 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
     {"k2 2->1 (1/ms)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"s_slow 2->1 (1/V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
-    {"V_slow 2->1 (V)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"s_slow 2->1 (1/mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"V_slow 2->1 (mV)", "", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Current 1->2 (nA)", "Total synaptic current 1->2", DefaultGUIModel::OUTPUT},
     {"Current 2->1 (nA)", "Total synaptic current 2->1", DefaultGUIModel::OUTPUT},
 
-    {"Voltage 1 (V)", "Membrane potential 1", DefaultGUIModel::INPUT},
-    {"Voltage 2 (V)", "Membrane potential 2", DefaultGUIModel::INPUT},
-    {"Voltage min 1 (V)", "Dynamic min 1", DefaultGUIModel::INPUT},
-    {"Voltage max 1 (V)", "Dynamic max 1", DefaultGUIModel::INPUT},
-    {"Voltage min 2 (V)", "Dynamic min 2", DefaultGUIModel::INPUT},
-    {"Voltage max 2 (V)", "Dynamic max 2", DefaultGUIModel::INPUT},
+    {"V_pre 1->2 (mV)", "Presynaptic membrane potential 1->2", DefaultGUIModel::INPUT},
+    {"V_post 1->2 (mV)", "Postsynaptic membrane potential 1->2", DefaultGUIModel::INPUT},
+    {"V_pre 2->1 (mV)", "Presynaptic membrane potential 2->1", DefaultGUIModel::INPUT},
+    {"V_post 2->1 (mV)", "Postsynaptic membrane potential 2->1", DefaultGUIModel::INPUT},
+    {"V_pre min 1->2 (mV)", "Dynamic V_pre min 1->2", DefaultGUIModel::INPUT},
+    {"V_pre max 1->2 (mV)", "Dynamic V_pre max 1->2", DefaultGUIModel::INPUT},
+    {"V_post min 1->2 (mV)", "Dynamic V_post min 1->2", DefaultGUIModel::INPUT},
+    {"V_post max 1->2 (mV)", "Dynamic V_post max 1->2", DefaultGUIModel::INPUT},
+    {"V_pre min 2->1 (mV)", "Dynamic V_pre min 2->1", DefaultGUIModel::INPUT},
+    {"V_pre max 2->1 (mV)", "Dynamic V_pre max 2->1", DefaultGUIModel::INPUT},
+    {"V_post min 2->1 (mV)", "Dynamic V_post min 2->1", DefaultGUIModel::INPUT},
+    {"V_post max 2->1 (mV)", "Dynamic V_post max 2->1", DefaultGUIModel::INPUT},
 };
 
 static size_t num_vars = sizeof(vars) / sizeof(DefaultGUIModel::variable_t);
 
 BidirectionalChemicalSynapseBO::BidirectionalChemicalSynapseBO(void)
-    : DefaultGUIModel("RTHybrid Bidirectional Chemical Synapse BO", ::vars, ::num_vars)
+    : DefaultGUIModel("Bidirectional Chemical Synapse BO", ::vars, ::num_vars)
 {
 
-  setWhatsThis("<p><b>RTHybrid Bidirectional Chemical Synapse BO</b></p>");
+  setWhatsThis("<p><b>Bidirectional Chemical Synapse BO</b></p>");
   DefaultGUIModel::createGUI(vars, num_vars);
   initParameters();
   customizeGUI();
@@ -210,34 +227,42 @@ double BidirectionalChemicalSynapseBO::compute_i_fast(double v_pre, double v_pos
 void BidirectionalChemicalSynapseBO::execute(void)
 {
 
-  // Solo actualiza v_min/v_max dinámicos cuando la BO no está corriendo
+  // Solo actualiza v_pre/v_post dinámicos cuando la BO no está corriendo
   // (para evitar cambios de rango durante la optimización)
   if (!BO_running)
   {
-    if (dynamic_v_min_max_1)
+    if (dynamic_v_pre_min_max_12)
     {
-      v_min_1 = input(2);
-      v_max_1 = input(3);
+      v_pre_min_12 = input(4);
+      v_pre_max_12 = input(5);
     }
 
-    if (dynamic_v_min_max_2)
+    if (dynamic_v_post_min_max_12)
     {
-      v_min_2 = input(4);
-      v_max_2 = input(5);
+      v_post_min_12 = input(6);
+      v_post_max_12 = input(7);
+    }
+
+    if (dynamic_v_pre_min_max_21)
+    {
+      v_pre_min_21 = input(8);
+      v_pre_max_21 = input(9);
+    }
+
+    if (dynamic_v_post_min_max_21)
+    {
+      v_post_min_21 = input(10);
+      v_post_max_21 = input(11);
     }
   }
 
   const bool use_syn_12 = use_i_fast_12 || use_i_slow_12;
   const bool use_syn_21 = use_i_fast_21 || use_i_slow_21;
 
-  double v1, v2;
-  if (use_syn_12 || use_syn_21)
-  {
-    v1 = input(0); // Voltaje neurona 1
-    v2 = input(1); // Voltaje neurona 2
-  }
-
-  double val_i_slow_12 = 0.0, val_i_fast_12 = 0.0, val_i_slow_21 = 0.0, val_i_fast_21 = 0.0;
+  double v_pre_12 = 0.0;
+  double v_post_12 = 0.0;
+  double v_pre_21 = 0.0;
+  double v_post_21 = 0.0;
 
   // --- Lectura del double-buffer atómico ---
   // Comprueba si el hilo NRT está pidiendo datos (RT_storing)
@@ -252,25 +277,33 @@ void BidirectionalChemicalSynapseBO::execute(void)
   // --- Cálculo de corrientes sinápticas dirección 1->2 ---
   if (use_syn_12)
   {
+    v_pre_12 = input(0);
+    v_post_12 = input(1);
+
     const ChemicalSynapseParams &curr_params_12 = params_12[curr_synapse_idx];
     if (use_i_slow_12)
-      val_i_slow_12 = compute_i_slow(m_slow_12, v1, v2, curr_params_12);
+      i_slow_12 = compute_i_slow(m_slow_12, v_pre_12, v_post_12, curr_params_12);
     if (use_i_fast_12)
-      val_i_fast_12 = compute_i_fast(v1, v2, curr_params_12);
+      i_fast_12 = compute_i_fast(v_pre_12, v_post_12, curr_params_12);
   }
-  const double val_i_12 = val_i_fast_12 + val_i_slow_12;
+
+  const double val_i_12 = i_fast_12 + i_slow_12;
   output(0) = std::clamp(val_i_12, i_min_12, i_max_12);
 
   // --- Cálculo de corrientes sinápticas dirección 2->1 ---
   if (use_syn_21)
   {
+    v_pre_21 = input(2);
+    v_post_21 = input(3);
+
     const ChemicalSynapseParams &curr_params_21 = params_21[curr_synapse_idx];
     if (use_i_slow_21)
-      val_i_slow_21 = compute_i_slow(m_slow_21, v2, v1, curr_params_21);
+      i_slow_21 = compute_i_slow(m_slow_21, v_pre_21, v_post_21, curr_params_21);
     if (use_i_fast_21)
-      val_i_fast_21 = compute_i_fast(v2, v1, curr_params_21);
+      i_fast_21 = compute_i_fast(v_pre_21, v_post_21, curr_params_21);
   }
-  const double val_i_21 = val_i_fast_21 + val_i_slow_21;
+
+  const double val_i_21 = i_fast_21 + i_slow_21;
   output(1) = std::clamp(val_i_21, i_min_21, i_max_21);
 
   // --- Almacenamiento de señales para la BO (cuando RT_storing está activo) ---
@@ -282,19 +315,19 @@ void BidirectionalChemicalSynapseBO::execute(void)
     {
       if (use_syn_12)
       {
-        v_sig_1[storing_idx] = v1;
+        v_pre_sig_12[storing_idx] = v_pre_12;
         if (use_i_fast_12)
-          i_fast_sig_12[storing_idx] = val_i_fast_12;
+          i_fast_sig_12[storing_idx] = i_fast_12;
         if (use_i_slow_12)
-          i_slow_sig_12[storing_idx] = val_i_slow_12;
+          i_slow_sig_12[storing_idx] = i_slow_12;
       }
       if (use_syn_21)
       {
-        v_sig_2[storing_idx] = v2;
+        v_pre_sig_21[storing_idx] = v_pre_21;
         if (use_i_fast_21)
-          i_fast_sig_21[storing_idx] = val_i_fast_21;
+          i_fast_sig_21[storing_idx] = i_fast_21;
         if (use_i_slow_21)
-          i_slow_sig_21[storing_idx] = val_i_slow_21;
+          i_slow_sig_21[storing_idx] = i_slow_21;
       }
       storing_idx++;
     }
@@ -323,18 +356,31 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
   fc_1 = FILTER_FC;
   fc_2 = FILTER_FC;
 
-  dynamic_v_min_max_1 = 0u;
-  v_min_1 = 0.0;
-  v_max_1 = 0.0;
+  dynamic_v_pre_min_max_12 = 0u;
+  v_pre_min_12 = 0.0;
+  v_pre_max_12 = 0.0;
 
-  dynamic_v_min_max_2 = 0u;
-  v_min_2 = 0.0;
-  v_max_2 = 0.0;
+  dynamic_v_post_min_max_12 = 0u;
+  v_post_min_12 = 0.0;
+  v_post_max_12 = 0.0;
+
+  dynamic_v_pre_min_max_21 = 0u;
+  v_pre_min_21 = 0.0;
+  v_pre_max_21 = 0.0;
+
+  dynamic_v_post_min_max_21 = 0u;
+  v_post_min_21 = 0.0;
+  v_post_max_21 = 0.0;
 
   i_min_12 = 0.0;
   i_max_12 = 0.0;
   i_min_21 = 0.0;
   i_max_21 = 0.0;
+
+  i_fast_12 = 0.0;
+  i_slow_12 = 0.0;
+  i_fast_21 = 0.0;
+  i_slow_21 = 0.0;
 
   verbose.store(0u, std::memory_order_relaxed);
 
@@ -407,6 +453,10 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
     dt = period * dt_factor;                                // dt del RK6(5) para m_slow
 
     setState("BO evaluations completed", evaluations_completed);
+    setState("I_fast 1->2 (nA)", i_fast_12);
+    setState("I_slow 1->2 (nA)", i_slow_12);
+    setState("I_fast 2->1 (nA)", i_fast_21);
+    setState("I_slow 2->1 (nA)", i_slow_21);
 
     setParameter("BO initial samples", initial_samples);
     setParameter("BO iterations", iterations);
@@ -420,12 +470,18 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
     setParameter("BO cutoff frequency 1 (kHz)", fc_1);
     setParameter("BO cutoff frequency 2 (kHz)", fc_2);
 
-    setParameter("Dynamic voltage min and max 1 (1/0)", dynamic_v_min_max_1);
-    setParameter("Voltage min 1 (V)", v_min_1);
-    setParameter("Voltage max 1 (V)", v_max_1);
-    setParameter("Dynamic voltage min and max 2 (1/0)", dynamic_v_min_max_2);
-    setParameter("Voltage min 2 (V)", v_min_2);
-    setParameter("Voltage max 2 (V)", v_max_2);
+    setParameter("Dynamic V_pre min and max 1->2 (1/0)", dynamic_v_pre_min_max_12);
+    setParameter("V_pre min 1->2 (mV)", v_pre_min_12);
+    setParameter("V_pre max 1->2 (mV)", v_pre_max_12);
+    setParameter("Dynamic V_post min and max 1->2 (1/0)", dynamic_v_post_min_max_12);
+    setParameter("V_post min 1->2 (mV)", v_post_min_12);
+    setParameter("V_post max 1->2 (mV)", v_post_max_12);
+    setParameter("Dynamic V_pre min and max 2->1 (1/0)", dynamic_v_pre_min_max_21);
+    setParameter("V_pre min 2->1 (mV)", v_pre_min_21);
+    setParameter("V_pre max 2->1 (mV)", v_pre_max_21);
+    setParameter("Dynamic V_post min and max 2->1 (1/0)", dynamic_v_post_min_max_21);
+    setParameter("V_post min 2->1 (mV)", v_post_min_21);
+    setParameter("V_post max 2->1 (mV)", v_post_max_21);
 
     setParameter("Current min 1->2 (nA)", i_min_12);
     setParameter("Current max 1->2 (nA)", i_max_12);
@@ -470,21 +526,40 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
       fc_1 = getParameter("BO cutoff frequency 1 (kHz)").toDouble();
       fc_2 = getParameter("BO cutoff frequency 2 (kHz)").toDouble();
 
-      dynamic_v_min_max_1 = getParameter("Dynamic voltage min and max 1 (1/0)").toUInt();
-      const double new_v_min_1 = getParameter("Voltage min 1 (V)").toDouble();
-      const double new_v_max_1 = getParameter("Voltage max 1 (V)").toDouble();
-      if (!dynamic_v_min_max_1)
+      dynamic_v_pre_min_max_12 = getParameter("Dynamic V_pre min and max 1->2 (1/0)").toUInt();
+      const double new_v_pre_min_12 = getParameter("V_pre min 1->2 (mV)").toDouble();
+      const double new_v_pre_max_12 = getParameter("V_pre max 1->2 (mV)").toDouble();
+      if (!dynamic_v_pre_min_max_12)
       {
-        v_min_1 = new_v_min_1;
-        v_max_1 = new_v_max_1;
+        v_pre_min_12 = new_v_pre_min_12;
+        v_pre_max_12 = new_v_pre_max_12;
       }
-      dynamic_v_min_max_2 = getParameter("Dynamic voltage min and max 2 (1/0)").toUInt();
-      const double new_v_min_2 = getParameter("Voltage min 2 (V)").toDouble();
-      const double new_v_max_2 = getParameter("Voltage max 2 (V)").toDouble();
-      if (!dynamic_v_min_max_2)
+
+      dynamic_v_post_min_max_12 = getParameter("Dynamic V_post min and max 1->2 (1/0)").toUInt();
+      const double new_v_post_min_12 = getParameter("V_post min 1->2 (mV)").toDouble();
+      const double new_v_post_max_12 = getParameter("V_post max 1->2 (mV)").toDouble();
+      if (!dynamic_v_post_min_max_12)
       {
-        v_min_2 = new_v_min_2;
-        v_max_2 = new_v_max_2;
+        v_post_min_12 = new_v_post_min_12;
+        v_post_max_12 = new_v_post_max_12;
+      }
+
+      dynamic_v_pre_min_max_21 = getParameter("Dynamic V_pre min and max 2->1 (1/0)").toUInt();
+      const double new_v_pre_min_21 = getParameter("V_pre min 2->1 (mV)").toDouble();
+      const double new_v_pre_max_21 = getParameter("V_pre max 2->1 (mV)").toDouble();
+      if (!dynamic_v_pre_min_max_21)
+      {
+        v_pre_min_21 = new_v_pre_min_21;
+        v_pre_max_21 = new_v_pre_max_21;
+      }
+
+      dynamic_v_post_min_max_21 = getParameter("Dynamic V_post min and max 2->1 (1/0)").toUInt();
+      const double new_v_post_min_21 = getParameter("V_post min 2->1 (mV)").toDouble();
+      const double new_v_post_max_21 = getParameter("V_post max 2->1 (mV)").toDouble();
+      if (!dynamic_v_post_min_max_21)
+      {
+        v_post_min_21 = new_v_post_min_21;
+        v_post_max_21 = new_v_post_max_21;
       }
 
       double new_dt_factor = getParameter("factor in dt (ms) = period (ms) * factor").toDouble();
@@ -498,29 +573,37 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
       use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
       use_i_fast_21 = getParameter("Use I_fast 2->1 (1/0)").toUInt();
       use_i_slow_21 = getParameter("Use I_slow 2->1 (1/0)").toUInt();
+      if (!use_i_fast_12)
+        i_fast_12 = 0.0;
+      if (!use_i_slow_12)
+        i_slow_12 = 0.0;
+      if (!use_i_fast_21)
+        i_fast_21 = 0.0;
+      if (!use_i_slow_21)
+        i_slow_21 = 0.0;
 
       // Actualiza los parámetros sinápticos del buffer activo actual
       const size_t curr_synapse_idx = synapse_idx.load(std::memory_order_relaxed);
 
-      params_12[curr_synapse_idx].e_syn = getParameter("E_syn 1->2 (V)").toDouble();
-      params_12[curr_synapse_idx].g_fast = getParameter("g_fast 1->2 (nS)").toDouble();
-      params_12[curr_synapse_idx].s_fast = getParameter("s_fast 1->2 (1/V)").toDouble();
-      params_12[curr_synapse_idx].v_fast = getParameter("V_fast 1->2 (V)").toDouble();
-      params_12[curr_synapse_idx].g_slow = getParameter("g_slow 1->2 (nS)").toDouble();
+      params_12[curr_synapse_idx].e_syn = getParameter("E_syn 1->2 (mV)").toDouble();
+      params_12[curr_synapse_idx].g_fast = getParameter("g_fast 1->2 (uS)").toDouble();
+      params_12[curr_synapse_idx].s_fast = getParameter("s_fast 1->2 (1/mV)").toDouble();
+      params_12[curr_synapse_idx].v_fast = getParameter("V_fast 1->2 (mV)").toDouble();
+      params_12[curr_synapse_idx].g_slow = getParameter("g_slow 1->2 (uS)").toDouble();
       params_12[curr_synapse_idx].k1 = getParameter("k1 1->2 (1/ms)").toDouble();
       params_12[curr_synapse_idx].k2 = getParameter("k2 1->2 (1/ms)").toDouble();
-      params_12[curr_synapse_idx].s_slow = getParameter("s_slow 1->2 (1/V)").toDouble();
-      params_12[curr_synapse_idx].v_slow = getParameter("V_slow 1->2 (V)").toDouble();
+      params_12[curr_synapse_idx].s_slow = getParameter("s_slow 1->2 (1/mV)").toDouble();
+      params_12[curr_synapse_idx].v_slow = getParameter("V_slow 1->2 (mV)").toDouble();
 
-      params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1 (V)").toDouble();
-      params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1 (nS)").toDouble();
-      params_21[curr_synapse_idx].s_fast = getParameter("s_fast 2->1 (1/V)").toDouble();
-      params_21[curr_synapse_idx].v_fast = getParameter("V_fast 2->1 (V)").toDouble();
-      params_21[curr_synapse_idx].g_slow = getParameter("g_slow 2->1 (nS)").toDouble();
+      params_21[curr_synapse_idx].e_syn = getParameter("E_syn 2->1 (mV)").toDouble();
+      params_21[curr_synapse_idx].g_fast = getParameter("g_fast 2->1 (uS)").toDouble();
+      params_21[curr_synapse_idx].s_fast = getParameter("s_fast 2->1 (1/mV)").toDouble();
+      params_21[curr_synapse_idx].v_fast = getParameter("V_fast 2->1 (mV)").toDouble();
+      params_21[curr_synapse_idx].g_slow = getParameter("g_slow 2->1 (uS)").toDouble();
       params_21[curr_synapse_idx].k1 = getParameter("k1 2->1 (1/ms)").toDouble();
       params_21[curr_synapse_idx].k2 = getParameter("k2 2->1 (1/ms)").toDouble();
-      params_21[curr_synapse_idx].s_slow = getParameter("s_slow 2->1 (1/V)").toDouble();
-      params_21[curr_synapse_idx].v_slow = getParameter("V_slow 2->1 (V)").toDouble();
+      params_21[curr_synapse_idx].s_slow = getParameter("s_slow 2->1 (1/mV)").toDouble();
+      params_21[curr_synapse_idx].v_slow = getParameter("V_slow 2->1 (mV)").toDouble();
     }
 
     break;
@@ -565,6 +648,16 @@ void BidirectionalChemicalSynapseBO::customizeGUI(void)
   BO_button = new QPushButton("Start BO");
   QObject::connect(BO_button, SIGNAL(clicked()), this, SLOT(toggle_BO_event()));
   customlayout->addWidget(BO_button, 0, 0);
+
+  parameter["I_fast 1->2 (nA)"].label->hide();
+  parameter["I_fast 1->2 (nA)"].edit->hide();
+  parameter["I_slow 1->2 (nA)"].label->hide();
+  parameter["I_slow 1->2 (nA)"].edit->hide();
+  parameter["I_fast 2->1 (nA)"].label->hide();
+  parameter["I_fast 2->1 (nA)"].edit->hide();
+  parameter["I_slow 2->1 (nA)"].label->hide();
+  parameter["I_slow 2->1 (nA)"].edit->hide();
+
   setLayout(customlayout);
 }
 
@@ -619,12 +712,18 @@ void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
   parameter["BO cutoff frequency 1 (kHz)"].edit->setReadOnly(read_only);
   parameter["BO cutoff frequency 2 (kHz)"].edit->setReadOnly(read_only);
 
-  parameter["Dynamic voltage min and max 1 (1/0)"].edit->setReadOnly(read_only);
-  parameter["Voltage min 1 (V)"].edit->setReadOnly(read_only);
-  parameter["Voltage max 1 (V)"].edit->setReadOnly(read_only);
-  parameter["Dynamic voltage min and max 2 (1/0)"].edit->setReadOnly(read_only);
-  parameter["Voltage min 2 (V)"].edit->setReadOnly(read_only);
-  parameter["Voltage max 2 (V)"].edit->setReadOnly(read_only);
+  parameter["Dynamic V_pre min and max 1->2 (1/0)"].edit->setReadOnly(read_only);
+  parameter["V_pre min 1->2 (mV)"].edit->setReadOnly(read_only);
+  parameter["V_pre max 1->2 (mV)"].edit->setReadOnly(read_only);
+  parameter["Dynamic V_post min and max 1->2 (1/0)"].edit->setReadOnly(read_only);
+  parameter["V_post min 1->2 (mV)"].edit->setReadOnly(read_only);
+  parameter["V_post max 1->2 (mV)"].edit->setReadOnly(read_only);
+  parameter["Dynamic V_pre min and max 2->1 (1/0)"].edit->setReadOnly(read_only);
+  parameter["V_pre min 2->1 (mV)"].edit->setReadOnly(read_only);
+  parameter["V_pre max 2->1 (mV)"].edit->setReadOnly(read_only);
+  parameter["Dynamic V_post min and max 2->1 (1/0)"].edit->setReadOnly(read_only);
+  parameter["V_post min 2->1 (mV)"].edit->setReadOnly(read_only);
+  parameter["V_post max 2->1 (mV)"].edit->setReadOnly(read_only);
 
   parameter["factor in dt (ms) = period (ms) * factor"].edit->setReadOnly(read_only);
 
@@ -635,39 +734,39 @@ void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
 
   if (use_i_fast_12 || use_i_slow_12)
   {
-    parameter["E_syn 1->2 (V)"].edit->setReadOnly(read_only);
+    parameter["E_syn 1->2 (mV)"].edit->setReadOnly(read_only);
     if (use_i_fast_12)
     {
-      parameter["g_fast 1->2 (nS)"].edit->setReadOnly(read_only);
-      parameter["s_fast 1->2 (1/V)"].edit->setReadOnly(read_only);
-      parameter["V_fast 1->2 (V)"].edit->setReadOnly(read_only);
+      parameter["g_fast 1->2 (uS)"].edit->setReadOnly(read_only);
+      parameter["s_fast 1->2 (1/mV)"].edit->setReadOnly(read_only);
+      parameter["V_fast 1->2 (mV)"].edit->setReadOnly(read_only);
     }
     if (use_i_slow_12)
     {
-      parameter["g_slow 1->2 (nS)"].edit->setReadOnly(read_only);
+      parameter["g_slow 1->2 (uS)"].edit->setReadOnly(read_only);
       parameter["k1 1->2 (1/ms)"].edit->setReadOnly(read_only);
       parameter["k2 1->2 (1/ms)"].edit->setReadOnly(read_only);
-      parameter["s_slow 1->2 (1/V)"].edit->setReadOnly(read_only);
-      parameter["V_slow 1->2 (V)"].edit->setReadOnly(read_only);
+      parameter["s_slow 1->2 (1/mV)"].edit->setReadOnly(read_only);
+      parameter["V_slow 1->2 (mV)"].edit->setReadOnly(read_only);
     }
   }
 
   if (use_i_fast_21 || use_i_slow_21)
   {
-    parameter["E_syn 2->1 (V)"].edit->setReadOnly(read_only);
+    parameter["E_syn 2->1 (mV)"].edit->setReadOnly(read_only);
     if (use_i_fast_21)
     {
-      parameter["g_fast 2->1 (nS)"].edit->setReadOnly(read_only);
-      parameter["s_fast 2->1 (1/V)"].edit->setReadOnly(read_only);
-      parameter["V_fast 2->1 (V)"].edit->setReadOnly(read_only);
+      parameter["g_fast 2->1 (uS)"].edit->setReadOnly(read_only);
+      parameter["s_fast 2->1 (1/mV)"].edit->setReadOnly(read_only);
+      parameter["V_fast 2->1 (mV)"].edit->setReadOnly(read_only);
     }
     if (use_i_slow_21)
     {
-      parameter["g_slow 2->1 (nS)"].edit->setReadOnly(read_only);
+      parameter["g_slow 2->1 (uS)"].edit->setReadOnly(read_only);
       parameter["k1 2->1 (1/ms)"].edit->setReadOnly(read_only);
       parameter["k2 2->1 (1/ms)"].edit->setReadOnly(read_only);
-      parameter["s_slow 2->1 (1/V)"].edit->setReadOnly(read_only);
-      parameter["V_slow 2->1 (V)"].edit->setReadOnly(read_only);
+      parameter["s_slow 2->1 (1/mV)"].edit->setReadOnly(read_only);
+      parameter["V_slow 2->1 (mV)"].edit->setReadOnly(read_only);
     }
   }
 }
@@ -683,39 +782,39 @@ void BidirectionalChemicalSynapseBO::update_params_gui(void)
 
   if (use_i_fast_12 || use_i_slow_12)
   {
-    setParameter("E_syn 1->2 (V)", params_12[curr_synapse_idx].e_syn);
+    setParameter("E_syn 1->2 (mV)", params_12[curr_synapse_idx].e_syn);
     if (use_i_fast_12)
     {
-      setParameter("g_fast 1->2 (nS)", params_12[curr_synapse_idx].g_fast);
-      setParameter("s_fast 1->2 (1/V)", params_12[curr_synapse_idx].s_fast);
-      setParameter("V_fast 1->2 (V)", params_12[curr_synapse_idx].v_fast);
+      setParameter("g_fast 1->2 (uS)", params_12[curr_synapse_idx].g_fast);
+      setParameter("s_fast 1->2 (1/mV)", params_12[curr_synapse_idx].s_fast);
+      setParameter("V_fast 1->2 (mV)", params_12[curr_synapse_idx].v_fast);
     }
     if (use_i_slow_12)
     {
-      setParameter("g_slow 1->2 (nS)", params_12[curr_synapse_idx].g_slow);
+      setParameter("g_slow 1->2 (uS)", params_12[curr_synapse_idx].g_slow);
       setParameter("k1 1->2 (1/ms)", params_12[curr_synapse_idx].k1);
       setParameter("k2 1->2 (1/ms)", params_12[curr_synapse_idx].k2);
-      setParameter("s_slow 1->2 (1/V)", params_12[curr_synapse_idx].s_slow);
-      setParameter("V_slow 1->2 (V)", params_12[curr_synapse_idx].v_slow);
+      setParameter("s_slow 1->2 (1/mV)", params_12[curr_synapse_idx].s_slow);
+      setParameter("V_slow 1->2 (mV)", params_12[curr_synapse_idx].v_slow);
     }
   }
 
   if (use_i_fast_21 || use_i_slow_21)
   {
-    setParameter("E_syn 2->1 (V)", params_21[curr_synapse_idx].e_syn);
+    setParameter("E_syn 2->1 (mV)", params_21[curr_synapse_idx].e_syn);
     if (use_i_fast_21)
     {
-      setParameter("g_fast 2->1 (nS)", params_21[curr_synapse_idx].g_fast);
-      setParameter("s_fast 2->1 (1/V)", params_21[curr_synapse_idx].s_fast);
-      setParameter("V_fast 2->1 (V)", params_21[curr_synapse_idx].v_fast);
+      setParameter("g_fast 2->1 (uS)", params_21[curr_synapse_idx].g_fast);
+      setParameter("s_fast 2->1 (1/mV)", params_21[curr_synapse_idx].s_fast);
+      setParameter("V_fast 2->1 (mV)", params_21[curr_synapse_idx].v_fast);
     }
     if (use_i_slow_21)
     {
-      setParameter("g_slow 2->1 (nS)", params_21[curr_synapse_idx].g_slow);
+      setParameter("g_slow 2->1 (uS)", params_21[curr_synapse_idx].g_slow);
       setParameter("k1 2->1 (1/ms)", params_21[curr_synapse_idx].k1);
       setParameter("k2 2->1 (1/ms)", params_21[curr_synapse_idx].k2);
-      setParameter("s_slow 2->1 (1/V)", params_21[curr_synapse_idx].s_slow);
-      setParameter("V_slow 2->1 (V)", params_21[curr_synapse_idx].v_slow);
+      setParameter("s_slow 2->1 (1/mV)", params_21[curr_synapse_idx].s_slow);
+      setParameter("V_slow 2->1 (mV)", params_21[curr_synapse_idx].v_slow);
     }
   }
 }

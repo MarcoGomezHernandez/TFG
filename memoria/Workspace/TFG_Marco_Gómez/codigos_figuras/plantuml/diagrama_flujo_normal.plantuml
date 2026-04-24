@@ -1,0 +1,127 @@
+@startuml
+
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+
+title Flujo normal desde el inicio de la BO hasta la publicación del mejor resultado
+
+actor       Usuario     as U
+participant "Hilo\nGUI"         as GUI
+participant "Hilo\nRT"          as RT
+participant "Hilo\nNRT_BO"      as NRT
+
+== Inicio de la BO ==
+
+U -> GUI : Click "Start BO"
+activate GUI
+opt No se había hecho join() al hilo NRT_BO anterior
+  GUI -> GUI : join() del hilo NRT_BO
+  GUI -> GUI : stop_BO.store(false, relaxed)
+end
+GUI -> GUI : BO_running = true\nBO_button->setText("Stop BO")
+GUI ->> U : Ve el botón "Stop BO" en lugar de "Start BO"
+GUI -> GUI : set_params_read_only(true)
+GUI ->> U: No puede modificar los campos necesarios
+GUI ->> NRT : Hilo NRT_BO(period) lanzado
+deactivate GUI
+
+activate NRT
+NRT -> NRT : num_elements = evaluation_time * fs\nRedimensiona buffers (i_fast_sig_XX, i_slow_sig_XX, v_pre_sig_XX) a tamaño num_elements
+NRT -> NRT : Inicializa variables de la BO
+NRT ->> GUI : invokeMethod("set_evaluations_completed", 0)
+activate GUI
+GUI -> GUI : evaluations_completed = 0
+GUI ->> U : Muestra 0 evaluaciones completadas
+deactivate GUI
+
+== Bucle de evaluación de los candidatos ==
+
+loop Para cada candidato (LHS + iteraciones BO)
+  par
+    NRT -> NRT : Decodifica parámetros del candidato
+    loop last_synapse_idx_read_RT.load(relaxed) != curr_synapse_idx
+      NRT -> NRT : sleep_for(ACTIVE_WAIT_MS)
+    end
+  else
+    RT ->> NRT : last_synapse_idx_read_RT.store(curr_synapse_idx, relaxed)
+  end
+  NRT -> NRT : new_synapse_idx = 1 - curr_synapse_idx
+  NRT -> NRT : Escribe parámetros del candidato en params_XX[new_synapse_idx]
+  NRT ->> RT : synapse_idx.store(new_synapse_idx, **release**)
+
+  par
+    RT -> RT : curr_synapse_idx = synapse_idx.load(**acquire**)
+    activate RT
+    RT ->> NRT : last_synapse_idx_read_RT.store(curr_synapse_idx, relaxed)
+    loop Bucle de RT
+      RT -> RT : Usa params_XX[curr_synapse_idx] para calcular sinapsis
+    end
+  else
+    NRT -> NRT : curr_synapse_idx = new_synapse_idx
+    NRT -> NRT : sleep_for(stabilization_time)
+    NRT -> NRT : storing_idx = 0
+  end
+
+  NRT ->> RT : RT_storing.store(true, **release**)
+  par
+    loop Bucle de RT, mientras\nRT_storing.load(relaxed) == true y storing_idx < num_elements
+      RT -> RT : Usa params_XX[curr_synapse_idx] para calcular sinapsis
+      RT -> RT : Guarda datos en buffers (i_fast_sig_XX, i_slow_sig_XX, v_pre_sig_XX)\nstoring_idx++
+    end
+    RT ->> NRT : RT_storing.store(false, **release**)
+    deactivate RT
+  else
+    loop RT_storing.load(**acquire**) == true
+      NRT -> NRT : sleep_for(ACTIVE_WAIT_MS)
+    end
+  end
+
+  NRT -> NRT : Evalúa candidato mediante buffers
+
+  NRT ->> GUI : invokeMethod("set_evaluations_completed", evaluations_completed + 1)
+  activate GUI
+  GUI -> GUI : evaluations_completed++
+  GUI ->> U : Muestra aumento en 1 de evaluaciones completadas
+  deactivate GUI
+
+end
+
+== Publicación del mejor resultado y finalización ==
+
+par
+  NRT -> NRT : Decodifica parámetros del mejor candidato
+  loop last_synapse_idx_read_RT.load(relaxed) != curr_synapse_idx
+    NRT -> NRT : sleep(ACTIVE_WAIT_MS)
+  end
+else
+  RT ->> NRT : last_synapse_idx_read_RT.store(curr_synapse_idx, relaxed)
+end
+
+NRT -> NRT : new_synapse_idx = 1 - curr_synapse_idx
+NRT -> NRT : Escribe parámetros del mejor candidato en params_XX[new_synapse_idx]
+
+par
+  NRT ->> RT : synapse_idx.store(new_synapse_idx, **release**)
+  RT -> RT : curr_synapse_idx = synapse_idx.load(**acquire**)
+  activate RT
+  RT ->> NRT : last_synapse_idx_read_RT.store(curr_synapse_idx, relaxed)
+  deactivate RT
+else
+  NRT ->> GUI : invokeMethod("stop_BO_event_async")
+  deactivate NRT
+end
+
+activate GUI
+GUI -> GUI : update_params_gui()
+GUI ->> U : Ve los parámetros del mejor candidato
+GUI -> GUI : set_params_read_only(false)
+GUI ->> U : Puede modificar todos los campos
+GUI -> GUI : BO_button->setText("Start BO")
+GUI ->> U : Ve el botón "Start BO" en lugar de "Stop BO"
+GUI -> GUI : BO_running = false
+deactivate GUI
+
+GUI -> NRT: join() del hilo NRT_BO (cuando se vuelva a pulsar "Start BO" o en el destructor de la clase del módulo)
+destroy NRT
+
+@enduml

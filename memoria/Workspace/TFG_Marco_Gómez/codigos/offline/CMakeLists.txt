@@ -36,6 +36,8 @@ endif()
 add_executable(consts_calculator consts_calculator.cpp scaling.cpp)
 target_link_libraries(consts_calculator PRIVATE kfr kfr_dsp)
 
+find_package(yaml-cpp REQUIRED)
+
 add_executable(bo main.cpp scaling.cpp)
 target_link_libraries(bo PRIVATE 
     kfr 
@@ -45,4 +47,5 @@ target_link_libraries(bo PRIVATE
     Boost::filesystem 
     Boost::thread 
     nlopt
+    yaml-cpp
 )

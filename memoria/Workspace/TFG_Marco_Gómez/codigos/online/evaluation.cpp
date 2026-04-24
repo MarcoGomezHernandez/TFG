@@ -334,7 +334,7 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
     {
 
         ChemicalSynapseEvaluation score_12 = evaluate_sigs_one_direction(
-            v_sig_1,
+            v_pre_sig_12,
             i_fast_sig_12,
             i_slow_sig_12,
             effective_pad_12,
@@ -355,7 +355,7 @@ ChemicalSynapseEvaluation BidirectionalChemicalSynapseBO::evaluate_candidate(
     {
 
         ChemicalSynapseEvaluation score_21 = evaluate_sigs_one_direction(
-            v_sig_2,
+            v_pre_sig_21,
             i_fast_sig_21,
             i_slow_sig_21,
             effective_pad_21,

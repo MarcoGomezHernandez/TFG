@@ -16,8 +16,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef RTHYBRID_BIDIRECTIONAL_CHEMICAL_SYNAPSE_BO_H
-#define RTHYBRID_BIDIRECTIONAL_CHEMICAL_SYNAPSE_BO_H
+#ifndef BIDIRECTIONAL_CHEMICAL_SYNAPSE_BO_H
+#define BIDIRECTIONAL_CHEMICAL_SYNAPSE_BO_H
 
 #include <default_gui_model.h>
 #include <kfr/all.hpp>
@@ -53,6 +53,10 @@ protected:
 
 private:
   double evaluations_completed;               // Estado: número de evaluaciones completadas
+  double i_fast_12;                           // Estado: I_fast 1->2
+  double i_slow_12;                           // Estado: I_slow 1->2
+  double i_fast_21;                           // Estado: I_fast 2->1
+  double i_slow_21;                           // Estado: I_slow 2->1
   unsigned int initial_samples;               // Muestras iniciales LHS de la BO
   unsigned int iterations;                    // Iteraciones de BO tras el muestreo inicial
   double evaluation_time, stabilization_time; // Tiempos en ms
@@ -64,10 +68,12 @@ private:
   // Frecuencias de corte Butterworth (kHz) por dirección
   double fc_1, fc_2;
 
-  // Modo de adquisición de v_min/v_max: 0 = manual, 1 = dinámico (desde inputs)
-  unsigned int dynamic_v_min_max_1, dynamic_v_min_max_2;
-  // Rangos de voltaje de cada neurona (para calcular rangos de búsqueda)
-  double v_min_1, v_max_1, v_min_2, v_max_2;
+  // Modos de adquisición de v_pre/v_post por dirección: 0 = manual, 1 = dinámico (desde inputs)
+  unsigned int dynamic_v_pre_min_max_12, dynamic_v_post_min_max_12;
+  unsigned int dynamic_v_pre_min_max_21, dynamic_v_post_min_max_21;
+  // Rangos de voltaje por dirección (para calcular rangos de búsqueda)
+  double v_pre_min_12, v_pre_max_12, v_post_min_12, v_post_max_12;
+  double v_pre_min_21, v_pre_max_21, v_post_min_21, v_post_max_21;
 
   // Clamps de corriente de salida por dirección
   double i_min_12, i_max_12, i_min_21, i_max_21;
@@ -113,8 +119,8 @@ private:
   kfr::univector<double> i_fast_sig_21;
   kfr::univector<double> i_slow_sig_12;
   kfr::univector<double> i_slow_sig_21;
-  kfr::univector<double> v_sig_1;
-  kfr::univector<double> v_sig_2;
+  kfr::univector<double> v_pre_sig_12;
+  kfr::univector<double> v_pre_sig_21;
 
   QPushButton *BO_button;
 

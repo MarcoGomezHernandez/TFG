@@ -320,14 +320,13 @@ ChemicalSynapseEvaluation evaluate_candidate(
         model_neur.add_synaptic_input(-i_val);
         model_neur.step(dt);
         // Sub-pasos de interpolación dentro de cada muestra
-        for (size_t k = 1; k < points_factor; k++)
+        for (size_t k = 1; k < points_factor; k++, interp_pts_counter++)
         {
 
             synapse.step(dt, interpolated_points_ptr[interp_pts_counter], get_v_neur(model_neur));
             const double i_interp_val = std::clamp(synapse.get(i_enum), i_min, i_max);
             model_neur.add_synaptic_input(-i_interp_val);
             model_neur.step(dt);
-            interp_pts_counter++;
         }
     }
 
@@ -336,8 +335,7 @@ ChemicalSynapseEvaluation evaluate_candidate(
 
     for (; v_pre_sig_idx < total_size - 1; v_pre_sig_idx++, syn_sig_idx++)
     {
-        const double v_post = get_v_neur(model_neur);
-        synapse.step(dt, v_pre_sig_ptr[v_pre_sig_idx], v_post);
+        synapse.step(dt, v_pre_sig_ptr[v_pre_sig_idx], get_v_neur(model_neur));
         const double i_val = std::clamp(synapse.get(i_enum), i_min, i_max);
         model_neur.add_synaptic_input(-i_val);
         model_neur.step(dt);
@@ -348,20 +346,17 @@ ChemicalSynapseEvaluation evaluate_candidate(
         if (use_i_slow)
             i_slow_sig_ptr[syn_sig_idx] = synapse.get(i_slow_enum);
         // Sub-pasos interpolados (no se registran, solo se simula para mantener estado)
-        for (size_t k = 1; k < points_factor; k++)
+        for (size_t k = 1; k < points_factor; k++, interp_pts_counter++)
         {
             synapse.step(dt, interpolated_points_ptr[interp_pts_counter], get_v_neur(model_neur));
             const double i_interp_val = std::clamp(synapse.get(i_enum), i_min, i_max);
             model_neur.add_synaptic_input(-i_interp_val);
             model_neur.step(dt);
-            interp_pts_counter++;
         }
     }
 
     // Último punto (sin sub-pasos posteriores)
-    const double v_post = get_v_neur(model_neur);
-
-    synapse.step(dt, v_pre_sig_ptr[v_pre_sig_idx], v_post);
+    synapse.step(dt, v_pre_sig_ptr[v_pre_sig_idx], get_v_neur(model_neur));
     const double i_val = std::clamp(synapse.get(i_enum), i_min, i_max);
     model_neur.add_synaptic_input(-i_val);
     model_neur.step(dt);

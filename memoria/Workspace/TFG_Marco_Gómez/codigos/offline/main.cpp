@@ -9,16 +9,19 @@
 #include "utils.hpp"
 #include "scaling.hpp"
 
+#include <yaml-cpp/yaml.h>
+#include <fstream>
+
 typedef RungeKutta4 Integrator;
 typedef HindmarshRoseNeuron<Integrator> NeuronType;
 
 int main(int argc, char *argv[])
 {
 
-    if (argc < 20)
+    if (argc < 21)
     {
         std::cerr << "Usage: " << argv[0]
-                  << " <csv_path> <column_idx> <csv_step (ms)> <start_time (ms)> <stabilization_time (ms)> <evaluation_time (ms)> <observation_time (ms)> <initial_samples> <iterations> <search_phase> <check_drift> <syn_model_step_factor> <syn_component> <cutoff_frequency (kHz)> <expected_i_min> <expected_i_max> <i_min> <i_max> <verbose>"
+                  << " <csv_path> <column_idx> <csv_step (ms)> <start_time (ms)> <stabilization_time (ms)> <evaluation_time (ms)> <observation_time (ms)> <initial_samples> <iterations> <search_phase> <check_drift> <syn_model_step_factor> <syn_component> <cutoff_frequency (kHz)> <expected_i_min> <expected_i_max> <i_min> <i_max> <verbose> <output_yaml>"
                   << std::endl;
         std::cerr << "  If we consider the post neuron in V, the currents are in nA" << std::endl;
         std::cerr << "  syn_component: 0=ifast  1=islow  2=both" << std::endl;
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
     const double i_min = std::atof(argv[17]);                                          // Clamp mínimo de salida (nA)
     const double i_max = std::atof(argv[18]);                                          // Clamp máximo de salida (nA)
     const bool verbose = (std::atoi(argv[19]) == 1);
+    const std::string out_yaml_path = argv[20];
 
     const std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
 
@@ -84,18 +88,23 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        // Imprime los mejores parámetros encontrados
+        // Imprime los mejores parámetros encontrados en el yaml
         const ChemicalSynapseParams &best_params = *best_params_opt;
 
-        std::cout << "    Esyn_values = [" << best_params.e_syn << "]" << std::endl;
-        std::cout << "    gfast_values = [" << best_params.g_fast << "]" << std::endl;
-        std::cout << "    sfast_values = [" << best_params.s_fast << "]" << std::endl;
-        std::cout << "    Vfast_values = [" << best_params.v_fast << "]" << std::endl;
-        std::cout << "    gslow_values = [" << best_params.g_slow << "]" << std::endl;
-        std::cout << "    k1_values = [" << best_params.k1 << "]" << std::endl;
-        std::cout << "    k2_values = [" << best_params.k2 << "]" << std::endl;
-        std::cout << "    sslow_values = [" << best_params.s_slow << "]" << std::endl;
-        std::cout << "    Vslow_values = [" << best_params.v_slow << "]" << std::endl;
+        YAML::Node out;
+        out["e_syn"] = best_params.e_syn;
+        out["g_fast"] = best_params.g_fast;
+        out["s_fast"] = best_params.s_fast;
+        out["v_fast"] = best_params.v_fast;
+        out["g_slow"] = best_params.g_slow;
+        out["k1"] = best_params.k1;
+        out["k2"] = best_params.k2;
+        out["s_slow"] = best_params.s_slow;
+        out["v_slow"] = best_params.v_slow;
+
+        std::ofstream fout(out_yaml_path);
+        fout << out;
+
         std::cout << "BO execution time: " << elapsed.count() << " s" << std::endl;
     }
     catch (const std::exception &e)

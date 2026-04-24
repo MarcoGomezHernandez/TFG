@@ -354,18 +354,18 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
     EvaluationPadBuffers pad_buffers(padded_buff_size_12, padded_buff_size_21);
 
     // Inicializa los rangos de búsqueda para cada dirección sináptica.
-    // Online usa v_min/v_max de la neurona real (dinámicos o fijos según configuración)
+    // Online usa v_pre/v_post por dirección (dinámicos o fijos según configuración)
     BOParamRanges ranges_12;
     if (use_syn_12)
     {
-        // v_pre = neurona 1, v_post = neurona 2
-        ranges_12.init(v_min_1, v_max_1, v_min_2, v_max_2,
+        // v_pre/v_post configurados explícitamente para la dirección 1->2
+        ranges_12.init(v_pre_min_12, v_pre_max_12, v_post_min_12, v_post_max_12,
                        expected_i_min_12, expected_i_max_12,
                        use_i_fast_12, use_i_slow_12,
                        search_phase, fc_1);
 
         // Redimensiona los buffers de señal del hilo RT para la fase de recogida
-        v_sig_1.resize(num_elements);
+        v_pre_sig_12.resize(num_elements);
         if (use_i_fast_12)
             i_fast_sig_12.resize(num_elements);
         if (use_i_slow_12)
@@ -375,12 +375,12 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
     BOParamRanges ranges_21;
     if (use_syn_21)
     {
-        // v_pre = neurona 2, v_post = neurona 1 (dirección inversa)
-        ranges_21.init(v_min_2, v_max_2, v_min_1, v_max_1,
+        // v_pre/v_post configurados explícitamente para la dirección 2->1
+        ranges_21.init(v_pre_min_21, v_pre_max_21, v_post_min_21, v_post_max_21,
                        expected_i_min_21, expected_i_max_21,
                        use_i_fast_21, use_i_slow_21,
                        search_phase, fc_2);
-        v_sig_2.resize(num_elements);
+        v_pre_sig_21.resize(num_elements);
         if (use_i_fast_21)
             i_fast_sig_21.resize(num_elements);
         if (use_i_slow_21)
