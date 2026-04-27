@@ -1,7 +1,11 @@
 #include <limbo/limbo.hpp>
 #include "bidirectional_chemical_synapse_BO.h"
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <cstdlib>
 
 using namespace limbo;
+using namespace nlohmann;
 
 namespace BOPrivateConfig
 {
@@ -36,8 +40,8 @@ struct Params
     {
         // Acota las muestras al hipercubo [0,1]^dim
         BO_PARAM(bool, bounded, true);
-        // Habilita la recolección de estadísticas
-        BO_PARAM(bool, stats_enabled, true);
+        // Deshabilita la recolección de estadísticas
+        BO_PARAM(bool, stats_enabled, false);
     };
 
     struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer
@@ -118,7 +122,8 @@ struct EvaluationFunctor
                       EvaluationPadBuffers &pad_buffers_,
                       double i_dist_max_12_,
                       double i_dist_max_21_,
-                      size_t curr_synapse_idx_)
+                      size_t curr_synapse_idx_,
+                      json *score_history_ptr_)
         : module(module_),
           ranges_12(ranges_12_),
           ranges_21(ranges_21_),
@@ -128,7 +133,8 @@ struct EvaluationFunctor
           pad_buffers(pad_buffers_),
           i_dist_max_12(i_dist_max_12_),
           i_dist_max_21(i_dist_max_21_),
-          curr_synapse_idx(curr_synapse_idx_)
+          curr_synapse_idx(curr_synapse_idx_),
+          score_history_ptr(score_history_ptr_)
     {
     }
 
@@ -141,6 +147,7 @@ struct EvaluationFunctor
     double i_dist_max_12, i_dist_max_21;
     // Índice del buffer activo del double-buffering; se actualiza en cada evaluación
     mutable size_t curr_synapse_idx;
+    json *score_history_ptr;
     mutable size_t evaluation_count = 0;
 
     // Dimensión de entrada (total de parámetros de ambas direcciones)
@@ -165,12 +172,19 @@ struct EvaluationFunctor
 
         // Fitness = media ponderada de puntuación de rango y forma
         const double y = ((evaluations.i_range_score * BOPrivateConfig::I_RANGE_WEIGH) + (evaluations.i_shape_score * BOPrivateConfig::I_SHAPE_WEIGHT)) / BOPrivateConstants::TOTAL_WEIGHT;
-        const size_t eval_idx = ++evaluation_count;
-
         if (module.verbose.load(std::memory_order_relaxed))
         {
-            std::cout << "Evaluation " << eval_idx << ": " << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
+            std::cout << "Evaluation " << evaluation_count + 1 << ": " << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
         }
+
+        if (score_history_ptr)
+        {
+            json &score_history = *score_history_ptr;
+            score_history["scores"][evaluation_count] = y;
+            score_history["range_scores"][evaluation_count] = evaluations.i_range_score;
+            score_history["shape_scores"][evaluation_count] = evaluations.i_shape_score;
+        }
+        evaluation_count++;
 
         return limbo::tools::make_vector(y);
     }
@@ -192,12 +206,7 @@ using Acqui_t = acqui::EI<Params, Model_t>;
 using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::LN_SBPLX>;
 
 // Estadísticas recogidas durante la optimización
-using Stat_t = boost::fusion::vector<
-    stat::Samples<Params>,
-    stat::Observations<Params>,
-    stat::GPAcquisitions<Params>,
-    stat::BestObservations<Params>,
-    stat::AggregatedObservations<Params>>;
+using Stat_t = boost::fusion::vector<>;
 
 // Inicialización: Latin Hypercube Sampling
 using Init_t = init::LHS<Params>;
@@ -419,6 +428,21 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
         }
     }
 
+    const char *jsonl_path_env = std::getenv("JSONL_HISTORY_FILE_PATH");
+    const std::optional<std::string> jsonl_history_file_path = (jsonl_path_env && jsonl_path_env[0] != '\0') ? std::optional<std::string>(jsonl_path_env) : std::nullopt;
+
+    json history;
+    json *score_history_ptr = nullptr;
+    if (jsonl_history_file_path)
+    {
+        const size_t total_evaluations = initial_samples + iterations;
+        json &score_history = history["score_history"];
+        score_history["scores"] = std::vector<double>(total_evaluations);
+        score_history["range_scores"] = std::vector<double>(total_evaluations);
+        score_history["shape_scores"] = std::vector<double>(total_evaluations);
+        score_history_ptr = &score_history;
+    }
+
     EvaluationFunctor functor(*this,
                               ranges_12,
                               ranges_21,
@@ -429,7 +453,8 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
                               i_dist_max_12,
                               i_dist_max_21,
                               // Índice actual del double-buffer
-                              synapse_idx.load(std::memory_order_relaxed));
+                              synapse_idx.load(std::memory_order_relaxed),
+                              score_history_ptr);
 
     // Notifica a la GUI que empiezan las evaluaciones (reset contador)
     QMetaObject::invokeMethod(this, "set_evaluations_completed", Qt::QueuedConnection,
@@ -458,6 +483,63 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
     if (verbose.load(std::memory_order_relaxed))
     {
         std::cout << "Best: " << opt.best_observation()(0) << std::endl;
+    }
+
+    if (jsonl_history_file_path)
+    {
+        const Eigen::VectorXd &lengthscales = opt.model().kernel_function().ell();
+        json &ls_json = history["ARD_lss"];
+        size_t ls_idx = 0;
+
+        json &ls_12 = ls_json["1->2"];
+        if (use_syn_12)
+        {
+            ls_12["e_syn"] = lengthscales(ls_idx++);
+            if (use_i_fast_12)
+            {
+                ls_12["g_fast"] = lengthscales(ls_idx++);
+                ls_12["s_fast"] = lengthscales(ls_idx++);
+                ls_12["v_fast"] = lengthscales(ls_idx++);
+            }
+            if (use_i_slow_12)
+            {
+                ls_12["g_slow"] = lengthscales(ls_idx++);
+                ls_12["v_slow"] = lengthscales(ls_idx++);
+                ls_12["k1"] = lengthscales(ls_idx++);
+                ls_12["R"] = lengthscales(ls_idx++);
+                ls_12["s_slow"] = lengthscales(ls_idx++);
+            }
+        }
+
+        json &ls_21 = ls_json["2->1"];
+        if (use_syn_21)
+        {
+            ls_21["e_syn"] = lengthscales(ls_idx++);
+            if (use_i_fast_21)
+            {
+                ls_21["g_fast"] = lengthscales(ls_idx++);
+                ls_21["s_fast"] = lengthscales(ls_idx++);
+                ls_21["v_fast"] = lengthscales(ls_idx++);
+            }
+            if (use_i_slow_21)
+            {
+                ls_21["g_slow"] = lengthscales(ls_idx++);
+                ls_21["v_slow"] = lengthscales(ls_idx++);
+                ls_21["k1"] = lengthscales(ls_idx++);
+                ls_21["R"] = lengthscales(ls_idx++);
+                ls_21["s_slow"] = lengthscales(ls_idx++);
+            }
+        }
+
+        std::ofstream fout(*jsonl_history_file_path, std::ios::app);
+        if (fout.is_open())
+        {
+            fout << history.dump() << "\n";
+        }
+        else
+        {
+            std::cerr << "Warning: Could not open jsonl file " << *jsonl_history_file_path << " for appending.\n";
+        }
     }
 
     // Decodifica los mejores parámetros encontrados

@@ -14,7 +14,7 @@ LIBS = -lkfr_dsp_avx2 -lboost_serialization -lboost_filesystem -lboost_system -l
 
 include $(shell rtxi_plugin_config --pkgdata-dir)/Makefile.plugin_compile
 
-CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS)) -std=c++20 -O2 -march=native -DNDEBUG -DUSE_NLOPT
-
-LIMBO_DIR ?= ../Limbo/limbo
-CXXFLAGS += -I$(LIMBO_DIR)/src -I/usr/include/eigen3 -I$(HOME)/.local/include
+CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS)) \
+            -std=c++20 -O2 -march=native -DNDEBUG -DUSE_NLOPT \
+            -Iextern/limbo/src $(shell pkg-config --cflags eigen3) \
+            -I$(HOME)/.local/include -Iinclude

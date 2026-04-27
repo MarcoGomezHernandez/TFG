@@ -9,6 +9,7 @@
 #include <ChemicalSynapsis.h>
 
 using namespace limbo;
+using namespace nlohmann;
 
 namespace BOPrivateConfig
 {
@@ -71,8 +72,8 @@ struct Params
     {
         // Acota las muestras al hipercubo [0,1]^dim
         BO_PARAM(bool, bounded, true);
-        // Habilita la recolección de estadísticas (muestras, observaciones, etc.)
-        BO_PARAM(bool, stats_enabled, true);
+        // Deshabilita la recolección de estadísticas (muestras, observaciones, etc.)
+        BO_PARAM(bool, stats_enabled, false);
     };
 
     struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer
@@ -308,12 +309,7 @@ using Acqui_t = acqui::EI<Params, Model_t>;
 using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::LN_SBPLX>;
 
 // Estadísticas recogidas durante la optimización
-using Stat_t = boost::fusion::vector<
-    stat::Samples<Params>,
-    stat::Observations<Params>,
-    stat::GPAcquisitions<Params>,
-    stat::BestObservations<Params>,
-    stat::AggregatedObservations<Params>>;
+using Stat_t = boost::fusion::vector<>;
 
 // Inicialización: Latin Hypercube Sampling
 using Init_t = init::LHS<Params>;
@@ -406,7 +402,8 @@ struct EvaluationFunctor : public EvaluationFunctorBase
                       double i_max_,
                       bool verbose_,
                       ResetStateFuncType reset_state_neur_,
-                      GetVFuncType get_v_neur_)
+                      GetVFuncType get_v_neur_,
+                      json *score_history_ptr_)
         : synapse(synapse_),
           model_neur(model_neur_),
           scaled_result(scaled_result_),
@@ -421,7 +418,8 @@ struct EvaluationFunctor : public EvaluationFunctorBase
           i_max(i_max_),
           verbose(verbose_),
           reset_state_neur(reset_state_neur_),
-          get_v_neur(get_v_neur_)
+          get_v_neur(get_v_neur_),
+          score_history_ptr(score_history_ptr_)
     {
     }
 
@@ -440,6 +438,7 @@ struct EvaluationFunctor : public EvaluationFunctorBase
     bool verbose;
     ResetStateFuncType reset_state_neur;
     GetVFuncType get_v_neur;
+    json *score_history_ptr;
     mutable size_t evaluation_count = 0;
 
     // La BO trabaja con dim_out = 1 (fitness escalar)
@@ -473,9 +472,17 @@ struct EvaluationFunctor : public EvaluationFunctorBase
 
         if (verbose)
         {
-
-            std::cout << "Evaluation " << ++evaluation_count << ": " << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
+            std::cout << "Evaluation " << evaluation_count + 1 << ": " << y << " (range: " << evaluations.i_range_score << ", shape: " << evaluations.i_shape_score << ")" << std::endl;
         }
+
+        if (score_history_ptr)
+        {
+            json &score_history = *score_history_ptr;
+            score_history["scores"][evaluation_count] = y;
+            score_history["range_scores"][evaluation_count] = evaluations.i_range_score;
+            score_history["shape_scores"][evaluation_count] = evaluations.i_shape_score;
+        }
+        evaluation_count++;
 
         return limbo::tools::make_vector(y);
     }
@@ -532,7 +539,8 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
                                         double expected_i_max,
                                         double i_min,
                                         double i_max,
-                                        bool verbose)
+                                        bool verbose,
+                                        const std::optional<std::string> &jsonl_history_file_path)
 {
 
     if (csv_step <= 0.0 || evaluation_time <= 0.0 || observation_time <= 0.0 || stabilization_time < 0.0 || fc <= 0.0 || expected_i_min >= expected_i_max || i_min > i_max)
@@ -648,6 +656,18 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
 
     EvaluationFunctor<Integrator, NeuronType, ResetStateFuncType, GetVFuncType>::set_dim_in(dim_in);
 
+    json history;
+    json *score_history_ptr = nullptr;
+    if (jsonl_history_file_path)
+    {
+        const size_t total_evaluations = initial_samples + iterations;
+        json &score_history = history["score_history"];
+        score_history["scores"] = std::vector<double>(total_evaluations);
+        score_history["range_scores"] = std::vector<double>(total_evaluations);
+        score_history["shape_scores"] = std::vector<double>(total_evaluations);
+        score_history_ptr = &score_history;
+    }
+
     EvaluationFunctor<Integrator, NeuronType, ResetStateFuncType, GetVFuncType> functor(
         synapse,
         model_neur,
@@ -663,7 +683,8 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
         i_max,
         verbose,
         reset_state_neur,
-        get_v_neur);
+        get_v_neur,
+        score_history_ptr);
 
     // Ejecuta la optimización bayesiana
     BO_t opt;
@@ -673,6 +694,38 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
     if (verbose)
     {
         std::cout << "Best: " << opt.best_observation()(0) << std::endl;
+    }
+
+    if (jsonl_history_file_path)
+    {
+        const Eigen::VectorXd &lengthscales = opt.model().kernel_function().ell();
+        json &ls_json = history["ARD_lss"];
+        size_t idx = 0;
+        ls_json["e_syn"] = lengthscales(idx++);
+        if (use_i_fast)
+        {
+            ls_json["g_fast"] = lengthscales(idx++);
+            ls_json["s_fast"] = lengthscales(idx++);
+            ls_json["v_fast"] = lengthscales(idx++);
+        }
+        if (use_i_slow)
+        {
+            ls_json["g_slow"] = lengthscales(idx++);
+            ls_json["v_slow"] = lengthscales(idx++);
+            ls_json["k1"] = lengthscales(idx++);
+            ls_json["R"] = lengthscales(idx++);
+            ls_json["s_slow"] = lengthscales(idx++);
+        }
+
+        std::ofstream fout(*jsonl_history_file_path, std::ios::app);
+        if (fout.is_open())
+        {
+            fout << history.dump() << "\n";
+        }
+        else
+        {
+            std::cerr << "Warning: Could not open jsonl file " << *jsonl_history_file_path << " for appending.\n";
+        }
     }
 
     // Decodifica la mejor muestra encontrada a parámetros sinápticos reales

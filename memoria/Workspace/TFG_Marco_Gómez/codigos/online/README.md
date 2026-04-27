@@ -1,7 +1,7 @@
 ### Bidirectional Chemical Synapse BO
 
-**Requirements:** libraries KFR DSP (compiled with -DCMAKE_POSITION_INDEPENDENT_CODE=ON) and Limbo (set the environment variable LIMBO_DIR to its the downloaded repo)
-**Limitations:** The user should change the -lkfr_dsp_... flag from ard2 to the appropriate one for their system in the Makefile.
+**Requirements:** libraries KFR DSP (compiled with -DCMAKE_POSITION_INDEPENDENT_CODE=ON), Limbo (included as a git submodule, run `git submodule update --init --recursive` from the root of the repository), nlohmann/json (placed in the `include/nlohmann/` directory, no need to do anything else), Eigen3, NLopt, and Boost (the last three are assumed to be installed in the system).
+**Limitations:** The user should change the -lkfr_dsp_... flag from avx2 to the appropriate one for their system in the Makefile; and KDR DSP must be compiled with -DCMAKE_POSITION_INDEPENDENT_CODE=ON.
 
 ![Bidirectional Chemical Synapse BO GUI](bidirectional_chemical_synapse_BO.png)
 

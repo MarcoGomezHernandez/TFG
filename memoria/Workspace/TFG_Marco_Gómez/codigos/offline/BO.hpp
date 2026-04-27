@@ -8,6 +8,8 @@
 #include <string>
 #include "utils.hpp"
 #include "evaluation.hpp"
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 // Función principal de Optimización Bayesiana offline.
 // Plantilla parametrizada por integrador numérico, tipo de neurona y funciones auxiliares.
@@ -42,7 +44,8 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
                                         double expected_i_max,
                                         double i_min,
                                         double i_max,
-                                        bool verbose);
+                                        bool verbose,
+                                        const std::optional<std::string> &jsonl_history_file_path);
 
 #include "BO.tpp"
 
