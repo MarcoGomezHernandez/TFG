@@ -1,0 +1,19 @@
+title: My Project Name
+description: Documentation for My Project
+remote_theme: just-the-docs/just-the-docs
+url: https://pablosanmar97.github.io/Parametrization_chemical
+
+# Enable search (default: true)
+search_enabled: true
+
+# Navigation order (optional)
+nav_order: 1
+
+# Links in the top right corner
+aux_links:
+  "View on GitHub":
+    - "https://github.com/<your-github-username>/<your-repo-name>"
+
+# Optional footer
+footer_content: "© 2025 My Project. Built with ❤️ using Just the Docs."
+

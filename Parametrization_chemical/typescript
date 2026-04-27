@@ -1,0 +1,1191 @@
+Script started on 2026-04-01 16:03:57+02:00 [TERM="xterm-256color" TTY="/dev/pts/1" COLUMNS="129" LINES="20"]
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.yaml
+Saved YAML: yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.yaml yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.yaml
+Output file: yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -3.02589 | H1  max: 2.11935
+Simulation finished. Results written to yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.asc
+\n--- Running plot.py on yaml_configs/config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.asc ---
+Plotting file from config_gf0.992134_gs0.0435187_sf2.71987_Vf0.124556_Es-14.919_ss0.673862_Vs-1.44329_k10.02_k20.02.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+^CTraceback (most recent call last):
+  File "/home/marco/Documents/TFG/Parametrization_chemical/plot.py", line 81, in <module>
+    plt.show()
+  File "/home/marco/Documents/TFG/.venv/lib/python3.12/site-packages/matplotlib/pyplot.py", line 613, in show
+    return _get_backend_mod().show(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/marco/Documents/TFG/.venv/lib/python3.12/site-packages/matplotlib/backend_bases.py", line 3550, in show
+    cls.mainloop()
+  File "/home/marco/Documents/TFG/.venv/lib/python3.12/site-packages/matplotlib/backends/_backend_tk.py", line 572, in start_main_loop
+    first_manager.window.mainloop()
+  File "/usr/lib/python3.12/tkinter/__init__.py", line 1504, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.yaml
+Saved YAML: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.yaml yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.yaml
+Output file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.25179 | H1  max: 1.81218
+Simulation finished. Results written to yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.asc
+\n--- Running plot.py on yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.asc ---
+Plotting file from config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k10.02_k20.02.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.yaml
+Saved YAML: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.yaml yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.yaml
+Output file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.26177 | H1  max: 1.86253
+Simulation finished. Results written to yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.asc
+\n--- Running plot.py on yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.asc ---
+Plotting file from config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k11.0_k21.0.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.yaml
+Saved YAML: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.yaml yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.yaml
+Output file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.26278 | H1  max: 1.85849
+Simulation finished. Results written to yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.asc
+\n--- Running plot.py on yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.asc ---
+Plotting file from config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k110.0_k210.0.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.yaml
+Saved YAML: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.yaml yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.yaml
+Output file: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.26283 | H1  max: 1.86478
+Simulation finished. Results written to yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.asc
+\n--- Running plot.py on yaml_configs/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.asc ---
+Plotting file from config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+/usr/lib/python3.12/tkinter/__init__.py:861: UserWarning: Creating legend with loc="best" can be slow with large amounts of data.
+  func(*args)
+✅ Plot creado: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.092134_gs0.4435187_sf2.0_Vf1.0_Es-14.919_ss1.0_Vs0.0_k1100.0_k2100.0.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ [K]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.yaml
+Saved YAML: yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.yaml yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.yaml
+Output file: yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.79411 | H1  max: 1.77039
+Simulation finished. Results written to yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.asc ---
+Plotting file from config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0718864_gs0.102989_sf3.69704_Vf1.61735_Es-14.919_ss0.772299_Vs-0.624946_k10.02_k20.02.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.yaml yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.8857 | H1  max: 2.03611
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.asc ---
+Plotting file from config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.02.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.yaml yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.97657 | H1  max: 2.08904
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.asc ---
+Plotting file from config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.02_k20.0002.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.yaml yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.97498 | H1  max: 2.20559
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.asc ---
+Plotting file from config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k110.0_k20.0002.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.yaml yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.97456 | H1  max: 2.17275
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.asc ---
+Plotting file from config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.081682_sf3.23607_Vf-1.58411_Es15.0149_ss0.607856_Vs-0.718977_k10.74_k20.007.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.91022 | H1  max: 2.23072
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.78404 | H1  max: 1.93184
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.78805 | H1  max: 1.8224
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k20.74.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.7911 | H1  max: 1.81967
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.007_k210.0.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.91022 | H1  max: 2.23072
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.007.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.95863 | H1  max: 2.18038
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.74_k20.07.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.23055 | H1  max: -0.712697
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.23055 | H1  max: -0.712697
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es-15_ss1_Vs0_k10.74_k20.007.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.78404 | H1  max: 1.93184
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.007_k20.74.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.78202 | H1  max: 1.92717
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k10.0007_k20.74.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.78243 | H1  max: 1.92023
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-05_k20.74.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.yaml
+Saved YAML: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.yaml yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.yaml
+Output file: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.78241 | H1  max: 1.92044
+Simulation finished. Results written to yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.asc ---
+Plotting file from config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0656093_gs0.181682_sf2_Vf1_Es15_ss1_Vs0_k17e-06_k20.74.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.yaml
+Saved YAML: yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.yaml yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.yaml
+Output file: yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.94349 | H1  max: 1.80882
+Simulation finished. Results written to yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.asc ---
+Plotting file from config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0454025_gs0.228719_sf2.24212_Vf-1.59629_Es-14.919_ss0.802418_Vs0.320394_k10.129821_k20.307737.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh 
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.yaml
+Saved YAML: yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.yaml yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.yaml
+Output file: yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.90711 | H1  max: 2.09154
+Simulation finished. Results written to yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.asc ---
+Plotting file from config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0603206_gs0.100625_sf1.8099_Vf-1.62852_Es15.0149_ss0.726331_Vs-0.225538_k10.143981_k20.0543955.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ clear
+[?2004l[H[2J[3J[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ clear./script.sh [K
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml
+Saved YAML: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml
+Output file: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.79204 | H1  max: 1.78575
+Simulation finished. Results written to yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc ---
+Plotting file from config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ make
+[?2004lg++ -Wall -O2 -I/usr/local/Neun/0.4.0 -std=c++20 parametrize_chemicalSynapsis_PD-HR.cpp -o parametrize_chemicalSynapsis_PD-HR -lyaml-cpp
+In file included from [01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:52[m[K:
+/usr/local/Neun/0.4.0/ChemicalSynapsis.h: In instantiation of ‘[01m[KChemicalSynapsis<TNode1, TNode2, TIntegrator, precission>::[01;32m[KChemicalSynapsis[m[K(const TNode1&, typename TNode1::variable, TNode2&, typename TNode2::variable, ConstructorArgs&, int) [35m[K[with TNode1 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TNode2 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TIntegrator = RungeKutta4; precission = double; typename TNode1::variable = HindmarshRoseModel<double>::variable; typename TNode2::variable = HindmarshRoseModel<double>::variable; ConstructorArgs = SystemWrapper<ChemicalSynapsisModel<double> >::ConstructorArgs][m[K[m[K’:
+[01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:135:53:[m[K   required from here
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:76:35:[m[K [01;35m[Kwarning: [m[K‘[01m[KChemicalSynapsis<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, RungeKutta4, double>::m_n2_variable[m[K’ will be initialized after [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreorder-Wreorder]8;;[m[K]
+   76 |   const typename TNode2::variable [01;35m[Km_n2_variable[m[K;
+      |                                   [01;35m[K^~~~~~~~~~~~~[m[K
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:110:22:[m[K [01;35m[Kwarning: [m[K  base ‘[01m[KSerializableWrapper<SystemWrapper<ChemicalSynapsisModel<double> > >[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreorder-Wreorder]8;;[m[K]
+  110 |         m_steps(steps[01;35m[K)[m[K {
+      |                      [01;35m[K^[m[K
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:102:3:[m[K [01;35m[Kwarning: [m[K  when initialized here [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreorder-Wreorder]8;;[m[K]
+  102 |   [01;35m[KChemicalSynapsis[m[K(TNode1 const &n1, typename TNode1::variable v, TNode2 &n2,
+      |   [01;35m[K^~~~~~~~~~~~~~~~[m[K
+In file included from [01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:55[m[K:
+/usr/local/Neun/0.4.0/RungeKutta4.h: In instantiation of ‘[01m[Kstatic void RungeKutta4::[01;32m[Kstep[m[K(TSystem&, typename TSystem::precission_t, typename TSystem::precission_t*, typename TSystem::precission_t*) [35m[K[with TSystem = ChemicalSynapsis<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, RungeKutta4, double>; typename TSystem::precission_t = double][m[K[m[K’:
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:170:24:[m[K   required from ‘[01m[Kvoid ChemicalSynapsis<TNode1, TNode2, TIntegrator, precission>::[01;32m[Kstep[m[K(precission, precission, precission) [35m[K[with TNode1 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TNode2 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TIntegrator = RungeKutta4; precission = double][m[K[m[K’
+[01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:220:19:[m[K   required from here
+[01m[K/usr/local/Neun/0.4.0/RungeKutta4.h:56:34:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kretorno[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+   56 |                 vars_type apoyo, [01;35m[Kretorno[m[K;
+      |                                  [01;35m[K^~~~~~~[m[K
+/usr/local/Neun/0.4.0/RungeKutta4.h: In instantiation of ‘[01m[Kstatic void RungeKutta4::[01;32m[Kstep[m[K(TSystem&, typename TSystem::precission_t, typename TSystem::precission_t*, typename TSystem::precission_t*) [35m[K[with TSystem = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; typename TSystem::precission_t = double][m[K[m[K’:
+[01m[K/usr/local/Neun/0.4.0/DifferentialNeuronWrapper.h:74:21:[m[K   required from ‘[01m[Kvoid DifferentialNeuronWrapper<Wrapee, Integrator>::[01;32m[Kstep[m[K(precission_t) [35m[K[with Wrapee = SystemWrapper<HindmarshRoseModel<double> >; Integrator = RungeKutta4; precission_t = double][m[K[m[K’
+[01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:222:20:[m[K   required from here
+[01m[K/usr/local/Neun/0.4.0/RungeKutta4.h:56:34:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kretorno[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ make./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml
+Saved YAML: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.yaml
+Output file: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.77474 | H1  max: 1.97428
+Simulation finished. Results written to yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc ---
+Plotting file from config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0326379_gs0.523566_sf3.91333_Vf1.09189_Es-15_ss0.766937_Vs-0.557249_k10.00314094_k20.030399.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.yaml
+Saved YAML: yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.yaml yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.yaml
+Output file: yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.13545 | H1  max: 1.98971
+Simulation finished. Results written to yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.asc ---
+Plotting file from config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0591718_gs1.47526_sf2.20364_Vf-1.14138_Es15_ss0.58234_Vs-0.212462_k10.00946886_k20.115307.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.yaml
+Saved YAML: yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.yaml yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.yaml
+Output file: yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.19777 | H1  max: 1.98363
+Simulation finished. Results written to yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.asc
+\n--- Running plot.py on yaml_configs/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.asc ---
+Plotting file from config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.059849_gs0.137096_sf2.83463_Vf-1.62948_Es15_ss0.742363_Vs-0.138928_k10.21577_k20.106234.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.yaml
+Saved YAML: yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.yaml yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.yaml
+Output file: yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.07971 | H1  max: 1.92074
+Simulation finished. Results written to yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.asc ---
+Plotting file from config_gf0.0677508_gs1.6858_sf2.96333_Vf1.16326_Es15_ss0.757907_Vs-0.778763_k10.0107044_k20.172479.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+^CTraceback (most recent call last):
+  File "/home/marco/Documents/TFG/Parametrization_chemical/plot.py", line 81, in <module>
+    plt.show()
+  File "/home/marco/Documents/TFG/.venv/lib/python3.12/site-packages/matplotlib/pyplot.py", line 613, in show
+    return _get_backend_mod().show(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/marco/Documents/TFG/.venv/lib/python3.12/site-packages/matplotlib/backend_bases.py", line 3550, in show
+    cls.mainloop()
+  File "/home/marco/Documents/TFG/.venv/lib/python3.12/site-packages/matplotlib/backends/_backend_tk.py", line 572, in start_main_loop
+    first_manager.window.mainloop()
+  File "/usr/lib/python3.12/tkinter/__init__.py", line 1504, in mainloop
+    self.tk.mainloop(n)
+KeyboardInterrupt
+
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ make
+[?2004lg++ -Wall -O2 -I/usr/local/Neun/0.4.0 -std=c++20 parametrize_chemicalSynapsis_PD-HR.cpp -o parametrize_chemicalSynapsis_PD-HR -lyaml-cpp
+In file included from [01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:52[m[K:
+/usr/local/Neun/0.4.0/ChemicalSynapsis.h: In instantiation of ‘[01m[KChemicalSynapsis<TNode1, TNode2, TIntegrator, precission>::[01;32m[KChemicalSynapsis[m[K(const TNode1&, typename TNode1::variable, TNode2&, typename TNode2::variable, ConstructorArgs&, int) [35m[K[with TNode1 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TNode2 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TIntegrator = RungeKutta4; precission = double; typename TNode1::variable = HindmarshRoseModel<double>::variable; typename TNode2::variable = HindmarshRoseModel<double>::variable; ConstructorArgs = SystemWrapper<ChemicalSynapsisModel<double> >::ConstructorArgs][m[K[m[K’:
+[01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:135:53:[m[K   required from here
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:76:35:[m[K [01;35m[Kwarning: [m[K‘[01m[KChemicalSynapsis<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, RungeKutta4, double>::m_n2_variable[m[K’ will be initialized after [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreorder-Wreorder]8;;[m[K]
+   76 |   const typename TNode2::variable [01;35m[Km_n2_variable[m[K;
+      |                                   [01;35m[K^~~~~~~~~~~~~[m[K
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:110:22:[m[K [01;35m[Kwarning: [m[K  base ‘[01m[KSerializableWrapper<SystemWrapper<ChemicalSynapsisModel<double> > >[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreorder-Wreorder]8;;[m[K]
+  110 |         m_steps(steps[01;35m[K)[m[K {
+      |                      [01;35m[K^[m[K
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:102:3:[m[K [01;35m[Kwarning: [m[K  when initialized here [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreorder-Wreorder]8;;[m[K]
+  102 |   [01;35m[KChemicalSynapsis[m[K(TNode1 const &n1, typename TNode1::variable v, TNode2 &n2,
+      |   [01;35m[K^~~~~~~~~~~~~~~~[m[K
+In file included from [01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:55[m[K:
+/usr/local/Neun/0.4.0/RungeKutta4.h: In instantiation of ‘[01m[Kstatic void RungeKutta4::[01;32m[Kstep[m[K(TSystem&, typename TSystem::precission_t, typename TSystem::precission_t*, typename TSystem::precission_t*) [35m[K[with TSystem = ChemicalSynapsis<DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>, RungeKutta4, double>; typename TSystem::precission_t = double][m[K[m[K’:
+[01m[K/usr/local/Neun/0.4.0/ChemicalSynapsis.h:170:24:[m[K   required from ‘[01m[Kvoid ChemicalSynapsis<TNode1, TNode2, TIntegrator, precission>::[01;32m[Kstep[m[K(precission, precission, precission) [35m[K[with TNode1 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TNode2 = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; TIntegrator = RungeKutta4; precission = double][m[K[m[K’
+[01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:220:19:[m[K   required from here
+[01m[K/usr/local/Neun/0.4.0/RungeKutta4.h:56:34:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kretorno[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+   56 |                 vars_type apoyo, [01;35m[Kretorno[m[K;
+      |                                  [01;35m[K^~~~~~~[m[K
+/usr/local/Neun/0.4.0/RungeKutta4.h: In instantiation of ‘[01m[Kstatic void RungeKutta4::[01;32m[Kstep[m[K(TSystem&, typename TSystem::precission_t, typename TSystem::precission_t*, typename TSystem::precission_t*) [35m[K[with TSystem = DifferentialNeuronWrapper<SystemWrapper<HindmarshRoseModel<double> >, RungeKutta4>; typename TSystem::precission_t = double][m[K[m[K’:
+[01m[K/usr/local/Neun/0.4.0/DifferentialNeuronWrapper.h:74:21:[m[K   required from ‘[01m[Kvoid DifferentialNeuronWrapper<Wrapee, Integrator>::[01;32m[Kstep[m[K(precission_t) [35m[K[with Wrapee = SystemWrapper<HindmarshRoseModel<double> >; Integrator = RungeKutta4; precission_t = double][m[K[m[K’
+[01m[Kparametrize_chemicalSynapsis_PD-HR.cpp:222:20:[m[K   required from here
+[01m[K/usr/local/Neun/0.4.0/RungeKutta4.h:56:34:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kretorno[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ cñ[K[Kclear
+[?2004l[H[2J[3J[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ make
+[?2004lmake: Nothing to be done for 'all'.
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ clear
+[?2004l[H[2J[3J[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ (reverse-i-search)`': [Ks': ./script.[7ms[27mhc': ./[7msc[27mript.shr': ./[7mscr[27mipt.sh]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.yaml
+Saved YAML: yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.yaml yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.yaml
+Output file: yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.99826 | H1  max: 2.09631
+Simulation finished. Results written to yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.asc ---
+Plotting file from config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0648305_gs0.304238_sf1.20054_Vf-1.439_Es15.0149_ss0.747036_Vs0.175801_k10.0590471_k20.095155.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.yaml
+Saved YAML: yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.yaml yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.yaml
+Output file: yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.93714 | H1  max: 1.81266
+Simulation finished. Results written to yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.asc ---
+Plotting file from config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0453069_gs2.16294_sf2.36244_Vf-1.60028_Es-14.919_ss0.761159_Vs0.848503_k10.0100576_k20.213405.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.yaml
+Saved YAML: yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.yaml yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.yaml
+Output file: yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.91266 | H1  max: 2.0916
+Simulation finished. Results written to yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.asc ---
+Plotting file from config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0646103_gs0.0818724_sf2.56403_Vf-1.60526_Es15.0149_ss0.816054_Vs-0.710335_k10.0504708_k20.0139751.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml
+Saved YAML: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml
+Output file: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.95855 | H1  max: 1.83235
+Simulation finished. Results written to yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc ---
+Plotting file from config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.yaml
+Saved YAML: yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.yaml yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.yaml
+Output file: yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.8604 | H1  max: 1.81092
+Simulation finished. Results written to yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.asc ---
+Plotting file from config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0613047_gs0.242465_sf2.00951_Vf1.16888_Es-14.919_ss0.894796_Vs-0.210244_k10.0533128_k20.178152.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml
+Saved YAML: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.yaml
+Output file: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.95855 | H1  max: 1.83235
+Simulation finished. Results written to yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc ---
+Plotting file from config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0482653_gs0.390197_sf2.57356_Vf-1.41035_Es-14.919_ss0.761253_Vs0.0436054_k10.0154956_k20.0698215.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml
+Saved YAML: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml
+Output file: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -2.00216 | H1  max: 2.11925
+Simulation finished. Results written to yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc ---
+Plotting file from config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0665425_gs0.157363_sf2.151_Vf-1.64913_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml
+Saved YAML: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.yaml
+Output file: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.88323 | H1  max: 1.98903
+Simulation finished. Results written to yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc ---
+Plotting file from config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0665425_gs0.157363_sf2.151_Vf1.0_Es15.0149_ss0.825436_Vs0.0134306_k10.10303_k20.0709666.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ clear
+[?2004l[H[2J[3J[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ clear./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.yaml
+Saved YAML: yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.yaml yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.yaml
+Output file: yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.91323 | H1  max: 1.99486
+Simulation finished. Results written to yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.asc ---
+Plotting file from config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0736248_gs1.26117_sf1.75282_Vf0.776496_Es15.0149_ss0.879548_Vs-0.852755_k10.00914252_k20.106726.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.yaml
+Saved YAML: yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.yaml yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.yaml
+Output file: yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.87899 | H1  max: 1.80711
+Simulation finished. Results written to yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.asc ---
+Plotting file from config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0641034_gs0.442955_sf1.88622_Vf1.21807_Es-14.919_ss0.825189_Vs-0.245279_k10.0496413_k20.292733.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.yaml
+Saved YAML: yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.yaml yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.yaml
+Output file: yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.88492 | H1  max: 2.02616
+Simulation finished. Results written to yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.asc ---
+Plotting file from config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0672355_gs0.198318_sf2.89497_Vf0.555321_Es15.0149_ss0.862058_Vs-0.378497_k10.02_k20.02.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ ./script.sh
+[?2004l🔧 Starting full parametrization + plot pipeline
+⚠️  No .venv found — using system Python (asegúrate del entorno correcto)
+
+--- Cleaning yaml_configs/ ---
+\n--- Running yaml_generator.py ---
+Saved: yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.yaml
+Saved YAML: yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.yaml
+\n--- Running run_parametrization.py ---
+Running: ./parametrize_chemicalSynapsis_PD-HR yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.yaml yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.asc 20000.0 0.1 /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+YAML file: yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.yaml
+Output file: yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.asc
+Simulation time: 20000
+CSV file: /home/marco/Documents/TFG/Parametrization_chemical/PDtracesV.csv
+Real step: 0.1
+Model step: 0.01
+Step factor: 8
+H1  min: -1.90281 | H1  max: 1.78624
+Simulation finished. Results written to yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.asc
+Distance appended in distances.csv
+
+Output .asc: yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.asc
+\n--- Running plot.py on yaml_configs/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.asc ---
+Plotting file from config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.asc
+The PostScript backend does not support transparency; partially transparent artists will be rendered opaque.
+✅ Plot creado: images/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.eps
+\n🎉 Pipeline completado. Archivo final de imagen: images/config_gf0.0495507_gs0.116962_sf2.6836_Vf0.565829_Es-14.919_ss0.762721_Vs-0.267478_k10.02_k20.02.eps
+[?2004h]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ [K]0;marco@marco-laptop: ~/Documents/TFG/Parametrization_chemical[01;32mmarco@marco-laptop[00m:[01;34m~/Documents/TFG/Parametrization_chemical[00m$ [K]0;mar
