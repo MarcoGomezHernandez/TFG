@@ -18,8 +18,7 @@ plt.ylabel('Voltaje/x(t) (mV adim.)', fontsize=7)
 plt.xticks(fontsize=7)
 plt.yticks(fontsize=7)
 
-plt.xlim(df['t'].min(), df['t'].max())
-plt.ylim(df['x'].min(), df['x'].max())
+plt.autoscale(enable=True, axis='both', tight=True)
 plt.tight_layout()
 plt.savefig('figures/hindmarsh-rose_modified.png',
             dpi=600, bbox_inches='tight')

@@ -1,0 +1,244 @@
+import argparse
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Analiza un historial de optimización bayesiana (BO) en JSONL y genera gráficos PNG.
+parser = argparse.ArgumentParser(
+    description="Genera 4 gráficas a partir del historial BO en formato JSONL.")
+parser.add_argument(
+    "input_jsonl", help="Ruta al archivo JSONL de enrada")
+parser.add_argument(
+    "--output_max_avg_score", help="Ruta al archio PNG de salida para la gráfica de promedio de máximos encontrados")
+parser.add_argument(
+    "--output_avg_scores", help="Ruta al archivo PNG de salida para la gráfica de promedios de puntuaciones")
+parser.add_argument(
+    "--output_scores", help="Ruta al archivo PNG de salida para la gráfica de puntuaciones de una única ejecución")
+parser.add_argument(
+    "--output_ard_lss", help="Ruta al archivo PNG de salida para la gráfica del inverso de lengthscales")
+parser.add_argument("--row_index", type=int, default=0,
+                    help="Índice de la fila/ejecución para la gráfica de las puntuaciones (por defecto 0)")
+parser.add_argument("--initial_samples", type=int,
+                    help="Número de muestras iniciales para dibujar una línea divisoria")
+parser.add_argument("--xtick_step", type=int,
+                    help="Paso de los ticks mayores en el eje x para todas las gráficas de puntuaciones")
+parser.add_argument("--xminor_step", type=int,
+                    help="Paso de los ticks menores en el eje x para la gráfica de puntuaciones individuales")
+
+args = parser.parse_args()
+
+need_only_single_run = bool(
+    args.output_scores and not args.output_max_avg_score
+    and not args.output_avg_scores and not args.output_ard_lss)
+
+# Determina qué datos deben cargarse según los gráficos que se pedirán.
+need_scores = args.output_max_avg_score or args.output_avg_scores or args.output_scores
+need_score_components = args.output_avg_scores or args.output_scores
+need_ard_lss = bool(args.output_ard_lss)
+
+if need_scores:
+    scores_list = []
+if need_score_components:
+    range_scores_list = []
+    shape_scores_list = []
+if need_ard_lss:
+    ard_lss_list = []
+
+with open(args.input_jsonl, 'r') as f:
+    # Recorre cada línea JSONL y procesa los resultados de cada ejecución.
+    for idx, line in enumerate(f):
+        line = line.strip()
+        if not line:
+            continue
+
+        data = json.loads(line)
+
+        if need_only_single_run:
+            if idx == args.row_index:
+                score_history = data["score_history"]
+                scores_list.append(score_history["scores"])
+                range_scores_list.append(score_history["range_scores"])
+                shape_scores_list.append(score_history["shape_scores"])
+                break
+        else:
+            if need_scores:
+                scores_list.append(data["score_history"]["scores"])
+            if need_score_components:
+                score_history = data["score_history"]
+                range_scores_list.append(score_history["range_scores"])
+                shape_scores_list.append(score_history["shape_scores"])
+            if need_ard_lss:
+                ard_lss_list.append(data["ARD_lss"])
+
+if need_scores:
+    # Convierte las listas recopiladas a arreglos NumPy para facilitar los cálculos.
+    scores = np.array(scores_list)
+    if need_score_components:
+        range_scores = np.array(range_scores_list)
+        shape_scores = np.array(shape_scores_list)
+    n_execs, n_evals = scores.shape
+    eval_indices = range(1, n_evals + 1)
+elif ard_lss_list and not need_scores:
+    n_execs = len(ard_lss_list)
+
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'DejaVu Sans']
+
+lw = 0.6
+markersize = 1.2
+margin = 0.01
+
+
+def setup_plot(title, xlabel, ylabel):
+    # Configura el estilo básico del gráfico antes de trazar los datos.
+    plt.figure(figsize=(6.5, 3.5), dpi=600)
+    plt.title(title, fontsize=8)
+    plt.xlabel(xlabel, fontsize=7)
+    plt.ylabel(ylabel, fontsize=7)
+    plt.xticks(fontsize=7)
+    plt.yticks(fontsize=7)
+
+
+def save_plot(path):
+    # Ajusta el diseño y guarda la figura en archivo.
+    plt.tight_layout()
+    plt.savefig(path, dpi=600, bbox_inches='tight')
+    plt.close()
+
+
+def set_extras(xtick_step, legend_fontsize=7):
+    if xtick_step:
+        plt.xticks(range(1, n_evals + 2, xtick_step))
+    else:
+        plt.xticks(range(1, n_evals + 2, max(1, n_evals // 10)))
+    plt.margins(margin)
+    plt.grid(True, linewidth=0.2)
+    plt.gca().set_axisbelow(True)
+    if args.initial_samples:
+        plt.axvline(x=args.initial_samples + 1, color='black', linestyle='--',
+                    linewidth=lw, label='Fin de muestras iniciales', zorder=0.51)
+    plt.legend(fontsize=legend_fontsize)
+
+
+def plot_with_shade(mean, std, label, color, alpha):
+    # Traza la media de una serie con su desviación estándar como región sombreada.
+    plt.plot(eval_indices, mean, label=label,
+             color=color, linewidth=lw, alpha=alpha)
+    mean_minus_std = mean - std
+    mean_plus_std = mean + std
+    plt.fill_between(eval_indices, mean_minus_std, mean_plus_std, color=color,
+                     alpha=alpha/6, edgecolor='none')
+    plt.plot(eval_indices, mean_minus_std,
+             color=color, alpha=alpha/3, linewidth=lw/2)
+    plt.plot(eval_indices, mean_plus_std,
+             color=color, alpha=alpha/3, linewidth=lw/2)
+
+
+if n_execs > 0:
+    # Solo se crean figuras cuando hay ejecuciones y evaluaciones disponibles.
+    if n_evals > 0:
+        if args.output_max_avg_score:
+            # Calcula la puntuación máxima acumulada por evaluación y su media.
+            max_scores = np.maximum.accumulate(scores, axis=1)
+            mean_max_scores = np.mean(max_scores, axis=0)
+            std_max_scores = np.std(max_scores, axis=0)
+
+            setup_plot('Promedio de la puntuación máxima acumulada por evaluación (convergencia)',
+                       'Evaluación', 'Puntuación máxima acumulada')
+            plot_with_shade(mean_max_scores,
+                            std_max_scores, '_nolegend_', 'dodgerblue', 0.6)
+            set_extras(args.xtick_step)
+            save_plot(args.output_max_avg_score)
+
+        if args.output_avg_scores:
+            mean_scores = np.mean(scores, axis=0)
+            std_scores = np.std(scores, axis=0)
+
+            mean_range = np.mean(range_scores, axis=0)
+            std_range = np.std(range_scores, axis=0)
+
+            mean_shape = np.mean(shape_scores, axis=0)
+            std_shape = np.std(shape_scores, axis=0)
+
+            setup_plot('Promedio de la puntuación y sus componentes por evaluación',
+                       'Evaluación', 'Puntuación')
+            plot_with_shade(mean_scores,
+                            std_scores, 'Puntuación total', 'C0', 0.6)
+            plot_with_shade(mean_range,
+                            std_range, 'Puntuación del rango de la corriente', 'C1', 0.6)
+            plot_with_shade(mean_shape,
+                            std_shape, 'Puntuación de la forma', 'C2', 0.6)
+            set_extras(args.xtick_step, legend_fontsize=5)
+            save_plot(args.output_avg_scores)
+
+        if args.output_scores:
+            row_index = 0 if need_only_single_run else args.row_index
+            if row_index < n_execs:
+                setup_plot('Puntuación y sus componentes por evaluación',
+                           'Evaluación', 'Puntuación')
+                plt.plot(eval_indices, scores[row_index], 'o', label='Puntuación total',
+                         color='C0', markersize=markersize, linestyle='None', alpha=0.6)
+                plt.plot(eval_indices, range_scores[row_index], 'o', label='Puntuación del rango',
+                         color='C1', markersize=markersize, linestyle='None', alpha=0.6)
+                plt.plot(eval_indices, shape_scores[row_index], 'o', label='Puntuación de la forma',
+                         color='C2', markersize=markersize, linestyle='None', alpha=0.6)
+                set_extras(args.xtick_step, legend_fontsize=5)
+                if args.xtick_step:
+                    plt.gca().set_xticks(range(1, n_evals + 2, args.xminor_step), minor=True)
+                    plt.grid(True, which='minor', linewidth=0.2)
+                save_plot(args.output_scores)
+            else:
+                print(
+                    f"Advertencia: el índice de fila {row_index} es mayor o igual que el número de ejecuciones disponibles ({n_execs}). No se generará la gráfica de puntuaciones individuales.")
+    else:
+        print("Advertencia: no se encontraron evaluaciones en los datos para generar las gráficas de puntuaciones.")
+
+    if args.output_ard_lss:
+        # Cada entrada ARD_lss contiene las lengthscales de los parámetros.
+        if len(ard_lss_list) > 0:
+            keys = sorted(list(ard_lss_list[0].keys()))
+
+            if len(keys) > 0:
+                inv_ls_data = {k: [] for k in keys}
+                for lss in ard_lss_list:
+                    for k in keys:
+                        val = lss[k]
+                        if val == 0:
+                            inv_val = 1e10
+                        else:
+                            inv_val = 1.0 / val
+                        inv_ls_data[k].append(inv_val)
+
+                means = []
+                stds = []
+                for k in keys:
+                    means.append(np.mean(inv_ls_data[k]))
+                    stds.append(np.std(inv_ls_data[k]))
+
+                display_labels = []
+                for k in keys:
+                    if k == 'R':
+                        label = "R (k2/k1)"
+                    if k in ['R', 'k1', 'g_slow', 'g_fast']:
+                        label = k + " (escala log.)"
+                    else:
+                        label = k
+                    display_labels.append(label)
+
+                setup_plot(
+                    'Importancia en la puntuación de los parámetros', 'Parámetro', 'Importancia (1 / ARD kernel lengthscale)')
+                # Crea un gráfico de barras con la importancia media de cada parámetro.
+                plt.bar(display_labels, means, yerr=stds, color='dodgerblue',
+                        linewidth=4/len(keys), capsize=30/len(keys))
+                plt.grid(True, axis='y', linewidth=0.2)
+                plt.gca().set_axisbelow(True)
+                plt.xticks(rotation=45, ha='right')
+                save_plot(args.output_ard_lss)
+            else:
+                print(
+                    "Advertencia: No se encontraron datos de lengthscales (ARD_lss) para generar la gráfica 4.")
+        else:
+            print(
+                "Advertencia: No se encontraron datos de lengthscales (ARD_lss) para generar la gráfica 4.")
+else:
+    print("Advertencia: no se encontraron ejecuciones en los datos para generar las gráficas de puntuaciones.")
