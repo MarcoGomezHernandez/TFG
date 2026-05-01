@@ -1,7 +1,9 @@
+\newacronym{gnb}{GNB}{Grupo de Neurocomputación Biológica}
+\newacronym{uam}{UAM}{Universidad Autónoma de Madrid}
 
 La parametrización automatizada de modelos de sinapsis químicas para circuitos neuronales biohíbridos impone desafíos que transcienden la mera traducción de ecuaciones diferenciales a código computacional. Requiere una orquestación precisa entre la teoría de sistemas dinámicos no lineales, el procesamiento digital de señales (DSP), algoritmos de optimización probabilística y la ingeniería de software de tiempo real estricto \cite{Reyes-Sanchez2020, Buttazzo2024}.
 
-El desarrollo se articula en torno a dos infraestructuras complementarias: una arquitectura de simulación en diferido (\textit{offline}), diseñada para la validación algorítmica sobre señales biológicas pre-registradas; y un módulo de experimentación en vivo (\textit{online}), integrado en el framework RTXI 2.3 \cite{Amaducci2019}. Se ha seleccionado la versión 2.3 de RTXI por compatibilidad con el ecosistema de software del laboratorio del GNB, que incluye los plugins de \textit{Dynamic Clamp} y las rutinas de RTHybrid validadas sobre esta versión \cite{Amaducci2022}. Las pruebas del módulo \textit{online} con neuronas simuladas se han ejecutado sobre el framework de tiempo real \textit{Xenomai} \cite{Xenomai2024}, el \textit{RTOS} nativo de RTXI 2.3, que implementa una arquitectura de doble kernel para garantizar latencias deterministas del orden de microsegundos.
+El desarrollo se articula en torno a dos infraestructuras complementarias: una arquitectura de simulación en diferido (\textit{offline}), diseñada para la validación algorítmica sobre señales biológicas pre-registradas; y un módulo de experimentación en vivo (\textit{online}), integrado en el framework RTXI 2.3 \cite{Amaducci2019}. Se ha seleccionado la versión 2.3 de RTXI por compatibilidad con el ecosistema de software del laboratorio del \ac{gnb}, que incluye los plugins de \textit{Dynamic Clamp} y las rutinas de RTHybrid validadas sobre esta versión \cite{Amaducci2022}. Las pruebas del módulo \textit{online} con neuronas simuladas se han ejecutado sobre el framework de tiempo real \textit{Xenomai} \cite{Xenomai2024}, el \textit{RTOS} nativo de RTXI 2.3, que implementa una arquitectura de doble kernel para garantizar latencias deterministas del orden de microsegundos.
 
 Las divergencias fundamentales entre ambas arquitecturas se resumen a continuación. En las siguientes secciones se desglosa la selección de los modelos neuronales y sinápticos, el diseño de la función objetivo manejada mediante Optimización Bayesiana, la gestión de hilos y memoria sin bloqueos (\textit{lock-free}), y el protocolo experimental \textit{in vivo}.
 
@@ -13,94 +15,117 @@ Las divergencias fundamentales entre ambas arquitecturas se resumen a continuaci
 \end{itemize}
 
 
-\section{Modelos Computacionales\label{SEC:MODELOS_COMPUTACIONALES}}
+\section{Modelos de dinámica neuronal usados\label{SEC:MODELOS_DINAMICA_NEURONAL}}
 
-La viabilidad de un circuito biohíbrido radica en la selección de modelos matemáticos que satisfagan dos premisas contrapuestas: poseer la riqueza fenomenológica necesaria para mimetizar la dinámica celular y, simultáneamente, exhibir un coste computacional reducido para ser integrados numéricamente en ventanas temporales del orden de microsegundos \cite{Fortuna2023, Hodgkin1990}.
+En esta sección se abordan las dos piezas fundamentales del circuito biohíbrido: el modelo neuronal y el modelo sináptico. Es importante establecer una distinción entre ambos. Por un lado, el modelo neuronal de Hindmarsh-Rose ha sido escogido entre diversas alternativas, decisión que se justificará a continuación. Por otro lado, el modelo de sinapsis química no representa una simple elección de diseño, sino que el estudio y parametrización del mismo constituye el objeto central de este trabajo. En los siguientes apartados se describe en profundidad la formulación de ambos sistemas.
 
-\subsection{Neurona de Hindmarsh-Rose (HR) Modificada\label{SUBSEC:HINDMARSH_ROSE}}
+\subsection{Modelo de Hindmarsh-Rose modificado\label{SUBSEC:HINDMARSH_ROSE}}
 
-El modelo clásico de Hodgkin-Huxley, aunque biofísicamente detallado, adolece de una alta dimensionalidad que penaliza su desempeño en entornos de tiempo real. Por consiguiente, se ha seleccionado el modelo de Hindmarsh-Rose (HR) \cite{Hindmarsh1984}, un modelo fenomenológico de tres dimensiones capaz de replicar regímenes de disparo simple (\textit{spiking}), ráfagas periódicas (\textit{bursting}) y caos determinista \cite{Rulkov2002}.
+Para el desarrollo de este trabajo se emplea una versión modificada del modelo de Hindmarsh-Rose \cite{Hindmarsh1984}, cuya formalización matemática se presenta en la ecuación~\ref{EQ:HR_SYSTEM}. Aunque constituye una descripción matemática simplificada en comparación con otras formulaciones biofísicas de mayor detalle, el modelo posee la fidelidad suficiente para los requerimientos experimentales de este proyecto, reproduciendo con precisión patrones complejos como el disparo en ráfagas (\textit{bursting}).
 
-El sistema dinámico continuo empleado se define por el siguiente conjunto de ecuaciones diferenciales ordinarias acopladas no lineales:
+El sistema dinámico continuo se define mediante el siguiente conjunto de ecuaciones diferenciales ordinarias:
 
 \begin{equation}[EQ:HR_SYSTEM]{Sistema de ecuaciones del modelo de Hindmarsh-Rose modificado.}
     \boxed{
         \begin{aligned}
-            \frac{dx(t)}{dt}               & = y(t) + 3x^2(t) - x^3(t) - z(t) + e \\[4pt]
-            \frac{dy(t)}{dt}               & = 1 - 5x^2(t) - y(t)                 \\[4pt]
+            \frac{dx(t)}{dt}               & = y(t) + b x^2(t) - a x^3(t) - z(t) + e - I_{\mathrm{syn}}(t) \\[4pt]
+            \frac{dy(t)}{dt}               & = c - d x^2(t) - y(t)                                         \\[4pt]
             \frac{1}{\mu} \frac{dz(t)}{dt} & = -v_h \cdot z(t) + S[x(t) - x_r]
         \end{aligned}
     }
 \end{equation}
 
-Donde $x(t)$ modela un análogo adimensional del potencial de membrana. La variable $y(t)$ representa una corriente de recuperación rápida asociada al flujo iónico transmembrana, responsable de la repolarización tras un potencial de acción. La variable $z(t)$ actúa como corriente de adaptación lenta, comparable a las dinámicas de iones de calcio, modulando la transición entre el estado de reposo y los ciclos activos de ráfagas. La corriente externa inyectada viene dada por el parámetro de bifurcación $e$.
+En este sistema, la variable \(x(t)\) representa el potencial de membrana adimensional. En la parametrización empleada, esta variable se desplaza típicamente en una escala comprendida entre \(-1{,}6\) y \(1{,}7\), por lo que tanto dichos valores como la propia variable se expresan en unidades adimensionales. Además, el término \(I_{\mathrm{syn}}(t)\) representa la corriente sináptica aplicada a la neurona, que actúa como una entrada externa adicional sobre la dinámica rápida del potencial de membrana (no es un parámetro). Es importante destacar que esta corriente se incluye con signo negativo en el sistema; esta convención garantiza que, bajo la formulación del modelo de sinapsis descrito en la sección~\ref{SUBSEC:SINAPSIS_QUIMICA}, un potencial de reversión \(E_{\mathrm{syn}}\) positivo (superior al potencial de membrana) ejerza un efecto excitatorio. Esto permite alinearse con la interpretación biofísica estándar y con la disposición de la corriente sináptica en el modelo neuronal (de diferente naturaleza) presentado en \cite{Golowasch1999}. Por su parte, \(y(t)\) actúa como la variable de disparo rápido que cuantifica la tasa de transporte de iones de sodio y potasio a través de los canales iónicos rápidos de membrana, gobernando la dinámica de recuperación del potencial de acción, y \(z(t)\) constituye la corriente de adaptación lenta (asociada específicamente al transporte de iones lentos), encargada de incrementarse con cada potencial de acción y reducir progresivamente la tasa de disparo, modulando así la alternancia entre episodios de actividad y períodos de silencio.
 
-\begin{figure}[Dinámica de la neurona HR modificada]{FIG:HR_ROSE}{Dinámica temporal de la neurona de Hindmarsh-Rose modificada con los parámetros mostrados en la Tabla~\ref{TB:HR_PARAMS}. Se aprecia el patrón de ráfagas del potencial $x(t)$ que caracteriza la versión mejorada del modelo.}
+Con el objetivo de asegurar un comportamiento rítmico consistente en el circuito biohíbrido, se han adoptado dos modificaciones paramétricas empleadas por el \ac{gnb} de la \ac{uam}. Por un lado, al establecer $v_h = 0{,}1$ en lugar del valor unitario presente en el modelo original, se reduce el decaimiento natural de la variable de adaptación lenta. Por otro lado, la reducción de la constante de acoplamiento de su valor canónico $S = 4{,}0$ a $S = 1{,}0$ atenúa la influencia del voltaje sobre dicha variable lenta. Esta configuración asegura de forma conjunta una elevada estabilidad rítmica en las neuronas, limitando la aparición de dinámicas caóticas y estabilizando el patrón de ráfagas para facilitar una interacción biohíbrida robusta.
+
+El resto de los parámetros se han seleccionado conforme a los valores habitualmente utilizados en la literatura matemática para el modelo. Cada uno de estos coeficientes tiene una función específica en la geometría del atractor dinámico, garantizando el comportamiento estable requerido. El comportamiento resultante de la neurona utilizando este conjunto completo de parámetros se ilustra en la Figura~\ref{FIG:HR_ROSE}. El significado fenomenológico y los valores exactos empleados del resto de parámetros se detallan a continuación:
+
+\begin{itemize}
+    \item $e = 3{,}281$: Corriente de estímulo externo que modula el régimen de disparo y facilita la aparición de ráfagas.
+    \item $\mu = 0{,}0021$: Parámetro de escala temporal que gobierna la lentitud intrínseca de la variable de adaptación $z(t)$.
+    \item $a = 1{,}0$: Coeficiente cúbico de la dinámica rápida que modula la amplitud y forma de los potenciales de acción.
+    \item $b = 3{,}0$: Coeficiente cuadrático de la dinámica rápida que regula la excitabilidad de membrana e influye en la transición entre ráfagas y disparo tónico.
+    \item $c = 1{,}0$: Término constante que establece el valor de la corriente de recuperación rápida $y(t)$ en ausencia de voltaje.
+    \item $d = 5{,}0$: Coeficiente cuadrático que determina cómo el voltaje $x(t)$ activa la corriente de recuperación $y(t)$.
+    \item $x_r = -1{,}6$: Potencial de referencia que define el estado de reposo relativo del subsistema lento.
+\end{itemize}
+
+\begin{figure}[Dinámica de la neurona de Hindmarsh-Rose modificada]{FIG:HR_ROSE}{Simulación temporal del modelo de Hindmarsh-Rose modificado. El ajuste conjunto de $v_h$ y $S$ junto con el resto de la parametrización estándar permite obtener un patrón de actividad con una elevada estabilidad rítmica.}
     \image{0.9\textwidth}{}{hindmarsh-rose_modified}
 \end{figure}
 
-Una modificación introducida en este trabajo reside en la EDO de la dinámica lenta $z(t)$. Se ha incluido el hiperparámetro $v_h$ ajustado a $v_h = 0{,}1$, frente al valor convencional de $1{,}0$. Esta reducción en la tasa de decaimiento ralentiza la transición del ciclo de histéresis de la neurona artificial. La justificación es biológica: las neuronas del sistema estomatogástrico (STG) presentan períodos de oscilación del orden de $0{,}5$ a $2{,}0$~Hz \cite{Golowasch1999}. Al hacer $v_h=0{,}1$, el atractor de ráfagas se dilata temporalmente, facilitando un emparejamiento de frecuencias entre el sustrato artificial y la célula biológica sin alterar las bases de tiempo mediante escalares agresivos.
 
-La configuración de parámetros fijada en el código C++ (Código~\ref{COD:HRPARAMS}) se resume en la Tabla~\ref{TB:HR_PARAMS}.
+\subsection{Modelo de sinapsis química\label{SUBSEC:SINAPSIS_QUIMICA}}
 
-\begin{table}[Parámetros del modelo HR modificado]{TB:HR_PARAMS}{Espacio de parámetros constantes para el modelo modificado de Hindmarsh-Rose y su relevancia computacional.}
-    \begin{tabular}{lcl}
-        \hline
-        \textbf{Símbolo} & \textbf{Valor}  & \textbf{Relevancia}                                    \\
-        \hline \hline
-        $e$              & $3{,}281$       & Estímulo externo: régimen de \textit{bursting} rítmico \\
-        $\mu$            & $0{,}0021$      & Separación de escalas rápida/lenta                     \\
-        $S$              & $1{,}0$         & Acoplamiento: saturación del canal $z$                 \\
-        $a, b$           & $1{,}0;\ 3{,}0$ & Polinomio cúbico en $\dot{x}$                          \\
-        $c, d$           & $1{,}0;\ 5{,}0$ & Polinomio cuadrático en $\dot{y}$                      \\
-        $x_r$            & $-1{,}6$        & Potencial de referencia (reposo)                       \\
-        $v_h$            & $0{,}1$         & Modificador de retardo (corriente lenta)               \\
-        \hline
-    \end{tabular}
-\end{table}
-
-La versión \textit{offline} resuelve las ecuaciones utilizando un integrador explícito de Runge-Kutta de 4º orden (RK4), implementado mediante el patrón de diseño \textit{Curiously Recurring Template Pattern} (CRTP) en C++ para maximizar el rendimiento al evitar llamadas a funciones virtuales. El sistema se parametriza genéricamente mediante \textit{Templates} y \textit{Concepts} de C++20, permitiendo sustituir modelos neuronales sin modificar la lógica del evaluador.
-
-
-\subsection{Sinapsis Química Graduada Bidireccional\label{SUBSEC:SINAPSIS_QUIMICA}}
-
-En las redes neuronales del ganglio estomatogástrico, el mecanismo de acoplamiento predominante es la transmisión sináptica química graduada inhibitoria \cite{Golowasch1999}. En este régimen, la liberación del neurotransmisor ocurre de forma continua y proporcional a la despolarización presináptica. El modelo de sinapsis implementado se escinde en dos componentes paralelas \cite{Reyes-Sanchez2020}:
-
-\begin{equation}[EQ:ISYN]{Corriente sináptica total como suma de componentes rápida y lenta.}
-    \boxed{I_{syn} = I_{fast} + I_{slow}}
+El modelo de sinapsis química empleado se fundamenta en dos componentes que actúan en paralelo: una corriente rápida (\(I_{\mathrm{fast}}\)) (que en este trabajo se restringirá exclusivamente a las componentes de alta frecuencia o \textit{spikes} de (\(V_{\mathrm{pre}}\)), como ahora se justificará), y una corriente lenta (\(I_{\mathrm{slow}}\)), vinculada a las bajas frecuencias de \(V_{\mathrm{pre}}\) (la envolvente de los \textit{bursts}). Ambas contribuciones dependen de los potenciales presináptico (\(V_{\mathrm{pre}}\)) y postsináptico (\(V_{\mathrm{post}}\)) conforme a la formulación matemática de \cite{Golowasch1999}, de donde también se adoptan las unidades físicas descritas en esta sección. Si bien en dicha referencia las componentes se tratan de forma independiente, la arquitectura de \ref{SEC:NEUNREPO} permite integrar la contribución de ambas en una única corriente sináptica total:
+\begin{equation}[EQ:ISYN]{Corriente sináptica total compuesta por las componentes rápida y lenta.}
+    \boxed{ I_{\mathrm{syn}}(t) = I_{\mathrm{fast}}(t) + I_{\mathrm{slow}}(t) }
 \end{equation}
+donde \(I_{\mathrm{syn}}\), \(I_{\mathrm{fast}}\) e \(I_{\mathrm{slow}}\) se expresan en unidades de corriente. Para acoplamientos con neuronas vivas, las corrientes se evalúan en nA.
 
-La componente rápida responde instantáneamente al potencial presináptico mediante una función sigmoidea:
+\paragraph{Componente rápida (\(I_{\mathrm{fast}}\))}
 
+La componente rápida es una corriente graduada instantánea que depende de \(V_{\mathrm{pre}}(t)\) mediante una sigmoide:
 \begin{equation}[EQ:IFAST]{Componente rápida de la corriente sináptica graduada.}
-    \boxed{I_{fast} = g_{fast} \cdot \frac{V_{post} - E_{syn}}{1 + \exp\left( s_{fast} \cdot (V_{fast} - V_{pre}) \right)}}
+    \boxed{
+        I_{\mathrm{fast}}(t) =
+        g_{\mathrm{fast}}
+        \cdot
+        \frac{V_{\mathrm{post}}(t) - E_{\mathrm{syn}}}
+        {1 + \exp[ s_{\mathrm{fast}} \cdot (V_{\mathrm{fast}} - V_{\mathrm{pre}}(t)) ]}
+    }
 \end{equation}
-
-Donde $g_{fast}$ es la conductancia máxima, $E_{syn}$ el potencial de reversión, $V_{fast}$ el voltaje de semi-activación y $s_{fast}$ la pendiente de la sigmoide.
-
-La componente lenta está gobernada por la variable de estado $m_{slow}$:
-
-\begin{equation}[EQ:ISLOW]{Componente lenta de la corriente sináptica.}
-    \boxed{I_{slow} = g_{slow} \cdot m_{slow}(t) \cdot (V_{post} - E_{syn})}
-\end{equation}
-
-\begin{equation}[EQ:DMSLOW]{Ecuación diferencial de la variable de compuerta lenta $m_{slow}$.}
-    \boxed{\frac{dm_{slow}(t)}{dt} = \frac{k_1 \cdot (1 - m_{slow}(t))}{1 + \exp\left( s_{slow} \cdot (V_{slow} - V_{pre}) \right)} - k_2 \cdot m_{slow}(t)}
-\end{equation}
-
-Los parámetros $k_1$ y $k_2$ representan las tasas cinéticas de activación y desactivación de los canales sinápticos lentos.
-
-Este modelo de sinapsis exhibe lo que se conoce como \textbf{holgura paramétrica} (\textit{parametric sloppiness}): múltiples combinaciones de los 9 parámetros sinápticos pueden producir dinámicas de corriente sináptica prácticamente indistinguibles \cite{Gutenkunst2007}. Este fenómeno, ampliamente documentado en modelos de sistemas biológicos, implica que el paisaje de fitness presenta valles degenerados donde la función objetivo varía mínimamente a lo largo de ciertas direcciones del espacio paramétrico. Para mitigar su impacto, la configuración de la Optimización Bayesiana incorpora varias estrategias complementarias:
-
+Los parámetros que aparecen en esta expresión son:
 \begin{itemize}
-    \item \textbf{Kernel SE-ARD:} Las escalas de longitud independientes por dimensión ($\ell_i$) permiten al Proceso Gaussiano detectar qué parámetros son más sensibles (\textit{stiff}) y cuáles más holgados (\textit{sloppy}), adaptando la resolución del modelo sustituto a cada eje del espacio.
-    \item \textbf{Exploración en espacio logarítmico:} Los parámetros con mayor holgura---conductancias ($g_{fast}$, $g_{slow}$), tasa cinética ($k_1$) y ratio $R = k_2/k_1$---se parametrizan en escala logarítmica, comprimiendo el espacio de búsqueda en las dimensiones más degeneradas y facilitando una exploración equitativa a lo largo de órdenes de magnitud.
-    \item \textbf{Función de fitness compuesta:} La combinación de \textit{Score de Rango} y \textit{Score de Forma} (correlación de Pearson) rompe parte de la degeneración, discriminando entre soluciones que coinciden en amplitud pero difieren en morfología temporal.
-    \item \textbf{Rangos de búsqueda informados:} Las cotas de cada parámetro se derivan de la estadística de $V_{pre}$ y de las corrientes esperadas, restringiendo la búsqueda a regiones biofísicamente plausibles y reduciendo el volumen del hiperespacio holgado.
+    \item \(g_{\mathrm{fast}}\) (\(\mathrm{\mu S}\)): conductancia máxima rápida. Representa la densidad efectiva de canales sinápticos rápidos disponibles y actúa como un factor de ganancia que modifica la escala (amplitud) de la curva de corriente generada, pero sin alterar su morfología temporal; valores mayores permiten que \(I_{\mathrm{fast}}\) tenga un impacto más marcado sobre \(V_{\mathrm{post}}\) (mayor fuerza de la sinapsis), debiendo ajustarse según lo que se busque en este aspecto.
+    \item \(E_{\mathrm{syn}}\) (mV): potencial de reversión sináptico. El hecho de que la sinapsis actúe de forma excitatoria o inhibitoria radica en este parámetro, ya que al evaluar el término \((V_{\mathrm{post}} - E_{\mathrm{syn}})\) determina el signo final de la corriente. Dependiendo de si se vuelve negativa o positiva, la corriente inyectada a la neurona postsináptica tendrá un efecto distinto: si \(E_{\mathrm{syn}}\) se sitúa claramente por encima del rango típico de \(V_{\mathrm{post}}\), la corriente inyectada neta es negativa (despolarizante al restarse en las ecuaciones del modelo), comportándose de forma excitatoria y tendiendo a favorecer patrones en fase. Si se coloca claramente por debajo de dicho rango, la corriente inyectada se vuelve positiva, actuando de forma inhibitoria (hiperpolarizante) y favoreciendo patrones en antifase. Además, cuanto más alejado se encuentre \(E_{\mathrm{syn}}\) del rango de operación de \(V_{\mathrm{post}}\), menor será la influencia dinámica de \(V_{\mathrm{post}}\) frente a \(V_{\mathrm{pre}}\) sobre la forma de la curva resultante. El hecho de que la morfología de la corriente replique la de \(V_{\mathrm{pre}}\) facilita la consecución de patrones en fase o antifase, ya que garantiza que la sinapsis excite o inhiba a la neurona postsináptica precisamente cuando la presináptica dispara. Esta mitigación de la influencia postsináptica es, por tanto, de gran interés para forzar un acoplamiento dominante, siempre manteniendo la cautela de no exceder los rangos fisiológicamente plausibles para el tipo de sinapsis modelada. Además, afectará, como es lógico, también a la escala de la corriente, aumentándola cuanto más se aleje de los límites de \(V_{\mathrm{post}}\), aunque esto puede ser compensado con \(g_{\mathrm{fast}}\).
+    \item \(V_{\mathrm{pre}}(t)\), \(V_{\mathrm{post}}(t)\) (mV): potenciales de membrana pre y postsináptico.
+    \item \(s_{\mathrm{fast}}\) (\(\mathrm{mV}^{-1}\)): pendiente de la sigmoide rápida. Valores grandes producen una transición muy abrupta entre estado inactivo y activo; esto implica que, cuanto mayor sea su valor, más compactación vertical sufrirá la parte de \(V_{\mathrm{pre}}\) que caiga en los bordes de la sigmoide, y más se expandirá verticalmente la parte que caiga en el centro. Por el contrario, valores pequeños generan una dependencia más suave de la corriente respecto a \(V_{\mathrm{pre}}\).
+    \item \(V_{\mathrm{fast}}\) (mV): voltaje de semiactivación rápida (umbral de la sigmoide). Constituye el punto matemático en el que la función sigmoide evalúa exactamente a 0.5, por lo que actúa como punto de centraje matemático sobre \(V_{\mathrm{pre}}\).
 \end{itemize}
 
-En la simulación \textit{offline}, la integración de $m_{slow}$ se realiza con RK4 y técnicas de sobremuestreo temporal (\textit{sub-stepping}), necesarias porque la señal presináptica proviene de un CSV con granulación muestral gruesa ($5$--$10$~kHz, $dt \approx 0{,}1$~ms) que debe interpolarse a la resolución del integrador del modelo HR ($dt \approx 0{,}001$~ms). Sin embargo, en el módulo RTXI (\textit{online}), el \textit{sub-stepping} resulta innecesario por la naturaleza matemática de las ecuaciones sinápticas. La derivada de $m_{slow}$ (Ecuación~\ref{EQ:DMSLOW}) depende del voltaje presináptico $V_{pre}$ exclusivamente a través de funciones sigmoideas $\sigma(V_{pre})$, que son suaves y acotadas en $[0, 1]$: variaciones intra-período de $V_{pre}$ producen cambios despreciables en $dm_{slow}/dt$. Dado que RTXI proporciona $V_{pre}$ muestra a muestra a la frecuencia del \textit{hardware timer}, no es necesario reconstruir la trayectoria intra-muestra del voltaje mediante interpolación. Para compensar la ausencia de sub-pasos, se emplea un integrador explícito de Runge-Kutta de orden 6(5) --- Dormand-Prince --- (Código~\ref{COD:RK65}), que efectúa seis evaluaciones funcionales estáticas por cada periodo del \textit{hardware timer}, proporcionando precisión de orden superior con un coste computacional fijo y determinista \cite{Buttazzo2024}.
+Ambos parámetros (\(s_{\mathrm{fast}}\) y \(V_{\mathrm{fast}}\)) se combinan para lograr el comportamiento deseado de la rama rápida. Al posicionar \(V_{\mathrm{fast}}\) en el centro de los \textit{spikes} y aplicar un \(s_{\mathrm{fast}}\) grande, se consigue que los picos ocupen todo el ancho activo de la sigmoide. Simultáneamente, esta combinación aplanará la onda lenta (los \textit{bursts}) en el extremo inferior de la curva, suprimiéndola casi por completo. Como resultado, \(I_{\mathrm{fast}}\) genera pulsos estrechos fielmente sincronizados con los \textit{spikes} o componentes de alta frecuencia, evitando reflejar la componente lenta de la señal presináptica.
 
+\paragraph{Componente lenta (\(I_{\mathrm{slow}}\)) y compuerta \(m_{\mathrm{slow}}\)}
+
+La componente lenta introduce una compuerta dinámica \(m_{\mathrm{slow}}(t)\) que integra la historia reciente de \(V_{\mathrm{pre}}\):
+\begin{equation}[EQ:ISLOW]{Componente lenta de la corriente sináptica.}
+    \boxed{
+        I_{\mathrm{slow}}(t) =
+        g_{\mathrm{slow}} \cdot m_{\mathrm{slow}}(t) \cdot [V_{\mathrm{post}}(t) - E_{\mathrm{syn}}]
+    }
+\end{equation}
+donde \(g_{\mathrm{slow}}\) (\(\mathrm{\mu S}\)) y \(E_{\mathrm{syn}}\) (mV) funcionan igual que en la versión rápida, pero para la componente lenta (\(E_{\mathrm{syn}}\) es compartido en caso de usar ambas), y \(m_{\mathrm{slow}}(t)\) es una variable adimensional que representa la fracción efectiva de canales lentos abiertos.
+
+La dinámica de \(m_{\mathrm{slow}}\) se describe mediante la siguiente ecuación diferencial, la cual garantiza matemáticamente su acotación entre 0 y 1 gracias al \textit{trade-off} dinámico entre la apertura impulsada por \(k_1\) (cuyo término se anula si \(m_{\mathrm{slow}} = 1\)) y el cierre impulsado por \(k_2\) (que se anula si \(m_{\mathrm{slow}} = 0\)):
+\begin{equation}[EQ:DMSLOW]{Ecuación diferencial de la compuerta lenta \(m_{\mathrm{slow}}\).}
+    \boxed{
+        \frac{d m_{\mathrm{slow}}(t)}{dt} =
+        \frac{k_1 \cdot [1 - m_{\mathrm{slow}}(t)]}
+        {1 + \exp[ s_{\mathrm{slow}} \cdot (V_{\mathrm{slow}} - V_{\mathrm{pre}}(t)) ]}
+        \;-\;
+        k_2 \cdot m_{\mathrm{slow}}(t)
+    }
+\end{equation}
+con:
+\begin{itemize}
+    \item \(k_1\) (\(\mathrm{ms}^{-1}\)): tasa máxima de apertura lenta. Su magnitud determina la inercia temporal de la compuerta y depende directamente de la frecuencia de corte que separa la dinámica rápida de los \emph{spikes} y la dinámica lenta del \emph{burst}. Valores mayores (constantes de tiempo menores) hacen que \(m_{\mathrm{slow}}\) siga con poca inercia las despolarizaciones permitiendo capturar respuestas de mayor agilidad en la compuerta (siempre que exista una separación temporal con la escala de los \emph{spikes}), mientras que valores menores (constantes comparables o mayores que el periodo de los \emph{bursts}) enfatizan la integración de la dinámica lenta y lo convierten en un integrador lento.
+    \item \(k_2\) (\(\mathrm{ms}^{-1}\)): tasa de cierre, expresada también empíricamente. Controla la duración de la compuerta abierta tras cesar la despolarización; valores relativamente pequeños respecto a \(k_1\) permiten que \(m_{\mathrm{slow}}\) permanezca elevado a lo largo del \emph{burst} y decaiga entre \emph{bursts}.
+    \item \(s_{\mathrm{slow}}\) (\(\mathrm{mV}^{-1}\)) y \(V_{\mathrm{slow}}\) (mV): pendiente y voltaje de semiactivación lenta. Funcionan igual que en la versión rápida, pero para la componente lenta, afectando ahora a través de \(m_{\mathrm{slow}}\), modulada por \(k_1\) y \(k_2\), en lugar de directamente.
+\end{itemize}
+
+De manera análoga, \(s_{\mathrm{slow}}\) y \(V_{\mathrm{slow}}\) se combinan para aislar la envolvente del \emph{burst}. Dado que los \emph{spikes} de alta frecuencia ya quedan cortados y mitigados por la inercia temporal impuesta por \(k_1\) y \(k_2\), se busca un valor de \(s_{\mathrm{slow}}\) pequeño (sin pasarse, para evitar que el rango dinámico de \(m_{\mathrm{slow}}\) sea minúsculo) que prevenga la deformación de la onda lenta. Al centrar \(V_{\mathrm{slow}}\) respecto a esta onda lenta y emplear dicha pendiente reducida, se logra que el \emph{burst} ocupe todo el ancho de la sigmoide sin distorsionarse. Con esta configuración, \(I_{\mathrm{slow}}\) actúa como una representación fidedigna en baja frecuencia de la señal presináptica.
+
+\paragraph{Uso de ambas corrientes simultáneamente}
+
+En ocasiones resulta conveniente estudiar dinámicas aisladas empleando únicamente la corriente rápida \(I_{\mathrm{fast}}\), centrada en los \textit{spikes} de \(V_{\mathrm{pre}}\); o la lenta \(I_{\mathrm{slow}}\), centrada en los \textit{bursts} de \(V_{\mathrm{pre}}\). No obstante, su suma (\(I_{\mathrm{syn}} = I_{\mathrm{fast}} + I_{\mathrm{slow}}\)) permite integrar ambas escalas temporales para lograr una reconstrucción sináptica completa de la forma de la señal presináptica.
+
+Algo que se podría pensar es que \(I_{\mathrm{fast}}\), con un \(s_{\mathrm{fast}}\) pequeño y \(V_{\mathrm{fast}}\) adecuadamente centrado (al centro del rango de \(V_{\mathrm{pre}}\)), captura intrínsecamente todas las frecuencias de \(V_{\mathrm{pre}}\), por lo que teóricamente bastaría con esta única corriente para replicar la señal presináptica al completo. Esto es completamente cierto, pero en este diseño se ha optado deliberadamente por restringir \(I_{\mathrm{fast}}\) a las altas frecuencias con un propósito fundamental: la modularidad. Disgregar la señal en dos vías frecuenciales permite escalar sus componentes de forma independiente. Partiendo de un estado base que replique \(V_{\mathrm{pre}}\) equilibrando ambas conductancias (\(g_{\mathrm{fast}}\) y \(g_{\mathrm{slow}}\)), esta separación otorga la flexibilidad de, por ejemplo, amplificar o atenuar los \textit{spikes} sin alterar los \textit{bursts}, o aislar su estudio. Esta capacidad de modulación o de usar únicamente las frecuencias altas es interesante para diversos experimentos, entre ellos los desarrollados por el \ac{gnb} de la \ac{uam}.
+
+\paragraph{Interacciones bidireccionales}
+
+En interacciones bidireccionales se consideran dos sinapsis del tipo descrito, una en cada dirección: cada una utiliza como \(V_{\mathrm{pre}}\) el potencial de una de las neuronas e inyecta su corriente \(I_{\mathrm{syn}}\) en la otra, con sus propios parámetros y con \(V_{\mathrm{post}}\) definido en el compartimento somático correspondiente.
 
 \section{Optimización Bayesiana y Función de Evaluación\label{SEC:OPTIMIZACION_BO}}
 
@@ -126,7 +151,7 @@ La señal de voltaje biológica presenta oscilaciones subumbrales de baja frecue
 
 \begin{itemize}
     \item \textbf{Señal de Referencia Lenta ($\tilde{V}_{pre}^{slow}$):} Salida directa del filtrado de Butterworth sobre $V_{pre}$. Se usa como patrón para correlacionar con $I_{slow}$.
-    \item \textbf{Señal de Referencia Rápida ($\tilde{V}_{pre}^{fast}$):} Residuo de alta frecuencia ($V_{pre} - \tilde{V}_{pre}^{slow}$), que aísla las ráfagas y sirve como patrón para $I_{fast}$.
+    \item \textbf{Señal de Referencia Rápida ($\tilde{V}_{pre}^{fast}$):} Residuo de alta frecuencia ($V_{pre} - \tilde{V}_{pre}^{slow}$), que aísla los \textit{spikes} y sirve como patrón para $I_{fast}$.
 \end{itemize}
 
 
@@ -201,7 +226,7 @@ La configuración del pipeline de Optimización Bayesiana en Limbo \cite{Cully20
 El modelo sustituto elegido es un Proceso Gaussiano con kernel \textit{Squared Exponential} con \textit{Automatic Relevance Determination} (SE-ARD). Esta elección se fundamenta en:
 
 \begin{itemize}
-    \item \textbf{SE-ARD frente a SE isotrópico:} El kernel SE-ARD asigna una escala de longitud independiente ($\ell_i$) a cada dimensión del espacio paramétrico. Dado que los 9 parámetros sinápticos operan en escalas muy dispares (conductancias en nanosiemens frente a pendientes en $\text{V}^{-1}$), un kernel isotrópico subestimaría la sensibilidad en las dimensiones de menor rango, deteriorando la capacidad predictiva del GP.
+    \item \textbf{SE-ARD frente a SE isotrópico:} El kernel SE-ARD asigna una escala de longitud independiente ($\ell_i$) a cada dimensión del espacio paramétrico. Dado que los 9 parámetros sinápticos operan en escalas muy dispares (conductancias en microsiemens frente a pendientes en $\text{V}^{-1}$), un kernel isotrópico subestimaría la sensibilidad en las dimensiones de menor rango, deteriorando la capacidad predictiva del GP.
     \item \textbf{Varianza de señal ($\sigma^2 = 1{,}0$):} Se fija la varianza de señal inicial del kernel en $1{,}0$ como prior no informativo. El optimizador de hiperparámetros (Rprop) la ajusta durante la ejecución.
     \item \textbf{Media constante ($\mu_0 = 0{,}5$):} La función media del GP se fija en $0{,}5$, correspondiente al punto medio del rango de fitness $[0, 1]$. Esto evita un sesgo inicial hacia valores altos o bajos, permitiendo que las primeras observaciones del LHS definan la topología del surrogate sin interferencia del prior.
 \end{itemize}
