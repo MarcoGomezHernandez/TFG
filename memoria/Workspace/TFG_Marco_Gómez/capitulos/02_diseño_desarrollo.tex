@@ -1,19 +1,6 @@
 \newacronym{gnb}{GNB}{Grupo de Neurocomputación Biológica}
 \newacronym{uam}{UAM}{Universidad Autónoma de Madrid}
 
-La parametrización automatizada de modelos de sinapsis químicas para circuitos neuronales biohíbridos impone desafíos que transcienden la mera traducción de ecuaciones diferenciales a código computacional. Requiere una orquestación precisa entre la teoría de sistemas dinámicos no lineales, el procesamiento digital de señales (DSP), algoritmos de optimización probabilística y la ingeniería de software de tiempo real estricto \cite{Reyes-Sanchez2020, Buttazzo2024}.
-
-El desarrollo se articula en torno a dos infraestructuras complementarias: una arquitectura de simulación en diferido (\textit{offline}), diseñada para la validación algorítmica sobre señales biológicas pre-registradas; y un módulo de experimentación en vivo (\textit{online}), integrado en el framework RTXI 2.3 \cite{Amaducci2019}. Se ha seleccionado la versión 2.3 de RTXI por compatibilidad con el ecosistema de software del laboratorio del \ac{gnb}, que incluye los plugins de \textit{Dynamic Clamp} y las rutinas de RTHybrid validadas sobre esta versión \cite{Amaducci2022}. Las pruebas del módulo \textit{online} con neuronas simuladas se han ejecutado sobre el framework de tiempo real \textit{Xenomai} \cite{Xenomai2024}, el \textit{RTOS} nativo de RTXI 2.3, que implementa una arquitectura de doble kernel para garantizar latencias deterministas del orden de microsegundos.
-
-Las divergencias fundamentales entre ambas arquitecturas se resumen a continuación. En las siguientes secciones se desglosa la selección de los modelos neuronales y sinápticos, el diseño de la función objetivo manejada mediante Optimización Bayesiana, la gestión de hilos y memoria sin bloqueos (\textit{lock-free}), y el protocolo experimental \textit{in vivo}.
-
-\begin{itemize}
-    \item \textbf{Integrador neuronal:} RK4 iterativo en offline; RK4 delegado a RTXI en online. Equilibrio coste--precisión en ventanas de milisegundos.
-    \item \textbf{Integrador de $m_{slow}$:} Interpolación lineal con sub-stepping en offline; RK 6(5) (Dormand-Prince) sin sub-stepping en online (véase la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA}).
-    \item \textbf{Concurrencia:} Secuencial unihilo en offline; double-buffering atómico RT/NRT en online para evitar inversión de prioridad \cite{Buttazzo2024}.
-    \item \textbf{DSP (KFR):} Escalado por interpolación en offline; filtro Butterworth paso bajo de cuarto orden en online para aislar la envolvente lenta utilizada en la correlación de Pearson \cite{KFRLib2023}.
-\end{itemize}
-
 
 \section{Modelos de dinámica neuronal usados\label{SEC:MODELOS_DINAMICA_NEURONAL}}
 
@@ -21,21 +8,21 @@ En esta sección se abordan las dos piezas fundamentales del circuito biohíbrid
 
 \subsection{Modelo de Hindmarsh-Rose modificado\label{SUBSEC:HINDMARSH_ROSE}}
 
-Para el desarrollo de este trabajo se emplea una versión modificada del modelo de Hindmarsh-Rose \cite{Hindmarsh1984}, cuya formalización matemática se presenta en la ecuación~\ref{EQ:HR_SYSTEM}. Aunque constituye una descripción matemática simplificada en comparación con otras formulaciones biofísicas de mayor detalle, el modelo posee la fidelidad suficiente para los requerimientos experimentales de este proyecto, reproduciendo con precisión patrones complejos como el disparo en ráfagas (\textit{bursting}).
+Para el desarrollo de este trabajo se emplea una versión modificada del modelo de Hindmarsh-Rose \cite{Hindmarsh1984}. Aunque constituye una descripción matemática simplificada en comparación con otras formulaciones biofísicas de mayor detalle, el modelo posee la fidelidad suficiente para los requerimientos experimentales de este proyecto, reproduciendo con precisión patrones complejos como el disparo en ráfagas (\textit{bursting}).
 
-El sistema dinámico continuo se define mediante el siguiente conjunto de ecuaciones diferenciales ordinarias:
+El sistema dinámico continuo se define mediante el conjunto de ecuaciones diferenciales ordinarias de la Ecuación~\ref{EQ:HR_SYSTEM}:
 
-\begin{equation}[EQ:HR_SYSTEM]{Sistema de ecuaciones del modelo de Hindmarsh-Rose modificado.}
+\begin{equation}[EQ:HR_SYSTEM]{Sistema de ecuaciones del modelo de Hindmarsh-Rose modificado}
     \boxed{
         \begin{aligned}
-            \frac{dx(t)}{dt}               & = y(t) + b x^2(t) - a x^3(t) - z(t) + e - I_{\mathrm{syn}}(t) \\[4pt]
-            \frac{dy(t)}{dt}               & = c - d x^2(t) - y(t)                                         \\[4pt]
-            \frac{1}{\mu} \frac{dz(t)}{dt} & = -v_h \cdot z(t) + S[x(t) - x_r]
+            \frac{dx(t)}{dt}               & = y(t) + b x^2(t) - a x^3(t) - z(t) + e - I_{\mathrm{syn}}(t) \\
+            \frac{dy(t)}{dt}               & = c - d x^2(t) - y(t)                                         \\
+            \frac{1}{\mu} \frac{dz(t)}{dt} & = -v_h \cdot z(t) + S(x(t) - x_r)
         \end{aligned}
     }
 \end{equation}
 
-En este sistema, la variable \(x(t)\) representa el potencial de membrana adimensional. En la parametrización empleada, esta variable se desplaza típicamente en una escala comprendida entre \(-1{,}6\) y \(1{,}7\), por lo que tanto dichos valores como la propia variable se expresan en unidades adimensionales. Además, el término \(I_{\mathrm{syn}}(t)\) representa la corriente sináptica aplicada a la neurona, que actúa como una entrada externa adicional sobre la dinámica rápida del potencial de membrana (no es un parámetro). Es importante destacar que esta corriente se incluye con signo negativo en el sistema; esta convención garantiza que, bajo la formulación del modelo de sinapsis descrito en la sección~\ref{SUBSEC:SINAPSIS_QUIMICA}, un potencial de reversión \(E_{\mathrm{syn}}\) positivo (superior al potencial de membrana) ejerza un efecto excitatorio. Esto permite alinearse con la interpretación biofísica estándar y con la disposición de la corriente sináptica en el modelo neuronal (de diferente naturaleza) presentado en \cite{Golowasch1999}. Por su parte, \(y(t)\) actúa como la variable de disparo rápido que cuantifica la tasa de transporte de iones de sodio y potasio a través de los canales iónicos rápidos de membrana, gobernando la dinámica de recuperación del potencial de acción, y \(z(t)\) constituye la corriente de adaptación lenta (asociada específicamente al transporte de iones lentos), encargada de incrementarse con cada potencial de acción y reducir progresivamente la tasa de disparo, modulando así la alternancia entre episodios de actividad y períodos de silencio.
+En este sistema, la variable \(x(t)\) representa el potencial de membrana adimensional. En la parametrización empleada, esta variable se desplaza típicamente en una escala comprendida entre \(-1{,}6\) y \(1{,}7\), por lo que tanto dichos valores como la propia variable se expresan en unidades adimensionales. Además, el término \(I_{\mathrm{syn}}(t)\) representa la corriente sináptica aplicada a la neurona, que actúa como una entrada externa adicional sobre la dinámica rápida del potencial de membrana (no es un parámetro). Es importante destacar que esta corriente se incluye con signo negativo en el sistema; esta convención garantiza que, bajo la formulación del modelo de sinapsis descrito en la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA}, un potencial de reversión \(E_{\mathrm{syn}}\) positivo (superior al potencial de membrana) ejerza un efecto excitatorio. Esto permite alinearse con la interpretación biofísica estándar y con la disposición de la corriente sináptica en el modelo neuronal (de diferente naturaleza) presentado en \cite{Golowasch1999}. Por su parte, \(y(t)\) actúa como la variable de disparo rápido que cuantifica la tasa de transporte de iones de sodio y potasio a través de los canales iónicos rápidos de membrana, gobernando la dinámica de recuperación del potencial de acción, y \(z(t)\) constituye la corriente de adaptación lenta (asociada específicamente al transporte de iones lentos), encargada de incrementarse con cada potencial de acción y reducir progresivamente la tasa de disparo, modulando así la alternancia entre episodios de actividad y períodos de silencio.
 
 Con el objetivo de asegurar un comportamiento rítmico consistente en el circuito biohíbrido, se han adoptado dos modificaciones paramétricas empleadas por el \ac{gnb} de la \ac{uam}. Por un lado, al establecer $v_h = 0{,}1$ en lugar del valor unitario presente en el modelo original, se reduce el decaimiento natural de la variable de adaptación lenta. Por otro lado, la reducción de la constante de acoplamiento de su valor canónico $S = 4{,}0$ a $S = 1{,}0$ atenúa la influencia del voltaje sobre dicha variable lenta. Esta configuración asegura de forma conjunta una elevada estabilidad rítmica en las neuronas, limitando la aparición de dinámicas caóticas y estabilizando el patrón de ráfagas para facilitar una interacción biohíbrida robusta.
 
@@ -58,16 +45,12 @@ El resto de los parámetros se han seleccionado conforme a los valores habitualm
 
 \subsection{Modelo de sinapsis química\label{SUBSEC:SINAPSIS_QUIMICA}}
 
-El modelo de sinapsis química empleado se fundamenta en dos componentes que actúan en paralelo: una corriente rápida (\(I_{\mathrm{fast}}\)) (que en este trabajo se restringirá exclusivamente a las componentes de alta frecuencia o \textit{spikes} de (\(V_{\mathrm{pre}}\)), como ahora se justificará), y una corriente lenta (\(I_{\mathrm{slow}}\)), vinculada a las bajas frecuencias de \(V_{\mathrm{pre}}\) (la envolvente de los \textit{bursts}). Ambas contribuciones dependen de los potenciales presináptico (\(V_{\mathrm{pre}}\)) y postsináptico (\(V_{\mathrm{post}}\)) conforme a la formulación matemática de \cite{Golowasch1999}, de donde también se adoptan las unidades físicas descritas en esta sección. Si bien en dicha referencia las componentes se tratan de forma independiente, la arquitectura de \ref{SEC:NEUNREPO} permite integrar la contribución de ambas en una única corriente sináptica total:
-\begin{equation}[EQ:ISYN]{Corriente sináptica total compuesta por las componentes rápida y lenta.}
-    \boxed{ I_{\mathrm{syn}}(t) = I_{\mathrm{fast}}(t) + I_{\mathrm{slow}}(t) }
-\end{equation}
-donde \(I_{\mathrm{syn}}\), \(I_{\mathrm{fast}}\) e \(I_{\mathrm{slow}}\) se expresan en unidades de corriente. Para acoplamientos con neuronas vivas, las corrientes se evalúan en nA.
+El modelo de sinapsis química empleado se fundamenta en dos componentes que actúan en paralelo: una corriente rápida (\(I_{\mathrm{fast}}\)), que en este trabajo se ha vinculado únicamente a las altas frecuencias o \textit{spikes} de \(V_{\mathrm{pre}}\) pese a poder modelar ambas, como se justifica en la Sección~\ref{SUBSEC:USO_SIMULTANEO}; y una corriente lenta (\(I_{\mathrm{slow}}\)), vinculada a las bajas frecuencias o \textit{bursts}. Ambas contribuciones dependen de los potenciales presináptico (\(V_{\mathrm{pre}}\)) y postsináptico (\(V_{\mathrm{post}}\)) conforme a la formulación matemática de \cite{Golowasch1999}, de donde también se adoptan las unidades físicas usadas en esta sección.
 
-\paragraph{Componente rápida (\(I_{\mathrm{fast}}\))}
+\subsubsection{Componente rápida (\(I_{\mathrm{fast}}\))}
 
-La componente rápida es una corriente graduada instantánea que depende de \(V_{\mathrm{pre}}(t)\) mediante una sigmoide:
-\begin{equation}[EQ:IFAST]{Componente rápida de la corriente sináptica graduada.}
+La componente rápida es una corriente graduada instantánea que depende de \(V_{\mathrm{pre}}(t)\) mediante una sigmoide (cuya salida está acotada entre 0 y 1). Se define mediante la Ecuación~\ref{EQ:IFAST}:
+\begin{equation}[EQ:IFAST]{Fórmula de la corriente rápida de la sinapsis química}
     \boxed{
         I_{\mathrm{fast}}(t) =
         g_{\mathrm{fast}}
@@ -79,7 +62,7 @@ La componente rápida es una corriente graduada instantánea que depende de \(V_
 Los parámetros que aparecen en esta expresión son:
 \begin{itemize}
     \item \(g_{\mathrm{fast}}\) (\(\mathrm{\mu S}\)): conductancia máxima rápida. Representa la densidad efectiva de canales sinápticos rápidos disponibles y actúa como un factor de ganancia que modifica la escala (amplitud) de la curva de corriente generada, pero sin alterar su morfología temporal; valores mayores permiten que \(I_{\mathrm{fast}}\) tenga un impacto más marcado sobre \(V_{\mathrm{post}}\) (mayor fuerza de la sinapsis), debiendo ajustarse según lo que se busque en este aspecto.
-    \item \(E_{\mathrm{syn}}\) (mV): potencial de reversión sináptico. El hecho de que la sinapsis actúe de forma excitatoria o inhibitoria radica en este parámetro, ya que al evaluar el término \((V_{\mathrm{post}} - E_{\mathrm{syn}})\) determina el signo final de la corriente. Dependiendo de si se vuelve negativa o positiva, la corriente inyectada a la neurona postsináptica tendrá un efecto distinto: si \(E_{\mathrm{syn}}\) se sitúa claramente por encima del rango típico de \(V_{\mathrm{post}}\), la corriente inyectada neta es negativa (despolarizante al restarse en las ecuaciones del modelo), comportándose de forma excitatoria y tendiendo a favorecer patrones en fase. Si se coloca claramente por debajo de dicho rango, la corriente inyectada se vuelve positiva, actuando de forma inhibitoria (hiperpolarizante) y favoreciendo patrones en antifase. Además, cuanto más alejado se encuentre \(E_{\mathrm{syn}}\) del rango de operación de \(V_{\mathrm{post}}\), menor será la influencia dinámica de \(V_{\mathrm{post}}\) frente a \(V_{\mathrm{pre}}\) sobre la forma de la curva resultante. El hecho de que la morfología de la corriente replique la de \(V_{\mathrm{pre}}\) facilita la consecución de patrones en fase o antifase, ya que garantiza que la sinapsis excite o inhiba a la neurona postsináptica precisamente cuando la presináptica dispara. Esta mitigación de la influencia postsináptica es, por tanto, de gran interés para forzar un acoplamiento dominante, siempre manteniendo la cautela de no exceder los rangos fisiológicamente plausibles para el tipo de sinapsis modelada. Además, afectará, como es lógico, también a la escala de la corriente, aumentándola cuanto más se aleje de los límites de \(V_{\mathrm{post}}\), aunque esto puede ser compensado con \(g_{\mathrm{fast}}\).
+    \item \(E_{\mathrm{syn}}\) (mV): potencial de reversión sináptico. El hecho de que la sinapsis actúe de forma excitatoria o inhibitoria radica en este parámetro, ya que al evaluar el término \((V_{\mathrm{post}} - E_{\mathrm{syn}})\) determina el signo final de la corriente. Dependiendo de si se vuelve negativa o positiva, la corriente inyectada a la neurona postsináptica tendrá un efecto distinto: si \(E_{\mathrm{syn}}\) se sitúa claramente por encima del rango típico de \(V_{\mathrm{post}}\), la corriente inyectada neta es negativa, por lo que la influencia de \(V_{\mathrm{pre}}\) es directa (despolarizante al restarse en las ecuaciones del modelo), comportándose de forma excitatoria y tendiendo a favorecer patrones en fase. Si se coloca claramente por debajo de dicho rango, la corriente inyectada se vuelve positiva, lo que invierte la influencia de \(V_{\mathrm{pre}}\) (reflexión sobre el eje horizontal), actuando de forma inhibitoria (hiperpolarizante) y favoreciendo patrones en antifase. Además, cuanto más alejado se encuentre \(E_{\mathrm{syn}}\) del rango de operación de \(V_{\mathrm{post}}\), menor será la influencia dinámica de \(V_{\mathrm{post}}\) frente a \(V_{\mathrm{pre}}\) sobre la forma de la curva resultante. El hecho de que la morfología de la corriente replique o invierta la de \(V_{\mathrm{pre}}\) facilite la consecución de patrones en fase o antifase se debe a que garantiza que la sinapsis excite o inhiba a la neurona postsináptica precisamente cuando la presináptica dispara y viceversa cuando se hiperpolariza. Esta mitigación de la influencia postsináptica es, por tanto, de gran interés para forzar un acoplamiento dominante, siempre manteniendo la cautela de no exceder los rangos fisiológicamente plausibles para el tipo de sinapsis modelada. Además, este parámetro afectará también, como es lógico, a la escala de la corriente, aumentándola cuanto más se aleje de los límites de \(V_{\mathrm{post}}\), aunque esto puede ser compensado con \(g_{\mathrm{fast}}\).
     \item \(V_{\mathrm{pre}}(t)\), \(V_{\mathrm{post}}(t)\) (mV): potenciales de membrana pre y postsináptico.
     \item \(s_{\mathrm{fast}}\) (\(\mathrm{mV}^{-1}\)): pendiente de la sigmoide rápida. Valores grandes producen una transición muy abrupta entre estado inactivo y activo; esto implica que, cuanto mayor sea su valor, más compactación vertical sufrirá la parte de \(V_{\mathrm{pre}}\) que caiga en los bordes de la sigmoide, y más se expandirá verticalmente la parte que caiga en el centro. Por el contrario, valores pequeños generan una dependencia más suave de la corriente respecto a \(V_{\mathrm{pre}}\).
     \item \(V_{\mathrm{fast}}\) (mV): voltaje de semiactivación rápida (umbral de la sigmoide). Constituye el punto matemático en el que la función sigmoide evalúa exactamente a 0.5, por lo que actúa como punto de centraje matemático sobre \(V_{\mathrm{pre}}\).
@@ -87,235 +70,104 @@ Los parámetros que aparecen en esta expresión son:
 
 Ambos parámetros (\(s_{\mathrm{fast}}\) y \(V_{\mathrm{fast}}\)) se combinan para lograr el comportamiento deseado de la rama rápida. Al posicionar \(V_{\mathrm{fast}}\) en el centro de los \textit{spikes} y aplicar un \(s_{\mathrm{fast}}\) grande, se consigue que los picos ocupen todo el ancho activo de la sigmoide. Simultáneamente, esta combinación aplanará la onda lenta (los \textit{bursts}) en el extremo inferior de la curva, suprimiéndola casi por completo. Como resultado, \(I_{\mathrm{fast}}\) genera pulsos estrechos fielmente sincronizados con los \textit{spikes} o componentes de alta frecuencia, evitando reflejar la componente lenta de la señal presináptica.
 
-\paragraph{Componente lenta (\(I_{\mathrm{slow}}\)) y compuerta \(m_{\mathrm{slow}}\)}
+\subsubsection{Componente lenta (\(I_{\mathrm{slow}}\))}
 
-La componente lenta introduce una compuerta dinámica \(m_{\mathrm{slow}}(t)\) que integra la historia reciente de \(V_{\mathrm{pre}}\):
-\begin{equation}[EQ:ISLOW]{Componente lenta de la corriente sináptica.}
+La componente lenta introduce una compuerta dinámica \(m_{\mathrm{slow}}(t)\) que integra la historia reciente de \(V_{\mathrm{pre}}\). El sistema que define tanto la corriente como la evolución de dicha compuerta se detalla en la Ecuación~\ref{EQ:ISLOW_SYSTEM}:
+
+\begin{equation}[EQ:ISLOW_SYSTEM]{Sistema de ecuaciones de la corriente lenta de la sinapsis química}
     \boxed{
-        I_{\mathrm{slow}}(t) =
-        g_{\mathrm{slow}} \cdot m_{\mathrm{slow}}(t) \cdot [V_{\mathrm{post}}(t) - E_{\mathrm{syn}}]
+        \begin{aligned}
+            I_{\mathrm{slow}}(t)              & = g_{\mathrm{slow}} \cdot m_{\mathrm{slow}}(t) \cdot (V_{\mathrm{post}}(t) - E_{\mathrm{syn}})                                                                \\
+            \frac{d m_{\mathrm{slow}}(t)}{dt} & = \frac{k_1 \cdot (1 - m_{\mathrm{slow}}(t))}{1 + \exp[ s_{\mathrm{slow}} \cdot (V_{\mathrm{slow}} - V_{\mathrm{pre}}(t)) ]} - k_2 \cdot m_{\mathrm{slow}}(t)
+        \end{aligned}
     }
 \end{equation}
-donde \(g_{\mathrm{slow}}\) (\(\mathrm{\mu S}\)) y \(E_{\mathrm{syn}}\) (mV) funcionan igual que en la versión rápida, pero para la componente lenta (\(E_{\mathrm{syn}}\) es compartido en caso de usar ambas), y \(m_{\mathrm{slow}}(t)\) es una variable adimensional que representa la fracción efectiva de canales lentos abiertos.
 
-La dinámica de \(m_{\mathrm{slow}}\) se describe mediante la siguiente ecuación diferencial, la cual garantiza matemáticamente su acotación entre 0 y 1 gracias al \textit{trade-off} dinámico entre la apertura impulsada por \(k_1\) (cuyo término se anula si \(m_{\mathrm{slow}} = 1\)) y el cierre impulsado por \(k_2\) (que se anula si \(m_{\mathrm{slow}} = 0\)):
-\begin{equation}[EQ:DMSLOW]{Ecuación diferencial de la compuerta lenta \(m_{\mathrm{slow}}\).}
-    \boxed{
-        \frac{d m_{\mathrm{slow}}(t)}{dt} =
-        \frac{k_1 \cdot [1 - m_{\mathrm{slow}}(t)]}
-        {1 + \exp[ s_{\mathrm{slow}} \cdot (V_{\mathrm{slow}} - V_{\mathrm{pre}}(t)) ]}
-        \;-\;
-        k_2 \cdot m_{\mathrm{slow}}(t)
-    }
-\end{equation}
-con:
+donde \(g_{\mathrm{slow}}\) (\(\mathrm{\mu S}\)) y \(E_{\mathrm{syn}}\) (mV) funcionan igual que en la versión rápida, pero para la componente lenta, y \(m_{\mathrm{slow}}(t)\) es una variable adimensional que representa la fracción efectiva de canales lentos abiertos. Se puede apreciar, que ahora \(V_{\mathrm{pre}}\) afecta a la corriente a través de la sigmoide y esta, a su vez, mediante la variable \(m_{\mathrm{slow}}\); en lugar de únicamente con la sigmoide como ocurría en la componente rápida.
+
+La dinámica de \(m_{\mathrm{slow}}(t)\) garantiza matemáticamente su acotación entre 0 y 1 gracias al compromiso dinámico entre la apertura impulsada por \(k_1\) (cuyo término se anula si \(m_{\mathrm{slow}} = 1\)) y el cierre impulsado por \(k_2\) (que se anula si \(m_{\mathrm{slow}} = 0\)), con:
 \begin{itemize}
-    \item \(k_1\) (\(\mathrm{ms}^{-1}\)): tasa máxima de apertura lenta. Su magnitud determina la inercia temporal de la compuerta y depende directamente de la frecuencia de corte que separa la dinámica rápida de los \emph{spikes} y la dinámica lenta del \emph{burst}. Valores mayores (constantes de tiempo menores) hacen que \(m_{\mathrm{slow}}\) siga con poca inercia las despolarizaciones permitiendo capturar respuestas de mayor agilidad en la compuerta (siempre que exista una separación temporal con la escala de los \emph{spikes}), mientras que valores menores (constantes comparables o mayores que el periodo de los \emph{bursts}) enfatizan la integración de la dinámica lenta y lo convierten en un integrador lento.
-    \item \(k_2\) (\(\mathrm{ms}^{-1}\)): tasa de cierre, expresada también empíricamente. Controla la duración de la compuerta abierta tras cesar la despolarización; valores relativamente pequeños respecto a \(k_1\) permiten que \(m_{\mathrm{slow}}\) permanezca elevado a lo largo del \emph{burst} y decaiga entre \emph{bursts}.
+    \item \(k_1\) (\(\mathrm{ms}^{-1}\)): tasa máxima de apertura lenta. Su magnitud determina la inercia temporal de la compuerta y depende directamente de la frecuencia de corte que separa la dinámica rápida de los \textit{spikes} y la dinámica lenta del \textit{burst}. Valores mayores (constantes de tiempo menores) hacen que \(m_{\mathrm{slow}}\) siga con poca inercia las despolarizaciones permitiendo capturar respuestas de mayor agilidad en la compuerta (siempre que exista una separación temporal con la escala de los \textit{spikes}), mientras que valores menores (constantes comparables o mayores que el periodo de los \textit{bursts}) enfatizan la integración de la dinámica lenta y lo convierten en un integrador lento.
+    \item \(k_2\) (\(\mathrm{ms}^{-1}\)): tasa de cierre, expresada también empíricamente. Controla la duración de la compuerta abierta tras cesar la despolarización; valores relativamente pequeños respecto a \(k_1\) permiten que \(m_{\mathrm{slow}}\) permanezca elevado a lo largo del \textit{burst} y decaiga entre \textit{bursts}.
     \item \(s_{\mathrm{slow}}\) (\(\mathrm{mV}^{-1}\)) y \(V_{\mathrm{slow}}\) (mV): pendiente y voltaje de semiactivación lenta. Funcionan igual que en la versión rápida, pero para la componente lenta, afectando ahora a través de \(m_{\mathrm{slow}}\), modulada por \(k_1\) y \(k_2\), en lugar de directamente.
 \end{itemize}
 
-De manera análoga, \(s_{\mathrm{slow}}\) y \(V_{\mathrm{slow}}\) se combinan para aislar la envolvente del \emph{burst}. Dado que los \emph{spikes} de alta frecuencia ya quedan cortados y mitigados por la inercia temporal impuesta por \(k_1\) y \(k_2\), se busca un valor de \(s_{\mathrm{slow}}\) pequeño (sin pasarse, para evitar que el rango dinámico de \(m_{\mathrm{slow}}\) sea minúsculo) que prevenga la deformación de la onda lenta. Al centrar \(V_{\mathrm{slow}}\) respecto a esta onda lenta y emplear dicha pendiente reducida, se logra que el \emph{burst} ocupe todo el ancho de la sigmoide sin distorsionarse. Con esta configuración, \(I_{\mathrm{slow}}\) actúa como una representación fidedigna en baja frecuencia de la señal presináptica.
+De manera análoga, \(s_{\mathrm{slow}}\) y \(V_{\mathrm{slow}}\) se combinan para aislar la envolvente del \textit{burst}. Dado que los \textit{spikes} de alta frecuencia ya quedan cortados y mitigados por la inercia temporal impuesta por \(k_1\) y \(k_2\), se busca un valor de \(s_{\mathrm{slow}}\) pequeño (sin pasarse, para evitar que el rango dinámico de \(m_{\mathrm{slow}}\) sea minúsculo) que prevenga la deformación de la onda lenta. Al centrar \(V_{\mathrm{slow}}\) respecto a esta onda lenta y emplear dicha pendiente reducida, se logra que el \textit{burst} ocupe todo el ancho de la sigmoide sin distorsionarse. Con esta configuración, \(I_{\mathrm{slow}}\) actúa como una representación fidedigna en baja frecuencia de la señal presináptica.
 
-\paragraph{Uso de ambas corrientes simultáneamente}
+\subsubsection{Uso simultáneo de corrientes\label{SUBSEC:USO_SIMULTANEO}}
 
-En ocasiones resulta conveniente estudiar dinámicas aisladas empleando únicamente la corriente rápida \(I_{\mathrm{fast}}\), centrada en los \textit{spikes} de \(V_{\mathrm{pre}}\); o la lenta \(I_{\mathrm{slow}}\), centrada en los \textit{bursts} de \(V_{\mathrm{pre}}\). No obstante, su suma (\(I_{\mathrm{syn}} = I_{\mathrm{fast}} + I_{\mathrm{slow}}\)) permite integrar ambas escalas temporales para lograr una reconstrucción sináptica completa de la forma de la señal presináptica.
+En ocasiones resulta conveniente estudiar dinámicas aisladas empleando únicamente la corriente rápida \(I_{\mathrm{fast}}\), centrada en los \textit{spikes} de \(V_{\mathrm{pre}}\); o la lenta \(I_{\mathrm{slow}}\), centrada en los \textit{bursts} de \(V_{\mathrm{pre}}\). No obstante, si bien en la referencia original \cite{Golowasch1999} estas componentes se tratan de forma independiente, la arquitectura del repositorio del Apéndice~\ref{SEC:NEUNREPO} permite integrar la contribución de ambas en una única corriente sináptica total (Ecuación~\ref{EQ:ISYN}), logrando una reconstrucción sináptica completa de la forma de la señal presináptica:
 
-Algo que se podría pensar es que \(I_{\mathrm{fast}}\), con un \(s_{\mathrm{fast}}\) pequeño y \(V_{\mathrm{fast}}\) adecuadamente centrado (al centro del rango de \(V_{\mathrm{pre}}\)), captura intrínsecamente todas las frecuencias de \(V_{\mathrm{pre}}\), por lo que teóricamente bastaría con esta única corriente para replicar la señal presináptica al completo. Esto es completamente cierto, pero en este diseño se ha optado deliberadamente por restringir \(I_{\mathrm{fast}}\) a las altas frecuencias con un propósito fundamental: la modularidad. Disgregar la señal en dos vías frecuenciales permite escalar sus componentes de forma independiente. Partiendo de un estado base que replique \(V_{\mathrm{pre}}\) equilibrando ambas conductancias (\(g_{\mathrm{fast}}\) y \(g_{\mathrm{slow}}\)), esta separación otorga la flexibilidad de, por ejemplo, amplificar o atenuar los \textit{spikes} sin alterar los \textit{bursts}, o aislar su estudio. Esta capacidad de modulación o de usar únicamente las frecuencias altas es interesante para diversos experimentos, entre ellos los desarrollados por el \ac{gnb} de la \ac{uam}.
+\begin{equation}[EQ:ISYN]{Fórmula de la corriente total de la sinapsis química}
+    \boxed{ I_{\mathrm{syn}}(t) = I_{\mathrm{fast}}(t) + I_{\mathrm{slow}}(t) }
+\end{equation}
 
-\paragraph{Interacciones bidireccionales}
+donde \(I_{\mathrm{syn}}\) se expresa en unidades de corriente (nA). Es importante notar que \(E_{\mathrm{syn}}\) será el único parámetro compartido por ambas componentes.
+
+Algo se podría pensar es que \(I_{\mathrm{fast}}\), con un \(s_{\mathrm{fast}}\) pequeño para que no se deforme la influencia de \(V_{\mathrm{pre}}(t)\), y \(V_{\mathrm{fast}}\) adecuadamente centrado al centro del rango de \(V_{\mathrm{pre}}\), captura intrínsecamente todas las frecuencias presinápticas, por lo que teóricamente bastaría con esta única corriente para replicar la señal presináptica al completo sin requerir de esta reconstrucción sumando. Esto es completamente cierto, pero en este diseño se ha optado deliberadamente por restringir \(I_{\mathrm{fast}}\) a las altas frecuencias con un propósito fundamental: la modularidad. Disgregar la señal en dos vías frecuenciales permite escalar sus componentes de forma independiente. Partiendo de un estado base que replique \(V_{\mathrm{pre}}\) mediante ambas componentes sumadas (equilibrando \(g_{\mathrm{fast}}\) y \(g_{\mathrm{slow}}\)), se tendrá la flexibilidad de, por ejemplo, amplificar o atenuar los \textit{spikes} sin alterar los \textit{bursts} y viceversa. Esta capacidad de modulación es interesante para diversos experimentos, entre ellos los desarrollados por el \ac{gnb} de la \ac{uam}.
+
+\subsubsection{Interacciones bidireccionales}
 
 En interacciones bidireccionales se consideran dos sinapsis del tipo descrito, una en cada dirección: cada una utiliza como \(V_{\mathrm{pre}}\) el potencial de una de las neuronas e inyecta su corriente \(I_{\mathrm{syn}}\) en la otra, con sus propios parámetros y con \(V_{\mathrm{post}}\) definido en el compartimento somático correspondiente.
 
-\section{Optimización Bayesiana y Función de Evaluación\label{SEC:OPTIMIZACION_BO}}
 
-La sintonización del conjunto de hiperparámetros sinápticos $\{g_{fast}, s_{fast}, V_{fast}, g_{slow}, s_{slow}, V_{slow}, k_1, k_2, E_{syn}\}$ debe alinearse con el espacio fásico singular de la neurona biológica conectada en cada instante. El ajuste empírico por fuerza bruta resulta insostenible: la inyección prolongada de parámetros subóptimos puede inducir degradación celular. El diseño delega la búsqueda paramétrica a un marco de Optimización Bayesiana (BO), instrumentado mediante la librería C++ \textit{Limbo} \cite{Cully2018}.
+\section{Optimización automática de los parámetros de la sinapsis química\label{SEC:OPTIMIZACION_AUTOMATICA}}
 
-La BO es idónea para funciones objetivo de tipo \textit{black-box} sin derivada analítica, con topologías no convexas y evaluación costosa. Limbo aproxima la función de coste mediante Procesos Gaussianos (GP), calculando media predictiva y varianza asociada, y emplea la función de adquisición \textit{Expected Improvement} (EI) para decidir la siguiente combinación paramétrica a evaluar. La configuración de Limbo se detalla en los Códigos~\ref{COD:LIMBOCFGOFF} y~\ref{COD:LIMBOCFGON} para las versiones \textit{offline} y \textit{online} respectivamente.
+Para que el modelo sináptico descrito en la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA} reproduzca una dinámica objetivo concreta es necesario encontrar la combinación de parámetros que minimice la discrepancia entre la corriente sináptica generada y el comportamiento deseado. Esto requiere dos elementos fundamentales: una función de evaluación que cuantifique la calidad de cada combinación de parámetros, y un algoritmo de optimización que explore el espacio paramétrico de forma eficiente.
+
+Un requisito de diseño central es que el algoritmo de parametrización no sea de un solo uso, sino que pueda aplicarse de forma recurrente en cada experimento con neuronas distintas, adaptándose a las características electrofisiológicas particulares de cada preparación biológica. En consecuencia, el método de optimización debe ser eficiente en el número de evaluaciones de la función objetivo, ya que cada evaluación resulta costosa en tiempo, especialmente en experimentos \textit{online} (con neuronas vivas y no con registros en frío) en los que no se dispone de tiempo ilimitado, que son los de mayor interés. Debido a esto y a otros factores, se ha optado por utilizar la optimización bayesiana.
+
+Se han desarrollado dos implementaciones complementarias de esta estrategia. Por un lado, una versión \textit{offline} que parametriza la sinapsis a partir de un registro de voltaje presináptico almacenado en un fichero; esta modalidad resulta muy rápida al no depender de los tiempos de adquisición de una neurona viva (el modelo sináptico se puede simular a velocidad arbitraria), aunque solo admite sinapsis unidireccional al disponer únicamente de una señal \(V_{\mathrm{pre}}\) estática. Por otro lado, una versión \textit{online} implementada como módulo de RTXI, que ejecuta la optimización en tiempo real durante el experimento, permitiendo su uso tanto en configuraciones unidireccionales como bidireccionales con neuronas vivas y modelo.
+
+En las secciones siguientes se describe la función de evaluación y el algoritmo de optimización elegido, y luego se detallan las características de cada implementación.
 
 
-\subsection{Arquitectura de la Función de Evaluación\label{SUBSEC:FITNESS_FUNCTION}}
+\subsection{Función de evaluación\label{SUBSEC:FUNCION_EVALUACION}}
 
-La función de evaluación devuelve una métrica escalar ponderada $F_{total}$:
+La función de evaluación es necesaria para poder cuantificar la calidad de una combinación de parámetros sinápticos midiendo cuánto se asemeja la corriente sináptica generada al comportamiento de referencia esperado. El algoritmo de evaluación desarrollado se descompone en dos componentes independientes: una puntuación de forma (\textit{shape score}) y una puntuación de rango (\textit{range score}), que capturan respectivamente la forma (sin contar escala y desplazamiento) y la amplitud de la corriente. En caso de usar ambas componentes (\(I_{\mathrm{fast}}\) e \(I_{\mathrm{slow}}\)), cada una se evalúa por separado y se promedian con pesos configurables (por defecto, 0{,}5 para cada una).
 
-\begin{equation}[EQ:FTOTAL]{Función de fitness total como media ponderada de las puntuaciones de rango y forma.}
-    \boxed{F_{total} = w_R \cdot Score_{Rango} + w_S \cdot Score_{Forma}}
+\subsubsection{Separación frecuencial}
+
+Antes de calcular las puntuaciones, es necesario separar la señal presináptica \(V_{\mathrm{pre}}(t)\) en sus componentes de alta y baja frecuencia para generar las señales de referencia contra las que comparar \(I_{\mathrm{fast}}\) e \(I_{\mathrm{slow}}\). Esta separación se realiza mediante un filtro Butterworth paso bajo de cuarto orden \cite{Butterworth1930}, cuya función de transferencia se implementa en secciones de segundo orden (SOS) mediante la función \texttt{to\_sos} para maximizar la estabilidad numérica \cite{Proakis2007}. Para evitar desfases temporales, el filtro se aplica de forma bidireccional (fase cero) utilizando la función \texttt{filtfilt} \cite{Gustafsson1996} (Código~\ref{COD:BUTTERWORTH}). Además, tal y como aplican las implementaciones de referencia en procesamiento digital de señales \cite{SciPyfiltfilt}, resulta indispensable mitigar los transitorios o efectos de borde generados durante el filtrado. Para ello, se lleva a cabo una extrapolación de puntos en los extremos de la señal (relleno), técnica que consiste en añadir un margen temporal calculando la reflexión, en este caso impar, de los datos respecto a los puntos inicial y final, lo que garantiza la continuidad de la derivada en los extremos, resultando conveniente para evitar transitorios indeseados al aplicar el filtro (Código~\ref{COD:PADDING}). La frecuencia de corte \(f_c\) la define el usuario en función de la separación temporal deseada entre \textit{spikes} y \textit{bursts} (típicamente 0{,}3\,kHz para neuronas vivas, aunque puede variar entre las mismas o con las neuronas modelo). La componente filtrada constituye la referencia de baja frecuencia para \(I_{\mathrm{slow}}\), mientras que el residuo (señal original menos filtrada) constituye la referencia de alta frecuencia para \(I_{\mathrm{fast}}\).
+
+Toda la lógica de procesamiento de señal se implementa mediante la biblioteca KFR (Apéndice~\ref{SUBSEC:KFRREPO}), seleccionada por tres motivos: (1)~la simplicidad de sus operaciones vectoriales sobre señales, que permite expresar operaciones como el centrado, la correlación o la extracción de extremos en pocas líneas de código; (2)~la eficiencia de dichas operaciones, optimizadas internamente mediante operaciones vectorizadas, vital en este caso dada la longitud en puntos de las señales (debido a las altas tasas de muestreo de estos experimentos); y (3)~la disponibilidad directa de funciones de diseño de filtros IIR (\texttt{iir\_lowpass}, \texttt{butterworth}, \texttt{to\_sos}) y de filtrado bidireccional (\texttt{filtfilt}), que simplifican notablemente la implementación del preprocesamiento frecuencial.
+
+\subsubsection{Puntuación de forma}
+
+La similitud en forma entre la corriente sináptica candidata y la referencia se evalúa mediante el coeficiente de correlación de Pearson \cite{Pearson1896} (Código~\ref{COD:PEARSON}). Dada una señal candidata \(\mathbf{x}\) y una señal de referencia \(\mathbf{y}\) de longitud \(n\), el coeficiente se calcula mediante la Ecuación~\ref{EQ:PEARSON}:
+\begin{equation}[EQ:PEARSON]{Fórmula del coeficiente de correlación de Pearson}
+    \boxed{
+        r = \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}^{n} (x_i - \bar{x})^2} \sqrt{\sum_{i=1}^{n} (y_i - \bar{y})^2}}
+    }
 \end{equation}
+donde \(\bar{x}\) e \(\bar{y}\) representan las medias de las respectivas señales, y \(r \in [-1, 1]\). Este coeficiente se normaliza al intervalo \([0, 1]\) mediante la transformación \((r + 1) / 2\). De esta forma, una puntuación de 1 corresponde a una correlación perfecta (formas iguales), mientras que una puntuación de 0 corresponde a una correlación inversa (formas opuestas o simétricas respecto al eje horizontal), y todo esto sin tener en cuenta la escala y el desplazamiento de ninguna de las señales, únicamente su morfología (es adimensional).
 
-Los pesos $w_R$ y $w_S$ están fijados simétricamente en $0{,}5$.
+Por tanto, la búsqueda de un acoplamiento en antifase se basa en una correlación directa, y la búsqueda en fase invierte esta puntuación para buscar una correlación inversa. Esto es de esta forma para compensar el hecho de que el modelo neuronal resta la corriente inyectada en sus ecuaciones.
 
+\subsubsection{Puntuación de rango}
 
-\subsubsection{Procesamiento de Señal (DSP) con KFR\label{SSUBSEC:DSP_KFR}}
-
-La señal de voltaje biológica presenta oscilaciones subumbrales de baja frecuencia y perturbaciones de alta frecuencia relativas a los potenciales de acción. La arquitectura implementa una descomposición espectral utilizando \textit{KFR} \cite{KFRLib2023}, una librería C++ de DSP que aprovecha instrucciones SIMD. El preprocesamiento ejecuta un filtro de Butterworth paso bajo de cuarto orden, seleccionado por su respuesta maximamente plana en la banda de paso. La frecuencia de corte típica es $f_c \approx 0{,}3$~kHz.
-
-\begin{itemize}
-    \item \textbf{Señal de Referencia Lenta ($\tilde{V}_{pre}^{slow}$):} Salida directa del filtrado de Butterworth sobre $V_{pre}$. Se usa como patrón para correlacionar con $I_{slow}$.
-    \item \textbf{Señal de Referencia Rápida ($\tilde{V}_{pre}^{fast}$):} Residuo de alta frecuencia ($V_{pre} - \tilde{V}_{pre}^{slow}$), que aísla los \textit{spikes} y sirve como patrón para $I_{fast}$.
-\end{itemize}
-
-
-\subsubsection{Cálculo de Métricas y Patrones Dinámicos\label{SSUBSEC:METRICAS}}
-
-La sincronización en el circuito CPG busca inducir un fenómeno de \textbf{fase} o \textbf{antifase}. El \textit{Score de Forma} emplea el Coeficiente de Correlación de Pearson:
-
-\begin{itemize}
-    \item \textbf{Antifase:} La correlación de Pearson se aplica directamente entre las corrientes sintetizadas y las señales preprocesadas correspondientes.
-    \item \textbf{Fase:} Se busca anticorrelación (correlación de Pearson negativa).
-\end{itemize}
-
-El \textit{Score de Rango} computa el error absoluto medio entre las cotas reales alcanzadas por la corriente ($\min(I_{syn}), \max(I_{syn})$) y un recinto de seguridad acotado por el usuario, con un factor de relajación configurado en el código.
-
-
-\subsection{Definición de Rangos de Exploración\label{SUBSEC:PRIORS}}
-
-El hiperespacio de 9 parámetros sinápticos requiere restricciones basadas en conocimiento \textit{a priori}. La matriz de límites (\texttt{BOParamRanges}, Código~\ref{COD:BOPARAMRANGES}) define cotas calculadas a partir de la estadística descriptiva de los potenciales $V_{pre}$ e $I_{esperado}$:
-
-\begin{itemize}
-    \item \textbf{Umbrales de Activación ($V_{fast}, V_{slow}$):} El umbral rápido se confina al segmento de despolarización activa; su base inferior se define como $V_{pre,min} + \Delta V_{pre} \cdot 0{,}25$, garantizando que la sigmoide rápida solo responda a potenciales de acción. El umbral lento cubre todo el rango de $V_{pre}$, ya que la cinética lenta puede activarse a cualquier nivel de despolarización. En la versión \textit{online}, se añade un margen adicional de $\pm 12{,}5\%$ del rango de $V_{pre}$ en ambos umbrales para compensar la variabilidad intrínseca de la señal biológica real.
-    \item \textbf{Sensibilidades ($s_{fast}, s_{slow}$):} Se escalan de forma inversamente proporcional al rango de voltaje ($1 / \Delta V_{pre}$), normalizando la pendiente de las sigmoides al rango dinámico observado.
-    \item \textbf{Conductancias ($g_{fast}, g_{slow}$):} La búsqueda se realiza en espacio logarítmico para explorar órdenes de magnitud equitativamente. Los límites se derivan invirtiendo las ecuaciones de corriente en el peor caso de \textit{driving force} $(V_{post} - E_{syn})$ y activación sigmoidea máxima.
-\end{itemize}
-
-
-\section{Implementación Offline: Evaluación en Simulador\label{SEC:IMPLEMENTACION_OFFLINE}}
-
-La implementación \textit{offline} consiste en una aplicación C++ independiente, desprovista del contenedor RTXI, construida sobre librerías estándares. Su objetivo es ejecutar campañas de validación del diseño de la BO frente a datos pre-grabados (formato CSV) \cite{Reyes-Sanchez2020}.
-
-La arquitectura se basa en un sistema modular mediante \textit{Templates} del estándar C++20. El evaluador de sinapsis y los integradores aceptan sus rutinas de derivación mediante parámetros de plantilla fuertemente tipados, permitiendo incrustar modelos neuronales alternativos simplemente satisfaciendo los \textit{Concepts} del evaluador.
-
-
-\subsection{Procesamiento de Señal: Escalado de Dominio\label{SUBSEC:SCALING}}
-
-Los registros biológicos (en milivoltios) deben transducirse al espacio adimensional del modelo HR para que la neurona artificial pueda procesarlos. Este escalado comprende dos transformaciones complementarias, descritas en detalle por Reyes-Sánchez \textit{et al.} \cite{Reyes-Sanchez2020}.
-
-\subsubsection{Escalado Vertical (de Amplitud)\label{SSUBSEC:ESCALADO_VERTICAL}}
-
-La transformación afín mapea el rango dinámico de la señal biológica $[V_{min}^{real}, V_{max}^{real}]$ al rango del atractor del modelo HR $[V_{min}^{HR}, V_{max}^{HR}]$ (típicamente $x_{min} \approx -1{,}6$, $x_{max} \approx 1{,}8$):
-
-\begin{equation}[EQ:ESCALADO]{Transformación afín para escalar la señal biológica al espacio del modelo.}
-    \boxed{v_{virtual} = v_{real} \cdot \alpha + \beta, \quad \text{donde } \alpha = \frac{\Delta V^{HR}}{\Delta V^{real}}, \quad \beta = V_{min}^{HR} - V_{min}^{real} \cdot \alpha}
+La puntuación de rango (Código~\ref{COD:RANGESCORE}) mide cuánto se desvían los extremos observados de la corriente candidata respecto a los buscados, complementando la puntuación de forma, que no captura información sobre el rango. Se calcula mediante la Ecuación~\ref{EQ:RANGESCORE} a continuación:
+\begin{equation}[EQ:RANGESCORE]{Fórmula de la puntuación del rango de la corriente sináptica}
+    \boxed{
+    \mathrm{score}_{\mathrm{range}} = 1 - \frac{\frac{1}{2}\left(|I_{\min}^{\mathrm{obs}} - I_{\min}^{\mathrm{exp}}| + |I_{\max}^{\mathrm{obs}} - I_{\max}^{\mathrm{exp}}|\right)}{d_{\max}}
+    }
 \end{equation}
-
-El factor $\alpha$ preserva la proporción entre rangos dinámicos, mientras que el offset $\beta$ alinea los mínimos. Los extremos $V_{min}^{real}$ y $V_{max}^{real}$ se obtienen de una ventana de observación inicial de la señal del CSV. Para mitigar el \textit{drift} estacionario (desplazamiento lento de la línea base biológica), los factores de escalado se recalculan cada dos ciclos completos de \textit{burst}, empleando los extremos locales de cada ventana con un margen del $\pm 10\%$ que evita que artefactos puntuales distorsionen la transformación \cite{Reyes-Sanchez2020}.
-
-\subsubsection{Escalado Temporal (de Frecuencia)\label{SSUBSEC:ESCALADO_TEMPORAL}}
-
-El modelo HR, simulado con un paso de integración $dt$, produce ráfagas cuyo período (en número de pasos) depende de $dt$. El objetivo es seleccionar un $dt$ tal que el período de \textit{burst} del modelo sea un múltiplo entero del período de \textit{burst} de la señal biológica (medido en número de muestras del CSV). El período de la señal biológica se mide mediante detección de cruces ascendentes con histéresis, empleando umbrales al $10\%$ y $90\%$ del rango dinámico de la señal para evitar detecciones espurias por ruido \cite{Reyes-Sanchez2020}. El factor de sub-pasos resultante $N_{factor}$ determina cuántos pasos del integrador se ejecutan por cada muestra del CSV:
-
-\begin{equation}[EQ:NFACTOR]{Factor de sub-pasos para alineación temporal.}
-    \boxed{N_{factor} = \left\lfloor \frac{\text{pts\_burst\_modelo}(dt)}{\text{pts\_burst\_señal}} \right\rfloor}
+donde \(d_{\max}\) es una distancia máxima admisible que normaliza el error. Esta distancia se deriva del rango de la corriente esperada y se calcula mediante la Ecuación~\ref{EQ:DMAX}:
+\begin{equation}[EQ:DMAX]{Fórmula de la distancia máxima para la normalización del error de la puntuación del rango}
+    \boxed{
+        \begin{aligned}
+            R_{\mathrm{exp}} & = I_{\max}^{\mathrm{exp}} - I_{\min}^{\mathrm{exp}}                                                             \\
+            d_{\max}         & = \left( R_{\mathrm{exp}} + R_{\mathrm{exp}} \cdot f_{\mathrm{margen}} \cdot 2 \right) \cdot f_{\mathrm{rango}}
+        \end{aligned}
+    }
 \end{equation}
+En esta expresión, \(d_{\max}\) representa la máxima diferencia de intensidad aproximada (porque realmente no está acotada) que habrá entre dos puntos. El parámetro \(f_{\mathrm{margen}}\) introduce unos márgenes de seguridad sobre el rango esperado \(R_{\mathrm{exp}}\), que es el mismo factor que se usará para definir posteriormente los límites de búsqueda de las conductancias para que no se llegue a corrientes extremas, lo que garantiza la coherencia del sistema. Por su parte, el factor empírico \(f_{\mathrm{rango}}\) se ha ajustado para asegurar que ambas componentes de la puntuación (rango y forma) presenten una variabilidad similar. De este modo, al no estar acotado estrictamente el error de rango (pudiendo resultar la puntuación final menor que cero en casos extremos), se evita que esta componente acabe dominando sobre la de forma y se preserva el peso de la morfología en la evaluación.
 
+\paragraph{Asignación de rangos esperados: uso de una componente de la corriente frente a uso conjunto}
 
-\subsection{Sobremuestreo Temporal e Interpolación Lineal\label{SUBSEC:SUBSTEPPING}}
-
-Los datos biológicos presentan una granulación muestral de $5$ a $10$~kHz ($dt \approx 0{,}1$~ms), mientras que el integrador RK4 del modelo HR requiere $dt \approx 0{,}001$~ms. La versión \textit{offline} implementa un algoritmo de \textit{sub-stepping} que genera $N_{factor} - 1$ puntos intermedios entre cada par de muestras consecutivas mediante interpolación lineal:
-
-\begin{equation}[EQ:INTERP]{Interpolación lineal entre muestras consecutivas para sub-stepping.}
-    \boxed{V_{interp}(k) = V(t) + \frac{k}{N_{factor}} \cdot [V(t+1) - V(t)], \quad \forall k \in \{1, ..., N_{factor}-1\}}
-\end{equation}
-
-
-\subsection{Justificación del Diseño de la Configuración de Limbo\label{SUBSEC:LIMBO_JUSTIFICACION}}
-
-La configuración del pipeline de Optimización Bayesiana en Limbo \cite{Cully2018} se compone de varios módulos interdependientes cuya parametrización requiere una justificación rigurosa. A continuación se detallan las decisiones de diseño para cada componente.
-
-\subsubsection{Modelo Sustituto: Proceso Gaussiano (GP)\label{SSUBSEC:GP_CONFIG}}
-
-El modelo sustituto elegido es un Proceso Gaussiano con kernel \textit{Squared Exponential} con \textit{Automatic Relevance Determination} (SE-ARD). Esta elección se fundamenta en:
+El tratamiento de los rangos esperados difiere según se utilice una única componente o ambas simultáneamente:
 
 \begin{itemize}
-    \item \textbf{SE-ARD frente a SE isotrópico:} El kernel SE-ARD asigna una escala de longitud independiente ($\ell_i$) a cada dimensión del espacio paramétrico. Dado que los 9 parámetros sinápticos operan en escalas muy dispares (conductancias en microsiemens frente a pendientes en $\text{V}^{-1}$), un kernel isotrópico subestimaría la sensibilidad en las dimensiones de menor rango, deteriorando la capacidad predictiva del GP.
-    \item \textbf{Varianza de señal ($\sigma^2 = 1{,}0$):} Se fija la varianza de señal inicial del kernel en $1{,}0$ como prior no informativo. El optimizador de hiperparámetros (Rprop) la ajusta durante la ejecución.
-    \item \textbf{Media constante ($\mu_0 = 0{,}5$):} La función media del GP se fija en $0{,}5$, correspondiente al punto medio del rango de fitness $[0, 1]$. Esto evita un sesgo inicial hacia valores altos o bajos, permitiendo que las primeras observaciones del LHS definan la topología del surrogate sin interferencia del prior.
+    \item \textbf{Uso individual} (\(I_{\mathrm{fast}}\) o \(I_{\mathrm{slow}}\) por separado): el rango esperado de corriente es directamente el intervalo \([I_{\min}^{\mathrm{exp}}, I_{\max}^{\mathrm{exp}}]\) introducido por el usuario.
+    \item \textbf{Uso conjunto} (\(I_{\mathrm{fast}}\) e \(I_{\mathrm{slow}}\) simultáneamente): el rango global introducido por el usuario se reparte proporcionalmente entre ambas componentes de forma coherente con un buen diseño de filtro paso bajo. En concreto, la componente lenta \(I_{\mathrm{slow}}\) hereda tanto el desplazamiento como la onda lenta de la señal presináptica (dado que el filtro paso bajo utilizado mantiene las magnitudes), por lo que su rango esperado se reescala con desplazamiento a partir del rango de \(V_{\mathrm{pre}}\) al rango de corriente total (Código~\ref{COD:RESCALE}, función \texttt{rescale\_to\_target}). La componente rápida \(I_{\mathrm{fast}}\), al ser el residuo tras la sustracción de la componente filtrada, está centrada en cero y carece de desplazamiento, por lo que su rango se reescala sin desplazamiento, aplicando únicamente la proporción entre rangos (función \texttt{rescale\_to\_target\_no\_offset}). Este reparto garantiza que la suma de ambas componentes reconstruya el rango total esperado, asignando a cada una la contribución proporcional a su peso frecuencial en la señal original.
 \end{itemize}
-
-\subsubsection{Ruido Observacional: Offline vs Online\label{SSUBSEC:NOISE_CONFIG}}
-
-La configuración del ruido del kernel presenta la divergencia más crítica entre ambas arquitecturas:
-
-\begin{itemize}
-    \item \textbf{Offline (\texttt{noise} $= 10^{-6}$, \texttt{optimize\_noise} = false):} La señal de entrada proviene de un CSV pre-grabado: cada evaluación con los mismos parámetros produce idéntico resultado. El sistema es determinista, por lo que el ruido observacional se fija en un valor prácticamente nulo ($10^{-6}$, suficiente para evitar singularidades numéricas en la factorización de Cholesky) y se deshabilita su optimización. Permitir que el GP infiera ruido en un sistema determinista induciría sobresuavizado del surrogate, perdiendo resolución en los picos del landscape de fitness.
-    \item \textbf{Online (\texttt{noise} $= 0{,}05$, \texttt{optimize\_noise} = true):} La señal biológica \textit{in vivo} es intrínsecamente estocástica: ruido térmico del amplificador, variabilidad intrínseca de los canales iónicos, y fluctuaciones del potencial sináptico. Dos evaluaciones con parámetros idénticos producirán fitness distintos. Se establece un prior de ruido elevado ($0{,}05$) y se habilita su optimización, permitiendo que el GP adapte la componente de ruido a la variabilidad real observada durante la campaña. Esto evita que el GP sobreajuste a observaciones ruidosas, manteniendo una estimación de incertidumbre calibrada.
-\end{itemize}
-
-\subsubsection{Función de Adquisición: Expected Improvement (EI)\label{SSUBSEC:EI_CONFIG}}
-
-Se seleccionó \textit{Expected Improvement} (EI) frente a alternativas como GP-UCB por su comportamiento superior en espacios de alta dimensionalidad con evaluaciones costosas. El hiperparámetro clave es el \textit{jitter} ($\xi$), que controla el equilibrio exploración/explotación:
-
-\begin{itemize}
-    \item \textbf{Offline ($\xi = 0{,}003$):} Valor moderado que favorece la exploración del espacio paramétrico. En el modo offline no existe restricción temporal: se dispone de tiempo ilimitado para evaluar candidatos, por lo que se prioriza descubrir regiones prometedoras del landscape antes de explotarlas. Un jitter demasiado bajo convergiría prematuramente a un óptimo local.
-    \item \textbf{Online ($\xi = 0{,}001$):} Valor reducido que intensifica la explotación. La viabilidad del tejido biológico impone una ventana temporal limitada ($\sim$30--60 minutos antes de la degradación celular). Cada evaluación requiere segundos de adquisición en tiempo real. Por tanto, se prioriza refinar rápidamente los mejores candidatos encontrados, asumiendo que el muestreo inicial (LHS) ya ha proporcionado suficiente cobertura del espacio.
-\end{itemize}
-
-\subsubsection{Optimizadores Internos\label{SSUBSEC:OPTIMIZERS_CONFIG}}
-
-Limbo emplea dos optimizadores internos cuya configuración escala con la dimensionalidad:
-
-\begin{itemize}
-    \item \textbf{Rprop (hiperparámetros del GP):} Algoritmo de gradiente con paso adaptativo. Las iteraciones se fijan como $50 \times d$, donde $d$ es la dimensión del espacio. La tolerancia de parada se establece en $10^{-6}$ para garantizar convergencia precisa de las escalas de longitud ARD. La re-optimización de hiperparámetros se ejecuta cada $\max(1, N_{iter}/25)$ iteraciones de la BO, equilibrando coste computacional y fidelidad del modelo.
-    \item \textbf{NLOpt Subplex (maximización de EI):} Optimizador sin gradiente para encontrar el máximo de la función de adquisición sobre el hipercubo $[0,1]^d$. Las iteraciones se fijan como $150 \times d^2$, escalando cuadráticamente con la dimensión para garantizar cobertura suficiente del espacio de búsqueda de la adquisición. Se deshabilitan las tolerancias de función y posición relativa ($-1$) para forzar que el optimizador agote todas las iteraciones asignadas, evitando terminación prematura en landscapes multimodales.
-\end{itemize}
-
-\subsubsection{Inicialización: Latin Hypercube Sampling (LHS)\label{SSUBSEC:LHS_CONFIG}}
-
-El muestreo inicial emplea \textit{Latin Hypercube Sampling}, que garantiza cobertura uniforme de cada dimensión marginal. El número de muestras iniciales es configurable por el usuario (típicamente 40 offline, ajustable online según la ventana temporal disponible). El LHS opera sobre el hipercubo normalizado $[0,1]^d$; la decodificación a parámetros reales se realiza mediante la transformación lineal (o log-lineal para conductancias) definida en \texttt{BOParamRanges}.
-
-
-\section{Implementación Online: Integración Biohíbrida (RTXI 2.3)\label{SEC:IMPLEMENTACION_ONLINE}}
-
-El despliegue \textit{in vivo} requirió la refactorización hacia un diseño de C++ con hilos asíncronos concurrentes y colas \textit{lock-free}. La implementación es gobernada por RTXI bajo \textit{Preempt-RT} \cite{Amaducci2019, Buttazzo2024}.
-
-La complejidad radica en combinar la Optimización Bayesiana---con un gran coste en álgebra matricial---con un hilo maestro que dispone de microsegundos para ejecutar la rutina antes del vencimiento del \textit{tick} de control ($\sim 10$--$20$~kHz).
-
-
-\subsection{Sincronización Dual de Hilos RT vs NRT\label{SUBSEC:SINCRO_HILOS}}
-
-Se instrumentó una arquitectura de segregación de concurrencia con dos entidades funcionales asíncronas (Código~\ref{COD:EXECUTE} y Código~\ref{COD:NRTBO}):
-
-\begin{itemize}
-    \item \textbf{Hilo de Tiempo Real (RT):} La función \texttt{execute()} de RTXI, gestionada bajo máxima prioridad (\textit{Sched\_FIFO}). Lee la placa DAQ, evalúa las ecuaciones de la red sináptica con RK6(5), inyecta corriente al hardware y transcribe los vectores a buffers circulares para la validación posterior.
-    \item \textbf{Hilo de Tiempo No Real (NRT):} Subproceso POSIX (\texttt{BO\_NRT\_thread}) bajo las prioridades del planificador CFS. Opera el control asíncrono de Limbo, resolviendo las aproximaciones del GP, computando penalizaciones con KFR, y determinando el próximo salto hiperparamétrico.
-\end{itemize}
-
-
-\subsection{Double-Buffering Atómico (Lock-Free)\label{SUBSEC:DOUBLE_BUFFERING}}
-
-Un control basado en \textit{Mutex} causaría inversión de prioridades \cite{Buttazzo2024}. El trasvase entre \texttt{execute()} y el NRT se diseñó mediante \textbf{Double-Buffering Atómico sin Bloqueo} (Código~\ref{COD:DOUBLEBUF}).
-
-El diseño emplea arreglos dobles de parámetros (\texttt{params\_12} y \texttt{params\_21}) indexados por \texttt{std::atomic<size\_t> synapse\_idx}:
-
-\begin{enumerate}
-    \item El hilo RT emplea la dirección apuntada por la lectura del índice atómico con \texttt{memory\_order\_acquire}.
-    \item El NRT escribe la nueva configuración en el índice opuesto (\texttt{1 - curr\_synapse\_idx}).
-    \item Tras finalizar, el NRT ejecuta \texttt{synapse\_idx.store(new\_idx, std::memory\_order\_release)}.
-    \item El RT detecta el cambio en el siguiente periodo: la permuta ocurre en un solo \textit{tick} sin bloqueos ni condiciones de carrera.
-\end{enumerate}
-
-Para los buffers de datos, la lógica emplea \texttt{std::atomic<bool> RT\_storing} como banderín de sincronización entre ambos hilos.
-
-
-\subsection{Configuración Bayesiana para Señales In Vivo\label{SUBSEC:BO_ONLINE_CONFIG}}
-
-La naturaleza ruidosa de las señales biológicas requiere ajustes en la configuración de Limbo (Código~\ref{COD:LIMBOCFGON}):
-
-\begin{itemize}
-    \item \textbf{Ruido del Kernel (\textit{noise}):} Se instancia en $0{,}05$ con \texttt{optimize\_noise = true}, para que el GP asuma la variabilidad intrínseca de la señal.
-    \item \textbf{Restricción de Búsqueda (\textit{jitter}):} Reducido a $0{,}001$, forzando una política de explotación intensiva del dominio funcional, dado que el tiempo de viabilidad del tejido biológico es limitado.
-\end{itemize}
-
-
-\section{Diseño del Experimento In Vivo\label{SEC:EXPERIMENTO_INVIVO}}
-
-La eficacia del sustrato algorítmico se valida bajo protocolos electrofisiológicos de ciclo cerrado con neuronas del Sistema Nervioso Estomatogástrico (STG) del cangrejo \textit{Carcinus maenas} \cite{Reyes-Sanchez2020, ReyesSnchez2023}.
-
-El STG aloja el circuito pilórico, un generador central de patrones (CPG) que preserva su dinámica endógena rítmica \textit{in vitro} mediante la inhibición recíproca entre las neuronas PD, PY y LP \cite{Golowasch1999}. El experimento establece una conexión biohíbrida mediada por RTXI, implementando \textit{Dynamic Clamp}.
-
-\textbf{Protocolo funcional:}
-\begin{enumerate}
-    \item \textbf{Calibración estacionaria inicial:} El plugin de RTXI opera en ciclo abierto, leyendo los picos de la neurona y trazando la periodicidad natural. La media algorítmica escala el atractor del modelo HR.
-    \item \textbf{Encendido bidireccional de la BO:} Se cierra el bucle biohíbrido. Las salidas del RK6(5) son inyectadas a la célula biológica; Limbo invoca la primera predicción mediante \textit{Latin Hypercube Sampling} (LHS).
-    \item \textbf{Bucle predictivo hasta convergencia:} Tras un tramo de estabilización, el módulo recolecta datos y la NRT activa la correlación de Pearson. El sistema reconfigura iterativamente los parámetros, convergiendo típicamente antes del minuto \cite{ReyesSnchez2023}.
-    \item \textbf{Evaluación final:} Un ensayo exitoso demuestra anclaje rítmico sostenido: el modelo HR y la neurona LP se entrelazan inyectándose repolarizaciones inducidas, instaurando una dinámica de antifase estable \cite{Reyes-Sanchez2020}.
-\end{enumerate}

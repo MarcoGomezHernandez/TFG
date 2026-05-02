@@ -1,38 +1,16 @@
 
 En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo de la memoria. Las rutas son relativas al directorio \texttt{codigos/} del proyecto. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
 
-\section{Código de la versión offline\label{SEC:CODIGOS_OFFLINE}}
+
+\section{Función de evaluación\label{SEC:CODIGOS_EVALUACION}}
 
 
-\subsection{Modelo de Hindmarsh-Rose\label{SUBSEC:COD_HR}}
+\CPPCode[COD:BUTTERWORTH]{Filtro Butterworth paso bajo bidireccional}{Aplicación del filtro Butterworth paso bajo de cuarto orden en fase cero (\texttt{filtfilt}) sobre la señal con relleno por reflexión impar. La función \texttt{iir\_lowpass} diseña el filtro a la frecuencia de corte \texttt{fc} con frecuencia de muestreo \texttt{fs}, y \texttt{to\_sos} lo convierte a secciones de segundo orden para estabilidad numérica. La versión offline y online comparten esta lógica.}{offline/evaluation.tpp}{135}{137}{1}
 
-\CPPCode[COD:HRPARAMS]{Parámetros del modelo de Hindmarsh-Rose.}{Namespace con las constantes del modelo HR modificado, incluyendo el hiperparámetro $v_h = 0{,}1$ que dilata temporalmente el atractor de ráfagas.}{offline/utils.hpp}{29}{42}{1}
+\CPPCode[COD:PADDING]{Relleno por reflexión impar}{Implementación del relleno por reflexión impar en los extremos de la señal para mitigar los transitorios del filtro IIR. Se calcula la reflexión respecto al primer y último punto para garantizar continuidad en la derivada.}{online/evaluation.cpp}{91}{105}{1}
 
+\CPPCode[COD:PEARSON]{Cálculo de la puntuación de forma mediante correlación de Pearson}{Correlación de Pearson entre la señal candidata y la referencia. La señal se centra restando su media, se calcula $r \in [-1, 1]$ y se normaliza a $[0, 1]$. La opción \texttt{search\_phase} invierte el resultado para buscar anti-correlación. Las operaciones vectorizadas (\texttt{mean}, \texttt{sum}, \texttt{sqr}) se realizan mediante KFR (Apéndice~\ref{SUBSEC:KFRREPO}).}{offline/evaluation.tpp}{61}{75}{1}
 
-\subsection{Optimización Bayesiana offline\label{SUBSEC:COD_BO_OFF}}
+\CPPCode[COD:RANGESCORE]{Cálculo de la puntuación de rango}{Compara los extremos observados de la corriente candidata con los esperados. El error medio se normaliza por la distancia máxima admisible \texttt{pts\_dist\_max} y se devuelve como $1 - e_{\mathrm{norm}}$.}{offline/evaluation.tpp}{79}{89}{1}
 
-\CPPCode[COD:LIMBOCFGOFF]{Configuración de Limbo para la versión offline (extracto).}{Extracto de la estructura \texttt{Params}: configuración del kernel del GP (\texttt{noise} $= 10^{-6}$, \texttt{optimize\_noise} = false) y la función de adquisición EI (\texttt{jitter} $= 0{,}003$). La configuración completa se encuentra en el repositorio (Apéndice~\ref{SEC:PARAMETRIZACIONREPO}).}{offline/BO.tpp}{68}{98}{68}
-
-\CPPCode[COD:BOPARAMRANGES]{Rangos de búsqueda de los parámetros sinápticos (extracto de \texttt{init}).}{Extracto del método \texttt{init()} de \texttt{BOParamRanges}: cálculo de los rangos de $e_{syn}$ y la componente rápida ($v_{fast}$, $s_{fast}$, $g_{fast}$). La componente lenta sigue un patrón análogo. Los parámetros de conductancia se parametrizan en espacio logarítmico.}{offline/BO.tpp}{184}{249}{184}
-
-
-\section{Código de la versión online (RTXI)\label{SEC:CODIGOS_ONLINE}}
-
-
-\subsection{Módulo RTXI: hilo de tiempo real\label{SUBSEC:COD_RT}}
-
-\CPPCode[COD:RK65]{Integrador Runge-Kutta de orden 6(5) para $m_{slow}$.}{Implementación del RK6(5) que integra la variable de compuerta lenta sin sub-stepping, garantizando un bloque de código determinista para el hilo de tiempo real.}{online/bidirectional_chemical_synapse_BO.cpp}{140}{178}{1}
-
-\CPPCode[COD:EXECUTE]{Función \texttt{execute()} del hilo RT (extracto).}{Núcleo de la función de tiempo real: lectura del double-buffer atómico y cálculo de las corrientes sinápticas bidireccionales. La lógica de almacenamiento de señales para la BO se omite por brevedad.}{online/bidirectional_chemical_synapse_BO.cpp}{240}{274}{240}
-
-
-\subsection{Sincronización y double-buffering\label{SUBSEC:COD_SYNC}}
-
-\CPPCode[COD:DOUBLEBUF]{Declaración del double-buffer atómico.}{Variables de sincronización entre hilos RT y NRT: \texttt{synapse\_idx} (índice del buffer activo), \texttt{last\_synapse\_idx\_read\_RT} (confirmación de lectura), y \texttt{RT\_storing} (banderín de recogida de datos).}{online/bidirectional_chemical_synapse_BO.h}{83}{109}{1}
-
-
-\subsection{Optimización Bayesiana online\label{SUBSEC:COD_BO_ON}}
-
-\CPPCode[COD:LIMBOCFGON]{Configuración de Limbo para la versión online (extracto).}{Extracto de la estructura \texttt{Params} online: kernel con \texttt{noise} $= 0{,}05$ y \texttt{optimize\_noise} = true (señal biológica ruidosa), y función de adquisición EI con \texttt{jitter} $= 0{,}001$ (explotación intensiva). La configuración completa se encuentra en el repositorio.}{online/BO.cpp}{33}{76}{33}
-
-\CPPCode[COD:NRTBO]{Bucle principal de BO en el hilo NRT (extracto).}{Extracto de la función \texttt{NRT\_BO}: configuración de rangos de búsqueda bidireccionales, inicialización de parámetros dinámicos de Limbo, y preparación del functor de evaluación. La publicación final de los mejores parámetros al hilo RT vía double-buffering se encuentra en el repositorio (Apéndice~\ref{SEC:PARAMETRIZACIONREPO}).}{online/BO.cpp}{311}{400}{311}
+\CPPCode[COD:RESCALE]{Funciones de reescalado de rangos al rango de corriente esperado}{La función \texttt{rescale\_to\_target} reescala con desplazamiento (usada para $I_{\mathrm{slow}}$, que hereda el nivel DC de $V_{\mathrm{pre}}$). La función \texttt{rescale\_to\_target\_no\_offset} reescala sin desplazamiento (usada para $I_{\mathrm{fast}}$, centrada en cero tras la sustracción de la componente filtrada).}{offline/evaluation.tpp}{38}{56}{1}
