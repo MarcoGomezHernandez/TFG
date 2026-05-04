@@ -1,16 +1,105 @@
 
 En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo de la memoria. Las rutas son relativas al directorio \texttt{codigos/} del proyecto. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
 
+\lstset{
+    style=numbered,
+    language=C++,
+}
+
+\newtcolorbox{lstwrap}{
+    blanker,
+    breakable,
+    boxsep=0pt,
+    left=0pt,
+    right=0pt,
+    top=0pt,
+    bottom=0pt,
+    before skip=0pt,
+    after skip=0pt,
+}
+
+\newcommand{\lstinputlistingwrap}[2][]{%
+    \begin{lstwrap}
+        \lstinputlisting[#1]{#2}
+    \end{lstwrap}
+}
+
 
 \section{Función de evaluación\label{SEC:CODIGOS_EVALUACION}}
 
 
-\CPPCode[COD:BUTTERWORTH]{Filtro Butterworth paso bajo bidireccional}{Aplicación del filtro Butterworth paso bajo de cuarto orden en fase cero (\texttt{filtfilt}) sobre la señal con relleno por reflexión impar. La función \texttt{iir\_lowpass} diseña el filtro a la frecuencia de corte \texttt{fc} con frecuencia de muestreo \texttt{fs}, y \texttt{to\_sos} lo convierte a secciones de segundo orden para estabilidad numérica. La versión offline y online comparten esta lógica.}{offline/evaluation.tpp}{135}{137}{1}
+\lstinputlistingwrap[
+    caption={[Filtro Butterworth paso bajo en fase cero]%
+            Aplicación del filtro Butterworth paso bajo de cuarto orden en fase cero mediante la librería KFR (Apéndice~\ref{SUBSEC:KFRREPO}), usando \texttt{filtfilt} para evitar desfases temporales y convirtiendo a secciones de segundo orden para la estabilidad numérica.},
+    label=COD:BUTTERWORTH,
+    firstline=135, lastline=137, firstnumber=135,
+]{codigos/offline/evaluation.tpp}
 
-\CPPCode[COD:PADDING]{Relleno por reflexión impar}{Implementación del relleno por reflexión impar en los extremos de la señal para mitigar los transitorios del filtro IIR. Se calcula la reflexión respecto al primer y último punto para garantizar continuidad en la derivada.}{online/evaluation.cpp}{91}{105}{1}
+\lstinputlistingwrap[
+    caption={[Relleno por reflexión impar]%
+            Implementación del relleno por reflexión impar en los extremos de la señal para mitigar los transitorios del filtrado.},
+    label=COD:PADDING,
+    firstline=91, lastline=105, firstnumber=91,
+]{codigos/online/evaluation.cpp}
 
-\CPPCode[COD:PEARSON]{Cálculo de la puntuación de forma mediante correlación de Pearson}{Correlación de Pearson entre la señal candidata y la referencia. La señal se centra restando su media, se calcula $r \in [-1, 1]$ y se normaliza a $[0, 1]$. La opción \texttt{search\_phase} invierte el resultado para buscar anti-correlación. Las operaciones vectorizadas (\texttt{mean}, \texttt{sum}, \texttt{sqr}) se realizan mediante KFR (Apéndice~\ref{SUBSEC:KFRREPO}).}{offline/evaluation.tpp}{61}{75}{1}
+\lstinputlistingwrap[
+    caption={[Cálculo de la puntuación de forma mediante correlación de Pearson]%
+            Cálculo de la correlación de Pearson entre la señal candidata y la referencia, incluyendo el centrado de la señal y la inversión condicional para buscar anti-correlación.},
+    label=COD:PEARSON,
+    firstline=61, lastline=75, firstnumber=61,
+]{codigos/offline/evaluation.tpp}
 
-\CPPCode[COD:RANGESCORE]{Cálculo de la puntuación de rango}{Compara los extremos observados de la corriente candidata con los esperados. El error medio se normaliza por la distancia máxima admisible \texttt{pts\_dist\_max} y se devuelve como $1 - e_{\mathrm{norm}}$.}{offline/evaluation.tpp}{79}{89}{1}
+\lstinputlistingwrap[
+    caption={[Cálculo de la puntuación de rango]%
+            Cálculo de la puntuación de rango comparando los extremos observados de la corriente con los esperados y normalizando el error.},
+    label=COD:RANGESCORE,
+    firstline=79, lastline=89, firstnumber=79,
+]{codigos/offline/evaluation.tpp}
 
-\CPPCode[COD:RESCALE]{Funciones de reescalado de rangos al rango de corriente esperado}{La función \texttt{rescale\_to\_target} reescala con desplazamiento (usada para $I_{\mathrm{slow}}$, que hereda el nivel DC de $V_{\mathrm{pre}}$). La función \texttt{rescale\_to\_target\_no\_offset} reescala sin desplazamiento (usada para $I_{\mathrm{fast}}$, centrada en cero tras la sustracción de la componente filtrada).}{offline/evaluation.tpp}{38}{56}{1}
+\lstinputlistingwrap[
+    caption={[Funciones de reescalado de rangos al rango de corriente esperado]%
+            Funciones para reescalar la señal generada al rango de la corriente objetivo, con y sin ajuste del desplazamiento vertical.},
+    label=COD:RESCALE,
+    firstline=38, lastline=56, firstnumber=38,
+]{codigos/offline/evaluation.tpp}
+
+
+\section{Optimización bayesiana\label{SEC:CODIGOS_BO}}
+
+
+\lstinputlistingwrap[
+    caption={[Configuración y tipos de Limbo (versión offline)]%
+            Configuración completa de Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) en su versión \textit{offline} con ruido observacional fijo ($10^{-6}$) y $\xi = 0{,}003$; la versión \textit{online} permite optimizar dicho ruido (inicializado en $0{,}05$) y reduce el \textit{jitter} a $\xi = 0{,}001$. Se muestra también cómo se calculan las configuraciones dinámicas y las constantes que les afectan},
+    label=COD:LIMBO_CONFIG_TYPES,
+    firstline=16, lastline=22, firstnumber=16,
+]{codigos/offline/BO.tpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=69, lastline=144, firstnumber=69,
+]{codigos/offline/BO.tpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=297, lastline=328, firstnumber=297,
+]{codigos/offline/BO.tpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=649, lastline=655, firstnumber=649,
+]{codigos/offline/BO.tpp}
+
+\lstinputlistingwrap[
+    caption={[Constantes y cálculo de rangos de búsqueda (versión online)]%
+            Cálculo dinámico de los rangos de búsqueda para la versión \textit{online}, incluyendo márgenes de seguridad en los umbrales de las sigmoides para compensar la variabilidad biológica; la versión \textit{offline} prescinde de dichos márgenes sobre $V_{\mathrm{pre}}$.},
+    label=COD:BO_RANGES,
+    firstline=10, lastline=53, firstnumber=10,
+]{codigos/online/utils.hpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=124, lastline=230, firstnumber=124,
+]{codigos/online/utils.hpp}
+
+\lstinputlistingwrap[
+    caption={[Llamada a la optimización de Limbo]%
+            Ejecución del bucle de optimización bayesiana mediante la librería Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) utilizando el functor de evaluación indicado.},
+    label=COD:LIMBO_OPTIMIZE,
+    firstline=690, lastline=692, firstnumber=690,
+]{codigos/offline/BO.tpp}
