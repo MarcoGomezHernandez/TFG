@@ -37,10 +37,14 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Relleno por reflexión impar]%
-            Implementación del relleno por reflexión impar en los extremos de la señal para mitigar los transitorios del filtrado.},
+            Determinación del tamaño del relleno necesario y su implementación por reflexión impar en los extremos de la señal, para mitigar los transitorios del filtrado.},
     label=COD:PADDING,
-    firstline=91, lastline=105, firstnumber=91,
-]{codigos/online/evaluation.cpp}
+    firstline=7, lastline=8, firstnumber=7,
+]{codigos/offline/evaluation.tpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=114, lastline=133, firstnumber=114,
+]{codigos/offline/evaluation.tpp}
 
 \lstinputlistingwrap[
     caption={[Cálculo de la puntuación de forma mediante correlación de Pearson]%
@@ -97,9 +101,108 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=124, lastline=230, firstnumber=124,
 ]{codigos/online/utils.hpp}
 
+
+\section{Implementación \textit{offline}\label{SEC:CODIGOS_OFFLINE}}
+
+
+
+
 \lstinputlistingwrap[
-    caption={[Llamada a la optimización de Limbo]%
-            Ejecución del bucle de optimización bayesiana mediante la librería Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) utilizando el functor de evaluación indicado.},
-    label=COD:LIMBO_OPTIMIZE,
-    firstline=690, lastline=692, firstnumber=690,
+    caption={[Uso del \textit{framework} Neun]%
+            Uso del \textit{framework} Neun (Apéndice~\ref{SEC:NEUNREPO}): declaraciones de tipos, creación, modificación y uso de los modelos sináptico y neuronal.},
+    label=COD:NEUN_OFFLINE,
+    firstline=15, lastline=16, firstnumber=15,
+]{codigos/offline/main.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=99, lastline=141, firstnumber=99,
+]{codigos/offline/utils.hpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=596, lastline=596, firstnumber=596,
 ]{codigos/offline/BO.tpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=269, lastline=300, firstnumber=269,
+]{codigos/offline/evaluation.tpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=338, lastline=347, firstnumber=338,
+]{codigos/offline/evaluation.tpp}
+
+\lstinputlistingwrap[
+    caption={[Inicialización de estadísticas de escalado de la señal]%
+            Funciones empleadas por la rutina principal de escalado para extraer las estadísticas fundamentales de la señal biológica (extremos absolutos, umbrales y periodo de \textit{burst}).},
+    label=COD:INIT_STATS_OFFLINE,
+    firstline=107, lastline=140, firstnumber=107,
+]{codigos/offline/scaling.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=285, lastline=311, firstnumber=285,
+]{codigos/offline/scaling.cpp}
+
+\lstinputlistingwrap[
+    caption={[Constantes precalculadas del modelo postsináptico]%
+            Constantes y tablas del comportamiento intrínseco del modelo sináptico, generadas de forma automatizada por el programa auxiliar \texttt{consts\_calculator} para agilizar los cálculos de la función de escalado.},
+    label=COD:CONSTS_CALCULATOR,
+    firstline=167, lastline=212, firstnumber=167,
+]{codigos/offline/utils.hpp}
+
+\lstinputlistingwrap[
+    caption={[Cálculo de factores de escalado de amplitud y su uso]%
+            Cálculo y uso de los factores de escala y \textit{offset} para mapear el rango de amplitud de la señal biológica al rango intrínseco de la neurona de modelo.},
+    label=COD:AMPLITUDE_SCALING_OFFLINE,
+    firstline=142, lastline=161, firstnumber=142,
+]{codigos/offline/scaling.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=471, lastline=471, firstnumber=471,
+]{codigos/offline/scaling.cpp}
+
+\lstinputlistingwrap[
+    caption={[Corrección de \textit{drift} en el escalado de amplitud]%
+            Adaptación dinámica de los factores de escalado lineal mediante una ventana deslizante, hecho de manera no causal (se escalan los datos de una ventana con los tñerminos extraídos de esa misma ventana).},
+    label=COD:DRIFT_OFFLINE,
+    firstline=415, lastline=467, firstnumber=415,
+]{codigos/offline/scaling.cpp}
+
+\lstinputlistingwrap[
+    caption={[Cálculo del paso de integración y el factor de submuestreo para el escalado temporal]%
+            Cálculo del los puntos por periodo de la señal biológica mediante histéresis y algoritmo de selección del paso de integración óptimo ($dt$) para el modelo neuronal, así como el factor de submuestreo correspondiente, garantizando la sincronización temporal entre las neuronas.},
+    label=COD:TIME_SCALING_OFFLINE,
+    firstline=163, lastline=262, firstnumber=163,
+]{codigos/offline/scaling.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=370, lastline=371, firstnumber=370,
+]{codigos/offline/scaling.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=396, lastline=405, firstnumber=396,
+]{codigos/offline/scaling.cpp}
+
+
+\lstinputlistingwrap[
+    caption={[Interpolación lineal para submuestreo del modelo neuronal]%
+            Generación y uso de puntos intermedios interpolados linealmente entre cada par de muestras consecutivas de la señal presináptica escalada para proporcionar la resolución temporal requerida por el integrador del modelo postsináptico.},
+    label=COD:INTERPOLATION_OFFLINE,
+    firstline=473, lastline=497, firstnumber=473,
+]{codigos/offline/scaling.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=336, lastline=356, firstnumber=336,
+]{codigos/offline/evaluation.tpp}
+
+\lstinputlistingwrap[
+    caption={[Estructura para guardar valores constantes de evaluación]%
+            Estructura de datos que almacena las señales de referencia centradas, sus factores de Pearson asociados y los rangos de corriente esperados y sus términos de normalización. Se precalcula una sola vez antes de la optimización para mejorar la eficiencia computacional.},
+    label=COD:CONST_EVAL_VALS,
+    firstline=35, lastline=54, firstnumber=35,
+]{codigos/offline/evaluation.hpp}
+
+\lstinputlistingwrap[
+    caption={[Uso de plantillas para el cambio de modelo e integrador]%
+            Llamada a la función principal de optimización en la que se inyectan como plantillas tanto el integrador numérico como el tipo de neurona postsináptica, junto con los punteros a funciones específicas del modelo, garantizando la genericidad del diseño.},
+    label=COD:BO_MAIN_CALL,
+    firstline=59, lastline=80, firstnumber=59,
+]{codigos/offline/main.cpp}

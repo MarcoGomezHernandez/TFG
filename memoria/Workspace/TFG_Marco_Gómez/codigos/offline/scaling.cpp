@@ -17,10 +17,6 @@ namespace SigPrivateConfig
     // (pts_burst_modelo / pts_real) sea hasta este factor * parte entera
     static constexpr double DT_SELECTION_TOLERANCE = 0.1;
 
-    // Porcentaje de margen para corregir drift en los extremos min/max de la señal
-    static constexpr double DRIFT_PERCENTAGE_MIN = 0.1;
-    static constexpr double DRIFT_PERCENTAGE_MAX = 0.1;
-
     // Cada cuántos bursts (en puntos) se recalcula el escalado por drift
     static constexpr size_t DRIFT_N_BURST = 2;
 }
@@ -286,49 +282,6 @@ static inline std::optional<DTSelection> set_pts_burst(NeuronModel model, Numeri
     }
 }
 
-// Recalcula el escalado cuando la señal presenta drift:
-// ajusta los extremos reales con un margen porcentual para que el escalado sea más robusto.
-// El margen "empuja" los umbrales rel_min/rel_max hacia el interior del rango,
-// evitando que el drift lleve la señal fuera de la zona detectada como burst.
-static inline ScalingFactors fix_drift(double model_abs_min, double model_abs_max, double window_min, double window_max, SigStats &stats)
-{
-
-    // Recalcula factores scale/offset con los nuevos extremos de la ventana
-    ScalingFactors factors = calculate_scaling(model_abs_min, model_abs_max, window_min, window_max);
-
-    constexpr double DRIFT_PERCENTAGE_MIN = SigPrivateConfig::DRIFT_PERCENTAGE_MIN;
-    constexpr double DRIFT_PERCENTAGE_MAX = SigPrivateConfig::DRIFT_PERCENTAGE_MAX;
-
-    // Ajusta rel_min hacia arriba (reduce el rango válido de burst por abajo).
-    // El signo de window_min determina la dirección del margen:
-    //   - window_min > 0: sumar (ej: 0.5 + 0.5*0.1 = 0.55 -> sube)
-    //   - window_min < 0: restar el producto negativo*0.1 (ej: -2 - (-2*0.1) = -2+0.2 = -1.8 -> sube)
-    // En ambos casos, el resultado es un umbral más alto que window_min.
-    if (window_min > 0)
-    {
-        stats.real_rel_min = window_min + (window_min * DRIFT_PERCENTAGE_MIN);
-    }
-    else
-    {
-        stats.real_rel_min = window_min - (window_min * DRIFT_PERCENTAGE_MIN);
-    }
-
-    // Ajusta rel_max hacia abajo (reduce el rango válido de burst por arriba).
-    //   - window_max > 0: restar (ej: 2 - 2*0.1 = 1.8 -> baja)
-    //   - window_max < 0: sumar el producto negativo*0.1 (ej: -0.5 + (-0.5*0.1) = -0.55 -> baja)
-    // En ambos casos, el resultado es un umbral más bajo que window_max.
-    if (window_max > 0)
-    {
-        stats.real_rel_max = window_max - (window_max * DRIFT_PERCENTAGE_MAX);
-    }
-    else
-    {
-        stats.real_rel_max = window_max + (window_max * DRIFT_PERCENTAGE_MAX);
-    }
-
-    return factors;
-}
-
 // Inicializa las estadísticas de la señal: extremos, umbrales de burst y período
 static inline SigStats init_stats(const univector<double> &sig, size_t obs_points, double csv_step)
 {
@@ -461,56 +414,55 @@ std::optional<ScaledSigResult> scale_sig(
 
     if (check_drift)
     {
-        // Corrección de drift: la señal biológica puede derivar lentamente (baseline shift).
-        // Cada DRIFT_N_BURST bursts (~2 ciclos de la señal), recalcula los factores de
-        // escalado usando los extremos observados en esa ventana, adaptándose al drift.
-        size_t drift_counter = 0;
+        // Corrección de drift no causal: la señal biológica puede derivar lentamente.
+        // Dado que se dispone de toda la señal offline, se procesa en ventanas temporales.
+        // En cada ventana se calculan los extremos locales (filtrando outliers) y
+        // se aplican los factores de escalado derivados de ellos a los puntos de esa misma ventana.
+
         constexpr double DOUBLE_MAX = GeneralConstants::DOUBLE_MAX;
         constexpr double DOUBLE_MIN = GeneralConstants::DOUBLE_MIN;
         // Inicializa min/max invertidos para que la primera comparación siempre actualice
-        double window_max = DOUBLE_MIN;
-        double window_min = DOUBLE_MAX;
+        double window_max, window_min;
         // Rango de la señal global: se usa para filtrar outliers (artefactos de medida)
         const double drift_aux_range = real_abs_max - real_abs_min;
+        const size_t window_size = static_cast<size_t>(SigPrivateConfig::DRIFT_N_BURST * external_pts_per_burst);
 
-        for (double &val : sig)
+        for (size_t start = 0; start < sig_size; start += window_size)
         {
-            // Actualiza window_min solo si val es un nuevo mínimo Y no es un outlier.
-            // Filtro de outliers: descarta valores que caigan más de un rango completo
-            // por debajo del mínimo global. Ej: si min=-2 y rango=3, descarta val < -5.
-            // Esto evita que artefactos puntuales distorsionen el escalado.
-            if ((window_min > val) && (val > (real_abs_min - drift_aux_range)))
+            size_t end = std::min(start + window_size, sig_size);
+
+            window_min = DOUBLE_MAX;
+            window_max = DOUBLE_MIN;
+
+            univector_ref<double> sig_window = sig.slice(start, end - start);
+
+            for (double &val : sig_window)
             {
-                window_min = val;
+                // Actualiza window_min solo si val es un nuevo mínimo Y no es un outlier.
+                // Filtro de outliers: descarta valores que caigan más de un rango completo
+                // por debajo del mínimo global. Ej: si min=-2 y rango=3, descarta val < -5.
+                // Esto evita que artefactos puntuales distorsionen el escalado.
+                if ((window_min > val) && (val > (real_abs_min - drift_aux_range)))
+                {
+                    window_min = val;
+                }
+                // Análogo para window_max: descarta outliers por encima de max + rango
+                if ((window_max < val) && (val < (real_abs_max + drift_aux_range)))
+                {
+                    window_max = val;
+                }
             }
-            // Análogo para window_max: descarta outliers por encima de max + rango
-            if ((window_max < val) && (val < (real_abs_max + drift_aux_range)))
+
+            if (window_max != DOUBLE_MIN && window_min != DOUBLE_MAX)
             {
-                window_max = val;
-            }
-
-            // Cada N bursts (en puntos), si la ventana tiene datos válidos (no quedó en
-            // los valores centinela), recalcula el escalado con los nuevos extremos
-            if (drift_counter >= (SigPrivateConfig::DRIFT_N_BURST * external_pts_per_burst) &&
-                window_max != DOUBLE_MIN && window_min != DOUBLE_MAX)
-            {
-
-                drift_counter = 0;
-
-                // Recalcula scale/offset adaptados al drift actual y ajusta los umbrales
-                factors = fix_drift(model_abs_min, model_abs_max, window_min, window_max, stats);
+                // Recalcula scale/offset adaptados al drift actual
+                factors = calculate_scaling(model_abs_min, model_abs_max, window_min, window_max);
                 scale_real_to_virtual = factors.scale_real_to_virtual;
                 offset_real_to_virtual = factors.offset_real_to_virtual;
-
-                // Resetea la ventana para la siguiente iteración
-                window_max = DOUBLE_MIN;
-                window_min = DOUBLE_MAX;
             }
 
-            drift_counter++;
-
             // Aplica el escalado actual (posiblemente actualizado por drift): real -> virtual
-            val = val * scale_real_to_virtual + offset_real_to_virtual;
+            process(sig_window, (sig_window * scale_real_to_virtual) + offset_real_to_virtual);
         }
     }
     else
