@@ -154,7 +154,7 @@ BidirectionalChemicalSynapseBO::~BidirectionalChemicalSynapseBO(void)
   }
 }
 
-// Integrador Runge-Kutta de orden 6(5) para la variable m_slow del canal lento.
+// Integrador Runge-Kutta de orden 5 con 6 etapas para la variable m_slow del canal lento.
 // Usa la misma función de derivada f(m_slow, v_pre, params) en cada etapa.
 void BidirectionalChemicalSynapseBO::runge_kutta_65(double (*f)(double, double, const ChemicalSynapseParams &), double &m_slow, double v_pre, double dt, const ChemicalSynapseParams &params)
 {
@@ -162,7 +162,7 @@ void BidirectionalChemicalSynapseBO::runge_kutta_65(double (*f)(double, double, 
   double apoyo, retorno;
   double k[6];
 
-  // 6 etapas del RK6(5) con coeficientes de Butcher específicos
+  // 6 etapas del integrador RK5 con coeficientes de Butcher específicos
   retorno = (*f)(m_slow, v_pre, params);
   k[0] = dt * retorno;
   apoyo = m_slow + k[0] * 0.2;
@@ -202,12 +202,12 @@ double BidirectionalChemicalSynapseBO::sm_chemical_synapse_m(double m_slow, doub
          (params.k2 * m_slow);
 }
 
-// Calcula i_slow: integra m_slow un paso con RK6(5) y devuelve g_slow * m * (v_post - e_syn)
+// Calcula i_slow: integra m_slow un paso con RK5 de 6 etapas y devuelve g_slow * m * (v_post - e_syn)
 double BidirectionalChemicalSynapseBO::compute_i_slow(double &m_slow, double v_pre, double v_post, const ChemicalSynapseParams &params)
 {
+  runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   // Clampea m_slow para evitar que se salga de [0,1] por errores numéricos
   m_slow = std::clamp(m_slow, ModuleConstants::M_SLOW_MIN, ModuleConstants::M_SLOW_MAX);
-  runge_kutta_65(sm_chemical_synapse_m, m_slow, v_pre, dt, params);
   return params.g_slow * m_slow * (v_post - params.e_syn);
 }
 
@@ -450,7 +450,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   {
 
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ns -> ms
-    dt = period * dt_factor;                                // dt del RK6(5) para m_slow
+    dt = period * dt_factor;                                // dt del RK5 de 6 etapas para m_slow
 
     setState("BO evaluations completed", evaluations_completed);
     setState("I_fast 1->2 (nA)", i_fast_12);

@@ -29,14 +29,14 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 
 \lstinputlistingwrap[
-    caption={[Filtro Butterworth paso bajo en fase cero]%
+    caption={[Filtro Butterworth paso bajo en fase cero en la evaluación]%
             Aplicación del filtro Butterworth paso bajo de cuarto orden en fase cero mediante la librería KFR (Apéndice~\ref{SUBSEC:KFRREPO}), usando \texttt{filtfilt} para evitar desfases temporales y convirtiendo a secciones de segundo orden para la estabilidad numérica.},
     label=COD:BUTTERWORTH,
     firstline=135, lastline=137, firstnumber=135,
 ]{codigos/offline/evaluation.tpp}
 
 \lstinputlistingwrap[
-    caption={[Relleno por reflexión impar]%
+    caption={[Relleno por reflexión impar en la evaluación]%
             Determinación del tamaño del relleno necesario y su implementación por reflexión impar en los extremos de la señal, para mitigar los transitorios del filtrado.},
     label=COD:PADDING,
     firstline=7, lastline=8, firstnumber=7,
@@ -61,7 +61,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/evaluation.tpp}
 
 \lstinputlistingwrap[
-    caption={[Funciones de reescalado de rangos al rango de corriente esperado]%
+    caption={[Funciones de reescalado de rangos al rango de corriente esperado en la evaluación]%
             Funciones para reescalar la señal generada al rango de la corriente objetivo, con y sin ajuste del desplazamiento vertical.},
     label=COD:RESCALE,
     firstline=38, lastline=56, firstnumber=38,
@@ -72,7 +72,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 
 \lstinputlistingwrap[
-    caption={[Configuración y tipos de Limbo (versión offline)]%
+    caption={[Configuración y tipos de Limbo para la optimización en la versión \textit{offline}]%
             Configuración completa de Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) en su versión \textit{offline} con ruido observacional fijo ($10^{-6}$) y $\xi = 0{,}003$; la versión \textit{online} permite optimizar dicho ruido (inicializado en $0{,}05$) y reduce el \textit{jitter} a $\xi = 0{,}001$. Se muestra también cómo se calculan las configuraciones dinámicas y las constantes que les afectan},
     label=COD:LIMBO_CONFIG_TYPES,
     firstline=16, lastline=22, firstnumber=16,
@@ -91,7 +91,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/BO.tpp}
 
 \lstinputlistingwrap[
-    caption={[Constantes y cálculo de rangos de búsqueda (versión online)]%
+    caption={[Constantes y cálculo de rangos de búsqueda para la optimización en la versión \textit{online}]%
             Cálculo dinámico de los rangos de búsqueda para la versión \textit{online}, incluyendo márgenes de seguridad en los umbrales de las sigmoides para compensar la variabilidad biológica; la versión \textit{offline} prescinde de dichos márgenes sobre $V_{\mathrm{pre}}$.},
     label=COD:BO_RANGES,
     firstline=10, lastline=53, firstnumber=10,
@@ -108,8 +108,8 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 
 \lstinputlistingwrap[
-    caption={[Uso del \textit{framework} Neun]%
-            Uso del \textit{framework} Neun (Apéndice~\ref{SEC:NEUNREPO}): declaraciones de tipos, creación, modificación y uso de los modelos sináptico y neuronal.},
+    caption={[Uso de la librería Neun en la versión \textit{offline}]%
+            Uso de la librería Neun (Apéndice~\ref{SEC:NEUNREPO}): declaraciones de tipos, creación, modificación y uso de los modelos sináptico y neuronal.},
     label=COD:NEUN_OFFLINE,
     firstline=15, lastline=16, firstnumber=15,
 ]{codigos/offline/main.cpp}
@@ -131,7 +131,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/evaluation.tpp}
 
 \lstinputlistingwrap[
-    caption={[Inicialización de estadísticas de escalado de la señal]%
+    caption={[Inicialización de estadísticas de escalado de la señal en la versión \textit{offline}]%
             Funciones empleadas por la rutina principal de escalado para extraer las estadísticas fundamentales de la señal biológica (extremos absolutos, umbrales y periodo de \textit{burst}).},
     label=COD:INIT_STATS_OFFLINE,
     firstline=107, lastline=140, firstnumber=107,
@@ -142,14 +142,14 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/scaling.cpp}
 
 \lstinputlistingwrap[
-    caption={[Constantes precalculadas del modelo postsináptico]%
+    caption={[Constantes precalculadas del modelo postsináptico en la versión \textit{offline}]%
             Constantes y tablas del comportamiento intrínseco del modelo sináptico, generadas de forma automatizada por el programa auxiliar \texttt{consts\_calculator} para agilizar los cálculos de la función de escalado.},
     label=COD:CONSTS_CALCULATOR,
     firstline=167, lastline=212, firstnumber=167,
 ]{codigos/offline/utils.hpp}
 
 \lstinputlistingwrap[
-    caption={[Cálculo de factores de escalado de amplitud y su uso]%
+    caption={[Cálculo de factores de escalado de amplitud y su uso en la versión \textit{offline}]%
             Cálculo y uso de los factores de escala y \textit{offset} para mapear el rango de amplitud de la señal biológica al rango intrínseco de la neurona de modelo.},
     label=COD:AMPLITUDE_SCALING_OFFLINE,
     firstline=142, lastline=161, firstnumber=142,
@@ -160,14 +160,14 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/scaling.cpp}
 
 \lstinputlistingwrap[
-    caption={[Corrección de \textit{drift} en el escalado de amplitud]%
+    caption={[Corrección de \textit{drift} en el escalado de amplitud en la versión \textit{offline}]%
             Adaptación dinámica de los factores de escalado lineal mediante una ventana deslizante, hecho de manera no causal (se escalan los datos de una ventana con los tñerminos extraídos de esa misma ventana).},
     label=COD:DRIFT_OFFLINE,
     firstline=415, lastline=467, firstnumber=415,
 ]{codigos/offline/scaling.cpp}
 
 \lstinputlistingwrap[
-    caption={[Cálculo del paso de integración y el factor de submuestreo para el escalado temporal]%
+    caption={[Cálculo del paso de integración y el factor de submuestreo para el escalado temporal en la versión \textit{offline}]%
             Cálculo del los puntos por periodo de la señal biológica mediante histéresis y algoritmo de selección del paso de integración óptimo ($dt$) para el modelo neuronal, así como el factor de submuestreo correspondiente, garantizando la sincronización temporal entre las neuronas.},
     label=COD:TIME_SCALING_OFFLINE,
     firstline=163, lastline=262, firstnumber=163,
@@ -183,7 +183,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 
 \lstinputlistingwrap[
-    caption={[Interpolación lineal para submuestreo del modelo neuronal]%
+    caption={[Interpolación lineal para submuestreo del modelo neuronal en la versión \textit{offline}]%
             Generación y uso de puntos intermedios interpolados linealmente entre cada par de muestras consecutivas de la señal presináptica escalada para proporcionar la resolución temporal requerida por el integrador del modelo postsináptico.},
     label=COD:INTERPOLATION_OFFLINE,
     firstline=473, lastline=497, firstnumber=473,
@@ -194,15 +194,65 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/evaluation.tpp}
 
 \lstinputlistingwrap[
-    caption={[Estructura para guardar valores constantes de evaluación]%
+    caption={[Estructura para guardar valores constantes de evaluación en la versión \textit{offline}]%
             Estructura de datos que almacena las señales de referencia centradas, sus factores de Pearson asociados y los rangos de corriente esperados y sus términos de normalización. Se precalcula una sola vez antes de la optimización para mejorar la eficiencia computacional.},
     label=COD:CONST_EVAL_VALS,
     firstline=35, lastline=54, firstnumber=35,
 ]{codigos/offline/evaluation.hpp}
 
 \lstinputlistingwrap[
-    caption={[Uso de plantillas para el cambio de modelo e integrador]%
+    caption={[Uso de plantillas para el cambio de modelo e integrador en la versión \textit{offline}]%
             Llamada a la función principal de optimización en la que se inyectan como plantillas tanto el integrador numérico como el tipo de neurona postsináptica, junto con los punteros a funciones específicas del modelo, garantizando la genericidad del diseño.},
     label=COD:BO_MAIN_CALL,
     firstline=59, lastline=80, firstnumber=59,
 ]{codigos/offline/main.cpp}
+
+
+\section{Implementación \textit{online}\label{SEC:CODIGOS_ONLINE}}
+
+\lstinputlistingwrap[
+    caption={[Declaración de parámetros, estados, entradas y salidas del módulo en la versión \textit{online}]%
+            Definición del vector \texttt{vars[]} que declara todos los parámetros configurables, estados internos, entradas y salidas del módulo \ac{rtxi} de sinapsis bidireccional},
+    label=COD:VARS_ONLINE,
+    firstline=48, lastline=129, firstnumber=48,
+]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
+
+\lstinputlistingwrap[
+    caption={[Función \texttt{execute} del hilo \acs{rt} en la versión \textit{online}]%
+            Función de tiempo real ejecutada en cada período de \ac{rtxi}. Calcula las corrientes sinápticas en cada dirección leyendo los parámetros mediante \textit{double buffering} atómico y, cuando la bandera \texttt{RT\_storing} está activa, almacena las señales en los búferes compartidos para la evaluación del hilo \ac{nrt}. También actualiza las variables de los máximos y mínimos de los voltajes en caso de estar activada su lectura dinámica (del módulo de análisis de \textit{bursts}). En las variables, para identificar la sinapsis, se utiliza \texttt{12} o \texttt{21} en función del número identificador de la neurona presináptica y del de la postsináptica (de \texttt{1} a \texttt{2} o de \texttt{2} a \texttt{1}, respectivamente).},
+    label=COD:EXECUTE_ONLINE,
+    firstline=222, lastline=340, firstnumber=222,
+]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
+
+\lstinputlistingwrap[
+    caption={[Integración \acs{rk5} de 6 etapas, \textit{clamping} de $m_{\mathrm{slow}}$ y cálculo de $I_{\mathrm{slow}}$ en la versión \textit{online}]%
+            Implementación del integrador \ac{rk5} de 6 etapas para la variable de compuerta lenta $m_{\mathrm{slow}}$, su función de derivada (\texttt{sm\_chemical\_synapse\_m}) y la función de cálculo de la corriente lenta (\texttt{compute\_i\_slow}) que integra y evalúa en un solo paso mostrando también el \textit{clamping} de $m_{\mathrm{slow}}$.},
+    label=COD:ISLOW_ONLINE,
+    firstline=29, lastline=38, firstnumber=29,
+]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
+\lstinputlistingwrap[
+    firstline=157, lastline=212, firstnumber=157,
+]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
+
+\lstinputlistingwrap[
+    caption={[Lanzamiento y parada del hilo \acs{nrt} en la versión \textit{online}]%
+            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la GUI. Si la optimización no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
+    label=COD:TOGGLE_BO,
+    firstline=664, lastline=688, firstnumber=664,
+]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
+
+\lstinputlistingwrap[
+    caption={[Función de evaluación del hilo \acs{nrt} en la versión \textit{online}]%
+            Función \texttt{evaluate\_candidate}: el hilo \acs{nrt} espera a que el \acs{rt} confirme la lectura del índice actual, escribe los nuevos parámetros en el búfer del otro índice, espera la estabilización, marca el comienzo de la escritura de los datos por el hilo \acs{rt}, espera a que acabe, y evalúa las señales; todo comprobando la señal de parada en determinados puntos. En las variables, para identificar la sinapsis, se utiliza \texttt{12} o \texttt{21} en función del número identificador de la neurona presináptica y del de la postsináptica (de \texttt{1} a \texttt{2} o de \texttt{2} a \texttt{1}, respectivamente).},
+    label=COD:EVAL_CANDIDATE_ONLINE,
+    firstline=243, lastline=326, firstnumber=243,
+]{codigos/online/evaluation.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=427, lastline=442, firstnumber=427,
+]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
+\lstinputlistingwrap[
+    nolol,
+    firstline=304, lastline=332, firstnumber=304,
+]{codigos/online/utils.hpp}
+

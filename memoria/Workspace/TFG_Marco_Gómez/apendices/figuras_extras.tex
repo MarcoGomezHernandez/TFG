@@ -1,0 +1,10 @@
+
+En este apéndice se incluyen los diagramas de secuencia que detallan la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} del módulo \textit{online} durante la optimización bayesiana.
+
+\begin{figure}[Sincronización de los hilos en un flujo normal de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_NORMAL}{Diagrama de secuencia de la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} durante una optimización completa, desde que el usuario pulsa en iniciar la optimización hasta la publicación del mejor resultado y su visualización en la interfaz. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{0.7\textwidth}{}{diagrama_flujo_normal}
+\end{figure}
+
+\begin{figure}[Sincronización de los hilos en la interrupción de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_INTERRUPCION}{Diagrama de secuencia que muestra los mecanismos de interrupción de la optimización bayesiana (por el usuario, cambio de período del hilo \ac{rt} o destrucción del módulo) y su gestión a nivel de sincronización entre hilos. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{1.0\textwidth}{}{diagrama_flujo_interrupcion}
+\end{figure}
