@@ -75,19 +75,19 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     caption={[Configuración y tipos de Limbo para la optimización en la versión \textit{offline}]%
             Configuración completa de Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) en su versión \textit{offline} con ruido observacional fijo ($10^{-6}$) y $\xi = 0{,}003$; la versión \textit{online} permite optimizar dicho ruido (inicializado en $0{,}05$) y reduce el \textit{jitter} a $\xi = 0{,}001$. Se muestra también cómo se calculan las configuraciones dinámicas y las constantes que les afectan},
     label=COD:LIMBO_CONFIG_TYPES,
-    firstline=16, lastline=22, firstnumber=16,
+    firstline=17, lastline=24, firstnumber=17,
 ]{codigos/offline/BO.tpp}
 \lstinputlistingwrap[
     nolol,
-    firstline=69, lastline=144, firstnumber=69,
+    firstline=64, lastline=145, firstnumber=64,
 ]{codigos/offline/BO.tpp}
 \lstinputlistingwrap[
     nolol,
-    firstline=297, lastline=328, firstnumber=297,
+    firstline=294, lastline=329, firstnumber=294,
 ]{codigos/offline/BO.tpp}
 \lstinputlistingwrap[
     nolol,
-    firstline=649, lastline=655, firstnumber=649,
+    firstline=647, lastline=657, firstnumber=647,
 ]{codigos/offline/BO.tpp}
 
 \lstinputlistingwrap[
@@ -111,7 +111,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     caption={[Uso de la librería Neun en la versión \textit{offline}]%
             Uso de la librería Neun (Apéndice~\ref{SEC:NEUNREPO}): declaraciones de tipos, creación, modificación y uso de los modelos sináptico y neuronal.},
     label=COD:NEUN_OFFLINE,
-    firstline=15, lastline=16, firstnumber=15,
+    firstline=14, lastline=15, firstnumber=14,
 ]{codigos/offline/main.cpp}
 \lstinputlistingwrap[
     nolol,
@@ -119,7 +119,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/utils.hpp}
 \lstinputlistingwrap[
     nolol,
-    firstline=596, lastline=596, firstnumber=596,
+    firstline=597, lastline=598, firstnumber=597,
 ]{codigos/offline/BO.tpp}
 \lstinputlistingwrap[
     nolol,
@@ -186,7 +186,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     caption={[Interpolación lineal para submuestreo del modelo neuronal en la versión \textit{offline}]%
             Generación y uso de puntos intermedios interpolados linealmente entre cada par de muestras consecutivas de la señal presináptica escalada para proporcionar la resolución temporal requerida por el integrador del modelo postsináptico.},
     label=COD:INTERPOLATION_OFFLINE,
-    firstline=473, lastline=497, firstnumber=473,
+    firstline=474, lastline=497, firstnumber=474,
 ]{codigos/offline/scaling.cpp}
 \lstinputlistingwrap[
     nolol,
@@ -204,7 +204,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     caption={[Uso de plantillas para el cambio de modelo e integrador en la versión \textit{offline}]%
             Llamada a la función principal de optimización en la que se inyectan como plantillas tanto el integrador numérico como el tipo de neurona postsináptica, junto con los punteros a funciones específicas del modelo, garantizando la genericidad del diseño.},
     label=COD:BO_MAIN_CALL,
-    firstline=59, lastline=80, firstnumber=59,
+    firstline=56, lastline=77, firstnumber=56,
 ]{codigos/offline/main.cpp}
 
 
