@@ -6,9 +6,9 @@ skinparam defaultFontSize 11
 title Flujo de interrupción de la BO antes de publicar el mejor resultado
 
 actor       Usuario     as U
-participant "Hilo\nGUI"         as GUI
-participant "Hilo\nRT"          as RT
-participant "Hilo\nNRT_BO"      as NRT
+participant "Hilo GUI"         as GUI
+participant "Hilo RT"          as RT
+participant "Hilo NRT_BO"      as NRT
 
 note over NRT
   Hilo NRT estaba activo
@@ -42,10 +42,10 @@ alt NRT_BO detecta parada en iteración del\nbucle de evaluación de candidatos
   NRT -> NRT : throw StopEvaluation()\nBO termina\ncatch fuera de la BO
 else NRT_BO detecta parada en función operator() de StopFunctor\n(entre evaluaciones)
   NRT -> NRT : return true\nBO termina
-  NRT -> NRT : Detecta stop_BO.load(relaxed) == true
-else NRT_BO detecta parada en otro lugar
+else NRT_BO en cualquier otro lugar en que se compruebe parada
 end
 
+NRT -> NRT : Detecta stop_BO.load(relaxed) == true
 NRT ->> GUI : invokeMethod("stop_BO_event_async")
 deactivate NRT
 

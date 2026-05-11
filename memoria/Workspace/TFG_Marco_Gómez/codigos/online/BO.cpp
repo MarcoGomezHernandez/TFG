@@ -470,108 +470,110 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
     }
     catch (const StopEvaluation &)
     {
-        // Cancelación solicitada durante una evaluación
-        QMetaObject::invokeMethod(this, "stop_BO_event_async", Qt::QueuedConnection);
-        return;
-    }
-
-    // Si se canceló durante la optimización (StopFunctor lo detectó)
-    if (stop_BO.load(std::memory_order_relaxed))
-    {
-        QMetaObject::invokeMethod(this, "stop_BO_event_async", Qt::QueuedConnection);
-        return;
     }
 
     const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
     const std::chrono::duration<double> elapsed = t_end - t_start;
 
+    // Comprobación clave: asegurar que existan individuos evaluados
+    const bool has_evaluations = !opt.observations().empty();
+
     if (verbose.load(std::memory_order_relaxed))
     {
-        std::cout << "Best: " << opt.best_observation()(0) << std::endl;
+        if (has_evaluations)
+        {
+            std::cout << "Best: " << opt.best_observation()(0) << std::endl;
+        }
         std::cout << "Optimization time: " << elapsed.count() << " s" << std::endl;
     }
 
-    // Decodifica los mejores parámetros encontrados
-    Candidate best_candidate = decode_to_candidate(opt.best_sample(),
-                                                   ranges_12,
-                                                   ranges_21);
+    Candidate best_candidate{};
+    if (has_evaluations)
+    {
+        // Decodifica los mejores parámetros encontrados
+        best_candidate = decode_to_candidate(opt.best_sample(), ranges_12, ranges_21);
+    }
 
     if (jsonl_history_file_path)
     {
-        const Eigen::VectorXd &lengthscales = opt.model().kernel_function().ell();
-        json &ls_json = history["ARD_lss"];
-        json &best_params = history["best_params"];
-        size_t ls_idx = 0;
-
         history["optimization_time"] = elapsed.count();
 
-        if (use_syn_12)
+        // Solo accedemos al modelo y guardamos resultados si hubo evaluaciones
+        if (has_evaluations)
         {
-            json &ls_12 = ls_json["1->2"];
-            json &bp_12 = best_params["1->2"];
-            const ChemicalSynapseParams &bc_params_12 = best_candidate.params_12;
+            const Eigen::VectorXd &lengthscales = opt.model().kernel_function().ell();
+            json &ls_json = history["ARD_lss"];
+            json &best_params = history["best_params"];
+            size_t ls_idx = 0;
 
-            ls_12["e_syn"] = lengthscales(ls_idx++);
-            bp_12["e_syn"] = bc_params_12.e_syn;
-
-            if (use_i_fast_12)
+            if (use_syn_12)
             {
-                ls_12["g_fast"] = lengthscales(ls_idx++);
-                ls_12["s_fast"] = lengthscales(ls_idx++);
-                ls_12["v_fast"] = lengthscales(ls_idx++);
+                json &ls_12 = ls_json["1->2"];
+                json &bp_12 = best_params["1->2"];
+                const ChemicalSynapseParams &bc_params_12 = best_candidate.params_12;
 
-                bp_12["g_fast"] = bc_params_12.g_fast;
-                bp_12["s_fast"] = bc_params_12.s_fast;
-                bp_12["v_fast"] = bc_params_12.v_fast;
+                ls_12["e_syn"] = lengthscales(ls_idx++);
+                bp_12["e_syn"] = bc_params_12.e_syn;
+
+                if (use_i_fast_12)
+                {
+                    ls_12["g_fast"] = lengthscales(ls_idx++);
+                    ls_12["s_fast"] = lengthscales(ls_idx++);
+                    ls_12["v_fast"] = lengthscales(ls_idx++);
+
+                    bp_12["g_fast"] = bc_params_12.g_fast;
+                    bp_12["s_fast"] = bc_params_12.s_fast;
+                    bp_12["v_fast"] = bc_params_12.v_fast;
+                }
+                if (use_i_slow_12)
+                {
+                    ls_12["g_slow"] = lengthscales(ls_idx++);
+                    ls_12["v_slow"] = lengthscales(ls_idx++);
+                    ls_12["k1"] = lengthscales(ls_idx++);
+                    ls_12["R"] = lengthscales(ls_idx++);
+                    ls_12["s_slow"] = lengthscales(ls_idx++);
+
+                    bp_12["g_slow"] = bc_params_12.g_slow;
+                    bp_12["v_slow"] = bc_params_12.v_slow;
+                    bp_12["k1"] = bc_params_12.k1;
+                    bp_12["k2"] = bc_params_12.k2;
+                    bp_12["s_slow"] = bc_params_12.s_slow;
+                }
             }
-            if (use_i_slow_12)
+
+            if (use_syn_21)
             {
-                ls_12["g_slow"] = lengthscales(ls_idx++);
-                ls_12["v_slow"] = lengthscales(ls_idx++);
-                ls_12["k1"] = lengthscales(ls_idx++);
-                ls_12["R"] = lengthscales(ls_idx++);
-                ls_12["s_slow"] = lengthscales(ls_idx++);
+                json &ls_21 = ls_json["2->1"];
+                json &bp_21 = best_params["2->1"];
+                const ChemicalSynapseParams &bc_params_21 = best_candidate.params_21;
 
-                bp_12["g_slow"] = bc_params_12.g_slow;
-                bp_12["v_slow"] = bc_params_12.v_slow;
-                bp_12["k1"] = bc_params_12.k1;
-                bp_12["k2"] = bc_params_12.k2;
-                bp_12["s_slow"] = bc_params_12.s_slow;
-            }
-        }
+                ls_21["e_syn"] = lengthscales(ls_idx++);
+                bp_21["e_syn"] = bc_params_21.e_syn;
 
-        if (use_syn_21)
-        {
-            json &ls_21 = ls_json["2->1"];
-            json &bp_21 = best_params["2->1"];
-            const ChemicalSynapseParams &bc_params_21 = best_candidate.params_21;
+                if (use_i_fast_21)
+                {
+                    ls_21["g_fast"] = lengthscales(ls_idx++);
+                    ls_21["s_fast"] = lengthscales(ls_idx++);
+                    ls_21["v_fast"] = lengthscales(ls_idx++);
 
-            ls_21["e_syn"] = lengthscales(ls_idx++);
-            bp_21["e_syn"] = bc_params_21.e_syn;
+                    bp_21["g_fast"] = bc_params_21.g_fast;
+                    bp_21["s_fast"] = bc_params_21.s_fast;
+                    bp_21["v_fast"] = bc_params_21.v_fast;
+                }
+                if (use_i_slow_21)
+                {
+                    ls_21["g_slow"] = lengthscales(ls_idx++);
+                    ls_21["v_slow"] = lengthscales(ls_idx++);
+                    ls_21["k1"] = lengthscales(ls_idx++);
+                    ls_21["R"] = lengthscales(ls_idx++);
+                    ls_21["s_slow"] = lengthscales(ls_idx++);
 
-            if (use_i_fast_21)
-            {
-                ls_21["g_fast"] = lengthscales(ls_idx++);
-                ls_21["s_fast"] = lengthscales(ls_idx++);
-                ls_21["v_fast"] = lengthscales(ls_idx++);
-
-                bp_21["g_fast"] = bc_params_21.g_fast;
-                bp_21["s_fast"] = bc_params_21.s_fast;
-                bp_21["v_fast"] = bc_params_21.v_fast;
-            }
-            if (use_i_slow_21)
-            {
-                ls_21["g_slow"] = lengthscales(ls_idx++);
-                ls_21["v_slow"] = lengthscales(ls_idx++);
-                ls_21["k1"] = lengthscales(ls_idx++);
-                ls_21["R"] = lengthscales(ls_idx++);
-                ls_21["s_slow"] = lengthscales(ls_idx++);
-
-                bp_21["g_slow"] = bc_params_21.g_slow;
-                bp_21["v_slow"] = bc_params_21.v_slow;
-                bp_21["k1"] = bc_params_21.k1;
-                bp_21["k2"] = bc_params_21.k2;
-                bp_21["s_slow"] = bc_params_21.s_slow;
+                    bp_21["g_slow"] = bc_params_21.g_slow;
+                    bp_21["v_slow"] = bc_params_21.v_slow;
+                    bp_21["k1"] = bc_params_21.k1;
+                    bp_21["k2"] = bc_params_21.k2;
+                    bp_21["s_slow"] = bc_params_21.s_slow;
+                }
             }
         }
 
@@ -584,6 +586,13 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
         {
             std::cerr << "Warning: Could not open jsonl file " << *jsonl_history_file_path << " for appending.\n";
         }
+    }
+
+    // Si se canceló durante la optimización o si no hay parámetros que actualizar
+    if (stop_BO.load(std::memory_order_relaxed) || !has_evaluations)
+    {
+        QMetaObject::invokeMethod(this, "stop_BO_event_async", Qt::QueuedConnection);
+        return;
     }
 
     // --- Publicación final de los mejores parámetros al hilo RT ---

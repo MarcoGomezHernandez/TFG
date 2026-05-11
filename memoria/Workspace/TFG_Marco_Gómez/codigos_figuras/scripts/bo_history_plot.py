@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "input_jsonl", help="Ruta al archivo JSONL de enrada")
 parser.add_argument(
-    "--output_max_avg_score", help="Ruta al archio PNG de salida para la gráfica de promedio de máximos encontrados")
+    "--output_max_score", help="Ruta al archio PNG de salida para la gráfica de máximos encontrados")
 parser.add_argument(
     "--output_avg_scores", help="Ruta al archivo PNG de salida para la gráfica de promedios de puntuaciones")
 parser.add_argument(
@@ -17,9 +17,9 @@ parser.add_argument(
 parser.add_argument(
     "--output_ard_lss", help="Ruta al archivo PNG de salida para la gráfica del inverso de lengthscales")
 parser.add_argument(
-    "--output_time_stats", help="Ruta al archivo TXT de salida para guardar el tiempo de optimización medio y su desviación")
+    "--output_avg_execution_time", help="Ruta al archivo TXT de salida para guardar el tiempo de optimización medio y su desviación")
 parser.add_argument(
-    "--output_best_params", help="Ruta al archivo CSV de salida para guardar la media y desviación de los mejores parámetros")
+    "--output_avg_best_params", help="Ruta al archivo CSV de salida para guardar la media y desviación de los mejores parámetros")
 parser.add_argument("--row_index", type=int, default=0,
                     help="Índice de la fila/ejecución para la gráfica de las puntuaciones (por defecto 0)")
 parser.add_argument("--initial_samples", type=int,
@@ -32,16 +32,16 @@ parser.add_argument("--xminor_step", type=int,
 args = parser.parse_args()
 
 need_only_single_run = bool(
-    args.output_scores and not args.output_max_avg_score
+    args.output_scores and not args.output_max_score
     and not args.output_avg_scores and not args.output_ard_lss
-    and not args.output_time_stats and not args.output_best_params)
+    and not args.output_avg_execution_time and not args.output_avg_best_params)
 
 # Determina qué datos deben cargarse según los gráficos que se pedirán.
-need_scores = args.output_max_avg_score or args.output_avg_scores or args.output_scores
+need_scores = args.output_max_score or args.output_avg_scores or args.output_scores
 need_score_components = args.output_avg_scores or args.output_scores
 need_ard_lss = bool(args.output_ard_lss)
-need_time_stats = bool(args.output_time_stats)
-need_best_params = bool(args.output_best_params)
+need_avg_execution_time = bool(args.output_avg_execution_time)
+need_avg_best_params = bool(args.output_avg_best_params)
 
 if need_scores:
     scores_list = []
@@ -50,9 +50,9 @@ if need_score_components:
     shape_scores_list = []
 if need_ard_lss:
     ard_lss_list = []
-if need_time_stats:
+if need_avg_execution_time:
     opt_times_list = []
-if need_best_params:
+if need_avg_best_params:
     best_params_list = []
 
 with open(args.input_jsonl, 'r') as f:
@@ -80,9 +80,9 @@ with open(args.input_jsonl, 'r') as f:
                 shape_scores_list.append(score_history["shape_scores"])
             if need_ard_lss:
                 ard_lss_list.append(data["ARD_lss"])
-            if need_time_stats:
+            if need_avg_execution_time:
                 opt_times_list.append(data["optimization_time"])
-            if need_best_params:
+            if need_avg_best_params:
                 best_params_list.append(data["best_params"])
 
 if need_scores:
@@ -96,9 +96,9 @@ if need_scores:
 else:
     if need_ard_lss:
         n_execs = len(ard_lss_list)
-    elif need_time_stats:
+    elif need_avg_execution_time:
         n_execs = len(opt_times_list)
-    elif need_best_params:
+    elif need_avg_best_params:
         n_execs = len(best_params_list)
 
 plt.rcParams['font.family'] = 'sans-serif'
@@ -157,18 +157,22 @@ def plot_with_shade(mean, std, label, color, alpha):
 if n_execs > 0:
     # Solo se crean figuras cuando hay ejecuciones y evaluaciones disponibles.
     if n_evals > 0:
-        if args.output_max_avg_score:
+        if args.output_max_score:
             # Calcula la puntuación máxima acumulada por evaluación y su media.
             max_scores = np.maximum.accumulate(scores, axis=1)
-            mean_max_scores = np.mean(max_scores, axis=0)
-            std_max_scores = np.std(max_scores, axis=0)
 
-            setup_plot('Promedio de la puntuación máxima acumulada por evaluación (convergencia)',
+            setup_plot('Puntuación máxima acumulada por evaluación (convergencia)' if n_execs == 1 else 'Promedio de la puntuación máxima acumulada por evaluación (convergencia)',
                        'Evaluación', 'Puntuación máxima acumulada')
-            plot_with_shade(mean_max_scores,
-                            std_max_scores, '_nolegend_', 'dodgerblue', 0.6)
+            if n_execs > 1:
+                mean_max_scores = np.mean(max_scores, axis=0)
+                std_max_scores = np.std(max_scores, axis=0)
+                plot_with_shade(mean_max_scores,
+                                std_max_scores, '_nolegend_', 'dodgerblue', 0.6)
+            else:
+                plt.plot(eval_indices, max_scores[0], label='_nolegend_',
+                         color='dodgerblue', linewidth=lw, alpha=0.6)
             set_extras(args.xtick_step)
-            save_plot(args.output_max_avg_score)
+            save_plot(args.output_max_score)
 
         if args.output_avg_scores:
             mean_scores = np.mean(scores, axis=0)
@@ -241,11 +245,14 @@ if n_execs > 0:
                             inv_val = 1.0 / val
                         inv_ls_data[k].append(inv_val)
 
-                means = []
-                stds = []
-                for k in keys:
-                    means.append(np.mean(inv_ls_data[k]))
-                    stds.append(np.std(inv_ls_data[k]))
+                if n_execs > 1:
+                    means = []
+                    stds = []
+                    for k in keys:
+                        means.append(np.mean(inv_ls_data[k]))
+                        stds.append(np.std(inv_ls_data[k]))
+                else:
+                    vals = [inv_ls_data[k][0] for k in keys]
 
                 display_labels = []
                 for k in keys:
@@ -258,11 +265,15 @@ if n_execs > 0:
 
                     display_labels.append(label)
 
-                setup_plot(
-                    'Importancia en la puntuación de los parámetros', 'Parámetro', 'Importancia (1 / ARD kernel lengthscale)')
+                setup_plot('Importancia en la puntuación de los parámetros' if n_execs == 1 else 'Promedio de la importancia en la puntuación de los parámetros',
+                           'Parámetro', 'Importancia (1 / ARD kernel lengthscale)')
                 # Crea un gráfico de barras con la importancia media de cada parámetro.
-                plt.bar(display_labels, means, yerr=stds, color='dodgerblue',
-                        linewidth=4/len(keys), capsize=30/len(keys))
+                if n_execs > 1:
+                    plt.bar(display_labels, means, yerr=stds, color='dodgerblue',
+                            linewidth=4/len(keys), capsize=30/len(keys))
+                else:
+                    plt.bar(display_labels, vals, color='dodgerblue',
+                            linewidth=4/len(keys))
                 plt.grid(True, axis='y', linewidth=0.2)
                 plt.gca().set_axisbelow(True)
                 plt.xticks(rotation=45, ha='right')
@@ -276,18 +287,18 @@ if n_execs > 0:
 else:
     print("Advertencia: no se encontraron ejecuciones en los datos para generar las gráficas de puntuaciones.")
 
-if args.output_time_stats:
+if args.output_avg_execution_time:
     # Calcula e imprime en un archivo de texto la media y desviación del tiempo de optimización
     if len(opt_times_list) > 0:
         mean_time = np.mean(opt_times_list)
         std_time = np.std(opt_times_list)
-        with open(args.output_time_stats, 'w') as f:
+        with open(args.output_avg_execution_time, 'w') as f:
             f.write(f"Mean: {mean_time}\n")
             f.write(f"Standard deviation: {std_time}\n")
     else:
         print("Advertencia: No se encontraron datos de tiempo de optimización (optimization_time).")
 
-if args.output_best_params:
+if args.output_avg_best_params:
     # Calcula y guarda en CSV la media y desviación de los mejores parámetros (best_params)
     if len(best_params_list) > 0:
         flat_params_list = []
@@ -310,7 +321,7 @@ if args.output_best_params:
                 for k in keys:
                     param_values[k].append(params[k])
 
-            with open(args.output_best_params, 'w') as f:
+            with open(args.output_avg_best_params, 'w') as f:
                 f.write("param,mean,std\n")
                 for k in keys:
                     vals = param_values[k]

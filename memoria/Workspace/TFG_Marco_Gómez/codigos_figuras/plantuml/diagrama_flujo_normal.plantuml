@@ -6,9 +6,9 @@ skinparam defaultFontSize 11
 title Flujo normal desde el inicio de la BO hasta la publicación del mejor resultado
 
 actor       Usuario     as U
-participant "Hilo\nGUI"         as GUI
-participant "Hilo\nRT"          as RT
-participant "Hilo\nNRT_BO"      as NRT
+participant "Hilo GUI"         as GUI
+participant "Hilo RT"          as RT
+participant "Hilo NRT_BO"      as NRT
 
 == Inicio de la BO ==
 
