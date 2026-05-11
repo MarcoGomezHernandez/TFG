@@ -9,8 +9,8 @@ exe_path = "./parametrize_chemicalSynapsis_PD-HR"
 yaml_folder = "yaml_configs"
 
 # Simulation parameters
-simulation_time = 20000.0  # adjust as needed
-step = 0.1                # optional, adjust if needed
+simulation_time = 1600.0  # adjust as needed
+step = 0.008                # optional, adjust if needed
 
 csv_file = os.path.abspath("PDtracesV.csv")
 

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -47,8 +48,8 @@ namespace BOPrivateConfig
     // g_min = g_max * G_MIN_FACTOR (explora varias órdenes de magnitud de conductancia)
     static constexpr double G_MIN_FACTOR = 0.001;
     // R = k2/k1 in [R_MIN, R_MAX], en log-space
-    static constexpr double R_MAX = 40.0;
-    static constexpr double R_MIN = 0.01;
+    static constexpr double R_MAX = 30.0;
+    static constexpr double R_MIN = 0.00001;
 }
 
 namespace BOPrivateConstants
@@ -542,6 +543,7 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
                                         bool verbose,
                                         const std::optional<std::string> &jsonl_history_file_path)
 {
+    const std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
 
     if (csv_step <= 0.0 || evaluation_time <= 0.0 || observation_time <= 0.0 || stabilization_time < 0.0 || fc <= 0.0 || expected_i_min >= expected_i_max || i_min > i_max)
     {
@@ -691,22 +693,39 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
 
     opt.optimize(functor);
 
+    const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = t_end - t_start;
+
     if (verbose)
     {
         std::cout << "Best: " << opt.best_observation()(0) << std::endl;
+        std::cout << "Optimization time: " << elapsed.count() << " s" << std::endl;
     }
+
+    // Decodifica la mejor muestra encontrada a parámetros sinápticos reales
+    const ChemicalSynapseParams best_candidate = decode_to_candidate(opt.best_sample(), ranges, use_i_fast, use_i_slow);
 
     if (jsonl_history_file_path)
     {
         const Eigen::VectorXd &lengthscales = opt.model().kernel_function().ell();
         json &ls_json = history["ARD_lss"];
+        json &best_params = history["best_params"];
         size_t idx = 0;
+
+        history["optimization_time"] = elapsed.count();
+
         ls_json["e_syn"] = lengthscales(idx++);
+        best_params["e_syn"] = best_candidate.e_syn;
+
         if (use_i_fast)
         {
             ls_json["g_fast"] = lengthscales(idx++);
             ls_json["s_fast"] = lengthscales(idx++);
             ls_json["v_fast"] = lengthscales(idx++);
+
+            best_params["g_fast"] = best_candidate.g_fast;
+            best_params["s_fast"] = best_candidate.s_fast;
+            best_params["v_fast"] = best_candidate.v_fast;
         }
         if (use_i_slow)
         {
@@ -715,6 +734,12 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
             ls_json["k1"] = lengthscales(idx++);
             ls_json["R"] = lengthscales(idx++);
             ls_json["s_slow"] = lengthscales(idx++);
+
+            best_params["g_slow"] = best_candidate.g_slow;
+            best_params["v_slow"] = best_candidate.v_slow;
+            best_params["k1"] = best_candidate.k1;
+            best_params["k2"] = best_candidate.k2;
+            best_params["s_slow"] = best_candidate.s_slow;
         }
 
         std::ofstream fout(*jsonl_history_file_path, std::ios::app);
@@ -727,9 +752,6 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
             std::cerr << "Warning: Could not open jsonl file " << *jsonl_history_file_path << " for appending.\n";
         }
     }
-
-    // Decodifica la mejor muestra encontrada a parámetros sinápticos reales
-    const ChemicalSynapseParams best_candidate = decode_to_candidate(opt.best_sample(), ranges, use_i_fast, use_i_slow);
 
     return best_candidate;
 }

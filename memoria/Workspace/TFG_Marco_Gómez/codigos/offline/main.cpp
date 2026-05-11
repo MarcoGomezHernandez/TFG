@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <exception>
 #include <optional>
-#include <chrono>
 
 #include "BO.hpp"
 #include "utils.hpp"
@@ -51,8 +50,6 @@ int main(int argc, char *argv[])
     const std::string out_yaml_path = argv[20];
     const std::optional<std::string> jsonl_history_path = (argc >= 22) ? std::optional<std::string>(argv[21]) : std::nullopt;
 
-    const std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
-
     try
     {
         // Lanza la optimización bayesiana offline
@@ -79,14 +76,10 @@ int main(int argc, char *argv[])
             verbose,
             jsonl_history_path);
 
-        const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
-        const std::chrono::duration<double> elapsed = t_end - t_start;
-
         if (!best_params_opt)
         {
 
             std::cerr << "Error: BO failed to produce parameters" << std::endl;
-            std::cerr << "BO execution time (until failure): " << elapsed.count() << " s" << std::endl;
             return 1;
         }
 
@@ -106,16 +99,11 @@ int main(int argc, char *argv[])
 
         std::ofstream fout(out_yaml_path);
         fout << out;
-
-        std::cout << "BO execution time: " << elapsed.count() << " s" << std::endl;
     }
     catch (const std::exception &e)
     {
 
-        const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
-        const std::chrono::duration<double> elapsed = t_end - t_start;
         std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "BO execution time (until error): " << elapsed.count() << " s" << std::endl;
         return 1;
     }
 

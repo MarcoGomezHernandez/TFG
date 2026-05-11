@@ -1,6 +1,7 @@
 #include <limbo/limbo.hpp>
 #include "bidirectional_chemical_synapse_BO.h"
 #include <nlohmann/json.hpp>
+#include <chrono>
 #include <fstream>
 #include <cstdlib>
 
@@ -319,6 +320,7 @@ static size_t count_params_one_direction(unsigned int use_i_fast,
 // parámetros al hilo RT mediante double-buffering atómico.
 void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
 {
+    const std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
 
     const double fs = 1.0 / safe_divisor(period_t);           // fs en kHz (period en ms)
     num_elements = static_cast<size_t>(evaluation_time * fs); // Puntos a almacenar por evaluación
@@ -480,26 +482,47 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
         return;
     }
 
+    const std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = t_end - t_start;
+
     if (verbose.load(std::memory_order_relaxed))
     {
         std::cout << "Best: " << opt.best_observation()(0) << std::endl;
+        std::cout << "Optimization time: " << elapsed.count() << " s" << std::endl;
     }
+
+    // Decodifica los mejores parámetros encontrados
+    Candidate best_candidate = decode_to_candidate(opt.best_sample(),
+                                                   ranges_12,
+                                                   ranges_21);
 
     if (jsonl_history_file_path)
     {
         const Eigen::VectorXd &lengthscales = opt.model().kernel_function().ell();
         json &ls_json = history["ARD_lss"];
+        json &best_params = history["best_params"];
         size_t ls_idx = 0;
 
-        json &ls_12 = ls_json["1->2"];
+        history["optimization_time"] = elapsed.count();
+
         if (use_syn_12)
         {
+            json &ls_12 = ls_json["1->2"];
+            json &bp_12 = best_params["1->2"];
+            const ChemicalSynapseParams &bc_params_12 = best_candidate.params_12;
+
             ls_12["e_syn"] = lengthscales(ls_idx++);
+            bp_12["e_syn"] = bc_params_12.e_syn;
+
             if (use_i_fast_12)
             {
                 ls_12["g_fast"] = lengthscales(ls_idx++);
                 ls_12["s_fast"] = lengthscales(ls_idx++);
                 ls_12["v_fast"] = lengthscales(ls_idx++);
+
+                bp_12["g_fast"] = bc_params_12.g_fast;
+                bp_12["s_fast"] = bc_params_12.s_fast;
+                bp_12["v_fast"] = bc_params_12.v_fast;
             }
             if (use_i_slow_12)
             {
@@ -508,18 +531,33 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
                 ls_12["k1"] = lengthscales(ls_idx++);
                 ls_12["R"] = lengthscales(ls_idx++);
                 ls_12["s_slow"] = lengthscales(ls_idx++);
+
+                bp_12["g_slow"] = bc_params_12.g_slow;
+                bp_12["v_slow"] = bc_params_12.v_slow;
+                bp_12["k1"] = bc_params_12.k1;
+                bp_12["k2"] = bc_params_12.k2;
+                bp_12["s_slow"] = bc_params_12.s_slow;
             }
         }
 
-        json &ls_21 = ls_json["2->1"];
         if (use_syn_21)
         {
+            json &ls_21 = ls_json["2->1"];
+            json &bp_21 = best_params["2->1"];
+            const ChemicalSynapseParams &bc_params_21 = best_candidate.params_21;
+
             ls_21["e_syn"] = lengthscales(ls_idx++);
+            bp_21["e_syn"] = bc_params_21.e_syn;
+
             if (use_i_fast_21)
             {
                 ls_21["g_fast"] = lengthscales(ls_idx++);
                 ls_21["s_fast"] = lengthscales(ls_idx++);
                 ls_21["v_fast"] = lengthscales(ls_idx++);
+
+                bp_21["g_fast"] = bc_params_21.g_fast;
+                bp_21["s_fast"] = bc_params_21.s_fast;
+                bp_21["v_fast"] = bc_params_21.v_fast;
             }
             if (use_i_slow_21)
             {
@@ -528,6 +566,12 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
                 ls_21["k1"] = lengthscales(ls_idx++);
                 ls_21["R"] = lengthscales(ls_idx++);
                 ls_21["s_slow"] = lengthscales(ls_idx++);
+
+                bp_21["g_slow"] = bc_params_21.g_slow;
+                bp_21["v_slow"] = bc_params_21.v_slow;
+                bp_21["k1"] = bc_params_21.k1;
+                bp_21["k2"] = bc_params_21.k2;
+                bp_21["s_slow"] = bc_params_21.s_slow;
             }
         }
 
@@ -541,11 +585,6 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
             std::cerr << "Warning: Could not open jsonl file " << *jsonl_history_file_path << " for appending.\n";
         }
     }
-
-    // Decodifica los mejores parámetros encontrados
-    Candidate best_candidate = decode_to_candidate(opt.best_sample(),
-                                                   ranges_12,
-                                                   ranges_21);
 
     // --- Publicación final de los mejores parámetros al hilo RT ---
     // Espera a que el hilo RT haya leído el índice actual antes de escribir el nuevo

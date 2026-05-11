@@ -16,6 +16,10 @@ parser.add_argument(
     "--output_scores", help="Ruta al archivo PNG de salida para la gráfica de puntuaciones de una única ejecución")
 parser.add_argument(
     "--output_ard_lss", help="Ruta al archivo PNG de salida para la gráfica del inverso de lengthscales")
+parser.add_argument(
+    "--output_time_stats", help="Ruta al archivo TXT de salida para guardar el tiempo de optimización medio y su desviación")
+parser.add_argument(
+    "--output_best_params", help="Ruta al archivo CSV de salida para guardar la media y desviación de los mejores parámetros")
 parser.add_argument("--row_index", type=int, default=0,
                     help="Índice de la fila/ejecución para la gráfica de las puntuaciones (por defecto 0)")
 parser.add_argument("--initial_samples", type=int,
@@ -29,12 +33,15 @@ args = parser.parse_args()
 
 need_only_single_run = bool(
     args.output_scores and not args.output_max_avg_score
-    and not args.output_avg_scores and not args.output_ard_lss)
+    and not args.output_avg_scores and not args.output_ard_lss
+    and not args.output_time_stats and not args.output_best_params)
 
 # Determina qué datos deben cargarse según los gráficos que se pedirán.
 need_scores = args.output_max_avg_score or args.output_avg_scores or args.output_scores
 need_score_components = args.output_avg_scores or args.output_scores
 need_ard_lss = bool(args.output_ard_lss)
+need_time_stats = bool(args.output_time_stats)
+need_best_params = bool(args.output_best_params)
 
 if need_scores:
     scores_list = []
@@ -43,6 +50,10 @@ if need_score_components:
     shape_scores_list = []
 if need_ard_lss:
     ard_lss_list = []
+if need_time_stats:
+    opt_times_list = []
+if need_best_params:
+    best_params_list = []
 
 with open(args.input_jsonl, 'r') as f:
     # Recorre cada línea JSONL y procesa los resultados de cada ejecución.
@@ -69,6 +80,10 @@ with open(args.input_jsonl, 'r') as f:
                 shape_scores_list.append(score_history["shape_scores"])
             if need_ard_lss:
                 ard_lss_list.append(data["ARD_lss"])
+            if need_time_stats:
+                opt_times_list.append(data["optimization_time"])
+            if need_best_params:
+                best_params_list.append(data["best_params"])
 
 if need_scores:
     # Convierte las listas recopiladas a arreglos NumPy para facilitar los cálculos.
@@ -78,8 +93,13 @@ if need_scores:
         shape_scores = np.array(shape_scores_list)
     n_execs, n_evals = scores.shape
     eval_indices = range(1, n_evals + 1)
-elif ard_lss_list and not need_scores:
-    n_execs = len(ard_lss_list)
+else:
+    if need_ard_lss:
+        n_execs = len(ard_lss_list)
+    elif need_time_stats:
+        n_execs = len(opt_times_list)
+    elif need_best_params:
+        n_execs = len(best_params_list)
 
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'DejaVu Sans']
@@ -196,11 +216,23 @@ if n_execs > 0:
     if args.output_ard_lss:
         # Cada entrada ARD_lss contiene las lengthscales de los parámetros.
         if len(ard_lss_list) > 0:
-            keys = sorted(list(ard_lss_list[0].keys()))
+            # Aplanar el diccionario para soportar tanto la versión offline (plano) como online (anidado por dirección)
+            flat_ard_lss_list = []
+            for lss in ard_lss_list:
+                flat_ard_lss = {}
+                for k, v in lss.items():
+                    if isinstance(v, dict):
+                        for sub_k, sub_v in v.items():
+                            flat_ard_lss[f"{k} {sub_k}"] = sub_v
+                    else:
+                        flat_ard_lss[k] = v
+                flat_ard_lss_list.append(flat_ard_lss)
+
+            keys = sorted(list(flat_ard_lss_list[0].keys()))
 
             if len(keys) > 0:
                 inv_ls_data = {k: [] for k in keys}
-                for lss in ard_lss_list:
+                for lss in flat_ard_lss_list:
                     for k in keys:
                         val = lss[k]
                         if val == 0:
@@ -217,12 +249,13 @@ if n_execs > 0:
 
                 display_labels = []
                 for k in keys:
-                    if k == 'R':
-                        label = "R (k2/k1)"
-                    if k in ['R', 'k1', 'g_slow', 'g_fast']:
-                        label = k + " (escala log.)"
-                    else:
-                        label = k
+                    label = k
+
+                    if 'R' in k:
+                        label += " (k2/k1, escala log.)"
+                    elif any(p in k for p in ['k1', 'g_slow', 'g_fast']):
+                        label += " (escala log.)"
+
                     display_labels.append(label)
 
                 setup_plot(
@@ -242,3 +275,52 @@ if n_execs > 0:
                 "Advertencia: No se encontraron datos de lengthscales (ARD_lss) para generar la gráfica 4.")
 else:
     print("Advertencia: no se encontraron ejecuciones en los datos para generar las gráficas de puntuaciones.")
+
+if args.output_time_stats:
+    # Calcula e imprime en un archivo de texto la media y desviación del tiempo de optimización
+    if len(opt_times_list) > 0:
+        mean_time = np.mean(opt_times_list)
+        std_time = np.std(opt_times_list)
+        with open(args.output_time_stats, 'w') as f:
+            f.write(f"Mean: {mean_time}\n")
+            f.write(f"Standard deviation: {std_time}\n")
+    else:
+        print("Advertencia: No se encontraron datos de tiempo de optimización (optimization_time).")
+
+if args.output_best_params:
+    # Calcula y guarda en CSV la media y desviación de los mejores parámetros (best_params)
+    if len(best_params_list) > 0:
+        flat_params_list = []
+        # Aplanar el diccionario para soportar tanto la versión offline (plano) como online (anidado por dirección)
+        for params in best_params_list:
+            flat_params = {}
+            for k, v in params.items():
+                if isinstance(v, dict):
+                    for sub_k, sub_v in v.items():
+                        flat_params[f"{k} {sub_k}"] = sub_v
+                else:
+                    flat_params[k] = v
+            flat_params_list.append(flat_params)
+
+        keys = sorted(list(flat_params_list[0].keys()))
+
+        if len(keys) > 1:
+            param_values = {k: [] for k in keys}
+            for params in flat_params_list:
+                for k in keys:
+                    param_values[k].append(params[k])
+
+            with open(args.output_best_params, 'w') as f:
+                f.write("param,mean,std\n")
+                for k in keys:
+                    vals = param_values[k]
+                    if vals:
+                        mean_val = np.mean(vals)
+                        std_val = np.std(vals)
+                        f.write(f"{k},{mean_val},{std_val}\n")
+        else:
+            print(
+                "Advertencia: No se encontraron datos de los mejores parámetros (best_params).")
+    else:
+        print(
+            "Advertencia: No se encontraron datos de los mejores parámetros (best_params).")

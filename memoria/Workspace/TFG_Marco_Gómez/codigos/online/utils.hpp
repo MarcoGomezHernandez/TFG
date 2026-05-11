@@ -45,8 +45,8 @@ namespace BOPublicConfig
     inline constexpr double G_MIN_FACTOR = 0.001;
 
     // R = k2/k1 in [R_MIN, R_MAX]
-    inline constexpr double R_MAX = 40.0;
-    inline constexpr double R_MIN = 0.01;
+    inline constexpr double R_MAX = 30.0;
+    inline constexpr double R_MIN = 0.00001;
 
     // Puntuación de rango muy mala; se asigna si el resultado no es finito
     inline constexpr double VERY_BAD_RANGE_SCORE = -1e6;
