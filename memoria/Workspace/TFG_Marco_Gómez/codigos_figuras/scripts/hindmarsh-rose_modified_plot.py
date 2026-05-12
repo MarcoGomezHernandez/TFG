@@ -18,7 +18,8 @@ plt.ylabel('Voltaje/x(t) (mV adim.)', fontsize=7)
 plt.xticks(fontsize=7)
 plt.yticks(fontsize=7)
 
-plt.autoscale(enable=True, axis='both', tight=True)
+ax = plt.gca()
+ax.margins(x=0.0, y=0.02)
 plt.tight_layout()
 plt.savefig('figures/hindmarsh-rose_modified.png',
             dpi=600, bbox_inches='tight')

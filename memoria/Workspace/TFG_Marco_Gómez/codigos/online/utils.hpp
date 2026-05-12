@@ -35,7 +35,7 @@ namespace BOPublicConfig
     // k1 in [K1_MIN_FACTOR * fc, K1_MAX_FACTOR * fc]
     inline constexpr double K1_MAX_FACTOR = 3.33;
 
-    inline constexpr double K1_MIN_FACTOR = 3.33e-6;
+    inline constexpr double K1_MIN_FACTOR = 3.33e-4;
 
     // e_syn: distancia proporcional al rango de v_post (similar a offline)
     inline constexpr double E_SYN_FAR_TERM = 3.86;
@@ -46,7 +46,7 @@ namespace BOPublicConfig
 
     // R = k2/k1 in [R_MIN, R_MAX]
     inline constexpr double R_MAX = 30.0;
-    inline constexpr double R_MIN = 0.00001;
+    inline constexpr double R_MIN = 0.001;
 
     // Puntuación de rango muy mala; se asigna si el resultado no es finito
     inline constexpr double VERY_BAD_RANGE_SCORE = -1e6;

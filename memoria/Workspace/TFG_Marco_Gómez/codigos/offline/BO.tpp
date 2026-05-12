@@ -39,7 +39,7 @@ namespace BOPrivateConfig
     static constexpr double S_SLOW_MAX_FACTOR = 3.43;
     // k1 in [K1_MIN_FACTOR * fc, K1_MAX_FACTOR * fc] (proporcional a la frecuencia de corte)
     static constexpr double K1_MAX_FACTOR = 3.33;
-    static constexpr double K1_MIN_FACTOR = 3.33e-6;
+    static constexpr double K1_MIN_FACTOR = 3.33e-4;
     // e_syn se coloca a una distancia proporcional al rango_v_post:
     //   phase: [v_post_max + near*rango, v_post_max + far*rango] (por encima -> despolarizante)
     //   antiphase: [v_post_min - far*rango, v_post_min - near*rango] (por debajo -> hiperpolarizante)
@@ -49,7 +49,7 @@ namespace BOPrivateConfig
     static constexpr double G_MIN_FACTOR = 0.001;
     // R = k2/k1 in [R_MIN, R_MAX], en log-space
     static constexpr double R_MAX = 30.0;
-    static constexpr double R_MIN = 0.00001;
+    static constexpr double R_MIN = 0.001;
 }
 
 namespace BOPrivateConstants

@@ -5,8 +5,17 @@ import argparse
 import os
 import re
 
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'DejaVu Sans']
+label_size = 7
+plt.rcParams.update({
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
+    'axes.xmargin': 0.0,
+    'axes.ymargin': 0.02,
+    'axes.labelsize': label_size,
+    'xtick.labelsize': label_size,
+    'ytick.labelsize': label_size,
+    'legend.fontsize': 5,
+})
 
 # 1. Parser de argumentos
 parser = argparse.ArgumentParser(
@@ -99,28 +108,22 @@ ax_idx = 0
 vpre12 = get_d('vpre_12')
 vpost12 = get_d('vpost_12')
 
-axs[ax_idx].plot(
-    t, vpost12, label=f"{label_n2} (2)", color='darkorange', linewidth=lw)
 axs[ax_idx].plot(t, vpre12, label=f"{label_n1} (1)",
                  color='dodgerblue', linewidth=lw, alpha=0.6)
-axs[ax_idx].set_ylabel(f'Voltaje (mV{unit_suffix_n2})', fontsize=7)
-axs[ax_idx].legend(fontsize=5)
-axs[ax_idx].tick_params(axis='both', labelsize=7)
+axs[ax_idx].plot(
+    t, vpost12, label=f"{label_n2} (2)", color='darkorange', linewidth=lw, alpha=0.9)
+axs[ax_idx].set_ylabel(f'Voltaje (mV{unit_suffix_n2})')
+axs[ax_idx].legend()
 
 if not single_axis:
     vpre21 = get_d('vpre_21')
     vpost21 = get_d('vpost_21')
 
     ax_v_twin = axs[ax_idx].twinx()
-    ax_v_twin.set_ylabel(f'Voltaje (mV{unit_suffix_n1})', fontsize=7)
-    ax_v_twin.tick_params(axis='both', labelsize=7)
+    ax_v_twin.set_ylabel(f'Voltaje (mV{unit_suffix_n1})')
 
     axs[ax_idx].set_zorder(ax_v_twin.get_zorder() + 1)
     axs[ax_idx].patch.set_visible(False)
-
-    ax_v_twin.autoscale(enable=True, axis='both', tight=True)
-
-axs[ax_idx].autoscale(enable=True, axis='both', tight=True)
 
 ax_idx += 1
 
@@ -160,9 +163,9 @@ def plot_current(ax, name, mode_target, c_dark, c_light, lbl):
 
     # Ajuste de límites del eje izquierdo
     if show_12 and (show_21 and not use_twin):
-        ax.set_ylabel(f"{lbl} (nA{unit_suffix_n2})", fontsize=7)
+        ax.set_ylabel(f"{lbl} (nA{unit_suffix_n2})")
     elif show_12:
-        ax.set_ylabel(f"{lbl} 1->2 (nA{unit_suffix_n2})", fontsize=7)
+        ax.set_ylabel(f"{lbl} 1->2 (nA{unit_suffix_n2})")
 
         # --- Eje Derecho (Twin) ---
         if show_21 and use_twin:
@@ -172,35 +175,30 @@ def plot_current(ax, name, mode_target, c_dark, c_light, lbl):
             l2 = ax_twin.plot(
                 t, d21, label="_nolegend_", color=c_light, linewidth=lw)
 
-            ax_twin.set_ylabel(f"{lbl} 2->1 (nA{unit_suffix_n1})", fontsize=7)
-            ax_twin.tick_params(axis='both', labelsize=7)
+            ax_twin.set_ylabel(f"{lbl} 2->1 (nA{unit_suffix_n1})")
 
             ax.set_zorder(ax_twin.get_zorder() + 1)
             ax.patch.set_visible(False)
 
-            ax_twin.autoscale(enable=True, axis='both', tight=True)
     elif show_21 and not use_twin:
-        ax.set_ylabel(f"{lbl} 2->1 (nA{unit_suffix_n1})", fontsize=7)
-
-    ax.autoscale(enable=True, axis='both', tight=True)
-    ax.tick_params(axis='both', labelsize=7)
+        ax.set_ylabel(f"{lbl} 2->1 (nA{unit_suffix_n1})")
 
     if lns and use_legend:
         labs = [l.get_label() for l in lns]
-        ax.legend(lns, labs, fontsize=5)
+        ax.legend(lns, labs)
 
 
 if 'i' in plots:
-    plot_current(axs[ax_idx], 'current', 2, 'darkgreen', 'limegreen', 'I')
+    plot_current(axs[ax_idx], 'current', 2, 'green', 'limegreen', 'I')
     ax_idx += 1
 if 'ifast' in plots:
-    plot_current(axs[ax_idx], 'ifast', 0, 'darkred', 'red', 'I_fast')
+    plot_current(axs[ax_idx], 'ifast', 0, 'darkred', 'lightcoral', 'I_fast')
     ax_idx += 1
 if 'islow' in plots:
-    plot_current(axs[ax_idx], 'islow', 1, 'indigo', 'mediumorchid', 'I_slow')
+    plot_current(axs[ax_idx], 'islow', 1, 'purple', 'magenta', 'I_slow')
     ax_idx += 1
 
-axs[-1].set_xlabel('Tiempo (ms)', fontsize=7)
+axs[-1].set_xlabel('Tiempo (ms)')
 
 plt.tight_layout()
 plt.savefig(out_png, dpi=600, bbox_inches='tight')

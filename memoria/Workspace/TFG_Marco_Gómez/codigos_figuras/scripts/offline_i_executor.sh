@@ -1,10 +1,6 @@
 #!/bin/bash
 
 BASE_DIR="data"
-FILE_PREFIX="best_sample_syn_params_i"
-FILE_BASE_PATH="${BASE_DIR}/${FILE_PREFIX}"
-HISTORY_PREFIX="bo_history_offline_syn_i"
-HISTORY_BASE_PATH="${BASE_DIR}/${HISTORY_PREFIX}"
 
 CMD_BASE="../codigos/offline/build/bo ../codigos/offline/PDtracesV.csv 0 0.008 800 320 560 560 50 350"
 CMD_END="-4.0 4.0 1"
@@ -18,21 +14,13 @@ run_optimization() {
   local mode_args=$3
   
   echo "$display_name"
-  local b_s=""
-  local b_f=""
   
   for i in {0..19}; do
     echo "Muestra $i de 20"
-    local f="${FILE_BASE_PATH}_${mode_name}_${i}.yaml"
-    local h="${HISTORY_BASE_PATH}_${mode_name}.jsonl"
-    
-    local o=$($CMD_BASE $mode_args $CMD_END "$f" "$h")
-    local s=$(awk '/Best:/{print $2}' <<< "$o")
-    
-    if [[ $i -eq 1 ]] || awk "BEGIN{exit !($s > $b_s)}"; then 
-      b_s=$s
-      b_f=$f
-    fi
+    local f="${BASE_DIR}/sample_syn_params_i_${mode_name}_${i}.yaml"
+    local h="${BASE_DIR}/bo_history_offline_syn_i_${mode_name}.jsonl"
+
+    $CMD_BASE $mode_args $CMD_END "$f" "$h" >/dev/null 2>&1
   done
 }
 

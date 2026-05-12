@@ -101,28 +101,38 @@ else:
     elif need_avg_best_params:
         n_execs = len(best_params_list)
 
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'DejaVu Sans']
+label_size = 7
+plt.rcParams.update({
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
+    'axes.xmargin': 0.02,
+    'axes.ymargin': 0.02,
+    'axes.labelsize': label_size,
+    'axes.titlesize': 8,
+    'xtick.labelsize': label_size,
+    'ytick.labelsize': label_size,
+    'figure.figsize': (6.5, 3.5),
+    'figure.dpi': 600,
+    'savefig.dpi': 600,
+    'savefig.bbox': 'tight',
+})
 
 lw = 0.6
 markersize = 1.2
-margin = 0.01
 
 
 def setup_plot(title, xlabel, ylabel):
     # Configura el estilo básico del gráfico antes de trazar los datos.
-    plt.figure(figsize=(6.5, 3.5), dpi=600)
-    plt.title(title, fontsize=8)
-    plt.xlabel(xlabel, fontsize=7)
-    plt.ylabel(ylabel, fontsize=7)
-    plt.xticks(fontsize=7)
-    plt.yticks(fontsize=7)
+    plt.figure()
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
 
 
 def save_plot(path):
     # Ajusta el diseño y guarda la figura en archivo.
     plt.tight_layout()
-    plt.savefig(path, dpi=600, bbox_inches='tight')
+    plt.savefig(path)
     plt.close()
 
 
@@ -131,7 +141,6 @@ def set_extras(xtick_step, legend_fontsize=7):
         plt.xticks(range(1, n_evals + 2, xtick_step))
     else:
         plt.xticks(range(1, n_evals + 2, max(1, n_evals // 10)))
-    plt.margins(margin)
     plt.grid(True, linewidth=0.2)
     plt.gca().set_axisbelow(True)
     if args.initial_samples:
@@ -147,11 +156,11 @@ def plot_with_shade(mean, std, label, color, alpha):
     mean_minus_std = mean - std
     mean_plus_std = mean + std
     plt.fill_between(eval_indices, mean_minus_std, mean_plus_std, color=color,
-                     alpha=alpha/6, edgecolor='none')
+                     alpha=alpha / 6, edgecolor='none')
     plt.plot(eval_indices, mean_minus_std,
-             color=color, alpha=alpha/3, linewidth=lw/2)
+             color=color, alpha=alpha / 3, linewidth=lw/2)
     plt.plot(eval_indices, mean_plus_std,
-             color=color, alpha=alpha/3, linewidth=lw/2)
+             color=color, alpha=alpha / 3, linewidth=lw/2)
 
 
 if n_execs > 0:
@@ -167,10 +176,10 @@ if n_execs > 0:
                 mean_max_scores = np.mean(max_scores, axis=0)
                 std_max_scores = np.std(max_scores, axis=0)
                 plot_with_shade(mean_max_scores,
-                                std_max_scores, '_nolegend_', 'dodgerblue', 0.6)
+                                std_max_scores, '_nolegend_', 'dodgerblue', 1.0)
             else:
                 plt.plot(eval_indices, max_scores[0], label='_nolegend_',
-                         color='dodgerblue', linewidth=lw, alpha=0.6)
+                         color='dodgerblue', linewidth=lw)
             set_extras(args.xtick_step)
             save_plot(args.output_max_score)
 
