@@ -81,7 +81,7 @@ private:
   // Verbose atómico (se puede cambiar desde GUI incluso durante la BO)
   std::atomic<unsigned int> verbose;
 
-  double dt, dt_factor; // dt = period * dt_factor (paso del integrador RK6(5))
+  double dt; // dt = integración paso del integrador RK6(5) en ms
 
   // Selección de componentes sinápticas por dirección
   unsigned int use_i_fast_12, use_i_slow_12, use_i_fast_21, use_i_slow_21;

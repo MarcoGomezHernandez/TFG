@@ -1,5 +1,6 @@
 
-En este apéndice se incluyen los diagramas de secuencia que detallan la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} del módulo \textit{online} durante la optimización bayesiana.
+En este apéndice se incluyen los diagramas de secuencia que detallan la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} del módulo \textit{online} durante la optimización bayesiana, así como las figuras complementarias de los resultados del Capítulo~\ref{CAP:RESULTADOS} que, por ser muy similares a las mostradas en el cuerpo principal, se recogen aquí para no redundar.
+
 
 \begin{figure}[Sincronización de los hilos en un flujo normal de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_NORMAL}{Diagrama de secuencia de la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} durante una optimización completa, desde que el usuario pulsa en iniciar la optimización hasta la publicación del mejor resultado y su visualización en la interfaz. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
     \image{0.7\textwidth}{}{diagrama_flujo_normal}
@@ -7,4 +8,36 @@ En este apéndice se incluyen los diagramas de secuencia que detallan la sincron
 
 \begin{figure}[Sincronización de los hilos en la interrupción de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_INTERRUPCION}{Diagrama de secuencia que muestra los mecanismos de interrupción de la optimización bayesiana (por el usuario, cambio de período del hilo \ac{rt} o destrucción del módulo) y su gestión a nivel de sincronización entre hilos. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
     \image{1.0\textwidth}{}{diagrama_flujo_interrupcion}
+\end{figure}
+
+
+
+
+\begin{figure}[Promedio de la puntuación máxima acumulada por evaluación \textit{offline} en fase]{FIG:OFFLINE_ACC_MAX_FASE_AP}{Evolución del promedio de la puntuación máxima acumulada por evaluación a lo largo de 20 ejecuciones independientes para el acoplamiento en fase utilizando la implementación \textit{offline}. La región sombreada indica la desviación estándar (como si fuesen barras de error verticales). La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+    \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_acc_max}
+\end{figure}
+
+\begin{figure}[Promedio de la puntuación y sus componentes por evaluación \textit{offline} en fase]{FIG:OFFLINE_AVG_SCORES_FASE_AP}{Promedio de la puntuación total y de sus componentes (puntuación de forma y puntuación del rango de corriente) por evaluación a lo largo de 20 ejecuciones para el acoplamiento en fase en la implementación \textit{offline}. La región sombreada indica la desviación estándar de cada curva (como si fuesen barras de error verticales). La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+    \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_avg_scores}
+\end{figure}
+
+\begin{figure}[Puntuación y sus componentes por evaluación \textit{offline} en fase]{FIG:OFFLINE_SCORES_FASE_AP}{Valores individuales de la puntuación total y de sus componentes (puntuación de forma y puntuación del rango de corriente) obtenidos en cada evaluación para una ejecución representativa del acoplamiento en fase en la implementación \textit{offline}. La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+    \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_scores}
+\end{figure}
+
+\begin{figure}[Promedio de la importancia en la puntuación de los parámetros \textit{offline} en fase]{FIG:OFFLINE_ARD_FASE_AP}{Importancia relativa promediada de cada parámetro sobre la puntuación objetivo a lo largo de 20 ejecuciones para la optimización \textit{offline} en fase. Se calcula como el inverso de las escalas de longitud (\textit{lengthscales}) del kernel \ac{ard} tras finalizar la optimización. Las barras más altas indican parámetros frente a los cuales la función objetivo es más sensible. Las barras de error representan la desviación estándar. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
+    \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_ard_lss}
+\end{figure}
+
+
+\begin{figure}[Puntuación y sus componentes por evaluación \textit{online} en fase]{FIG:ONLINE_SCORES_FASE_AP}{Valores individuales de la puntuación total y de sus componentes (forma y rango) obtenidos en cada evaluación durante la ejecución en tiempo real (\textit{online}) para el acoplamiento en fase. La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+    \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_phase_scores}
+\end{figure}
+
+\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en antifase]{FIG:ONLINE_ARD_ANTI_AP}{Importancia relativa de cada parámetro sobre la puntuación objetivo para la optimización \textit{online} en antifase. Se calcula como el inverso de las escalas de longitud (\textit{lengthscales}) del kernel \ac{ard} tras finalizar la optimización. Las barras más altas indican parámetros frente a los cuales la función objetivo es más sensible. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. Los parámetros de la sinapsis de la neurona 1 a la 2 se etiquetan como \verb|1->2| y los de la sinapsis de la neurona 2 a la 1 como \verb|2->1|.}
+    \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_antiphase_ard_lss}
+\end{figure}
+
+\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en fase]{FIG:ONLINE_ARD_FASE_AP}{Importancia relativa de cada parámetro sobre la puntuación objetivo para la optimización \textit{online} en fase. Se calcula como el inverso de las escalas de longitud (\textit{lengthscales}) del kernel \ac{ard} tras finalizar la optimización. Las barras más altas indican parámetros frente a los cuales la función objetivo es más sensible. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. Los parámetros de la sinapsis de la neurona 1 a la 2 se etiquetan como \verb|1->2| y los de la sinapsis de la neurona 2 a la 1 como \verb|2->1|.}
+    \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_phase_ard_lss}
 \end{figure}

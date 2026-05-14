@@ -32,10 +32,10 @@ namespace BOPublicConfig
     inline constexpr double S_SLOW_MIN_FACTOR = 1.72;
     inline constexpr double S_SLOW_MAX_FACTOR = 3.43;
 
-    // k1 in [K1_MIN_FACTOR * fc, K1_MAX_FACTOR * fc]
-    inline constexpr double K1_MAX_FACTOR = 3.33;
+    // k1 in [K1_MIN_FACTOR * fc_adim, K1_MAX_FACTOR * fc_adim] (proporcional a la frecuencia de corte adimensional)
+    inline constexpr double K1_MAX_FACTOR = 29.845125;
 
-    inline constexpr double K1_MIN_FACTOR = 3.33e-4;
+    inline constexpr double K1_MIN_FACTOR = 29.845125e-4;
 
     // e_syn: distancia proporcional al rango de v_post (similar a offline)
     inline constexpr double E_SYN_FAR_TERM = 3.86;
@@ -130,7 +130,9 @@ struct BOParamRanges
               unsigned int use_i_fast,
               unsigned int use_i_slow,
               unsigned int search_phase,
-              double fc)
+              double fc,
+              double period_t,
+              double dt)
     {
         constexpr double G_MIN_FACTOR = BOPublicConfig::G_MIN_FACTOR;
         constexpr double R_MIN = BOPublicConfig::R_MIN;
@@ -194,8 +196,10 @@ struct BOParamRanges
         if (use_i_slow)
         {
             // k1: tasa de apertura del canal lento, proporcional a fc (frecuencia de corte fast/slow)
-            const double k1_max = BOPublicConfig::K1_MAX_FACTOR * fc;
-            const double k1_min = BOPublicConfig::K1_MIN_FACTOR * fc;
+            // Se usa fc en la escala del dt de la sinapsis (adimensional)
+            const double fc_adim = fc * period_t / dt;
+            const double k1_max = BOPublicConfig::K1_MAX_FACTOR * fc_adim;
+            const double k1_min = BOPublicConfig::K1_MIN_FACTOR * fc_adim;
 
             // v_slow: umbral de la sigmoide lenta, todo el rango de v_pre + margen en ambos extremos (online)
             v_slow = ParamRange(v_pre_margin_min,

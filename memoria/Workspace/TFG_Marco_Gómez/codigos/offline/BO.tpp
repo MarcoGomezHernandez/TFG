@@ -37,9 +37,9 @@ namespace BOPrivateConfig
     // s_slow in [S_SLOW_MIN_FACTOR, S_SLOW_MAX_FACTOR] / rango_v_pre
     static constexpr double S_SLOW_MIN_FACTOR = 1.72;
     static constexpr double S_SLOW_MAX_FACTOR = 3.43;
-    // k1 in [K1_MIN_FACTOR * fc, K1_MAX_FACTOR * fc] (proporcional a la frecuencia de corte)
-    static constexpr double K1_MAX_FACTOR = 3.33;
-    static constexpr double K1_MIN_FACTOR = 3.33e-4;
+    // k1 in [K1_MIN_FACTOR * fc_adim, K1_MAX_FACTOR * fc_adim] (proporcional a la frecuencia de corte adimensional)
+    static constexpr double K1_MAX_FACTOR = 29.845125;
+    static constexpr double K1_MIN_FACTOR = 29.845125e-4;
     // e_syn se coloca a una distancia proporcional al rango_v_post:
     //   phase: [v_post_max + near*rango, v_post_max + far*rango] (por encima -> despolarizante)
     //   antiphase: [v_post_min - far*rango, v_post_min - near*rango] (por debajo -> hiperpolarizante)
@@ -193,7 +193,10 @@ struct BOParamRanges
               bool use_i_fast,
               bool use_i_slow,
               bool search_phase,
-              double fc)
+              double fc,
+              double csv_step,
+              double dt,
+              size_t points_factor)
     {
 
         constexpr double G_MIN_FACTOR = BOPrivateConfig::G_MIN_FACTOR;
@@ -253,8 +256,10 @@ struct BOParamRanges
         if (use_i_slow)
         {
             // k1: tasa de apertura del canal lento, proporcional a fc (frecuencia de corte fast/slow)
-            const double k1_max = BOPrivateConfig::K1_MAX_FACTOR * fc;
-            const double k1_min = BOPrivateConfig::K1_MIN_FACTOR * fc;
+            // Se usa fc en la escala del dt de la sinapsis (adimensional)
+            const double fc_adim = fc * csv_step / (dt * points_factor);
+            const double k1_max = BOPrivateConfig::K1_MAX_FACTOR * fc_adim;
+            const double k1_min = BOPrivateConfig::K1_MIN_FACTOR * fc_adim;
 
             // v_slow: umbral de la sigmoide lenta, cubre todo el rango de v_pre (puede activarse a cualquier nivel)
             v_slow = ParamRange(v_pre_min,
@@ -629,7 +634,8 @@ std::optional<ChemicalSynapseParams> BO(const std::string &csv_path,
     ranges.init(evaluation_v_pre_min, evaluation_v_pre_max, v_post_min, v_post_max,
                 expected_i_min, expected_i_max,
                 use_i_fast, use_i_slow,
-                search_phase, fc);
+                search_phase, fc,
+                csv_step, scaled_result.dt, scaled_result.points_factor);
 
     // Precalcula las señales de referencia y rangos esperados de corriente
     const ConstantEvaluationVals constant_evaluation_vals = calc_constant_evaluation_vals(

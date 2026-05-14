@@ -34,7 +34,7 @@ def main(csv_file):
     # Gráfica 3: Onda Rápida (Complementaria)
     ax3.plot(t, onda_rapida, color='blue', linewidth=1.5)
     ax3.set_title("Onda Rápida (Original - Onda Lenta)")
-    ax3.set_xlabel("Tiempo (s)")
+    ax3.set_xlabel("Tiempo (ms)")
     ax3.set_ylabel("Amplitud")
     ax3.grid(True)
 

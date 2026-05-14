@@ -373,7 +373,7 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
         ranges_12.init(v_pre_min_12, v_pre_max_12, v_post_min_12, v_post_max_12,
                        expected_i_min_12, expected_i_max_12,
                        use_i_fast_12, use_i_slow_12,
-                       search_phase, fc_1);
+                       search_phase, fc_1, period_t, dt);
 
         // Redimensiona los buffers de señal del hilo RT para la fase de recogida
         v_pre_sig_12.resize(num_elements);
@@ -390,7 +390,7 @@ void BidirectionalChemicalSynapseBO::NRT_BO(double period_t)
         ranges_21.init(v_pre_min_21, v_pre_max_21, v_post_min_21, v_post_max_21,
                        expected_i_min_21, expected_i_max_21,
                        use_i_fast_21, use_i_slow_21,
-                       search_phase, fc_2);
+                       search_phase, fc_2, period_t, dt);
         v_pre_sig_21.resize(num_elements);
         if (use_i_fast_21)
             i_fast_sig_21.resize(num_elements);

@@ -23,18 +23,18 @@ parser.add_argument("output_png", help="Ruta al archivo PNG de salida")
 parser.add_argument("plot_mode", type=int, choices=[
                     -1, 0, 1, 2], help="Corriente a mostrar: -1 (ninguna), 0 (i_fast), 1 (i_slow), o 2 (i, i_fast e i_slow)")
 parser.add_argument(
-    "pre_is_live",
+    "pre_is_reg",
     type=int,
     choices=[0, 1],
-    help="Flag de neurona presináptica: 0 (modelo) o 1 (viva)"
+    help="Flag de neurona presináptica: 0 (modelo) o 1 (registro)"
 )
 args = parser.parse_args()
 
 data_path = args.input_csv
 out_png = args.output_png
 plot_mode = args.plot_mode
-pre_is_live = args.pre_is_live
-label_pre = 'Neur. presin. (viva)' if pre_is_live == 1 else 'Neur. presin. (modelo)'
+pre_is_reg = args.pre_is_reg
+label_pre = 'Neur. presin. (registro)' if pre_is_reg == 1 else 'Neur. presin. (modelo)'
 
 if not os.path.exists(data_path):
     print("Archivo de datos no encontrado.")

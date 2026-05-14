@@ -84,7 +84,7 @@ static DefaultGUIModel::variable_t vars[] = {
 
     {"Verbose (1/0)", "Enable/disable BO candidate evaluation logging", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
 
-    {"factor in dt (ms) = period (ms) * factor", "Factor for calculating dt form the period; dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
+    {"dt (ms)", "Integration step dt in ms", DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE},
 
     {"Use I_fast 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
     {"Use I_slow 1->2 (1/0)", "1 = Enable, 0 = Disable", DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER},
@@ -384,7 +384,7 @@ void BidirectionalChemicalSynapseBO::initParameters(void)
 
   verbose.store(0u, std::memory_order_relaxed);
 
-  dt_factor = 1.0;
+  dt = 0.001;
 
   use_i_fast_12 = 1u;
   use_i_slow_12 = 1u;
@@ -450,7 +450,6 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
   {
 
     period = RT::System::getInstance()->getPeriod() * 1e-6; // ns -> ms
-    dt = period * dt_factor;                                // dt del RK5 de 6 etapas para m_slow
 
     setState("BO evaluations completed", evaluations_completed);
     setState("I_fast 1->2 (nA)", i_fast_12);
@@ -490,7 +489,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
 
     setParameter("Verbose (1/0)", verbose.load(std::memory_order_relaxed));
 
-    setParameter("factor in dt (ms) = period (ms) * factor", dt_factor);
+    setParameter("dt (ms)", dt);
 
     setParameter("Use I_fast 1->2 (1/0)", use_i_fast_12);
     setParameter("Use I_slow 1->2 (1/0)", use_i_slow_12);
@@ -562,12 +561,7 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
         v_post_max_21 = new_v_post_max_21;
       }
 
-      double new_dt_factor = getParameter("factor in dt (ms) = period (ms) * factor").toDouble();
-      if (new_dt_factor != dt_factor)
-      {
-        dt_factor = new_dt_factor;
-        dt = period * dt_factor;
-      }
+      dt = getParameter("dt (ms)").toDouble();
 
       use_i_fast_12 = getParameter("Use I_fast 1->2 (1/0)").toUInt();
       use_i_slow_12 = getParameter("Use I_slow 1->2 (1/0)").toUInt();
@@ -614,13 +608,12 @@ void BidirectionalChemicalSynapseBO::update(DefaultGUIModel::update_flags_t flag
 
   case PERIOD:
   {
-    // Si cambia el período RT, recalcula dt y para la BO
+    // Si cambia el período RT, se para la BO
     // (porque cambiaría el número de puntos a almacenar)
     const double new_period = RT::System::getInstance()->getPeriod() * 1e-6; // ms
     if (new_period != period)
     {
       period = new_period;
-      dt = period * dt_factor;
       if (BO_running)
       {
 
@@ -725,7 +718,7 @@ void BidirectionalChemicalSynapseBO::set_params_read_only(bool read_only)
   parameter["V_post min 2->1 (mV)"].edit->setReadOnly(read_only);
   parameter["V_post max 2->1 (mV)"].edit->setReadOnly(read_only);
 
-  parameter["factor in dt (ms) = period (ms) * factor"].edit->setReadOnly(read_only);
+  parameter["dt (ms)"].edit->setReadOnly(read_only);
 
   parameter["Use I_fast 1->2 (1/0)"].edit->setReadOnly(read_only);
   parameter["Use I_slow 1->2 (1/0)"].edit->setReadOnly(read_only);

@@ -98,7 +98,7 @@ fig, axs = plt.subplots(n_plots, 1, figsize=(
 if n_plots == 1:
     axs = [axs]
 
-title = 'Potenciales de membrana y corriente sináptica de sinapsis química biidireccional en RTXI' if any(
+title = 'Potenciales de membrana y corriente sináptica de sinapsis química bidireccional en RTXI' if any(
     mode != -1 for mode in modes) else 'Potenciales de membrana de sinapsis química bidireccional en RTXI'
 fig.suptitle(title, fontsize=8)
 lw = 0.6

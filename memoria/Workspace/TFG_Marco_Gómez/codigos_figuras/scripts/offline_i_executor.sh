@@ -2,11 +2,11 @@
 
 BASE_DIR="data"
 
-CMD_BASE="../codigos/offline/build/bo ../codigos/offline/PDtracesV.csv 0 0.008 800 320 560 560 50 350"
+CMD_BASE="../codigos/offline/build/bo ../codigos/offline/PDtracesV.csv 0 0.1 10000 4000 7000 7000 50 350"
 CMD_END="-4.0 4.0 1"
 
-PHASE_ARGS="1 0 1 2 0.3 -1.4 -0.4"
-ANTIPHASE_ARGS="0 0 1 2 0.3 0.2 0.8"
+PHASE_ARGS="1 0 1 2 0.024 -1.4 -0.4"
+ANTIPHASE_ARGS="0 0 1 2 0.024 0.2 0.8"
 
 run_optimization() {
   local display_name=$1
