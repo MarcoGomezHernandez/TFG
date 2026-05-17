@@ -3,11 +3,11 @@ En este apéndice se incluyen los diagramas de secuencia que detallan la sincron
 
 
 \begin{figure}[Sincronización de los hilos en un flujo normal de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_NORMAL}{Diagrama de secuencia de la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} durante una optimización completa, desde que el usuario pulsa en iniciar la optimización hasta la publicación del mejor resultado y su visualización en la interfaz. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
-    \image{0.7\textwidth}{}{diagrama_flujo_normal}
+    \image{0.8\textwidth}{}{diagrama_flujo_normal}
 \end{figure}
 
 \begin{figure}[Sincronización de los hilos en la interrupción de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_INTERRUPCION}{Diagrama de secuencia que muestra los mecanismos de interrupción de la optimización bayesiana (por el usuario, cambio de período del hilo \ac{rt} o destrucción del módulo) y su gestión a nivel de sincronización entre hilos. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
-    \image{1.0\textwidth}{}{diagrama_flujo_interrupcion}
+    \image{0.9\textwidth}{}{diagrama_flujo_interrupcion}
 \end{figure}
 
 
@@ -25,7 +25,7 @@ En este apéndice se incluyen los diagramas de secuencia que detallan la sincron
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_scores}
 \end{figure}
 
-\begin{figure}[Promedio de la importancia en la puntuación de los parámetros \textit{offline} en fase]{FIG:OFFLINE_ARD_FASE_AP}{Importancia relativa promediada de cada parámetro sobre la puntuación objetivo a lo largo de 20 ejecuciones para la optimización \textit{offline} en fase. Se calcula como el inverso de las escalas de longitud (\textit{lengthscales}) del kernel \ac{ard} tras finalizar la optimización. Las barras más altas indican parámetros frente a los cuales la función objetivo es más sensible. Las barras de error representan la desviación estándar. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
+\begin{figure}[Promedio de la importancia en la puntuación de los parámetros \textit{offline} en fase]{FIG:OFFLINE_ARD_FASE_AP}{Importancia promediada sobre 20 ejecuciones de la variación de cada parámetro (con respecto a su rango de búsqueda) sobre la puntuación para la optimización \textit{offline} en fase. Se calculan como las inversas de los \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_ard_lss}
 \end{figure}
 
@@ -34,10 +34,10 @@ En este apéndice se incluyen los diagramas de secuencia que detallan la sincron
     \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_phase_scores}
 \end{figure}
 
-\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en antifase]{FIG:ONLINE_ARD_ANTI_AP}{Importancia relativa de cada parámetro sobre la puntuación objetivo para la optimización \textit{online} en antifase. Se calcula como el inverso de las escalas de longitud (\textit{lengthscales}) del kernel \ac{ard} tras finalizar la optimización. Las barras más altas indican parámetros frente a los cuales la función objetivo es más sensible. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. Los parámetros de la sinapsis de la neurona 1 a la 2 se etiquetan como \texttt{1->2} y los de la sinapsis de la neurona 2 a la 1 como \texttt{2->1}.}
+\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en antifase]{FIG:ONLINE_ARD_ANTI_AP}{Importancia de la variación de cada parámetro (con respecto a su rango de búsqueda) sobre la puntuación para la optimización \textit{online} en antifase. Se calculan como las inversas de los \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. La sinpasis a la que pertenecen los parámetros se identifica mediante \texttt{1->2} o \texttt{2->1}, en base a su neurona pre y postsináptica.}
     \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_antiphase_ard_lss}
 \end{figure}
 
-\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en fase]{FIG:ONLINE_ARD_FASE_AP}{Importancia relativa de cada parámetro sobre la puntuación objetivo para la optimización \textit{online} en fase. Se calcula como el inverso de las escalas de longitud (\textit{lengthscales}) del kernel \ac{ard} tras finalizar la optimización. Las barras más altas indican parámetros frente a los cuales la función objetivo es más sensible. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. Los parámetros de la sinapsis de la neurona 1 a la 2 se etiquetan como \texttt{1->2} y los de la sinapsis de la neurona 2 a la 1 como \texttt{2->1}.}
+\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en fase]{FIG:ONLINE_ARD_FASE_AP}{Importancia de la variación de cada parámetro (con respecto a su rango de búsqueda) sobre la puntuación para la optimización \textit{online} en fase. Se calculan como las inversas de los \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. La sinpasis a la que pertenecen los parámetros se identifica mediante \texttt{1->2} o \texttt{2->1}, en base a su neurona pre y postsináptica.}
     \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_phase_ard_lss}
 \end{figure}

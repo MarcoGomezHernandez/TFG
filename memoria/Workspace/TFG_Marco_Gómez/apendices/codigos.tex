@@ -1,5 +1,5 @@
 
-En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo de la memoria. Las rutas son relativas al directorio \texttt{codigos/} del proyecto. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
+En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo de la memoria. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
 
 \lstset{
     style=numbered,
@@ -73,7 +73,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Configuración y tipos de Limbo para la optimización en la versión \textit{offline}]%
-            Configuración completa de Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) en su versión \textit{offline} con ruido observacional fijo ($10^{-6}$) y $\xi = 0{,}003$; la versión \textit{online} permite optimizar dicho ruido (inicializado en $0{,}05$) y reduce el \textit{jitter} a $\xi = 0{,}001$. Se muestra también cómo se calculan las configuraciones dinámicas y las constantes que les afectan},
+            Configuración completa de Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) en su versión \textit{offline} con ruido observacional fijo ($10^{-6}$) y $\xi = 0{,}003$; la versión \textit{online} permite optimizar dicho ruido (inicializado en $0{,}05$) y reduce el \textit{jitter} a $\xi = 0{,}001$. Se muestra también cómo se calculan las configuraciones dinámicas y las constantes que les afectan.},
     label=COD:LIMBO_CONFIG_TYPES,
     firstline=17, lastline=24, firstnumber=17,
 ]{codigos/offline/BO.tpp}
@@ -161,7 +161,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Corrección de \textit{drift} en el escalado de amplitud en la versión \textit{offline}]%
-            Adaptación dinámica de los factores de escalado lineal mediante una ventana deslizante, hecho de manera no causal (se escalan los datos de una ventana con los tñerminos extraídos de esa misma ventana).},
+            Adaptación dinámica de los factores de escalado lineal mediante una ventana deslizante, hecho de manera no causal (se escalan los datos de una ventana con los términos extraídos de esa misma ventana).},
     label=COD:DRIFT_OFFLINE,
     firstline=415, lastline=467, firstnumber=415,
 ]{codigos/offline/scaling.cpp}
@@ -212,20 +212,20 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Declaración de parámetros, estados, entradas y salidas del módulo en la versión \textit{online}]%
-            Definición del vector \texttt{vars[]} que declara todos los parámetros configurables, estados internos, entradas y salidas del módulo \ac{rtxi} de sinapsis bidireccional},
+            Definición del vector \texttt{vars[]} que declara todos los parámetros configurables, estados internos, entradas y salidas del módulo \ac{rtxi} de sinapsis bidireccional.},
     label=COD:VARS_ONLINE,
     firstline=48, lastline=129, firstnumber=48,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
 \lstinputlistingwrap[
-    caption={[Función \texttt{execute} del hilo \acs{rt} en la versión \textit{online}]%
-            Función de tiempo real ejecutada en cada período de \ac{rtxi}. Calcula las corrientes sinápticas en cada dirección leyendo los parámetros mediante \textit{double buffering} atómico y, cuando la bandera \texttt{RT\_storing} está activa, almacena las señales en los búferes compartidos para la evaluación del hilo \ac{nrt}. También actualiza las variables de los máximos y mínimos de los voltajes en caso de estar activada su lectura dinámica (del módulo de análisis de \textit{bursts}). En las variables, para identificar la sinapsis, se utiliza \texttt{12} o \texttt{21} en función del número identificador de la neurona presináptica y del de la postsináptica (de \texttt{1} a \texttt{2} o de \texttt{2} a \texttt{1}, respectivamente).},
+    caption={[Función \texttt{execute} del hilo \acl{rt} en la versión \textit{online}]%
+            Función de tiempo real ejecutada en cada período de \ac{rtxi}. Calcula las corrientes sinápticas en cada dirección leyendo los parámetros con \textit{double buffering} atómico y, cuando \texttt{RT\_storing} está activa, almacena las señales en los búferes compartidos para la evaluación del hilo \ac{nrt}. También actualiza las variables de los máximos y mínimos de los voltajes en caso de estar activada su lectura dinámica. Se usa \texttt{12} o \texttt{21} para identificar la sinapsis.},
     label=COD:EXECUTE_ONLINE,
     firstline=222, lastline=340, firstnumber=222,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
 \lstinputlistingwrap[
-    caption={[Integración \acs{rk5} de 6 etapas, \textit{clamping} de $m_{\mathrm{slow}}$ y cálculo de $I_{\mathrm{slow}}$ en la versión \textit{online}]%
+    caption={[Integración \acl{rk5} de 6 etapas, \textit{clamping} de $m_{\mathrm{slow}}$ y cálculo de $I_{\mathrm{slow}}$ en la versión \textit{online}]%
             Implementación del integrador \ac{rk5} de 6 etapas para la variable de compuerta lenta $m_{\mathrm{slow}}$, su función de derivada (\texttt{sm\_chemical\_synapse\_m}) y la función de cálculo de la corriente lenta (\texttt{compute\_i\_slow}) que integra y evalúa en un solo paso mostrando también el \textit{clamping} de $m_{\mathrm{slow}}$.},
     label=COD:ISLOW_ONLINE,
     firstline=29, lastline=38, firstnumber=29,
@@ -235,15 +235,15 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
 \lstinputlistingwrap[
-    caption={[Lanzamiento y parada del hilo \acs{nrt} en la versión \textit{online}]%
-            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la GUI. Si la optimización no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
+    caption={[Lanzamiento y parada del hilo \acl{nrt} en la versión \textit{online}]%
+            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la \ac{gui}. Si la optimización no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
     label=COD:TOGGLE_BO,
     firstline=657, lastline=681, firstnumber=657,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
 \lstinputlistingwrap[
-    caption={[Función de evaluación del hilo \acs{nrt} en la versión \textit{online}]%
-            Función \texttt{evaluate\_candidate}: el hilo \acs{nrt} espera a que el \acs{rt} confirme la lectura del índice actual, escribe los nuevos parámetros en el búfer del otro índice, espera la estabilización, marca el comienzo de la escritura de los datos por el hilo \acs{rt}, espera a que acabe, y evalúa las señales; todo comprobando la señal de parada en determinados puntos. En las variables, para identificar la sinapsis, se utiliza \texttt{12} o \texttt{21} en función del número identificador de la neurona presináptica y del de la postsináptica (de \texttt{1} a \texttt{2} o de \texttt{2} a \texttt{1}, respectivamente).},
+    caption={[Función de evaluación del hilo \acl{nrt} en la versión \textit{online}]%
+            Función \texttt{evaluate\_candidate}: el hilo \ac{nrt} espera a que el \ac{rt} confirme la lectura del índice actual, escribe los nuevos parámetros en el búfer del otro índice, espera la estabilización, marca el comienzo de la escritura de los datos por el hilo \ac{rt}, espera a que acabe, y evalúa las señales; todo comprobando la señal de parada en determinados puntos. Se usa \texttt{12} o \texttt{21} para identificar la sinapsis.},
     label=COD:EVAL_CANDIDATE_ONLINE,
     firstline=243, lastline=326, firstnumber=243,
 ]{codigos/online/evaluation.cpp}
