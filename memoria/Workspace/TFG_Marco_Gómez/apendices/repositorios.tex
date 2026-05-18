@@ -1,7 +1,9 @@
 
-En este apéndice se listan los repositorios de código desarrollado como parte del trabajo y las dependencias de terceros utilizadas (también sus repositorios). Salvo que se indique lo contrario, se usa la rama \texttt{main} con la versión más reciente de cada repositorio. La única excepción es \ac{rtxi}, del que se usó un \textit{tag} específico.
+En este apéndice se listan los repositorios de código desarrollado como parte del trabajo y las dependencias de terceros utilizadas (también sus repositorios).
 
 \section{Código desarrollado\label{SEC:CODIGODESARROLLADO}}
+
+Para los repositorios desarrollados como parte de este trabajo, listados a continuación, se usa en todos ellos la rama \texttt{main} (ver el último \textit{commit}).
 
 \subsection{Código fuente del proyecto\label{SEC:PARAMETRIZACIONREPO}}
 
@@ -21,77 +23,77 @@ En este repositorio se encuentran todos los datos, gráficas y códigos involucr
 
 \subsection{Neun\label{SEC:NEUNREPO}}
 
-Librería C++ para la simulación de sistemas dinámicos y redes neuronales, desarrollada por el \ac{gnb} de la \ac{uam}. Se usa en la versión \textit{offline} para implementar la neurona postsináptica y la sinapsis. Se descarga automáticamente al compilar.
+Librería C++ para la simulación de sistemas dinámicos y redes neuronales, desarrollada por el \ac{gnb} de la \ac{uam}. Se usa en la versión \textit{offline} para implementar la neurona postsináptica y la sinapsis. Se descarga automáticamente al compilar. Se necesita usar el \textit{commit} \texttt{\seqsplit{437c5b95898a0542f2c96a5344856d8dac12ad52}} (o posteriores).
 
-\url{https://github.com/GNB-UAM/Neun}
+\url{https://github.com/GNB-UAM/Neun/tree/437c5b95898a0542f2c96a5344856d8dac12ad52}
 
 
 \subsection{\acs{rthybrid}\label{SEC:RTHYBRIDREPO}}
 
-Librería de modelos de neuronas y sinapsis para circuitos electrofisiológicos biohíbridos en \ac{rt}, desarrollada por el \ac{gnb} de la \ac{uam}. El algoritmo de escalado de la señal presináptica se basa en su implementación.
+Librería de modelos de neuronas y sinapsis para circuitos electrofisiológicos biohíbridos en \ac{rt}, desarrollada por el \ac{gnb} de la \ac{uam}. El algoritmo de escalado de la señal presináptica se basa en su implementación. Se habla del \textit{commit} \texttt{\seqsplit{a83071dcb4ac85f85b7beb2f7b7b5f68e785db22}}.
 
-\url{https://github.com/GNB-UAM/RTHybrid}
+\url{https://github.com/GNB-UAM/RTHybrid/tree/a83071dcb4ac85f85b7beb2f7b7b5f68e785db22}
 
 
 \subsection{\acs{rthybrid} para \acs{rtxi}\label{SEC:RTXIPLUGINSGNB}}
 
-Conjunto de módulos de \ac{rtxi} desarrollados por el \ac{gnb} de la \ac{uam} que proporcionan la funcionalidad de \ac{rthybrid}, incluyendo módulos de neuronas modelo, análisis de \textit{bursts} y escalado de amplitud. Se instalan como módulos independientes en \ac{rtxi}.
+Conjunto de módulos de \ac{rtxi} desarrollados por el \ac{gnb} de la \ac{uam} que proporcionan la funcionalidad de \ac{rthybrid}, incluyendo módulos de neuronas modelo, análisis de \textit{bursts} y escalado de amplitud. Se instalan como módulos independientes en \ac{rtxi}. Se ha usado el \textit{commit} \texttt{\seqsplit{f13a015084b9819a02663833aaccbc8e86d36161}}.
 
-\url{https://github.com/GNB-UAM/rthybrid-for-rtxi}
+\url{https://github.com/GNB-UAM/rthybrid-for-rtxi/tree/f13a015084b9819a02663833aaccbc8e86d36161}
 
 
-\subsection{\texttt{mimic-signal}\label{SEC:MIMICSIGNALREPO}}
+\subsection{Módulo de \ac{rtxi} \texttt{mimic-signal}\label{SEC:MIMICSIGNALREPO}}
 
-Módulo estándar de \ac{rtxi} que copia una señal de entrada y la emite con ganancia y \textit{offset} configurables. Se usa para aplicar el escalado de amplitud a la señal presináptica, debiendo introducir los términos de escalado manualmente. Se instala como módulo independiente en \ac{rtxi}.
+Módulo estándar de \ac{rtxi} que copia una señal de entrada y la emite con ganancia y \textit{offset} configurables. Se usa para aplicar el escalado de amplitud a la señal presináptica, debiendo introducir los términos de escalado manualmente. Se instala como módulo independiente en \ac{rtxi}. Se habla del \textit{commit} \texttt{\seqsplit{e15e26cef364575de9a0629591ac9e2218637226}}.
 
-\url{https://github.com/RTXI/mimic-signal}
+\url{https://github.com/RTXI/mimic-signal/tree/e15e26cef364575de9a0629591ac9e2218637226}
 
 
 \subsection{\acs{rtxi}\label{SEC:RTXIREPO}}
 
-Plataforma de experimentación en \ac{hrt} de código abierto sobre la que se ejecuta la versión \textit{online}, en este caso con un \textit{kernel} Linux parcheado con Xenomai. Se usó la versión con el \textit{tag} \texttt{v2.3} (\textit{commit} \texttt{b8b5ffe}) por compatibilidad con la instalada en el laboratorio del \ac{gnb} de la \ac{uam}, debiendo hacer uso de la plantilla para módulos de \ac{rtxi} antigua (Apéndice~\ref{SEC:PLUGINTEMPLATE}).
+Plataforma de experimentación en \ac{hrt} de código abierto sobre la que se ejecuta la versión \textit{online}, en este caso con un \textit{kernel} Linux parcheado con Xenomai. Se usó la versión 2.3 por compatibilidad con la instalada en el laboratorio del \ac{gnb} de la \ac{uam}, debiendo hacer uso de la plantilla para módulos de \ac{rtxi} antigua (Apéndice~\ref{SEC:PLUGINTEMPLATE}). Se ha usado la \textit{release} \texttt{v2.3} (\textit{commit} \texttt{\seqsplit{b8b5ffee0c91ad2b2c3a00466d69cb2123e60ffa}}).
 
-\url{https://github.com/RTXI/rtxi}
+\url{https://github.com/RTXI/rtxi/releases/tag/v2.3}
 
 
 \subsection{Plantilla de módulo de \texttt{rtxi} (\texttt{plugin-template})\label{SEC:PLUGINTEMPLATE}}
 
-Plantilla base oficial para la creación de módulos de \ac{rtxi}. En la implementación \textit{online} se utilizó la versión antigua de esta plantilla (ficheros \texttt{plugin-template}) para asegurar la compatibilidad con la versión 2.3 de \ac{rtxi} (Apéndice~\ref{SEC:RTXIREPO}).
+Plantilla base oficial para la creación de módulos de \ac{rtxi}. En la implementación \textit{online} se utilizó la versión antigua de esta plantilla (ficheros \texttt{plugin-template}) para asegurar la compatibilidad con la versión 2.3 de \ac{rtxi} (Apéndice~\ref{SEC:RTXIREPO}). Se ha usado el \textit{commit} \texttt{\seqsplit{b7b3a3b606cca17778cac8c5a4846d6df8a0733a}}.
 
-\url{https://github.com/RTXI/plugin-template}
+\url{https://github.com/RTXI/plugin-template/tree/b7b3a3b606cca17778cac8c5a4846d6df8a0733a}
 
 
 \subsection{KFR\label{SUBSEC:KFRREPO}}
 
-Biblioteca C++ de procesamiento digital de señal. Se usa para el filtrado Butterworth mediante \texttt{filtfilt} y las operaciones vectoriales sobre las señales (mediante el tipo \texttt{univector}). Se descarga automáticamente al compilar en la versión \textit{offline}; en la versión \textit{online} debe estar preinstalada en el sistema, requiriendo compilarse previamente con la bandera \texttt{-DCMAKE\_POSITION\_INDEPENDENT\_CODE=ON} y ajustar manualmente la arquitectura en el \texttt{Makefile} (cambiando \texttt{-lkfr\_dsp\_avx2} por la correspondiente al sistema). Esto se explica en el \texttt{README.md} de la versión \textit{online} (Apéndice~\ref{SEC:DATOSREPO}).
+Biblioteca C++ de procesamiento digital de señal. Se usa para el filtrado Butterworth mediante \texttt{filtfilt} y las operaciones vectoriales sobre las señales (mediante el tipo \texttt{univector}). Se descarga automáticamente al compilar en la versión \textit{offline}; en la versión \textit{online} debe estar preinstalada en el sistema, requiriendo compilarse previamente con la bandera \texttt{-DCMAKE\_POSITION\_INDEPENDENT\_CODE=ON} y ajustar manualmente la arquitectura en el \texttt{Makefile} (cambiando \texttt{-lkfr\_dsp\_avx2} por la correspondiente al sistema). Esto se explica en el \texttt{README.md} de la versión \textit{online} (Apéndice~\ref{SEC:PARAMETRIZACIONREPO}). En ambas versiones se ha utilizado la \textit{release} \texttt{7.0.1} (\textit{commit} \texttt{\seqsplit{d030ca3bfa2d3a48e74cd52ec45e9a29fadc9967}}).
 
-\url{https://github.com/kfrlib/kfr}
+\url{https://github.com/kfrlib/kfr/releases/tag/7.0.1}
 
 
 \subsection{Limbo\label{SUBSEC:LIMBOREPO}}
 
-Biblioteca C++ de \ac{bo} de optimización Bayesiana y modelado con procesos gaussianos, utilizada para ejecutar la optimización de los parámetros sinápticos. Se descarga automáticamente al compilar en la versión \textit{offline}; incluida como \textit{git submodule} en la versión \textit{online} (carpeta \texttt{extern}).
+Biblioteca C++ de \ac{bo} de optimización Bayesiana y modelado con procesos gaussianos, utilizada para ejecutar la optimización de los parámetros sinápticos. Se descarga automáticamente al compilar en la versión \textit{offline}; incluida como \textit{git submodule} en la versión \textit{online} (carpeta \texttt{extern}). En ambas versiones se ha utilizado la \textit{release} \texttt{v2.1.0} (\textit{commit} \texttt{\seqsplit{93c4c1af2366b719ff009c87a0df2e4c7ebef923}}).
 
-\url{https://github.com/resibots/limbo}
+\url{https://github.com/resibots/limbo/releases/tag/v2.1.0}
 
 
 \subsection{nlohmann/json\label{SUBSEC:JSONREPO}}
 
-Biblioteca C++ de cabecera única para JSON, utilizada para el guardado del historial de la \ac{bo}. Se descarga automáticamente al compilar en la versión \textit{offline}; vendorizada como cabecera en el repositorio de la versión \textit{online} (carpeta \texttt{include}).
+Biblioteca C++ de cabecera única para JSON, utilizada para el guardado del historial de la \ac{bo}. Se descarga automáticamente al compilar en la versión \textit{offline}; vendorizada como cabecera en el repositorio de la versión \textit{online} (carpeta \texttt{include}). En ambas versiones se ha utilizado la \textit{release} \texttt{v3.11.3} (\textit{commit} \texttt{\seqsplit{9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03}}).
 
-\url{https://github.com/nlohmann/json}
+\url{https://github.com/nlohmann/json/releases/tag/v3.11.3}
 
 
 \subsection{yaml-cpp\label{SUBSEC:YAMLCPPREPO}}
 
-Biblioteca C++ para la lectura y escritura de ficheros YAML, utilizada en la versión \textit{offline} para la configuración y la escritura de los resultados. Se descarga automáticamente al compilar.
+Biblioteca C++ para la lectura y escritura de ficheros YAML, utilizada en la versión \textit{offline} para la configuración y la escritura de los resultados. Se descarga automáticamente al compilar. Se ha usado la \textit{release} \texttt{yaml-cpp-0.9.0} (\textit{commit} \texttt{\seqsplit{56e3bb550c91fd7005566f19c079cb7a503223cf}}).
 
-\url{https://github.com/jbeder/yaml-cpp}
+\url{https://github.com/jbeder/yaml-cpp/releases/tag/yaml-cpp-0.9.0}
 
 
 \subsection{NLopt\label{SUBSEC:NLOPTREPO}}
 
-Biblioteca de optimización no lineal, usada por Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) para la maximización de la función de adquisición mediante Subplex. Dependencia del sistema preinstalada en ambas versiones.
+Biblioteca de optimización no lineal, usada por Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) para la maximización de la función de adquisición mediante Subplex. Dependencia del sistema preinstalada en ambas versiones. Se ha usado la \textit{release} \texttt{v2.7.1} (\textit{commit} \texttt{\seqsplit{09b3c2a6da71cabcb98d2c8facc6b83d2321ed71}}).
 
-\url{https://github.com/stevengj/nlopt}
+\url{https://github.com/stevengj/nlopt/releases/tag/v2.7.1}
 
