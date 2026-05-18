@@ -7,6 +7,7 @@
 \newacronym{lhs}{LHS}{\textit{Latin Hypercube Sampling}}
 \newacronym{sos}{SOS}{\textit{Second-Order Sections}}
 \newacronym{rt}{RT}{\textit{Real-Time}}
+\newacronym{hrt}{HRT}{\textit{Hard \acl{rt}}}
 \newacronym{nrt}{NRT}{\textit{No \acl{rt}}}
 \newacronym{rtxi}{RTXI}{\textit{\acl{rt} eXperiment Interface}}
 \newacronym{rthybrid}{RTHybrid}{\textit{\acl{rt} Hybrid}}
@@ -24,11 +25,11 @@
 \newacronym{hr}{HR}{Hindmarsh-Rose}
 
 
-La construcción de circuitos neuronales computacionales y biohíbridos, en los que neuronas biológicas y modelos computacionales interactúan en tiempo real, exige sinapsis artificiales cuyos parámetros reproduzcan la dinámica de acoplamiento deseada. La parametrización de estos modelos sinápticos constituye un problema de optimización complejo, debido al elevado número de parámetros, su acoplamiento y la variabilidad inherente a cada preparación biológica, lo que hace la parametrización manual lenta e inasumible cuando el tiempo de vida de la preparación es limitado. El presente trabajo aborda este reto mediante un algoritmo de parametrización automática del modelo de sinapsis química de \cite{Golowasch1999}, adaptable a cada experimento y capaz de alcanzar dinámicas de acoplamiento específicas con comportamiento sináptico realista en un tiempo razonable.
+La construcción de circuitos neuronales computacionales y biohíbridos, en los que neuronas biológicas y modelos computacionales interactúan en \ac{rt}, exige sinapsis artificiales cuyos parámetros reproduzcan la dinámica de acoplamiento deseada. La parametrización de estos modelos sinápticos constituye un problema de optimización complejo, debido al elevado número de parámetros, su acoplamiento y la variabilidad inherente a cada preparación biológica, lo que hace la parametrización manual lenta e inasumible cuando el tiempo de vida de la preparación es limitado. El presente trabajo aborda este reto mediante un algoritmo de parametrización automática del modelo de sinapsis química de \cite{Golowasch1999}, adaptable a cada experimento y capaz de alcanzar dinámicas de acoplamiento específicas con comportamiento sináptico realista en un tiempo razonable.
 
 \section{Motivación del trabajo\label{SEC:MOTIVACION}}
 
-Los circuitos neuronales biohíbridos permiten estudiar la dinámica neuronal bajo condiciones controladas, conectando neuronas biológicas con modelos computacionales en tiempo real mediante sinapsis artificiales cuyos parámetros determinan la naturaleza, intensidad y temporalidad del acoplamiento.
+Los circuitos neuronales biohíbridos permiten estudiar la dinámica neuronal bajo condiciones controladas, conectando neuronas biológicas con modelos computacionales en \ac{rt} mediante sinapsis artificiales cuyos parámetros determinan la naturaleza, intensidad y temporalidad del acoplamiento.
 
 Encontrar una parametrización adecuada para cada experimento no es trivial: cada preparación biológica presenta características electrofisiológicas distintas, con que los parámetros válidos en un experimento no son necesariamente trasladables a otro. Esta dificultad se acentúa con modelos detallados como el de sinapsis química de \cite{Golowasch1999}, cuyo espacio de parámetros presenta un notable acoplamiento que causa el fenómeno \textit{parameter sloppiness} \cite{Gutenkunst2007} (múltiples combinaciones producen respuestas similares). Dado que la parametrización debe repetirse en cada experimento, la lentitud del ajuste manual resulta perjudicial para preparaciones de vida limitada, por lo que se necesitan métodos de búsqueda automática eficientes y adaptados a esta problemática.
 
@@ -51,7 +52,7 @@ Un modelo de sinapsis describe matemáticamente la transmisión de señales entr
 
 Un circuito biohíbrido conecta neuronas biológicas con modelos computacionales mediante sinapsis artificiales en \textit{software}. La técnica de \textit{Dynamic Clamp} \cite{Patel2017, Amaducci2019, Reyes-Sanchez2020} permite esta interacción en lazo cerrado: el sistema adquiere el voltaje de la neurona viva, calcula los modelos sinápticos y neuronales, e inyecta la corriente resultante en la neurona viva de nuevo.
 
-\subsection{Restricciones de tiempo real\label{SS:TIEMPOREAL}}
+\subsection{\acl{hrt} (\acs{hrt})\label{SS:TIEMPOREAL}}
 
 Las neuronas biológicas operan con regímenes temporales muy precisos, en escalas de milisegundos a segundos. Para que la interacción biohíbrida sea válida, el sistema de \textit{Dynamic Clamp} debe completar el cálculo de la corriente sináptica a inyectar en la neurona viva dentro de cada periodo de muestreo. Esto requiere ejecutar el software sobre un \ac{rtos} que garantice plazos temporales estrictos \cite{Buttazzo2024, Patel2017, Amaducci2019}. Esta restricción limita la complejidad computacional admisible de los modelos y algoritmos.
 
@@ -61,7 +62,7 @@ La parametrización automática de un modelo se formula como un problema de opti
 
 \section{Estado del Arte\label{SEC:ESTADODELARTE}}
 
-Esta sección revisa las principales herramientas y técnicas existentes relevantes: modelos de sinapsis, sistemas de tiempo real y algoritmos de optimización de caja negra.
+Esta sección revisa las principales herramientas y técnicas existentes relevantes: modelos de sinapsis, sistemas de \ac{rt} y algoritmos de optimización de caja negra.
 
 \subsection{Modelos de sinapsis\label{SS:MODELOS_SINAPSIS}}
 
@@ -83,9 +84,9 @@ Los modelos de plasticidad a corto plazo, como el de Tsodyks-Markram \cite{Tsody
 
 El modelo empleado en este trabajo es el de \cite{Golowasch1999}, diseñado para describir sinapsis graduadas en el ganglio estomatogástrico de crustáceos. Su formulación con dos componentes (rápida y lenta) permite reconstruir modularmente la corriente sináptica aislando las contribuciones de alta frecuencia (\textit{spikes}) o la onda completa, y baja frecuencia  (onda lenta) de la señal presináptica. Esta separación frecuencial facilita la adaptación del acoplamiento a cada preparación experimental. Su formulación matemática se detalla en la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA}.
 
-\subsection{Sistemas y herramientas de tiempo real\label{SS:SISTEMAS_RT}}
+\subsection{Sistemas y herramientas de \acl{rt}\label{SS:SISTEMAS_RT}}
 
-La construcción de circuitos biohíbridos requiere plataformas con garantías de tiempo real estricto. \ac{rtxi} \cite{RTXI2024} es una plataforma de código abierto para \textit{Dynamic Clamp} que opera sobre un \ac{rtos} basado en un \textit{kernel} Linux parcheado con extensiones de tiempo real como Xenomai \cite{Xenomai2024} (en este caso). Proporciona un entorno donde cada funcionalidad se implementa como un módulo independiente ejecutado periódicamente en el hilo de tiempo real, permitiendo componer circuitos combinando módulos. \ac{rthybrid} para \ac{rtxi} \cite{Amaducci2019} complementa esta plataforma con módulos para modelos neuronales, escalado de señales y análisis de \textit{bursts} \cite{Reyes-Sanchez2020}, y dispone de una versión \textit{standalone} independiente de \ac{rtxi}.
+La construcción de circuitos biohíbridos requiere plataformas con garantías de \ac{hrt}. \ac{rtxi} \cite{RTXI2024} es una plataforma de código abierto para \textit{Dynamic Clamp} que opera sobre un \ac{rtos} basado en un \textit{kernel} Linux parcheado con extensiones de \ac{hrt} como Xenomai \cite{Xenomai2024} (en este caso). Proporciona un entorno donde cada funcionalidad se implementa como un módulo independiente ejecutado periódicamente en el hilo de \ac{rt}, permitiendo componer circuitos combinando módulos. \ac{rthybrid} para \ac{rtxi} \cite{Amaducci2019} complementa esta plataforma con módulos para modelos neuronales, escalado de señales y análisis de \textit{bursts} \cite{Reyes-Sanchez2020}, y dispone de una versión \textit{standalone} independiente de \ac{rtxi}.
 
 \subsection{Algoritmos de optimización de caja negra\label{SS:ALGORITMOS_OPTIMIZACION}}
 
@@ -119,6 +120,6 @@ A partir de los antecedentes expuestos, el objetivo principal es estudiar la par
     \item Diseñar e implementar una función de evaluación que cuantifique la calidad de una parametrización sináptica considerando tanto la morfología como el rango de la corriente generada.
     \item Configurar y adaptar el algoritmo de optimización (\ac{bo}) al espacio de parámetros del modelo sináptico, incorporando mecanismos para mitigar el \textit{parameter sloppiness} inherente al problema.
     \item Desarrollar una implementación \textit{offline} que permita la parametrización rápida sobre señales pregrabadas usando una interacción unidireccional, facilitando la depuración y validación del algoritmo.
-    \item Desarrollar un módulo \textit{online} integrado en \ac{rtxi} que ejecute la optimización en tiempo real durante el experimento, compatible con interacciones bidireccionales en circuitos computacionales y biohíbridos.
+    \item Desarrollar un módulo \textit{online} integrado en \ac{rtxi} que ejecute la optimización en \ac{rt} durante el experimento, compatible con interacciones bidireccionales en circuitos computacionales y biohíbridos.
     \item Validar ambas implementaciones verificando que producen parametrizaciones que generan corrientes sinápticas con la morfología y escala esperadas en un tiempo razonable, así como comprobando la corrección del proceso de optimización.
 \end{enumerate}

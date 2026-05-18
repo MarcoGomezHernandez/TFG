@@ -219,7 +219,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Función \texttt{execute} del hilo \acl{rt} en la versión \textit{online}]%
-            Función de tiempo real ejecutada en cada período de \ac{rtxi}. Calcula las corrientes sinápticas en cada dirección leyendo los parámetros con \textit{double buffering} atómico y, cuando \texttt{RT\_storing} está activa, almacena las señales en los búferes compartidos para la evaluación del hilo \ac{nrt}. También actualiza las variables de los máximos y mínimos de los voltajes en caso de estar activada su lectura dinámica. Se usa \texttt{12} o \texttt{21} para identificar la sinapsis.},
+            Función de \ac{rt} ejecutada en cada período de \ac{rtxi}. Calcula las corrientes sinápticas en cada dirección leyendo los parámetros con \textit{double buffering} atómico y, cuando \texttt{RT\_storing} está activa, almacena las señales en los búferes compartidos para la evaluación del hilo \ac{nrt}. También actualiza las variables de los máximos y mínimos de los voltajes en caso de estar activada su lectura dinámica. Se usa \texttt{12} o \texttt{21} para identificar la sinapsis.},
     label=COD:EXECUTE_ONLINE,
     firstline=222, lastline=340, firstnumber=222,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
