@@ -1,5 +1,5 @@
 
-En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo de la memoria. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
+En este apéndice se recogen los fragmentos de código fuente más relevantes referenciados a lo largo del cuerpo de la memoria, funcionando como una ampliación, ya que la lógica relevante de estos se explica en el propio cuerpo. El código fuente completo de ambas implementaciones se encuentra disponible en el repositorio indicado en el Apéndice~\ref{SEC:PARAMETRIZACIONREPO}.
 
 \lstset{
     style=numbered,
@@ -32,9 +32,14 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     caption={[Filtro Butterworth paso bajo en fase cero en la evaluación]%
             Aplicación del filtro Butterworth paso bajo de cuarto orden en fase cero mediante la librería KFR (Apéndice~\ref{SUBSEC:KFRREPO}), usando \texttt{filtfilt} para evitar desfases temporales y convirtiendo a secciones de segundo orden para la estabilidad numérica.},
     label=COD:BUTTERWORTH,
+    firstline=10, lastline=11, firstnumber=10,
+]{codigos/offline/evaluation.tpp}
+\lstinputlistingwrap[
+    nolol,
     firstline=135, lastline=137, firstnumber=135,
 ]{codigos/offline/evaluation.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Relleno por reflexión impar en la evaluación]%
             Determinación del tamaño del relleno necesario y su implementación por reflexión impar en los extremos de la señal, para mitigar los transitorios del filtrado.},
@@ -46,6 +51,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=114, lastline=133, firstnumber=114,
 ]{codigos/offline/evaluation.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Cálculo de la puntuación de forma mediante correlación de Pearson]%
             Cálculo de la correlación de Pearson entre la señal candidata y la referencia, incluyendo el centrado de la señal y la inversión condicional para buscar anti-correlación.},
@@ -53,6 +59,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=61, lastline=75, firstnumber=61,
 ]{codigos/offline/evaluation.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Cálculo de la puntuación de rango]%
             Cálculo de la puntuación de rango comparando los extremos observados de la corriente con los esperados y normalizando el error.},
@@ -60,6 +67,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=79, lastline=89, firstnumber=79,
 ]{codigos/offline/evaluation.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Funciones de reescalado de rangos al rango de corriente esperado en la evaluación]%
             Funciones para reescalar la señal generada al rango de la corriente objetivo, con y sin ajuste del desplazamiento vertical.},
@@ -90,6 +98,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=653, lastline=663, firstnumber=653,
 ]{codigos/offline/BO.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Constantes y cálculo de rangos de búsqueda para la \acl{bo} en la versión \textit{online}]%
             Cálculo dinámico de los rangos de búsqueda para la versión \textit{online}, incluyendo márgenes de seguridad en los umbrales de las sigmoides para compensar la variabilidad biológica; la versión \textit{offline} prescinde de dichos márgenes sobre $V_{\mathrm{pre}}$.},
@@ -130,6 +139,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=338, lastline=347, firstnumber=338,
 ]{codigos/offline/evaluation.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Inicialización de estadísticas de escalado de la señal en la versión \textit{offline}]%
             Funciones empleadas por la rutina principal de escalado para extraer las estadísticas fundamentales de la señal biológica (extremos absolutos, umbrales y periodo de \textit{burst}).},
@@ -141,6 +151,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=285, lastline=311, firstnumber=285,
 ]{codigos/offline/scaling.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Constantes precalculadas del modelo postsináptico en la versión \textit{offline}]%
             Constantes y tablas del comportamiento intrínseco del modelo sináptico, generadas de forma automatizada por el programa auxiliar \texttt{consts\_calculator} para agilizar los cálculos de la función de escalado.},
@@ -148,6 +159,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=167, lastline=212, firstnumber=167,
 ]{codigos/offline/utils.hpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Cálculo de factores de escalado de amplitud y su uso en la versión \textit{offline}]%
             Cálculo y uso de los factores de escala y \textit{offset} para mapear el rango de amplitud de la señal biológica al rango intrínseco de la neurona de modelo.},
@@ -159,6 +171,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=471, lastline=471, firstnumber=471,
 ]{codigos/offline/scaling.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Corrección de \textit{drift} en el escalado de amplitud en la versión \textit{offline}]%
             Adaptación dinámica de los factores de escalado lineal mediante una ventana deslizante, hecho de manera no causal (se escalan los datos de una ventana con los términos extraídos de esa misma ventana).},
@@ -166,6 +179,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=415, lastline=467, firstnumber=415,
 ]{codigos/offline/scaling.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Cálculo del paso de integración y el factor de submuestreo para el escalado temporal en la versión \textit{offline}]%
             Cálculo del los puntos por periodo de la señal biológica mediante histéresis y algoritmo de selección del paso de integración óptimo ($dt$) para el modelo neuronal, así como el factor de submuestreo correspondiente, garantizando la sincronización temporal entre las neuronas.},
@@ -181,7 +195,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=396, lastline=405, firstnumber=396,
 ]{codigos/offline/scaling.cpp}
 
-
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Interpolación lineal para submuestreo del modelo neuronal en la versión \textit{offline}]%
             Generación y uso de puntos intermedios interpolados linealmente entre cada par de muestras consecutivas de la señal presináptica escalada para proporcionar la resolución temporal requerida por el integrador del modelo postsináptico.},
@@ -193,6 +207,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=336, lastline=356, firstnumber=336,
 ]{codigos/offline/evaluation.tpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Estructura para guardar valores constantes de evaluación en la versión \textit{offline}]%
             Estructura de datos que almacena las señales de referencia centradas, sus factores de Pearson asociados y los rangos de corriente esperados y sus términos de normalización. Se precalcula una sola vez antes de la \ac{bo} para mejorar la eficiencia computacional.},
@@ -200,6 +215,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=35, lastline=54, firstnumber=35,
 ]{codigos/offline/evaluation.hpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Uso de plantillas para el cambio de modelo e integrador en la versión \textit{offline}]%
             Llamada a la función principal de \ac{bo} en la que se inyectan como plantillas tanto el integrador numérico como el tipo de neurona postsináptica, junto con los punteros a funciones específicas del modelo, garantizando la genericidad del diseño.},
@@ -217,6 +233,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=48, lastline=129, firstnumber=48,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Función \texttt{execute} del hilo \acl{rt} en la versión \textit{online}]%
             Función de \ac{rt} ejecutada en cada período de \ac{rtxi}. Calcula las corrientes sinápticas en cada dirección leyendo los parámetros con \textit{double buffering} atómico y, cuando \texttt{RT\_storing} está activa, almacena las señales en los búferes compartidos para la evaluación del hilo \ac{nrt}. También actualiza las variables de los máximos y mínimos de los voltajes en caso de estar activada su lectura dinámica. Se usa \texttt{12} o \texttt{21} para identificar la sinapsis.},
@@ -224,6 +241,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=222, lastline=340, firstnumber=222,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Integración \acl{rk5} de 6 etapas, \textit{clamping} de $m_{\mathrm{slow}}$ y cálculo de $I_{\mathrm{slow}}$ en la versión \textit{online}]%
             Implementación del integrador \ac{rk5} de 6 etapas para la variable de compuerta lenta $m_{\mathrm{slow}}$, su función de derivada (\texttt{sm\_chemical\_synapse\_m}) y la función de cálculo de la corriente lenta (\texttt{compute\_i\_slow}) que integra y evalúa en un solo paso mostrando también el \textit{clamping} de $m_{\mathrm{slow}}$.},
@@ -234,6 +252,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=157, lastline=212, firstnumber=157,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Lanzamiento y parada del hilo \acl{nrt} en la versión \textit{online}]%
             Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la \ac{gui}. Si la \ac{bo} no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
@@ -241,6 +260,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
     firstline=657, lastline=681, firstnumber=657,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}
 
+\vspace{36pt}
 \lstinputlistingwrap[
     caption={[Función de evaluación del hilo \acl{nrt} en la versión \textit{online}]%
             Función \texttt{evaluate\_candidate}: el hilo \ac{nrt} espera a que el \ac{rt} confirme la lectura del índice actual, escribe los nuevos parámetros en el búfer del otro índice, espera la estabilización, marca el comienzo de la escritura de los datos por el hilo \ac{rt}, espera a que acabe, y evalúa las señales; todo comprobando la señal de parada en determinados puntos. Se usa \texttt{12} o \texttt{21} para identificar la sinapsis.},

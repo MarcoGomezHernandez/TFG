@@ -44,11 +44,11 @@ Para contextualizar el problema que se aborda en este trabajo, esta sección pre
 
 Un modelo neuronal es una descripción matemática que reproduce el comportamiento eléctrico de una neurona. Estos modelos capturan los patrones de actividad eléctrica característicos, como el disparo de potenciales de acción (\textit{spikes}) y las ráfagas de actividad (\textit{bursting}), en las que secuencias de \textit{spikes} se agrupan sobre una oscilación lenta del potencial de membrana. La elección del modelo neuronal implica un compromiso entre fidelidad biofísica y coste computacional: modelos detallados como el de Hodgkin-Huxley \cite{Hodgkin1952} describen con precisión las corrientes iónicas individuales, mientras que modelos fenomenológicos como el de \ac{hr} \cite{Hindmarsh1984} o el mapa de Rulkov \cite{Rulkov2002} utilizan formulaciones simplificadas que reproducen los patrones cualitativos de disparo con menor coste \cite{Fortuna2023}.
 
-\subsection{Modelo de sinapsis\label{SS:MODELOSINAPSIS}}
+\subsection{Modelos de sinapsis\label{SS:MODELOSINAPSIS}}
 
 Un modelo de sinapsis describe matemáticamente la transmisión de señales entre dos neuronas. Existen dos grandes categorías: los modelos de sinapsis eléctrica, que representan la conexión directa entre neuronas a través de uniones comunicantes \cite{GurelKazanci2007}, y los modelos de sinapsis química, que formalizan la transmisión mediada por neurotransmisores. Estos últimos ofrecen una mayor riqueza funcional, permitiendo capturar aspectos como el carácter excitatorio o inhibitorio de la conexión, la selectividad frecuencial \cite{TsodyksMarkram1998} o la dinámica temporal de activación de los canales sinápticos \cite{Destexhe1994}. En general, los parámetros del modelo (conductancias, potenciales de reversión, constantes cinéticas, entre otros) determinan conjuntamente las propiedades de la corriente generada y, por tanto, la naturaleza del acoplamiento entre las neuronas conectadas \cite{Golowasch1999}.
 
-\subsection{Circuito biohíbrido\label{SS:CIRCUITOBIOHIBRIDO}}
+\subsection{Circuitos biohíbridos\label{SS:CIRCUITOBIOHIBRIDO}}
 
 Un circuito biohíbrido conecta neuronas biológicas con modelos computacionales mediante sinapsis artificiales en \textit{software}. La técnica de \textit{Dynamic Clamp} \cite{Patel2017, Amaducci2019, Reyes-Sanchez2020} permite esta interacción en lazo cerrado: el sistema adquiere el voltaje de la neurona viva, calcula los modelos sinápticos y neuronales, e inyecta la corriente resultante en la neurona viva de nuevo.
 
@@ -68,11 +68,11 @@ Esta sección revisa las principales herramientas y técnicas existentes relevan
 
 A continuación se presentan los principales modelos de sinapsis, ordenados de menor a mayor complejidad funcional.
 
-\subsubsection{Sinapsis eléctrica}
+\subsubsection{Sinapsis eléctricas}
 
 La sinapsis eléctrica modela la conexión directa entre neuronas a través de uniones comunicantes (\textit{gap junctions}) \cite{GurelKazanci2007}, formalizándose como una conductancia lineal: $I_{\mathrm{gap}} = g_{\mathrm{gap}} \cdot (V_{\mathrm{post}} - V_{\mathrm{pre}})$. Ofrece simplicidad computacional y transmisión bidireccional instantánea, pero carece de la flexibilidad funcional de las sinapsis químicas: no distingue entre excitación e inhibición, no introduce filtrado frecuencial y no reproduce la riqueza dinámica (modulación, plasticidad, selectividad temporal) observada en la mayoría de conexiones biológicas.
 
-\subsubsection{Modelos cinéticos de sinapsis química}
+\subsubsection{Modelos cinéticos de sinapsis químicas}
 
 Estos modelos describen la transmisión sináptica mediante ecuaciones que relacionan el potencial presináptico con la apertura de canales postsinápticos. El modelo de \cite{Destexhe1994} formula la cinética de unión del neurotransmisor al receptor como un sistema de primer orden. El de \cite{Golowasch1999}, empleado en este trabajo, separa la corriente en dos componentes (rápida y lenta) con cinéticas diferenciadas, capturando la transmisión mediada por \textit{spikes} (solos o junto con a onda lenta) y la transmisión graduada sobre la onda lenta. Ofrecen gran flexibilidad para reproducir comportamientos excitatorios e inhibitorios y ajustar independientemente la respuesta a distintas bandas frecuenciales, a costa de un mayor número de parámetros, algunos acoplados, que dificultan su ajuste manual.
 
