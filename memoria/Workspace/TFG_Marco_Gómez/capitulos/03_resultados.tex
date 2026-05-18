@@ -10,7 +10,7 @@ La versión \textit{offline} se ha evaluado para actividad en antifase (interacc
 
 \subsection{Dinámica de interacción en antifase\label{SUBSEC:OFFLINE_ANTIFASE}}
 
-Para esta \ac{bo}, el rango de corriente total objetivo se ha fijado entre $-1{,}4$ y $-0{,}4$\,nA adimensionales (al estar en la escala de la neurona \ac{hr}). El tiempo de optimización medio ha sido de $29{,}57$\,s, con una desviación estándar de $9{,}27$\,s, lo cual es bajo, como ya se comentó.
+Para esta \ac{bo}, el rango de corriente total objetivo se ha fijado entre $-1{,}4$ y $-0{,}4$\,unidades adimensionales (al estar en la escala de la neurona \ac{hr}). El tiempo de optimización medio ha sido de $29{,}57$\,s, con una desviación estándar de $9{,}27$\,s, lo cual es bajo, como ya se comentó.
 
 La Figura~\ref{FIG:OFFLINE_ACC_MAX_ANTI} muestra la evolución de la puntuación máxima acumulada promediada sobre las 20 ejecuciones. La curva comienza entre $0{,}55$ y $0{,}60$, crece rápidamente durante las muestras de \ac{lhs} hasta estabilizarse entre $0{,}70$ y $0{,}75$, y experimenta un nuevo ascenso pronunciado tras concluir las muestras iniciales (evaluación $\sim 60$), estabilizándose entre $0{,}85$ y $0{,}90$. El estancamiento inicial refleja que el \ac{lhs} busca cobertura, no maximización; una vez el \ac{gp} dispone de datos suficientes para ser informativo, \ac{ei} guía eficazmente la búsqueda, ascendiendo de nuevo hasta converger. La ligera tendencia ascendente residual al final sugiere mejoras marginales posibles con más iteraciones, demostrando un presupuesto adecuado: ni excesivo (sigue refinando) ni insuficiente (clara convergencia). La variabilidad se mantiene moderada y constante, indicando consistencia entre ejecuciones.
 
@@ -43,7 +43,7 @@ Finalmente, la Figura~\ref{FIG:OFFLINE_DYN_ANTI} presenta la dinámica en antifa
 
 \subsection{Dinámica de interacción en fase\label{SUBSEC:OFFLINE_FASE}}
 
-Para este caso, el rango de corriente total objetivo se ha establecido entre $0{,}2$ y $0{,}8$\,nA adimensionales. El tiempo de optimización medio ha sido de $32{,}2$\,s, con una desviación estándar de $6{,}77$\,s.
+Para este caso, el rango de corriente total objetivo se ha establecido entre $0{,}2$ y $0{,}8$\,unidades adimensionales. El tiempo de optimización medio ha sido de $32{,}2$\,s, con una desviación estándar de $6{,}77$\,s.
 
 La evolución de la puntuación máxima acumulada (Figura~\ref{FIG:OFFLINE_ACC_MAX_FASE_AP}) y las puntuaciones promediadas (Figura~\ref{FIG:OFFLINE_AVG_SCORES_FASE_AP}) son similares al caso de antifase, con variabilidad ligeramente mayor en la componente de rango. Las puntuaciones individuales (Figura~\ref{FIG:OFFLINE_SCORES_FASE_AP}) muestran algún \textit{outlier} más lejano por debajo y más puntos en torno a $0{,}5$ para la componente de rango. La importancia de los parámetros (Figura~\ref{FIG:OFFLINE_ARD_FASE_AP}) no difiere significativamente, lo que es lógico: $E_{\mathrm{syn}}$ es el único parámetro que cambia entre fase y antifase, y su rango tiene la misma amplitud y lejanía relativa a $V_{\mathrm{post}}$ en ambos casos (por encima para fase y debajo para antifase), debiendo afectar parecido a la puntuación si el rango de fase y antifase fuesen simétricos respecto al eje horizontal (no lo son pero no por mucho). Las pequeñas variaciones pueden deberse a la aleatoriedad y al ajuste del rango de corriente buscado (que difiere con respecto a antifase).
 
@@ -65,7 +65,7 @@ La frecuencia de corte se ha establecido en $0{,}002$\,kHz, valor verificado com
 
 \subsection{Dinámica de interacción en antifase\label{SUBSEC:ONLINE_ANTIFASE}}
 
-Para esta \ac{bo}, los rangos de corriente objetivo se han fijado entre $-1{,}0$ y $0{,}0$\,nA adimensionales para $I_{\mathrm{fast}}$ y entre $-1{,}4$ y $-0{,}4$ para $I_{\mathrm{slow}}$. El tiempo de optimización ha sido de $915{,}46$\,s (poco más de 15 minutos), un tiempo aceptable para un experimento hipotético con una neurona viva.
+Para esta \ac{bo}, los rangos de corriente objetivo se han fijado entre $-1{,}0$ y $0{,}0$\,unidades adimensionales para $I_{\mathrm{fast}}$ y entre $-1{,}4$ y $-0{,}4$ para $I_{\mathrm{slow}}$. El tiempo de optimización ha sido de $915{,}46$\,s (poco más de 15 minutos), un tiempo aceptable para un experimento hipotético con una neurona viva.
 
 La Figura~\ref{FIG:ONLINE_ACC_MAX_ANTI} muestra la puntuación máxima acumulada por evaluación. Comienza sobre $0{,}74$, asciende durante el \ac{lhs} hasta $0{,}83$ y se mantiene hasta la evaluación 125 aproximadamente, donde alcanza una solución superior a $0{,}9$ (mejor que los promedios \textit{offline}), conservándose hasta el final con una mejora marginal. La dinámica de convergencia es análoga a la descrita en la Sección~\ref{SUBSEC:OFFLINE_ANTIFASE}, con menor significación estadística al ser una única ejecución.
 
@@ -90,7 +90,7 @@ La Figura~\ref{FIG:ONLINE_DYN_ANTI} muestra la dinámica resultante con los par�
 
 \subsection{Dinámica de interacción en fase\label{SUBSEC:ONLINE_FASE}}
 
-En esta configuración, los rangos de corriente objetivo se han fijado entre $0{,}0$ y $0{,}6$\,nA adimensionales para $I_{\mathrm{fast}}$ y entre $0{,}2$ y $0{,}8$ para $I_{\mathrm{slow}}$. El tiempo de optimización ha sido de $934{,}14$\,s (casi 16 minutos), de nuevo un tiempo aceptable para interactuar con una neurona biológica.
+En esta configuración, los rangos de corriente objetivo se han fijado entre $0{,}0$ y $0{,}6$\,unidades adimensionales para $I_{\mathrm{fast}}$ y entre $0{,}2$ y $0{,}8$ para $I_{\mathrm{slow}}$. El tiempo de optimización ha sido de $934{,}14$\,s (casi 16 minutos), de nuevo un tiempo aceptable para interactuar con una neurona biológica.
 
 La Figura~\ref{FIG:ONLINE_ACC_MAX_FASE} presenta la puntuación máxima acumulada por evaluación. Comienza en aproximadamente $0{,}65$, asciende rápidamente durante el \ac{lhs} hasta casi $0{,}85$, y mejora progresivamente hasta poco antes de la evaluación 300, alcanzando poco menos de $0{,}9$. El hecho de que esta puntuación máxima se localice relativamente lejos del final y de que las muestras iniciales proporcionen una puntuación elevada (haciendo que la mejora tras esto sea menor que en los casos anteriores) se debe a la aleatoriedad de cada ejecución. Pese a esto, se guardan algunas similitudes con lo descrito en secciones previas, con que aplican justificaciones similares.
 
