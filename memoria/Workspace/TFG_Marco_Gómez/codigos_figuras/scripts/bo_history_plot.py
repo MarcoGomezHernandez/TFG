@@ -111,9 +111,9 @@ plt.rcParams.update({
     'axes.titlesize': 8,
     'xtick.labelsize': label_size,
     'ytick.labelsize': label_size,
-    'figure.figsize': (6.5, 3.5),
-    'figure.dpi': 600,
-    'savefig.dpi': 600,
+    'figure.figsize': (5.88, 2.94),
+    'figure.dpi': 300,
+    'savefig.dpi': 300,
     'savefig.bbox': 'tight',
 })
 

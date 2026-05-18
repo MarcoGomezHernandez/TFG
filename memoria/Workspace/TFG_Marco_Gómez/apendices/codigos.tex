@@ -68,11 +68,11 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/evaluation.tpp}
 
 
-\section{Optimización bayesiana\label{SEC:CODIGOS_BO}}
+\section{\acl{bo}\label{SEC:CODIGOS_BO}}
 
 
 \lstinputlistingwrap[
-    caption={[Configuración y tipos de Limbo para la optimización en la versión \textit{offline}]%
+    caption={[Configuración y tipos de Limbo para la \acl{bo} en la versión \textit{offline}]%
             Configuración completa de Limbo (Apéndice~\ref{SUBSEC:LIMBOREPO}) en su versión \textit{offline} con ruido observacional fijo ($10^{-6}$) y $\xi = 0{,}003$; la versión \textit{online} permite optimizar dicho ruido (inicializado en $0{,}05$) y reduce el \textit{jitter} a $\xi = 0{,}001$. Se muestra también cómo se calculan las configuraciones dinámicas y las constantes que les afectan.},
     label=COD:LIMBO_CONFIG_TYPES,
     firstline=17, lastline=24, firstnumber=17,
@@ -91,7 +91,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 ]{codigos/offline/BO.tpp}
 
 \lstinputlistingwrap[
-    caption={[Constantes y cálculo de rangos de búsqueda para la optimización en la versión \textit{online}]%
+    caption={[Constantes y cálculo de rangos de búsqueda para la \acl{bo} en la versión \textit{online}]%
             Cálculo dinámico de los rangos de búsqueda para la versión \textit{online}, incluyendo márgenes de seguridad en los umbrales de las sigmoides para compensar la variabilidad biológica; la versión \textit{offline} prescinde de dichos márgenes sobre $V_{\mathrm{pre}}$.},
     label=COD:BO_RANGES,
     firstline=10, lastline=53, firstnumber=10,
@@ -195,14 +195,14 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Estructura para guardar valores constantes de evaluación en la versión \textit{offline}]%
-            Estructura de datos que almacena las señales de referencia centradas, sus factores de Pearson asociados y los rangos de corriente esperados y sus términos de normalización. Se precalcula una sola vez antes de la optimización para mejorar la eficiencia computacional.},
+            Estructura de datos que almacena las señales de referencia centradas, sus factores de Pearson asociados y los rangos de corriente esperados y sus términos de normalización. Se precalcula una sola vez antes de la \ac{bo} para mejorar la eficiencia computacional.},
     label=COD:CONST_EVAL_VALS,
     firstline=35, lastline=54, firstnumber=35,
 ]{codigos/offline/evaluation.hpp}
 
 \lstinputlistingwrap[
     caption={[Uso de plantillas para el cambio de modelo e integrador en la versión \textit{offline}]%
-            Llamada a la función principal de optimización en la que se inyectan como plantillas tanto el integrador numérico como el tipo de neurona postsináptica, junto con los punteros a funciones específicas del modelo, garantizando la genericidad del diseño.},
+            Llamada a la función principal de \ac{bo} en la que se inyectan como plantillas tanto el integrador numérico como el tipo de neurona postsináptica, junto con los punteros a funciones específicas del modelo, garantizando la genericidad del diseño.},
     label=COD:BO_MAIN_CALL,
     firstline=56, lastline=77, firstnumber=56,
 ]{codigos/offline/main.cpp}
@@ -236,7 +236,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 
 \lstinputlistingwrap[
     caption={[Lanzamiento y parada del hilo \acl{nrt} en la versión \textit{online}]%
-            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la \ac{gui}. Si la optimización no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
+            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la \ac{gui}. Si la \ac{bo} no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
     label=COD:TOGGLE_BO,
     firstline=657, lastline=681, firstnumber=657,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}

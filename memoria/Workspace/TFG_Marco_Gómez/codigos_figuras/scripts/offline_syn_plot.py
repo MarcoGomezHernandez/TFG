@@ -43,9 +43,9 @@ if not os.path.exists(data_path):
 df = pd.read_csv(data_path)
 
 n_plots = 1 if plot_mode == -1 else (2 if plot_mode in [0, 1] else 4)
-heights = {1: 3.5, 2: 5.0, 4: 8.0}
+heights = {1: 2.94, 2: 4.41, 4: 7.35}
 fig, axs = plt.subplots(n_plots, 1, figsize=(
-    6.5, heights[n_plots]), dpi=600, sharex=True)
+    5.88, heights[n_plots]), dpi=300, sharex=True)
 
 # Asegurar que axs sea siempre un iterable
 if n_plots == 1:
@@ -62,33 +62,33 @@ axs[0].plot(df['t'], df['v_pre'], label=label_pre,
             color='dodgerblue', linewidth=lw, alpha=0.6, zorder=3)
 axs[0].plot(df['t'], df['v_post'], label='Neur. postsin. (modelo)',
             color='darkorange', linewidth=lw, zorder=2)
-axs[0].set_ylabel('Voltaje (mV adim.)')
+axs[0].set_ylabel('Voltaje (uds. adim.)')
 axs[0].legend(fontsize=5)
 
 if plot_mode == 2:
     # 2. total i
     axs[1].plot(df['t'], df['i'], color='green', linewidth=lw)
-    axs[1].set_ylabel('I (nA adim.)')
+    axs[1].set_ylabel('I (uds. adim.)')
 
     # 3. i_fast
     axs[2].plot(df['t'], df['i_fast'], color='darkred', linewidth=lw)
-    axs[2].set_ylabel('I_fast (nA adim.)')
+    axs[2].set_ylabel('I_fast (uds. adim.)')
 
     # 4. i_slow
     axs[3].plot(df['t'], df['i_slow'], color='purple', linewidth=lw)
-    axs[3].set_ylabel('I_slow (nA adim.)')
+    axs[3].set_ylabel('I_slow (uds. adim.)')
     axs[3].set_xlabel('Tiempo (ms)')
 
 elif plot_mode == 0:
     axs[1].plot(df['t'], df['i_fast'], color='darkred', linewidth=lw)
-    axs[1].set_ylabel('I_fast (nA adim.)')
+    axs[1].set_ylabel('I_fast (uds. adim.)')
     axs[1].set_xlabel('Tiempo (ms)')
 
 elif plot_mode == 1:
     axs[1].plot(df['t'], df['i_slow'], color='purple', linewidth=lw)
-    axs[1].set_ylabel('I_slow (nA adim.)')
+    axs[1].set_ylabel('I_slow (uds. adim.)')
     axs[1].set_xlabel('Tiempo (ms)')
 
 plt.tight_layout()
-plt.savefig(out_png, dpi=600, bbox_inches='tight')
+plt.savefig(out_png, dpi=300, bbox_inches='tight')
 plt.close()

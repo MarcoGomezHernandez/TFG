@@ -1,0 +1,53 @@
+@startuml
+
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam ParticipantPadding 20
+skinparam maxMessageSize 200
+
+title Publicación del mejor resultado y finalización del flujo normal de la BO
+
+actor       Usuario     as U
+participant "Hilo GUI"         as GUI
+participant "Hilo RT"          as RT
+participant "Hilo NRT_BO"      as NRT
+
+activate NRT
+
+par
+  NRT -> NRT : Decodifica parámetros del mejor candidato
+  loop last_synapse_idx_read_RT.load(relaxed)\n!= curr_synapse_idx
+    NRT -> NRT : sleep(ACTIVE_WAIT_MS)
+  end
+else
+  RT ->> NRT : last_synapse_idx_read_RT.store(curr_synapse_idx, relaxed)
+end
+
+NRT -> NRT : new_synapse_idx = 1 - curr_synapse_idx
+NRT -> NRT : Escribe parámetros del mejor candidato en params_XX[new_synapse_idx]
+
+par
+  NRT ->> RT : synapse_idx.store(new_synapse_idx, **release**)
+  RT -> RT : curr_synapse_idx = synapse_idx.load(**acquire**)
+  activate RT
+  RT ->> NRT : last_synapse_idx_read_RT.store(curr_synapse_idx, relaxed)
+  deactivate RT
+else
+  NRT ->> GUI : invokeMethod("stop_BO_event_async")
+  activate GUI
+  deactivate NRT
+end
+
+GUI -> GUI : update_params_gui()
+GUI ->> U : Ve los parámetros del mejor candidato
+GUI -> GUI : set_params_read_only(false)
+GUI ->> U : Puede modificar todos los campos
+GUI -> GUI : BO_button->setText("Start BO")
+GUI ->> U : Ve el botón "Start BO" en lugar de "Stop BO"
+GUI -> GUI : BO_running = false
+deactivate GUI
+
+GUI -> NRT: join() del hilo NRT_BO (cuando se vuelva a pulsar "Start BO" o en el destructor de la clase del módulo)
+destroy NRT
+
+@enduml

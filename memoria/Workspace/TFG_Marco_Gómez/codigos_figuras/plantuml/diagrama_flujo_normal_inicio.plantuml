@@ -1,0 +1,36 @@
+@startuml
+
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam ParticipantPadding 20
+skinparam maxMessageSize 200
+
+title Inicio del flujo normal de la BO
+
+actor       Usuario     as U
+participant "Hilo GUI"         as GUI
+participant "Hilo NRT_BO"      as NRT
+
+U -> GUI : Click "Start BO"
+activate GUI
+opt No se había hecho join()\nal hilo NRT_BO anterior
+  GUI -> GUI : join() del hilo NRT_BO
+  GUI -> GUI : stop_BO.store(false, relaxed)
+end
+GUI -> GUI : BO_running = true\nBO_button->setText("Stop BO")
+GUI ->> U : Ve el botón "Stop BO" en lugar de "Start BO"
+GUI -> GUI : set_params_read_only(true)
+GUI ->> U: No puede modificar los campos necesarios
+GUI ->> NRT : Hilo NRT_BO(period) lanzado
+deactivate GUI
+
+activate NRT
+NRT -> NRT : num_elements = evaluation_time * fs\nRedimensiona buffers (i_fast_sig_XX, i_slow_sig_XX, v_pre_sig_XX) a tamaño num_elements
+NRT -> NRT : Inicializa variables de la BO
+NRT ->> GUI : invokeMethod("set_evaluations_completed", 0)
+activate GUI
+GUI -> GUI : evaluations_completed = 0
+GUI ->> U : Muestra 0 evaluaciones completadas
+deactivate GUI
+
+@enduml

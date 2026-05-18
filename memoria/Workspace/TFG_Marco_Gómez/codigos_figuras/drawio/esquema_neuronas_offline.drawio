@@ -1,11 +1,11 @@
 <mxfile host="65bd71144e">
     <diagram name="Página-1" id="ZZeWGzVzhdgVUkHqQGHK">
-        <mxGraphModel dx="734" dy="591" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="444" dy="446" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="l5__uRsVIfwHmQrNc7lG-1" value="Neurona viva de CSV escalada&lt;div&gt;(en el rango de la modelo)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="150" width="190" height="46" as="geometry"/>
+                <mxCell id="l5__uRsVIfwHmQrNc7lG-1" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Registro CSV de neurona viva&lt;/span&gt;&amp;nbsp;escalado&lt;div&gt;(en el rango del modelo)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="105" y="150" width="220" height="46" as="geometry"/>
                 </mxCell>
                 <mxCell id="l5__uRsVIfwHmQrNc7lG-2" value="Neurona modelo Hindmarsh-Rose" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontSize=11;" parent="1" vertex="1">
                     <mxGeometry x="445" y="158" width="205" height="30" as="geometry"/>
@@ -21,8 +21,8 @@
                         <mxPoint y="7" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="l5__uRsVIfwHmQrNc7lG-9" value="Neurona viva de CSV" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="147.5" y="90" width="135" height="30" as="geometry"/>
+                <mxCell id="l5__uRsVIfwHmQrNc7lG-9" value="Registro CSV de neurona viva" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="126.5" y="90" width="176.5" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="l5__uRsVIfwHmQrNc7lG-10" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Helvetica;" parent="1" source="l5__uRsVIfwHmQrNc7lG-9" target="l5__uRsVIfwHmQrNc7lG-1" edge="1">
                     <mxGeometry relative="1" as="geometry">

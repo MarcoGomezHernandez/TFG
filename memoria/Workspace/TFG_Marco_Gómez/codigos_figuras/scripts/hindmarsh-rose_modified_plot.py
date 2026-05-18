@@ -8,12 +8,12 @@ plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'DejaVu Sans']
 df = pd.read_csv('data/hindmarsh-rose_modified.csv')
 
 # Configuración y renderizado de la gráfica
-plt.figure(figsize=(6.5, 3.5), dpi=600)
+plt.figure(figsize=(5.88, 2.94), dpi=300)
 plt.plot(df['t'], df['x'], color='dodgerblue', linewidth=0.6)
 
 plt.title('Hindmarsh-Rose Modificada', fontsize=8)
-plt.xlabel('Tiempo/t (ms adim.)', fontsize=7)
-plt.ylabel('Voltaje/x(t) (mV adim.)', fontsize=7)
+plt.xlabel('Tiempo/t (uds. adim.)', fontsize=7)
+plt.ylabel('Voltaje/x(t) (uds. adim.)', fontsize=7)
 
 plt.xticks(fontsize=7)
 plt.yticks(fontsize=7)
@@ -22,4 +22,4 @@ ax = plt.gca()
 ax.margins(x=0.0, y=0.02)
 plt.tight_layout()
 plt.savefig('figures/hindmarsh-rose_modified.png',
-            dpi=600, bbox_inches='tight')
+            dpi=300, bbox_inches='tight')

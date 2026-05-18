@@ -1,46 +1,58 @@
 
-En este apéndice se incluyen los diagramas de secuencia que detallan la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} del módulo \textit{online} durante la optimización bayesiana, así como las figuras complementarias de los resultados del Capítulo~\ref{CAP:RESULTADOS} que, por ser muy similares a las mostradas en el cuerpo principal, se recogen aquí para no redundar.
+En este apéndice se incluyen los diagramas de secuencia que detallan la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} del módulo \textit{online} durante la \ac{bo}, así como las figuras complementarias de los resultados del Capítulo~\ref{CAP:RESULTADOS} que, por ser muy similares a las mostradas en el cuerpo principal, se recogen aquí para no redundar.
 
 
-\begin{figure}[Sincronización de los hilos en un flujo normal de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_NORMAL}{Diagrama de secuencia de la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} durante una optimización completa. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
-    \image{0.8\textwidth}{}{diagrama_flujo_normal}
+\begin{figure}[Sincronización de los hilos en el inicio del flujo normal de la \acl{bo} en la implementación \textit{online}]{FIG:FLUJO_NORMAL_INICIO}{Diagrama de secuencia del inicio del flujo normal de la \ac{bo} en la implementación \textit{online}. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{1.0\textwidth}{}{diagrama_flujo_normal_inicio}
 \end{figure}
 
-\begin{figure}[Sincronización de los hilos en la interrupción de la optimización bayesiana en la implementación \textit{online}]{FIG:FLUJO_INTERRUPCION}{Diagrama de secuencia de la sincronización entre los hilos \ac{gui}, \ac{rt} y \ac{nrt} en la interrupción de la optimización. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
-    \image{0.9\textwidth}{}{diagrama_flujo_interrupcion}
+\begin{figure}[Sincronización de los hilos en el bucle de evaluación del flujo normal de la \acl{bo} en la implementación \textit{online}]{FIG:FLUJO_NORMAL_BO}{Diagrama de secuencia del bucle de evaluación de los candidatos del flujo normal de la \ac{bo} en la implementación \textit{online}. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{0.8\textwidth}{}{diagrama_flujo_normal_BO}
+\end{figure}
+
+\begin{figure}[Sincronización de los hilos en la publicación y finalización del flujo normal de la \acl{bo} en la implementación \textit{online}]{FIG:FLUJO_NORMAL_FIN}{Diagrama de secuencia de la publicación del mejor resultado y la finalización del flujo normal de la \ac{bo} en la implementación \textit{online}. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{1.0\textwidth}{}{diagrama_flujo_normal_fin}
+\end{figure}
+
+\begin{figure}[Sincronización de los hilos en la detección de la interrupción de la \acl{bo} en la implementación \textit{online}]{FIG:FLUJO_INTERRUPCION_DETECCION}{Diagrama de secuencia de la interrupción de la \ac{bo} en la implementación \textit{online} antes de publicar el mejor resultado, sin la finalización de la \ac{gui}. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{0.8\textwidth}{}{diagrama_flujo_interrupcion_deteccion}
+\end{figure}
+
+\begin{figure}[Sincronización de los hilos en la finalización de la interrupción de la \acl{bo} en la implementación \textit{online}]{FIG:FLUJO_INTERRUPCION_FINALIZACION}{Diagrama de secuencia de la finalización por parte de la \ac{gui} en la interrupción de la \ac{bo} en la implementación \textit{online}. Que un hilo aparezca inactivo no implica que lo esté: por claridad, se muestra activo únicamente cuando realiza operaciones relevantes para el caso representado.}
+    \image{1.0\textwidth}{}{diagrama_flujo_interrupcion_finalizacion}
 \end{figure}
 
 
 
-\begin{figure}[Promedio de la importancia en la puntuación de los parámetros \textit{offline} en antifase]{FIG:OFFLINE_ARD_ANTI_AP}{Promedio de la importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda sobre 20 ejecuciones para antifase en la implementación \textit{offline}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
+\begin{figure}[Promedio de la importancia en la puntuación de los parámetros de la \acl{bo} \textit{offline} en antifase]{FIG:OFFLINE_ARD_ANTI_AP}{Promedio de la importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda sobre 20 ejecuciones para antifase en la implementación \textit{offline}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la \ac{bo}. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_antiphase_ard_lss}
 \end{figure}
 
-\begin{figure}[Promedio de la puntuación máxima acumulada por evaluación \textit{offline} en fase]{FIG:OFFLINE_ACC_MAX_FASE_AP}{Evolución del promedio de la puntuación máxima acumulada por evaluación sobre 20 ejecuciones para fase en la implementación \textit{offline}. La región sombreada indica la desviación estándar (barras de error verticales). La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+\begin{figure}[Promedio de la puntuación máxima acumulada por evaluación de la \acl{bo} \textit{offline} en fase]{FIG:OFFLINE_ACC_MAX_FASE_AP}{Evolución del promedio de la puntuación máxima acumulada por evaluación sobre 20 ejecuciones para fase en la implementación \textit{offline}. La región sombreada indica la desviación estándar (barras de error verticales). La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la \ac{bo}.}
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_acc_max}
 \end{figure}
 
-\begin{figure}[Promedio de la puntuación y sus componentes por evaluación \textit{offline} en fase]{FIG:OFFLINE_AVG_SCORES_FASE_AP}{Promedio de la puntuación total y de sus componentes (forma y rango de corriente) por evaluación sobre 20 ejecuciones para fase en la implementación \textit{offline}. La región sombreada indica la desviación estándar de cada curva (barras de error verticales). La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+\begin{figure}[Promedio de la puntuación y sus componentes por evaluación de la \acl{bo} \textit{offline} en fase]{FIG:OFFLINE_AVG_SCORES_FASE_AP}{Promedio de la puntuación y de sus componentes (forma y rango de corriente) por evaluación sobre 20 ejecuciones para fase en la implementación \textit{offline}. La región sombreada indica la desviación estándar de cada curva (barras de error verticales). La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la \ac{bo}.}
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_avg_scores}
 \end{figure}
 
-\begin{figure}[Puntuación y sus componentes por evaluación \textit{offline} en fase]{FIG:OFFLINE_SCORES_FASE_AP}{Valores individuales de la puntuación total y sus componentes (forma y rango de corriente) por evaluación en una ejecución representativa para fase en la implementación \textit{offline}. La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+\begin{figure}[Puntuación y sus componentes por evaluación en una ejecución representativa de la \acl{bo} \textit{offline} en fase]{FIG:OFFLINE_SCORES_FASE_AP}{Puntuación y sus componentes (forma y rango de corriente) por evaluación en una ejecución representativa para fase en la implementación \textit{offline}. La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la \ac{bo}.}
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_scores}
 \end{figure}
 
-\begin{figure}[Promedio de la importancia en la puntuación de los parámetros \textit{offline} en fase]{FIG:OFFLINE_ARD_FASE_AP}{Promedio de la importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda sobre 20 ejecuciones para fase en la implementación \textit{offline}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
+\begin{figure}[Promedio de la importancia en la puntuación de los parámetros de la \acl{bo} \textit{offline} en fase]{FIG:OFFLINE_ARD_FASE_AP}{Promedio de la importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda sobre 20 ejecuciones para fase en la implementación \textit{offline}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la \ac{bo}. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda.}
     \image{0.9\textwidth}{}{bo_history_offline_syn_i_phase_ard_lss}
 \end{figure}
 
 
-\begin{figure}[Puntuación y sus componentes por evaluación \textit{online} en fase]{FIG:ONLINE_SCORES_FASE_AP}{Valores individuales de la puntuación total y sus componentes (forma y rango de corriente) por evaluación para fase en la implementación \textit{online}. La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la optimización bayesiana.}
+\begin{figure}[Puntuación y sus componentes por evaluación de la \acl{bo} \textit{online} en fase]{FIG:ONLINE_SCORES_FASE_AP}{Puntuación y sus componentes (forma y rango de corriente) por evaluación para fase en la implementación \textit{online}. La línea discontinua vertical separa las muestras iniciales de \ac{lhs} de las iteraciones guiadas por la \ac{bo}.}
     \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_phase_scores}
 \end{figure}
 
-\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en antifase]{FIG:ONLINE_ARD_ANTI_AP}{Importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda para antifase en la implementación \textit{online}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. La sinpasis a la que pertenecen los parámetros se identifica mediante \texttt{1->2} o \texttt{2->1}, en base a su neurona pre y postsináptica.}
+\begin{figure}[Importancia en la puntuación de los parámetros de la \acl{bo} \textit{online} en antifase]{FIG:ONLINE_ARD_ANTI_AP}{Importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda para antifase en la implementación \textit{online}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la \ac{bo}. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. La sinpasis a la que pertenecen los parámetros se identifica mediante \texttt{1->2} o \texttt{2->1}, en base a su neurona pre y postsináptica.}
     \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_antiphase_ard_lss}
 \end{figure}
 
-\begin{figure}[Importancia en la puntuación de los parámetros \textit{online} en fase]{FIG:ONLINE_ARD_FASE_AP}{Importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda para fase en la implementación \textit{online}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la optimización. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. La sinpasis a la que pertenecen los parámetros se identifica mediante \texttt{1->2} o \texttt{2->1}, en base a su neurona pre y postsináptica.}
+\begin{figure}[Importancia en la puntuación de los parámetros de la \acl{bo} \textit{online} en fase]{FIG:ONLINE_ARD_FASE_AP}{Importancia en la puntuación de cada parámetro con respecto a su rango de búsqueda para fase en la implementación \textit{online}. Son las inversas de las \textit{lengthscales} del \textit{kernel} \ac{ard} tras la \ac{bo}. Cada \textit{lengthscale} está normalizado en base a su rango de búsqueda. La sinpasis a la que pertenecen los parámetros se identifica mediante \texttt{1->2} o \texttt{2->1}, en base a su neurona pre y postsináptica.}
     \image{0.9\textwidth}{}{bo_history_rtxi_syn_model_ifast_islow_phase_ard_lss}
 \end{figure}

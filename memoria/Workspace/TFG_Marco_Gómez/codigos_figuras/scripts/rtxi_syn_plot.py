@@ -39,10 +39,15 @@ out_png = args.output_png
 single_axis = args.single_axis == 1
 
 # Etiquetas y sufijos de unidad según si la neurona es viva o modelo
-label_n1 = "Neur. viva" if args.n1_is_live == 1 else "Neur. modelo"
-label_n2 = "Neur. viva" if args.n2_is_live == 1 else "Neur. modelo"
-unit_suffix_n1 = "" if args.n1_is_live == 1 else " adim."
-unit_suffix_n2 = "" if args.n2_is_live == 1 else " adim."
+if args.n1_is_live == 1:
+    label_n1, unit_v_n1, unit_i_n1 = "Neur. viva", "mV", "nA"
+else:
+    label_n1, unit_v_n1, unit_i_n1 = "Neur. modelo", "uds. adim.", "uds. adim."
+
+if args.n2_is_live == 1:
+    label_n2, unit_v_n2, unit_i_n2 = "Neur. viva", "mV", "nA"
+else:
+    label_n2, unit_v_n2, unit_i_n2 = "Neur. modelo", "uds. adim.", "uds. adim."
 
 # 2. Validar que el archivo existe
 if not os.path.exists(data_path):
@@ -90,9 +95,9 @@ if 1 in modes or 2 in modes:
 
 # 5. Configurar figura y ejes dinámicamente
 n_plots = len(plots)
-heights = {1: 3.5, 2: 5.0, 3: 6.5, 4: 8.0}
+heights = {1: 2.94, 2: 4.41, 3: 5.88, 4: 7.35}
 fig, axs = plt.subplots(n_plots, 1, figsize=(
-    6.5, heights[n_plots]), dpi=600, sharex=True)
+    5.88, heights[n_plots]), dpi=300, sharex=True)
 
 # Asegurar que axs sea siempre un iterable
 if n_plots == 1:
@@ -112,7 +117,7 @@ axs[ax_idx].plot(t, vpre12, label=f"{label_n1} (1)",
                  color='dodgerblue', linewidth=lw, alpha=0.6)
 axs[ax_idx].plot(
     t, vpost12, label=f"{label_n2} (2)", color='darkorange', linewidth=lw, alpha=0.9)
-axs[ax_idx].set_ylabel(f'Voltaje (mV{unit_suffix_n2})')
+axs[ax_idx].set_ylabel(f'Voltaje ({unit_v_n2})')
 axs[ax_idx].legend()
 
 if not single_axis:
@@ -120,7 +125,7 @@ if not single_axis:
     vpost21 = get_d('vpost_21')
 
     ax_v_twin = axs[ax_idx].twinx()
-    ax_v_twin.set_ylabel(f'Voltaje (mV{unit_suffix_n1})')
+    ax_v_twin.set_ylabel(f'Voltaje ({unit_v_n1})')
 
     axs[ax_idx].set_zorder(ax_v_twin.get_zorder() + 1)
     axs[ax_idx].patch.set_visible(False)
@@ -163,9 +168,9 @@ def plot_current(ax, name, mode_target, c_dark, c_light, lbl):
 
     # Ajuste de límites del eje izquierdo
     if show_12 and (show_21 and not use_twin):
-        ax.set_ylabel(f"{lbl} (nA{unit_suffix_n2})")
+        ax.set_ylabel(f"{lbl} ({unit_i_n2})")
     elif show_12:
-        ax.set_ylabel(f"{lbl} 1->2 (nA{unit_suffix_n2})")
+        ax.set_ylabel(f"{lbl} 1->2 ({unit_i_n2})")
 
         # --- Eje Derecho (Twin) ---
         if show_21 and use_twin:
@@ -175,13 +180,13 @@ def plot_current(ax, name, mode_target, c_dark, c_light, lbl):
             l2 = ax_twin.plot(
                 t, d21, label="_nolegend_", color=c_light, linewidth=lw)
 
-            ax_twin.set_ylabel(f"{lbl} 2->1 (nA{unit_suffix_n1})")
+            ax_twin.set_ylabel(f"{lbl} 2->1 ({unit_i_n1})")
 
             ax.set_zorder(ax_twin.get_zorder() + 1)
             ax.patch.set_visible(False)
 
     elif show_21 and not use_twin:
-        ax.set_ylabel(f"{lbl} 2->1 (nA{unit_suffix_n1})")
+        ax.set_ylabel(f"{lbl} 2->1 ({unit_i_n1})")
 
     if lns and use_legend:
         labs = [l.get_label() for l in lns]
@@ -201,5 +206,5 @@ if 'islow' in plots:
 axs[-1].set_xlabel('Tiempo (ms)')
 
 plt.tight_layout()
-plt.savefig(out_png, dpi=600, bbox_inches='tight')
+plt.savefig(out_png, dpi=300, bbox_inches='tight')
 plt.close()

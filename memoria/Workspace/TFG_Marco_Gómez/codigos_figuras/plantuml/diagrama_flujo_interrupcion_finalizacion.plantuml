@@ -1,0 +1,27 @@
+@startuml
+
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam ParticipantPadding 20
+skinparam maxMessageSize 200
+
+title Finalización por parte de la GUI en el flujo de interrupción de la BO antes de publicar el mejor resultado
+
+actor       Usuario     as U
+participant "Hilo GUI"         as GUI
+participant "Hilo NRT_BO"      as NRT
+
+activate GUI
+GUI -> GUI : update_params_gui()
+GUI ->> U : Ve los parámetros del candidato actual
+GUI -> GUI : set_params_read_only(false)
+GUI ->> U : Puede modificar todos los campos
+GUI -> GUI : BO_button->setText("Start BO")
+GUI ->> U : Ve el botón "Start BO" en lugar de "Stop BO"
+GUI -> GUI : BO_running = false
+deactivate GUI
+
+GUI -> NRT: join() del hilo NRT_BO (cuando se vuelva a pulsar "Start BO" o en el destructor de la clase del módulo)
+destroy NRT
+
+@enduml

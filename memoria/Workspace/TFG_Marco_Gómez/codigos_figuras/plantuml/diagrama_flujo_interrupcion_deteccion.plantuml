@@ -2,8 +2,10 @@
 
 skinparam defaultFontName Helvetica
 skinparam defaultFontSize 11
+skinparam ParticipantPadding 20
+skinparam maxMessageSize 200
 
-title Flujo de interrupción de la BO antes de publicar el mejor resultado
+title Flujo de interrupción de la BO antes de publicar el mejor resultado, sin la finalización de la GUI
 
 actor       Usuario     as U
 participant "Hilo GUI"         as GUI
@@ -22,7 +24,7 @@ alt Usuario pulsa "Stop BO"
   U -> GUI : Click "Stop BO"
   activate GUI
 else Cambia periodo RT a uno distinto\n(update(PERIOD) y new_period != period)
-else Se llama al destructor de la clase del módulo\n(~BidirectionalChemicalSynapseBO())
+else Se llama al destructor\nde la clase del módulo\n(~BidirectionalChemicalSynapseBO())
 end
 
 GUI ->> NRT : stop_BO.store(true, relaxed)
@@ -32,36 +34,22 @@ deactivate GUI
 
 NRT -> NRT : Detecta stop_BO.load(relaxed) == true
 
-alt NRT_BO detecta parada en iteración del\nbucle de evaluación de candidatos
-  opt Parada detectada en iteración de la espera activa\n para que RT llene buffers\n(RT_storing.load(relaxed) == true)
+alt NRT_BO detecta parada en\niteración del bucle de\nevaluación de candidatos
+  opt Parada detectada en iteración\nde la espera activa para que\nRT llene buffers\n(RT_storing.load(relaxed) == true)
     NRT ->> RT : RT_storing.store(false, relaxed)
     activate RT
     RT -> RT :  Detecta RT_storing.load(relaxed) == false\nDeja de almacenar datos
     deactivate RT
   end
   NRT -> NRT : throw StopEvaluation()\nBO termina\ncatch fuera de la BO
-else NRT_BO detecta parada en función operator() de StopFunctor\n(entre evaluaciones)
+else NRT_BO detecta parada en función operator()\nde StopFunctor (entre evaluaciones)
   NRT -> NRT : return true\nBO termina
-else NRT_BO en cualquier otro lugar en que se compruebe parada
+else NRT_BO en cualquier otro lugar\nen que se compruebe parada
 end
 
 NRT -> NRT : Detecta stop_BO.load(relaxed) == true
 NRT ->> GUI : invokeMethod("stop_BO_event_async")
 deactivate NRT
-
-== Finalización por parte de la GUI ==
-
 activate GUI
-GUI -> GUI : update_params_gui()
-GUI ->> U : Ve los parámetros del candidato actual
-GUI -> GUI : set_params_read_only(false)
-GUI ->> U : Puede modificar todos los campos
-GUI -> GUI : BO_button->setText("Start BO")
-GUI ->> U : Ve el botón "Start BO" en lugar de "Stop BO"
-GUI -> GUI : BO_running = false
-deactivate GUI
-
-GUI -> NRT: join() del hilo NRT_BO (cuando se vuelva a pulsar "Start BO" o en el destructor de la clase del módulo)
-destroy NRT
 
 @enduml
