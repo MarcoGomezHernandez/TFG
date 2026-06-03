@@ -1,430 +1,507 @@
-% ========================================================================
-% Bibliografía del TFG: Parametrización del modelo de sinapsis química
-%                        para circuitos neuronales biohíbridos
-% ========================================================================
-
-% --- Artículos referenciados en el capítulo de Diseño y Desarrollo ---
-
 @article{Reyes-Sanchez2020,
-  title     = {{Automatic Adaptation of Model Neurons and Connections to Build Hybrid Circuits with Living Networks}},
-  author    = {Reyes-Sanchez, Manuel and Amaducci, Rodrigo and Elices, Irene and Rodriguez, Francisco B. and Varona, Pablo},
-  journal   = {Neuroinformatics},
-  volume    = {18},
-  number    = {3},
-  pages     = {377--393},
-  year      = {2020},
-  publisher = {Springer},
-  doi       = {10.1007/s12021-019-09440-z}
+  author   = {Reyes-Sanchez, Manuel and Amaducci, Rodrigo and Elices, Irene and Rodriguez, Francisco B and Varona, Pablo},
+  title    = {Automatic Adaptation of Model Neurons and Connections to Build Hybrid Circuits with Living Networks.},
+  journal  = {Neuroinformatics},
+  volume   = {18},
+  number   = {3},
+  pages    = {377--393},
+  year     = {2020},
+  month    = {Jun},
+  issn     = {1559-0089},
+  doi      = {10.1007/s12021-019-09440-z},
+  pmid     = {31930463},
+  abstract = {Hybrid circuits built by creating mono- or bi-directional interactions among living cells and model neurons and synapses are an effective way to study neuron, synaptic and neural network dynamics. However, hybrid circuit technology has been largely underused in the context of neuroscience studies mainly because of the inherent difficulty in implementing and tuning this type of interactions. In this paper, we present a set of algorithms for the automatic adaptation of model neurons and connections in the creation of hybrid circuits with living neural networks. The algorithms perform model time and amplitude scaling, real-time drift adaptation, goal-driven synaptic and model tuning/calibration and also automatic parameter mapping. These algorithms have been implemented in RTHybrid, an open-source library that works with hard real-time constraints. We provide validation examples by building hybrid circuits in a central pattern generator. The results of the validation experiments show that the proposed dynamic adaptation facilitates closed-loop communication among living and artificial model neurons and connections, and contributes to characterize system dynamics, achieve control, automate experimental protocols and extend the lifespan of the preparations.},
+  keywords = {Closed-loop neuroscience, Dynamic clamp, Experiment automation, Hybrid circuit real-time dynamic adaptation, Interacting living and model neurons}
 }
 
 @article{Amaducci2019,
-  title     = {{RTHybrid: A Standardized and Open-Source Real-Time Software Model Library for Experimental Neuroscience}},
-  author    = {Amaducci, Rodrigo and Reyes-Sanchez, Manuel and Elices, Irene and Rodriguez, Francisco B. and Varona, Pablo},
-  journal   = {Frontiers in Neuroinformatics},
-  volume    = {13},
-  pages     = {11},
-  year      = {2019},
-  publisher = {Frontiers Media SA},
-  doi       = {10.3389/fninf.2019.00011}
+  author   = {Amaducci, Rodrigo  and Reyes-Sanchez, Manuel  and Elices, Irene  and Rodriguez, Francisco B.  and Varona, Pablo },
+  title    = {RTHybrid: A Standardized and Open-Source Real-Time Software Model Library for Experimental Neuroscience},
+  journal  = {Frontiers in Neuroinformatics},
+  volume   = {13},
+  year     = {2019},
+  url      = {https://www.frontiersin.org/journals/neuroinformatics/articles/10.3389/fninf.2019.00011},
+  doi      = {10.3389/fninf.2019.00011},
+  issn     = {1662-5196},
+  abstract = {Closed-loop technologies provide novel ways of online observation, control and bidirectional interaction with the nervous system, which help to study complex non-linear and partially observable neural dynamics. These protocols are often difficult to implement due to the temporal precision required when interacting with biological components, which in many cases can only be achieved using real-time technology. In this paper we introduce RTHybrid (www.github.com/GNB-UAM/RTHybrid), a free and open-source software that includes a neuron and synapse model library to build hybrid circuits with living neurons in a wide variety of experimental contexts. In an effort to encourage the standardization of real-time software technology in neuroscience research, we compared different open-source real-time operating system patches, RTAI, Xenomai 3 and Preempt-RT, according to their performance and usability. RTHybrid has been developed to run over Linux operating systems supporting both Xenomai 3 and Preempt-RT real-time patches, and thus allowing an easy implementation in any laboratory. We report a set of validation tests and latency benchmarks for the construction of hybrid circuits using this library. With this work we want to promote the dissemination of standardized, user-friendly and open-source software tools developed for open- and closed-loop experimental neuroscience.}
 }
 
 @article{Hindmarsh1984,
-  title     = {{A model of neuronal bursting using three coupled first order differential equations}},
-  author    = {Hindmarsh, J. L. and Rose, R. M.},
-  journal   = {Proceedings of the Royal Society of London. Series B. Biological Sciences},
-  volume    = {221},
-  number    = {1222},
-  pages     = {87--102},
-  year      = {1984},
-  publisher = {The Royal Society},
-  doi       = {10.1098/rspb.1984.0024}
+  author   = {Hindmarsh, J. L. and Rose, R. M.},
+  title    = {A model of neuronal bursting using three coupled first order differential equations},
+  journal  = {Proceedings of the Royal Society of London. B. Biological Sciences},
+  volume   = {221},
+  number   = {1222},
+  pages    = {87-102},
+  year     = {1984},
+  month    = {03},
+  abstract = {We describe a modification to our recent model of the action potential which introduces two additional equilibrium points. By using stability analysis we show that one of these equilibrium points is a saddle point from which there are two separatrices which divide the phase plane into two regions. In one region all phase paths approach a limit cycle and in the other all phase paths approach a stable equilibrium point. A consequence of this is that a short depolarizing current pulse will change an initially silent model neuron into one that fires repetitively. Addition of a third equation limits this firing to either an isolated burst or a depolarizing afterpotential. When steady depolarizing current was applied to this model it resulted in periodic bursting. The equations, which were initially developed to explain isolated triggered bursts, therefore provide one of the simplest models of the more general phenomenon of oscillatory burst discharge.},
+  issn     = {0080-4649},
+  doi      = {10.1098/rspb.1984.0024},
+  url      = {https://doi.org/10.1098/rspb.1984.0024},
+  eprint   = {https://royalsocietypublishing.org/rspb/article-pdf/221/1222/87/173146/rspb.1984.0024.pdf}
 }
 
 @article{Rulkov2002,
-  title     = {{Modeling of spiking-bursting neural behavior using two-dimensional map}},
+  title     = {Modeling of spiking-bursting neural behavior using two-dimensional map},
   author    = {Rulkov, Nikolai F.},
-  journal   = {Physical Review E},
+  journal   = {Phys. Rev. E},
   volume    = {65},
-  number    = {4},
+  issue     = {4},
   pages     = {041922},
+  numpages  = {9},
   year      = {2002},
-  publisher = {APS},
-  doi       = {10.1103/PhysRevE.65.041922}
+  month     = {Apr},
+  publisher = {American Physical Society},
+  doi       = {10.1103/PhysRevE.65.041922},
+  url       = {https://link.aps.org/doi/10.1103/PhysRevE.65.041922}
 }
 
 @article{ReyesSnchez2023,
-  title     = {{Automatized offline and online exploration to achieve a target dynamics in biohybrid neural circuits built with living and model neurons}},
-  author    = {Reyes-Sanchez, Manuel and Amaducci, Rodrigo and Sanchez-Martin, Pablo and Elices, Irene and Rodriguez, Francisco B. and Varona, Pablo},
-  journal   = {Neural Networks},
-  volume    = {164},
-  pages     = {464--475},
-  year      = {2023},
-  publisher = {Elsevier},
-  doi       = {10.1016/j.neunet.2023.04.034}
+  title    = {Automatized offline and online exploration to achieve a target dynamics in biohybrid neural circuits built with living and model neurons},
+  journal  = {Neural Networks},
+  volume   = {164},
+  pages    = {464-475},
+  year     = {2023},
+  issn     = {0893-6080},
+  doi      = {https://doi.org/10.1016/j.neunet.2023.04.034},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0893608023002204},
+  author   = {Manuel Reyes-Sanchez and Rodrigo Amaducci and Pablo Sanchez-Martin and Irene Elices and Francisco B. Rodriguez and Pablo Varona},
+  keywords = {Interacting living and model neurons, Automatic parameterization, Neural sequences, Hybrid neural dynamics, Biohybrid coupling, Neurotechnology},
+  abstract = {Biohybrid circuits of interacting living and model neurons are an advantageous means to study neural dynamics and to assess the role of specific neuron and network properties in the nervous system. Hybrid networks are also a necessary step to build effective artificial intelligence and brain hybridization. In this work, we deal with the automatized online and offline adaptation, exploration and parameter mapping to achieve a target dynamics in hybrid circuits and, in particular, those that yield dynamical invariants between living and model neurons. We address dynamical invariants that form robust cycle-by-cycle relationships between the intervals that build neural sequences from such interaction. Our methodology first attains automated adaptation of model neurons to work in the same amplitude regime and time scale of living neurons. Then, we address the automatized exploration and mapping of the synapse parameter space that lead to a specific dynamical invariant target. Our approach uses multiple configurations and parallel computing from electrophysiological recordings of living neurons to build full mappings, and genetic algorithms to achieve an instance of the target dynamics for the hybrid circuit in a short time. We illustrate and validate such strategy in the context of the study of functional sequences in neural rhythms, which can be easily generalized for any variety of hybrid circuit configuration. This approach facilitates both the building of hybrid circuits and the accomplishment of their scientific goal.}
 }
 
 @article{Golowasch1999,
-  title     = {{Network stability from activity-dependent regulation of neuronal conductances}},
-  author    = {Golowasch, Jorge and Casey, Michael and Abbott, L. F. and Marder, Eve},
-  journal   = {Neural Computation},
-  volume    = {11},
-  number    = {5},
-  pages     = {1079--1096},
-  year      = {1999},
-  publisher = {MIT Press},
-  doi       = {10.1162/089976699300016359}
+  author   = {Golowasch, Jorge and Casey, Michael and Abbott, L. F. and Marder, Eve},
+  title    = {Network Stability from Activity-Dependent Regulation of Neuronal Conductances},
+  journal  = {Neural Computation},
+  volume   = {11},
+  number   = {5},
+  pages    = {1079-1096},
+  year     = {1999},
+  month    = {07},
+  abstract = {Activity-dependent plasticity appears to play an important role in the modification of neurons and neural circuits that occurs during development and learning. Plasticity is also essential for the maintenance of stable patterns of activity in the face of variable environmental and internal conditions. Previous theoretical and experimental results suggest that neurons stabilize their activity by altering the number or characteristics of ion channels to regulate their intrinsic electrical properties. We present both experimental and modeling evidence to show that activity-dependent regulation of conductances, operating at the level of individual neurons, can also stabilize network activity. These results indicate that the stomatogastric ganglion of the crab can generate a characteristic rhythmic pattern of activity in two fundamentally different modes of operation. In one mode, the rhythm is strictly conditional on the presence of neuromodulatory afferents from adjacent ganglia. In the other, it is independent of neuromodulatory input but relies on newly developed intrinsic properties of the component neurons.},
+  issn     = {0899-7667},
+  doi      = {10.1162/089976699300016359},
+  url      = {https://doi.org/10.1162/089976699300016359},
+  eprint   = {https://direct.mit.edu/neco/article-pdf/11/5/1079/814304/089976699300016359.pdf}
 }
 
 @article{Cully2018,
-  title     = {{Limbo: A Flexible High-performance Library for Gaussian Processes modeling and Data-Efficient Optimization}},
-  author    = {Cully, Antoine and Chatzilygeroudis, Konstantinos and Allocati, Federico and Mouret, Jean-Baptiste},
-  journal   = {Journal of Open Source Software},
+  doi       = {10.21105/joss.00545},
+  url       = {https://doi.org/10.21105/joss.00545},
+  year      = {2018},
+  publisher = {The Open Journal},
   volume    = {3},
   number    = {26},
   pages     = {545},
-  year      = {2018},
-  publisher = {The Open Journal},
-  doi       = {10.21105/joss.00545}
+  author    = {Cully, Antoine and Chatzilygeroudis, Konstantinos and Allocati, Federico and Mouret, Jean-Baptiste},
+  title     = {Limbo: A Flexible High-performance Library for Gaussian Processes modeling and Data-Efficient Optimization},
+  journal   = {Journal of Open Source Software}
 }
 
 @article{Fortuna2023,
-  title     = {{Spiking Neuron Mathematical Models: A Compact Overview}},
-  author    = {Fortuna, Luigi and Buscarino, Arturo},
-  journal   = {Bioengineering},
-  volume    = {10},
-  number    = {2},
-  pages     = {234},
-  year      = {2023},
-  publisher = {MDPI}
+  author   = {Fortuna, Luigi and Buscarino, Arturo},
+  title    = {Spiking Neuron Mathematical Models: A Compact Overview.},
+  journal  = {Bioengineering (Basel)},
+  volume   = {10},
+  number   = {2},
+  pages    = {174},
+  year     = {2023},
+  month    = {Jan},
+  issn     = {2306-5354},
+  doi      = {10.3390/bioengineering10020174},
+  pmid     = {36829668},
+  pmc      = {PMC9952045},
+  abstract = {The features of the main models of spiking neurons are discussed in this review. We focus on the dynamical behaviors of five paradigmatic spiking neuron models and present recent literature studies on the topic, classifying the contributions based on the most-studied items. The aim of this review is to provide the reader with fundamental details related to spiking neurons from a dynamical systems point-of-view.},
+  keywords = {neural network, nonlinear dynamics, spiking neuron}
 }
 
 @article{Hodgkin1952,
-  author  = {Hodgkin, Alan L. and Huxley, Andrew F.},
-  title   = {A quantitative description of membrane current and its application to conduction and excitation in nerve},
-  journal = {The Journal of Physiology},
-  volume  = {117},
-  number  = {4},
-  pages   = {500--544},
-  year    = {1952},
-  doi     = {10.1113/jphysiol.1952.sp004764}
+  author   = {HODGKIN, A L and HUXLEY, A F},
+  title    = {A quantitative description of membrane current and its application to conduction and excitation in nerve.},
+  journal  = {The Journal of physiology},
+  volume   = {117},
+  number   = {4},
+  pages    = {500--544},
+  year     = {1952},
+  month    = {Aug},
+  issn     = {0022-3751},
+  doi      = {10.1113/jphysiol.1952.sp004764},
+  pmid     = {12991237},
+  pmc      = {PMC1392413},
+  keywords = {Axons, Humans}
 }
 
-@incollection{Buttazzo2024,
-  title     = {{Real-Time Operating Systems and Standards}},
-  author    = {Buttazzo, Giorgio C.},
-  booktitle = {Hard Real-Time Computing Systems},
-  pages     = {403--456},
-  year      = {2024},
-  publisher = {Springer}
+@incollection{Buttazzo2011,
+  author    = {Buttazzo, Giorgio},
+  year      = {2011},
+  month     = {09},
+  pages     = {419-455},
+  title     = {Real-Time Operating Systems and Standards},
+  booktitle = {Hard Real-Time Computing Systems: Predictable Scheduling Algorithms and Applications},
+  publisher = {Springer},
+  isbn      = {978-1-4614-0675-4},
+  doi       = {10.1007/978-1-4614-0676-1_12}
 }
 
 @phdthesis{Amaducci2022,
-  title  = {{Real-time software technology and its implementation in experimental neuroscience closed-loop protocols}},
-  author = {Amaducci, Rodrigo},
-  school = {Universidad Aut{\'o}noma de Madrid},
-  year   = {2022}
+  title  = {Real-time software technology and its implementation in experimental neuroscience closed-loop protocols},
+  author = {Amaducci Swarc, Rodrigo Vicente},
+  year   = {2023},
+  school = {Universidad Aut{\'o}noma de Madrid}
 }
 
-@misc{Xenomai2024,
-  author       = {{Xenomai Project}},
-  title        = {{Xenomai 3: Real-Time Framework for Linux}},
-  year         = {2024},
-  howpublished = {\url{https://xenomai.org/}},
-  note         = {Accedido: 2025-04-19}
+@article{Xenomai2004,
+  title   = {Xenomai-Implementing a RTOS emulation framework on GNU/Linux},
+  author  = {Gerum, Philippe},
+  journal = {White Paper, Xenomai},
+  volume  = {81},
+  year    = {2004}
 }
 
 @article{Gutenkunst2007,
-  title   = {{Universally Sloppy Parameter Sensitivities in Systems Biology Models}},
-  author  = {Gutenkunst, Ryan N. and Waterfall, Joshua J. and Casey, Fergal P. and Brown, Kevin S. and Myers, Christopher R. and Sethna, James P.},
-  journal = {PLoS Computational Biology},
-  volume  = {3},
-  number  = {10},
-  pages   = {e189},
+  author  = {Gutenkunst, Ryan and Waterfall, Joshua and Casey, Fergal and Brown, Kevin and Myers, Chris and Sethna, James},
   year    = {2007},
+  month   = {11},
+  pages   = {e189},
+  title   = {Universally Sloppy Parameter Sensitivities in Systems Biology Models},
+  volume  = {3},
+  journal = {PLOS Comput Biol},
   doi     = {10.1371/journal.pcbi.0030189}
 }
 
 @article{Pearson1896,
-  title   = {{Mathematical Contributions to the Theory of Evolution. III. Regression, Heredity, and Panmixia}},
-  author  = {Pearson, Karl},
-  journal = {Philosophical Transactions of the Royal Society of London. Series A},
-  volume  = {187},
-  pages   = {253--318},
-  year    = {1896}
+  author   = {Pearson, Karl},
+  title    = {VII. Mathematical contributions to the theory of evolution.—III. Regression, heredity, and panmixia},
+  journal  = {Philosophical Transactions of the Royal Society of London, Series A: Containing Papers of a Mathematical or Physical Character},
+  number   = {187},
+  pages    = {253-318},
+  year     = {1896},
+  month    = {12},
+  abstract = {There are few branches of the Theory of Evolution which appear to the mathematical statistician so much in need of exact treatment as those of Regression, Heredity, and Panmixia. Round the notion of panmixia much obscurity has accumulated, owing to the want of precise definition and quantitative measurement. The problems of regression and heredity have been dealt with by Mr. Francis Galton in his epochmaking work on ‘Natural Inheritance,’ but, although he has shown exact methods of dealing, both experimentally and mathematically, with the problems of inheritance, it does not appear that mathematicians have hitherto developed his treatment, or that biologists and medical men have yet fully appreciated that he has really shown how many of the problems which perplex them may receive at any rate a partial answer. A considerable portion of the present memoir will be devoted to the expansion and fuller development of Mr. Galton’s ideas, particularly their application to the problem of bi-parental inheritance. At the same time I shall endeavour to point out how the results apply to some current biological and medical problems. In the first place, we must definitely free our minds, in the present state of our knowledge of the mechanism of inheritance and reproduction, of any hope of reaching a mathematical relation expressing the degree of correlation between individual parent and individual offspring. The causes in any individual case of inheritance are far too complex to admit of exact treatment; and up to the present the classification of the circumstances under which greater or less degrees of correlation between special groups of parents and offspring may be expected has made but little progress. This is largely owing to a certain prevalence of almost metaphysical speculation as to the causes of heredity, which has usurped the place of that careful collection and elaborate experiment by which alone sufficient data might have been accumulated, with a view to ultimately narrowing and specialising the circumstances under which correlation was measured. We must proceed from inheritance in the mass to inheritance in narrower and narrwoer classes, rather than attempt to build up general rules on the observation of individual instances. Shortly, we must proceed by the method of statistics, rather than by the consideration of typical cases. It may seem discouraging to the medical practitioner, with the problem before him of inheritance in a particular family, to be told that nothing but averages, means, and probabilities with regard to large classes can as yet be scientifically dealt with ; but the very nature of the distribution of variation, whether healthy or morhid, seems to indicate that we are dealing with that sphere of indefinitely numerous small causes, which in so many other instances has shown itself only amenable to the calculus of chance, and not to any analysis of the individual instance. On the other hand, the mathematical theory wall be of assistance to the medical man by answering, inter alia, in its discussion of regression the problem as to the average effect upon the offspring of given degrees of morbid variation in the parents. It may enable the physician, in many cases, to state a belief based on a high degree of probability, if it offers no ground for dogma in individual cases. One of the most noteworthy results of Mr. Francis Galton’s researches is his discovery of the mode in which a population actually reproduces itself by regression and fraternal variation. It is with some expansion and fuller mathematical treatment of these ideas that this memoir commences.},
+  issn     = {0264-3952},
+  doi      = {10.1098/rsta.1896.0007},
+  url      = {https://doi.org/10.1098/rsta.1896.0007},
+  eprint   = {https://royalsocietypublishing.org/rsta/article-pdf/doi/10.1098/rsta.1896.0007/1272707/rsta.1896.0007.pdf}
 }
 
 @article{Butterworth1930,
-  title   = {{On the Theory of Filter Amplifiers}},
-  author  = {Butterworth, S.},
-  journal = {Experimental Wireless \& the Wireless Engineer},
+  title   = {On the theory of filter amplifiers},
+  author  = {Butterworth, Stephen},
+  journal = {Wireless Engineer},
   volume  = {7},
+  number  = {6},
   pages   = {536--541},
-  year    = {1930},
-  month   = oct
+  year    = {1930}
 }
 
 @article{Gustafsson1996,
-  title     = {{Determining the Initial States in Forward-Backward Filtering}},
-  author    = {Gustafsson, Fredrik},
-  journal   = {IEEE Transactions on Signal Processing},
-  volume    = {44},
-  number    = {4},
-  pages     = {988--992},
-  year      = {1996},
-  publisher = {IEEE},
-  doi       = {10.1109/78.492552}
+  author   = {Gustafsson, F.},
+  journal  = {IEEE Transactions on Signal Processing},
+  title    = {Determining the initial states in forward-backward filtering},
+  year     = {1996},
+  volume   = {44},
+  number   = {4},
+  pages    = {988-992},
+  keywords = {Wiener filter;Nonlinear filters;IIR filters;Filtering;Signal processing;Matched filters;Vectors;Application software;Software packages;Computer languages},
+  doi      = {10.1109/78.492552}
 }
 
-@misc{SciPyfiltfilt,
-  author       = {{SciPy Community}},
-  title        = {{{\texttt{scipy.signal.filtfilt}} --- SciPy v1.13.0 Reference Guide}},
-  year         = {2024},
-  howpublished = {\url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html}},
-  note         = {Accedido: 2025-04-19}
+@manual{SciPyfiltfilt,
+  author = {{SciPy Community}},
+  title  = {scipy.signal.filtfilt --- SciPy Documentation},
+  year   = {2024},
+  url    = {https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html},
+  note   = {Accedido: 2026-05-19}
 }
 
 @book{Proakis2007,
-  title     = {{Digital Signal Processing: Principles, Algorithms, and Applications}},
-  author    = {Proakis, John G. and Manolakis, Dimitris G.},
-  edition   = {4},
-  year      = {2007},
-  publisher = {Pearson Prentice Hall},
-  address   = {Upper Saddle River, NJ},
-  isbn      = {978-0-13-187374-2}
+  title     = {Digital Signal Processing: Principles, Algorithms, and Applications},
+  author    = {John G. Proakis and Dimitris G. Manolakis},
+  year      = {1992},
+  publisher = {Macmillan},
+  url       = {https://api.semanticscholar.org/CorpusID:265828805}
 }
 
 @article{Shahriari2016,
-  title     = {{Taking the Human Out of the Loop: A Review of Bayesian Optimization}},
-  author    = {Shahriari, Bobak and Swersky, Kevin and Wang, Ziyu and Adams, Ryan P. and de Freitas, Nando},
-  journal   = {Proceedings of the IEEE},
-  volume    = {104},
-  number    = {1},
-  pages     = {148--175},
-  year      = {2016},
-  publisher = {IEEE},
-  doi       = {10.1109/JPROC.2015.2494218}
+  author   = {Shahriari, Bobak and Swersky, Kevin and Wang, Ziyu and Adams, Ryan P. and de Freitas, Nando},
+  journal  = {Proceedings of the IEEE},
+  title    = {Taking the Human Out of the Loop: A Review of Bayesian Optimization},
+  year     = {2016},
+  volume   = {104},
+  number   = {1},
+  pages    = {148-175},
+  keywords = {Big data;Bayes methods;Linear programming;Decision making;Design of experiments;Optimization;Genomes;Statistical analysis;decision making;design of experiments;optimization;response surface methodology;statistical learning;genomic medicine;Decision making;design of experiments;optimization;response surface methodology;statistical learning},
+  doi      = {10.1109/JPROC.2015.2494218}
 }
 
 @book{Rasmussen2006,
-  title     = {{Gaussian Processes for Machine Learning}},
-  author    = {Rasmussen, Carl Edward and Williams, Christopher K. I.},
-  year      = {2006},
-  publisher = {MIT Press},
-  address   = {Cambridge, MA},
-  isbn      = {978-0-262-18253-9}
+  author = {Rasmussen, Carl and Williams, Christopher},
+  year   = {2005},
+  month  = {11},
+  pages  = {},
+  title  = {Gaussian Processes for Machine Learning},
+  isbn   = {9780262256834},
+  doi    = {10.7551/mitpress/3206.001.0001}
 }
 
 @incollection{Mockus1978,
-  title     = {{The Application of Bayesian Methods for Seeking the Extremum}},
-  author    = {Mockus, Jonas and Tiesis, Vytautas and Zilinskas, Antanas},
-  booktitle = {Towards Global Optimization},
-  volume    = {2},
-  pages     = {117--129},
+  author    = {Mockus, J. and Tiesis, Vytautas and Zilinskas, Antanas},
   year      = {1978},
+  pages     = {117-129},
+  title     = {The application of Bayesian methods for seeking the extremum},
+  volume    = {2},
+  isbn      = {0-444-85171-2},
+  booktitle = {Towards Global Optimization},
   publisher = {North-Holland}
 }
 
 @article{McKay1979,
-  title     = {{A Comparison of Three Methods for Selecting Values of Input Variables in the Analysis of Output from a Computer Code}},
-  author    = {McKay, Michael D. and Beckman, Richard J. and Conover, William J.},
-  journal   = {Technometrics},
-  volume    = {21},
-  number    = {2},
-  pages     = {239--245},
-  year      = {1979},
-  publisher = {Taylor \& Francis},
-  doi       = {10.1080/00401706.1979.10489755}
+  author  = {Mckay, M. and Beckman, Richard and Conover, William},
+  year    = {1979},
+  month   = {05},
+  pages   = {239-245},
+  title   = {A Comparison of Three Methods for Selecting Values of Input Variables in the Analysis of Output From a Computer Code},
+  volume  = {21},
+  journal = {Technometrics},
+  doi     = {10.1080/00401706.1979.10489755}
 }
 
 @inproceedings{Riedmiller1993,
-  title        = {{A Direct Adaptive Method for Faster Backpropagation Learning: The RPROP Algorithm}},
-  author       = {Riedmiller, Martin and Braun, Heinrich},
-  booktitle    = {IEEE International Conference on Neural Networks},
-  pages        = {586--591},
-  year         = {1993},
-  organization = {IEEE},
-  doi          = {10.1109/ICNN.1993.298623}
+  author    = {Riedmiller, M. and Braun, H.},
+  booktitle = {IEEE International Conference on Neural Networks},
+  title     = {A direct adaptive method for faster backpropagation learning: the RPROP algorithm},
+  year      = {1993},
+  volume    = {},
+  number    = {},
+  pages     = {586-591 vol.1},
+  keywords  = {Backpropagation algorithms;Neurons;Acceleration;Supervised learning;Feedforward systems;Computer networks;Convergence;Writing},
+  doi       = {10.1109/ICNN.1993.298623}
 }
 
 @phdthesis{Rowan1990,
-  title  = {{Functional Stability Analysis of Numerical Algorithms}},
-  author = {Rowan, Thomas H.},
-  school = {Department of Computer Sciences, University of Texas at Austin},
-  year   = {1990}
+  title  = {Functional stability analysis of numerical algorithms},
+  author = {Thomas Harvey Rowan},
+  school = {University of Texas at Austin},
+  year   = {1990},
+  url    = {https://api.semanticscholar.org/CorpusID:117559971}
 }
 
 @misc{Johnson2007,
-  author       = {Johnson, Steven G.},
-  title        = {{The NLopt nonlinear-optimization package}},
-  howpublished = {\url{https://github.com/stevengj/nlopt}},
-  note         = {Accedido: 2025-04-19}
+  title        = {The {NLopt} nonlinear-optimization package},
+  author       = {Steven G. Johnson},
+  year         = {2007},
+  howpublished = {\url{https://github.com/stevengj/nlopt}}
 }
 
-@article{pinto2000synaptic,
-  author  = {Pinto, R. D. and Varona, P. and Volkovskii, A. R. and Sz{\H{u}}cs, A. and Abarbanel, H. D. and Rabinovich, M. I.},
-  title   = {Synaptic efficacy and the transmission of complex firing patterns},
-  journal = {Journal of Neurophysiology},
-  volume  = {84},
-  number  = {6},
-  pages   = {3010--3023},
-  year    = {2000}
+@article{Phan2020,
+  title    = {Random attractor for stochastic Hindmarsh-Rose equations with multiplicative noise},
+  journal  = {Discrete and Continuous Dynamical Systems - B},
+  volume   = {25},
+  number   = {8},
+  pages    = {3233--3256},
+  year     = {2020},
+  issn     = {1531-3492},
+  doi      = {10.3934/dcdsb.2020060},
+  url      = {https://www.aimsciences.org/article/id/95b069e6-a1f7-4c63-869a-b4d69c6cdd32},
+  author   = {Phan, Chi},
+  keywords = {Stochastic Hindmarsh-Rose equations, random dynamical system, random attractor, pullback absorbing set, pullback asymptotic compactness},
+  abstract = {The longtime and global pullback dynamics of stochastic Hind-marsh-Rose equations with multiplicative noise on a three-dimensional bounded domain in neurodynamics is investigated in this work. The existence of a random attractor for this random dynamical system is proved through the exponential transformation and uniform estimates showing the pullback absorbing property and the pullback asymptotically compactness of this cocycle in the $ L^2 $ Hilbert space.}
 }
 
 @book{Butcher2016,
-  title     = {{Numerical Methods for Ordinary Differential Equations}},
-  author    = {Butcher, John Charles},
-  edition   = {3},
+  author    = {Butcher, John},
   year      = {2016},
+  month     = {08},
+  pages     = {1-513},
+  title     = {Numerical Methods for Ordinary Differential Equations},
+  isbn      = {9781119121503},
   publisher = {John Wiley \& Sons},
-  address   = {Chichester},
-  isbn      = {978-1-119-12150-3}
+  doi       = {10.1002/9781119121534}
 }
 
-@misc{RTXI2024,
-  author       = {{RTXI Development Team}},
-  title        = {{RTXI: Real-Time eXperiment Interface}},
-  year         = {2024},
-  howpublished = {\url{https://rtxi.org/}},
-  note         = {Accedido: 2025-04-19}
+@article{RTXI2010,
+  author   = {Lin, Risa J and Bettencourt, Jonathan and White, John A. and Christini, David J and Butera, Robert J},
+  title    = {Real-time experiment interface for biological control applications.},
+  journal  = {Annual International Conference of the IEEE Engineering in Medicine and Biology Society},
+  volume   = {2010},
+  pages    = {4160--4163},
+  year     = {2010},
+  issn     = {2375-7477},
+  doi      = {10.1109/IEMBS.2010.5627397},
+  pmid     = {21096883},
+  pmc      = {PMC3647344},
+  abstract = {The Real-time Experiment Interface (RTXI) is a fast and versatile real-time biological experimentation system based on Real-Time Linux. RTXI is open source and free, can be used with an extensive range of experimentation hardware, and can be run on Linux or Windows computers (when using the Live CD). RTXI is currently used extensively for two experiment types: dynamic patch clamp and closed-loop stimulation pattern control in neural and cardiac single cell electrophysiology. RTXI includes standard plug-ins for implementing commonly used electrophysiology protocols with synchronized stimulation, event detection, and online analysis. These and other user-contributed plug-ins can be found on the website (http://www.rtxi.org).},
+  keywords = {Computational Biology, Patch-Clamp Techniques, Programming Languages, User-Computer Interface}
 }
 
 @article{Patel2017,
-  title     = {{Hard real-time closed-loop electrophysiology with the Real-Time eXperiment Interface (RTXI)}},
-  author    = {Patel, Yogi A. and George, Ansel and Dorval, Alan D. and White, John A. and Bhatt, Dora and Bhatt, Ranu and Bhatt, Dorval and Christini, David J. and Butera, Robert J.},
-  journal   = {PLOS Computational Biology},
-  volume    = {13},
-  number    = {5},
-  pages     = {e1005430},
-  year      = {2017},
-  publisher = {Public Library of Science},
-  doi       = {10.1371/journal.pcbi.1005430}
+  title   = {Hard real-time closed-loop electrophysiology with the Real-Time eXperiment Interface (RTXI)},
+  author  = {Yogi A. Patel and Ansel George and Alan D. Dorval and John A. White and David J. Christini and Robert J. Butera},
+  journal = {PLoS Computational Biology},
+  year    = {2017},
+  volume  = {13},
+  url     = {https://api.semanticscholar.org/CorpusID:22190701}
 }
 
 @article{TsodyksMarkram1998,
-  title     = {{Neural Networks with Dynamic Synapses}},
-  author    = {Tsodyks, Misha V. and Pawelzik, Klaus and Markram, Henry},
-  journal   = {Neural Computation},
-  volume    = {10},
-  number    = {4},
-  pages     = {821--835},
-  year      = {1998},
-  publisher = {MIT Press},
-  doi       = {10.1162/089976698300017502}
+  author  = {Tsodyks, Michail and Pawelzik, Klaus and Markram, Henry},
+  year    = {1998},
+  month   = {05},
+  pages   = {821-835},
+  title   = {Neural Networks with Dynamic Synapses},
+  volume  = {10},
+  journal = {Neural Computation},
+  doi     = {10.1162/089976698300017502}
 }
 
 @article{Hansen2001,
-  title     = {{Completely Derandomized Self-Adaptation in Evolution Strategies}},
-  author    = {Hansen, Nikolaus and Ostermeier, Andreas},
-  journal   = {Evolutionary Computation},
-  volume    = {9},
-  number    = {2},
-  pages     = {159--195},
-  year      = {2001},
-  publisher = {MIT Press},
-  doi       = {10.1162/106365601750190398}
+  author   = {Hansen, Nikolaus and Ostermeier, Andreas},
+  journal  = {Evolutionary Computation},
+  title    = {Completely Derandomized Self-Adaptation in Evolution Strategies},
+  year     = {2001},
+  volume   = {9},
+  number   = {2},
+  pages    = {159-195},
+  keywords = {Evolution strategy;self-adaptation;strategy parameter control;step size control;de-randomization;derandomized self-adaptation;covariance matrix adaptation;evolution path;cumulation;cumulative path length control},
+  doi      = {10.1162/106365601750190398}
 }
 
 @article{Nelder1965,
-  title     = {{A Simplex Method for Function Minimization}},
-  author    = {Nelder, J. A. and Mead, R.},
-  journal   = {The Computer Journal},
-  volume    = {7},
-  number    = {4},
-  pages     = {308--313},
-  year      = {1965},
-  publisher = {Oxford University Press},
-  doi       = {10.1093/comjnl/7.4.308}
+  author   = {Nelder, J. A. and Mead, R.},
+  title    = {A Simplex Method for Function Minimization},
+  journal  = {The Computer Journal},
+  volume   = {7},
+  number   = {4},
+  pages    = {308-313},
+  year     = {1965},
+  month    = {01},
+  abstract = {A method is described for the minimization of a function of n variables, which depends on the comparison of function values at the (n + 1) vertices of a general simplex, followed by the replacement of the vertex with the highest value by another point. The simplex adapts itself to the local landscape, and contracts on to the final minimum. The method is shown to be effective and computationally compact. A procedure is given for the estimation of the Hessian matrix in the neighbourhood of the minimum, needed in statistical estimation problems.},
+  issn     = {0010-4620},
+  doi      = {10.1093/comjnl/7.4.308},
+  url      = {https://doi.org/10.1093/comjnl/7.4.308},
+  eprint   = {https://academic.oup.com/comjnl/article-pdf/7/4/308/1013182/7-4-308.pdf}
 }
 
 @inproceedings{Kennedy1995,
-  title        = {{Particle Swarm Optimization}},
-  author       = {Kennedy, James and Eberhart, Russell C.},
-  booktitle    = {Proceedings of the IEEE International Conference on Neural Networks},
-  volume       = {4},
-  pages        = {1942--1948},
-  year         = {1995},
-  organization = {IEEE},
-  doi          = {10.1109/ICNN.1995.488968}
+  author    = {Kennedy, J. and Eberhart, R.},
+  booktitle = {Proceedings of ICNN'95 - International Conference on Neural Networks},
+  title     = {Particle swarm optimization},
+  year      = {1995},
+  volume    = {4},
+  number    = {},
+  pages     = {1942-1948 vol.4},
+  keywords  = {Particle swarm optimization;Birds;Educational institutions;Marine animals;Testing;Humans;Genetic algorithms;Optimization methods;Artificial neural networks;Performance evaluation},
+  doi       = {10.1109/ICNN.1995.488968}
 }
 
 @book{Holland1975,
-  title     = {{Adaptation in Natural and Artificial Systems}},
-  author    = {Holland, John H.},
-  year      = {1975},
+  author    = {John H. Holland},
+  title     = {Adaptation in Natural and Artificial Systems},
+  address   = {Ann Arbor, MI},
   publisher = {University of Michigan Press},
-  address   = {Ann Arbor, MI}
+  url       = {https://mitpress.mit.edu/books/adaptation-natural-and-artificial-systems},
+  year      = {1975}
 }
 
 @article{Destexhe1994,
-  title     = {{Synthesis of Models for Excitable Membranes, Synaptic Transmission and Neuromodulation Using a Common Kinetic Formalism}},
-  author    = {Destexhe, Alain and Mainen, Zachary F. and Bhalla, Upinder S. and Bhalla, Upinder S. and Sejnowski, Terrence J.},
-  journal   = {Journal of Computational Neuroscience},
-  volume    = {1},
-  number    = {3},
-  pages     = {195--230},
-  year      = {1994},
-  publisher = {Springer},
-  doi       = {10.1007/BF00961734}
+  author  = {Destexhe, Alain and Mainen, Zachary and Sejnowski, Terrence},
+  year    = {1994},
+  month   = {01},
+  pages   = {195-230},
+  title   = {Synthesis of models for excitable membranes, synaptic transmission and neuromodulation using a common kinetic formalism},
+  volume  = {1},
+  journal = {Journal of Computational Neuroscience},
+  doi     = {10.1007/BF00961734}
 }
 
 @article{GurelKazanci2007,
-  author    = {Gurel Kazanci, Fatma and Ermentrout, Bard},
-  title     = {Pattern Formation in an Array of Oscillators with Electrical and Chemical Coupling},
-  journal   = {SIAM Journal on Applied Mathematics},
-  year      = {2007},
-  volume    = {67},
-  number    = {2},
-  pages     = {512--529},
-  doi       = {10.1137/060659782}
+  author  = {Kazanci, Fatma and Ermentrout, Bard},
+  year    = {2007},
+  month   = {02},
+  pages   = {512-529},
+  title   = {Pattern Formation in an Array of Oscillators with Electrical and Chemical Coupling},
+  volume  = {67},
+  journal = {SIAM Journal on Applied Mathematics},
+  doi     = {10.1137/060661041}
 }
 
 @article{marder2007understanding,
-  title     = {{Understanding circuit dynamics using the stomatogastric nervous system of lobsters and crabs}},
-  author    = {Marder, Eve and Bucher, Dirk},
-  journal   = {Annual Review of Physiology},
-  volume    = {69},
-  pages     = {291--316},
-  year      = {2007},
-  publisher = {Annual Reviews},
-  doi       = {10.1146/annurev.physiol.69.031905.161516}
+  title   = {Understanding circuit dynamics using the stomatogastric nervous system of lobsters and crabs.},
+  author  = {Eve Marder and Dirk M. Bucher},
+  journal = {Annual review of physiology},
+  year    = {2007},
+  volume  = {69},
+  pages   = {
+             291-316
+             },
+  url     = {https://api.semanticscholar.org/CorpusID:42018740}
 }
 
 @article{Varona2024,
-author = {Varona, P. and Sanchez-Romero, A. and Torres, J.J.},
-journal = {Journal of Computational Neuroscience},
-number = {Suppl 1},
-pages = {P203, S129},
-title = {{Making the Hindmarsh-Rose model adaptable in the slow interburst hyperpolarization dynamics}},
-volume = {52},
-year = {2024},
-doi = {10.1007/s10827-024-00871-5}
+  author  = {Varona, P. and Sanchez-Romero, A. and Torres, J.J.},
+  journal = {Journal of Computational Neuroscience},
+  number  = {Suppl 1},
+  pages   = {P203, S129},
+  title   = {{Making the Hindmarsh-Rose model adaptable in the slow interburst hyperpolarization dynamics}},
+  volume  = {52},
+  year    = {2024},
+  doi     = {10.1007/s10827-024-00871-5}
 }
 
 @article{Selverston2000,
-abstract = {Central pattern generating neurons from the lobster stomatogastric ganglion were analyzed using new nonlinear methods. The LP neuron was found to have only four or five degrees of freedom in the isolated condition and displayed chaotic behavior. We show that this chaotic behavior could be regularized by periodic pulses of negative current injected into the neuron or by coupling it to another neuron via inhibitory connections. We used both a modified Hindmarsh-Rose model to simulate the neurons behavior phenomenologically and a more realistic conductance-based model so that the modeling could be linked to the experimental observations. Both models were able to capture the dynamics of the neuron behavior better than previous models. We used the Hindmarsh-Rose model as the basis for building electronic neurons which could then be integrated into the biological circuitry. Such neurons were able to rescue patterns which had been disabled by removing key biological neurons from the circuit.},
-author = {Selverston, A I and Rabinovich, M I and Abarbanel, H D I and Elson, R and Sz{\"{u}}cs, A and Pinto, R D and Huerta, R and Varona, P},
-doi = {10.1016/S0928-4257(00)01101-3},
-institution = {Institute for Nonlinear Science, University of California, San Diego, 9500 Gilman Drive, La Jolla, CA 92093-0402, USA. aselverston@ucsd.edu},
-journal = {Journal of Physiology-Paris},
-keywords = {Animals,Ganglia,Invertebrate,Models,Nephropidae,Nerve Net,Neurological,Neurons,Nonlinear Dynamics,Synapses,Synaptic Transmission,physiology},
-number = {5-6},
-pages = {357--374},
-title = {{Reliable circuits from irregular neurons: a dynamical approach to understanding central pattern generators}},
-url = {http://dx.doi.org/10.1016/S0928-4257(00)01101-3},
-volume = {94},
-year = {2000}
+  abstract    = {Central pattern generating neurons from the lobster stomatogastric ganglion were analyzed using new nonlinear methods. The LP neuron was found to have only four or five degrees of freedom in the isolated condition and displayed chaotic behavior. We show that this chaotic behavior could be regularized by periodic pulses of negative current injected into the neuron or by coupling it to another neuron via inhibitory connections. We used both a modified Hindmarsh-Rose model to simulate the neurons behavior phenomenologically and a more realistic conductance-based model so that the modeling could be linked to the experimental observations. Both models were able to capture the dynamics of the neuron behavior better than previous models. We used the Hindmarsh-Rose model as the basis for building electronic neurons which could then be integrated into the biological circuitry. Such neurons were able to rescue patterns which had been disabled by removing key biological neurons from the circuit.},
+  author      = {Selverston, A I and Rabinovich, M I and Abarbanel, H D I and Elson, R and Sz{\"{u}}cs, A and Pinto, R D and Huerta, R and Varona, P},
+  doi         = {10.1016/S0928-4257(00)01101-3},
+  institution = {Institute for Nonlinear Science, University of California, San Diego, 9500 Gilman Drive, La Jolla, CA 92093-0402, USA. aselverston@ucsd.edu},
+  journal     = {Journal of Physiology-Paris},
+  keywords    = {Animals,Ganglia,Invertebrate,Models,Nephropidae,Nerve Net,Neurological,Neurons,Nonlinear Dynamics,Synapses,Synaptic Transmission,physiology},
+  number      = {5-6},
+  pages       = {357--374},
+  title       = {{Reliable circuits from irregular neurons: a dynamical approach to understanding central pattern generators}},
+  volume      = {94},
+  year        = {2000}
 }
 
 @article{Elices2019,
-abstract = {By studying different sources of temporal variability in central pattern generator (CPG) circuits, we unveil fundamental aspects of the instantaneous balance between flexibility and robustness in sequential dynamics -a property that characterizes many systems that display neural rhythms. Our analysis of the triphasic rhythm of the pyloric CPG (Carcinus maenas) shows strong robustness of transient dynamics in keeping not only the activation sequences but also specific cycle-by-cycle temporal relationships in the form of strong linear correlations between pivotal time intervals, i.e. dynamical invariants. The level of variability and coordination was characterized using intrinsic time references and intervals in long recordings of both regular and irregular rhythms. Out of the many possible combinations of time intervals studied, only two cycle-by-cycle dynamical invariants were identified, existing even outside steady states. While executing a neural sequence, dynamical invariants reflect constraints to optimize functionality by shaping the actual intervals in which activity emerges to build the sequence. Our results indicate that such boundaries to the adaptability arise from the interaction between the rich dynamics of neurons and connections. We suggest that invariant temporal sequence relationships could be present in other networks, including those shaping sequences of functional brain rhythms, and underlie rhythm programming and functionality.},
-author = {Elices, Irene and Levi, Rafael and Arroyo, David and Rodriguez, F.B. Francisco B and Varona, Pablo},
-doi = {10.1038/s41598-019-44953-2},
-issn = {2045-2322},
-journal = {Scientific Reports},
-number = {1},
-pages = {9048},
-title = {{Robust dynamical invariants in sequential neural activity}},
-url = {https://doi.org/10.1038/s41598-019-44953-2},
-volume = {9},
-year = {2019}
+  abstract = {By studying different sources of temporal variability in central pattern generator (CPG) circuits, we unveil fundamental aspects of the instantaneous balance between flexibility and robustness in sequential dynamics -a property that characterizes many systems that display neural rhythms. Our analysis of the triphasic rhythm of the pyloric CPG (Carcinus maenas) shows strong robustness of transient dynamics in keeping not only the activation sequences but also specific cycle-by-cycle temporal relationships in the form of strong linear correlations between pivotal time intervals, i.e. dynamical invariants. The level of variability and coordination was characterized using intrinsic time references and intervals in long recordings of both regular and irregular rhythms. Out of the many possible combinations of time intervals studied, only two cycle-by-cycle dynamical invariants were identified, existing even outside steady states. While executing a neural sequence, dynamical invariants reflect constraints to optimize functionality by shaping the actual intervals in which activity emerges to build the sequence. Our results indicate that such boundaries to the adaptability arise from the interaction between the rich dynamics of neurons and connections. We suggest that invariant temporal sequence relationships could be present in other networks, including those shaping sequences of functional brain rhythms, and underlie rhythm programming and functionality.},
+  author   = {Elices, Irene and Levi, Rafael and Arroyo, David and Rodriguez, F.B. Francisco B and Varona, Pablo},
+  doi      = {10.1038/s41598-019-44953-2},
+  issn     = {2045-2322},
+  journal  = {Scientific Reports},
+  number   = {1},
+  pages    = {9048},
+  title    = {{Robust dynamical invariants in sequential neural activity}},
+  url      = {https://doi.org/10.1038/s41598-019-44953-2},
+  volume   = {9},
+  year     = {2019}
+}
+
+@incollection{Torres2012,
+  abstract  = {{\textcopyright} Springer-Verlag Berlin Heidelberg 2012. All rights are reserved. In recent years, many new experimental studies on emerging phenomena in neural systems have been reported. The high efficiency of living neural systems to encode, process, and learn information has stimulated an increased interest among theoreticians in developing mathematical approaches and tools to model biological neural networks. In this chapter we review some of the most popular models of neurons and neural networks that help us understand how living systems perform information processing. Beyond the fundamental goal of understanding the function of the nervous system, the lessons learned from these models can also be used to build bio-inspired paradigms of artificial intelligence and robotics.},
+  address   = {Berlin, Heidelberg},
+  author    = {Torres, Joaquin J. and Varona, Pablo},
+  booktitle = {Handbook of Natural Computing},
+  doi       = {10.1007/978-3-540-92910-9_17},
+  file      = {:C\:/Users/Pablo/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Torres, Varona - 2012 - Modeling Biological Neural Networks.pdf:pdf},
+  isbn      = {9783540929109},
+  pages     = {533--564},
+  publisher = {Springer},
+  title     = {{Modeling Biological Neural Networks}},
+  volume    = {1-4},
+  year      = {2012}
+}
+
+@article{Sharp1993a,
+  title       = {{Dynamic clamp: computer-generated conductances in real neurons.}},
+  year        = {1993},
+  journal     = {J Neurophysiol},
+  author      = {Sharp, A A and O'Neil, M B and Abbott, L F and Marder, E},
+  number      = {3},
+  month       = {3},
+  pages       = {992--995},
+  volume      = {69},
+  institution = {Department of Biology, Brandeis University, Waltham, Massachusetts 02254.},
+  keywords    = {Animals; Axons, Cultured; Computer Simulation; Electric Stimulati, Neurological; Neural Conduction, instrumentation; Ganglia, physiology, physiology; Brachyura; Cells, physiology; Membrane Potentials, physiology; Microelectrodes; Models, physiology; Neural Networks (Computer); Synapses}
 }

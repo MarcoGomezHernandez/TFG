@@ -182,7 +182,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 \vspace{36pt}
 \lstinputlistingwrap[
     caption={[Cálculo del paso de integración y el factor de submuestreo para el escalado temporal en la versión \textit{offline}]%
-            Cálculo del los puntos por periodo de la señal biológica mediante histéresis y algoritmo de selección del paso de integración óptimo ($dt$) para el modelo neuronal, así como el factor de submuestreo correspondiente, garantizando la sincronización temporal entre las neuronas.},
+            Cálculo de los puntos por periodo de la señal biológica mediante histéresis y algoritmo de selección del paso de integración óptimo ($dt$) para el modelo neuronal, así como el factor de submuestreo correspondiente, garantizando la sincronización temporal entre las neuronas.},
     label=COD:TIME_SCALING_OFFLINE,
     firstline=163, lastline=262, firstnumber=163,
 ]{codigos/offline/scaling.cpp}
@@ -255,7 +255,7 @@ En este apéndice se recogen los fragmentos de código fuente más relevantes re
 \vspace{36pt}
 \lstinputlistingwrap[
     caption={[Lanzamiento y parada del hilo \acl{nrt} en la versión \textit{online}]%
-            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la \ac{gui}. Si la \ac{bo} no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí corriendo, señaliza su parada mediante una variable atómica.},
+            Función \texttt{toggle\_BO\_event} invocada al pulsar el botón de la \ac{gui}. Si la \ac{bo} no estaba corriendo, lanza el hilo \ac{nrt} para realizarla (haciendo \texttt{join} al anterior si lo había); y si sí estaba corriendo, señaliza su parada mediante una variable atómica.},
     label=COD:TOGGLE_BO,
     firstline=657, lastline=681, firstnumber=657,
 ]{codigos/online/bidirectional_chemical_synapse_BO.cpp}

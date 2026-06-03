@@ -1,7 +1,7 @@
 \newacronym{gnb}{GNB}{Grupo de Neurocomputación Biológica}
 \newacronym{uam}{UAM}{Universidad Autónoma de Madrid}
 \newacronym{gp}{GP}{\textit{Gaussian Process}}
-\newacronym{se}{SE}{\textit{Squared Exponential Kernel}}
+\newacronym{se}{SE}{\textit{Squared Exponential}}
 \newacronym{ard}{ARD}{\textit{Automatic Relevance Determination}}
 \newacronym{ei}{EI}{\textit{Expected Improvement}}
 \newacronym{lhs}{LHS}{\textit{Latin Hypercube Sampling}}
@@ -21,17 +21,17 @@
 \newacronym{cmaes}{CMA-ES}{\textit{Covariance Matrix Adaptation Evolution Strategy}}
 \newacronym{cpg}{CPG}{\textit{Central Pattern Generator}}
 \newacronym{rtos}{RTOS}{\textit{\acl{rt} Operating System}}
-\newacronym{bo}{BO}{\textit{Bayesian optimization}}
+\newacronym{bo}{BO}{\textit{Bayesian Optimization}}
 \newacronym{hr}{HR}{Hindmarsh-Rose}
 
 
-La construcción de circuitos neuronales computacionales y biohíbridos, en los que neuronas biológicas y modelos computacionales interactúan en \ac{rt}, exige sinapsis artificiales cuyos parámetros reproduzcan la dinámica de acoplamiento deseada. La parametrización de estos modelos sinápticos constituye un problema de optimización complejo, debido al elevado número de parámetros, su acoplamiento y la variabilidad inherente a cada preparación biológica, lo que hace la parametrización manual lenta e inasumible cuando el tiempo de vida de la preparación es limitado. El presente trabajo aborda este reto mediante un algoritmo de parametrización automática del modelo de sinapsis química de \cite{Golowasch1999}, adaptable a cada experimento y capaz de alcanzar dinámicas de acoplamiento específicas con comportamiento sináptico realista en un tiempo razonable.
+La construcción de circuitos neuronales computacionales y biohíbridos, en los que neuronas biológicas y modelos computacionales interactúan en tiempo real, \ac{rt}, exige sinapsis artificiales cuyos parámetros reproduzcan la dinámica de acoplamiento deseada. La parametrización de estos modelos sinápticos constituye un problema de optimización complejo, debido al elevado número de parámetros, su acoplamiento y la variabilidad inherente a cada preparación biológica, lo que hace la parametrización manual lenta e inasumible cuando el tiempo de vida de la preparación es limitado. El presente trabajo aborda este reto mediante un algoritmo de parametrización automática del modelo de sinapsis química de \cite{Golowasch1999}, adaptable a cada experimento y capaz de alcanzar dinámicas de acoplamiento específicas con comportamiento sináptico realista en un tiempo razonable.
 
 \section{Motivación del trabajo\label{SEC:MOTIVACION}}
 
 Los circuitos neuronales biohíbridos permiten estudiar la dinámica neuronal bajo condiciones controladas, conectando neuronas biológicas con modelos computacionales en \ac{rt} mediante sinapsis artificiales cuyos parámetros determinan la naturaleza, intensidad y temporalidad del acoplamiento.
 
-Encontrar una parametrización adecuada para cada experimento no es trivial: cada preparación biológica presenta características electrofisiológicas distintas, con que los parámetros válidos en un experimento no son necesariamente trasladables a otro. Esta dificultad se acentúa con modelos detallados como el de sinapsis química de \cite{Golowasch1999}, cuyo espacio de parámetros presenta un notable acoplamiento que causa el fenómeno \textit{parameter sloppiness} \cite{Gutenkunst2007} (múltiples combinaciones producen respuestas similares). Dado que la parametrización debe repetirse en cada experimento, la lentitud del ajuste manual resulta perjudicial para preparaciones de vida limitada, por lo que se necesitan métodos de búsqueda automática eficientes y adaptados a esta problemática.
+Encontrar una parametrización adecuada para cada experimento no es trivial: cada preparación biológica presenta características electrofisiológicas distintas, por lo que los parámetros válidos en un experimento no son necesariamente trasladables a otro. Esta dificultad se acentúa con modelos detallados como el de sinapsis química de \cite{Golowasch1999}, cuyo espacio de parámetros presenta un notable acoplamiento que causa el fenómeno \textit{parameter sloppiness} \cite{Gutenkunst2007} (múltiples combinaciones producen respuestas similares). Dado que la parametrización debe repetirse en cada experimento, la lentitud del ajuste manual resulta perjudicial para preparaciones de vida limitada, por lo que se necesitan métodos de búsqueda automática eficientes y adaptados a esta problemática.
 
 Este problema es de especial interés para las líneas de investigación del \ac{gnb} de la \ac{uam}. Motivados por esta necesidad experimental, el presente trabajo tiene como objetivo estudiar este modelo de sinapsis \cite{Golowasch1999} y desarrollar un algoritmo automático para parametrizarlo que se adapte a cada experimento para lograr dinámicas de acoplamiento específicas (fase o antifase) con un comportamiento sináptico realista y en un tiempo razonable.
 
@@ -42,7 +42,7 @@ Para contextualizar el problema que se aborda en este trabajo, esta sección pre
 
 \subsection{Modelo neuronal\label{SS:MODELONEURONAL}}
 
-Un modelo neuronal es una descripción matemática que reproduce el comportamiento eléctrico de una neurona. Estos modelos capturan los patrones de actividad eléctrica característicos, como el disparo de potenciales de acción (\textit{spikes}) y las ráfagas de actividad (\textit{bursting}), en las que secuencias de \textit{spikes} se agrupan sobre una oscilación lenta del potencial de membrana. La elección del modelo neuronal implica un compromiso entre fidelidad biofísica y coste computacional: modelos detallados como el de Hodgkin-Huxley \cite{Hodgkin1952} describen con precisión las corrientes iónicas individuales, mientras que modelos fenomenológicos como el de \ac{hr} \cite{Hindmarsh1984} o el mapa de Rulkov \cite{Rulkov2002} utilizan formulaciones simplificadas que reproducen los patrones cualitativos de disparo con menor coste \cite{Fortuna2023}.
+Un modelo neuronal es una descripción matemática que reproduce el comportamiento eléctrico de una neurona. Estos modelos capturan los patrones de actividad eléctrica característicos, como el disparo de potenciales de acción (\textit{spikes}) y las ráfagas de actividad (\textit{bursting}), en las que secuencias de \textit{spikes} se agrupan sobre una oscilación lenta del potencial de membrana. La elección del modelo neuronal implica un compromiso entre fidelidad biofísica y coste computacional \cite{Torres2012}: modelos detallados como el de Hodgkin-Huxley \cite{Hodgkin1952} describen con precisión las corrientes iónicas individuales, mientras que modelos fenomenológicos como el de \ac{hr} \cite{Hindmarsh1984} o el mapa de Rulkov \cite{Rulkov2002} utilizan formulaciones simplificadas que reproducen los patrones cualitativos de disparo con menor coste \cite{Fortuna2023}.
 
 \subsection{Modelos de sinapsis\label{SS:MODELOSINAPSIS}}
 
@@ -50,11 +50,11 @@ Un modelo de sinapsis describe matemáticamente la transmisión de señales entr
 
 \subsection{Circuitos biohíbridos\label{SS:CIRCUITOBIOHIBRIDO}}
 
-Un circuito biohíbrido conecta neuronas biológicas con modelos computacionales mediante sinapsis artificiales en \textit{software}. La técnica de \textit{Dynamic Clamp} \cite{Patel2017, Amaducci2019, Reyes-Sanchez2020} permite esta interacción en lazo cerrado: el sistema adquiere el voltaje de la neurona viva, calcula los modelos sinápticos y neuronales, e inyecta la corriente resultante en la neurona viva de nuevo.
+Un circuito biohíbrido conecta neuronas biológicas con modelos computacionales mediante sinapsis artificiales en \textit{software}. La técnica de \textit{Dynamic Clamp} \cite{Sharp1993a, Patel2017, Amaducci2019, Reyes-Sanchez2020} permite implementar esta interacción en lazo cerrado: el sistema adquiere el voltaje de la neurona viva, calcula los modelos sinápticos y neuronales, e inyecta la corriente resultante en la neurona viva de nuevo.
 
 \subsection{\acl{hrt} (\acs{hrt})\label{SS:TIEMPOREAL}}
 
-Las neuronas biológicas operan con regímenes temporales muy precisos, en escalas de milisegundos a segundos. Para que la interacción biohíbrida sea válida, el sistema de \textit{Dynamic Clamp} debe completar el cálculo de la corriente sináptica a inyectar en la neurona viva dentro de cada periodo de muestreo. Esto requiere ejecutar el software sobre un \ac{rtos} que garantice plazos temporales estrictos \cite{Buttazzo2024, Patel2017, Amaducci2019}. Esta restricción limita la complejidad computacional admisible de los modelos y algoritmos.
+Las neuronas biológicas operan con regímenes temporales muy precisos, en escalas de milisegundos a segundos. Para que la interacción biohíbrida sea válida, el sistema de \textit{Dynamic Clamp} debe completar el cálculo de la corriente sináptica a inyectar en la neurona viva dentro de cada periodo de muestreo. Esto requiere ejecutar el software sobre un \ac{rtos} que garantice plazos temporales estrictos \cite{Buttazzo2011, Patel2017, Amaducci2019}. Esta restricción limita la complejidad computacional admisible de los modelos y algoritmos.
 
 \subsection{Optimización de parámetros\label{SS:OPTIMIZACION}}
 
@@ -62,7 +62,7 @@ La parametrización automática de un modelo se formula como un problema de opti
 
 \section{Estado del Arte\label{SEC:ESTADODELARTE}}
 
-Esta sección revisa las principales herramientas y técnicas existentes relevantes: modelos de sinapsis, sistemas de \ac{rt} y algoritmos de optimización de caja negra.
+Esta sección revisa las principales herramientas y técnicas existentes relevantes para los circuitos biohíbridos: modelos de sinapsis, sistemas de \ac{rt} y algoritmos de optimización de caja negra.
 
 \subsection{Modelos de sinapsis\label{SS:MODELOS_SINAPSIS}}
 
@@ -70,23 +70,23 @@ A continuación se presentan los principales modelos de sinapsis, ordenados de m
 
 \subsubsection{Sinapsis eléctricas}
 
-La sinapsis eléctrica modela la conexión directa entre neuronas a través de uniones comunicantes (\textit{gap junctions}) \cite{GurelKazanci2007}, formalizándose como una conductancia lineal: $I_{\mathrm{gap}} = g_{\mathrm{gap}} \cdot (V_{\mathrm{post}} - V_{\mathrm{pre}})$. Ofrece simplicidad computacional y transmisión bidireccional instantánea, pero carece de la flexibilidad funcional de las sinapsis químicas: no distingue entre excitación e inhibición, no introduce filtrado frecuencial y no reproduce la riqueza dinámica (modulación, plasticidad, selectividad temporal) observada en la mayoría de conexiones biológicas.
+La sinapsis eléctrica modela la conexión directa entre neuronas a través de uniones comunicantes (\textit{gap junctions}) \cite{GurelKazanci2007}, formalizándose como una conductancia lineal: $I_{\mathrm{gap}} = g_{\mathrm{gap}} \cdot (V_{\mathrm{post}} - V_{\mathrm{pre}})$. Ofrece simplicidad computacional y transmisión bidireccional instantánea, pero carece de la flexibilidad funcional de las sinapsis químicas: no distingue entre excitación e inhibición, no introduce filtrado frecuencial y no reproduce la riqueza dinámica (modulación, plasticidad, selectividad temporal) observada en la mayoría de conexiones químicas biológicas.
 
 \subsubsection{Modelos cinéticos de sinapsis químicas}
 
-Estos modelos describen la transmisión sináptica mediante ecuaciones que relacionan el potencial presináptico con la apertura de canales postsinápticos. El modelo de \cite{Destexhe1994} formula la cinética de unión del neurotransmisor al receptor como un sistema de primer orden. El de \cite{Golowasch1999}, empleado en este trabajo, separa la corriente en dos componentes (rápida y lenta) con cinéticas diferenciadas, capturando la transmisión mediada por \textit{spikes} (solos o junto con a onda lenta) y la transmisión graduada sobre la onda lenta. Ofrecen gran flexibilidad para reproducir comportamientos excitatorios e inhibitorios y ajustar independientemente la respuesta a distintas bandas frecuenciales, a costa de un mayor número de parámetros, algunos acoplados, que dificultan su ajuste manual.
+Estos modelos describen la transmisión sináptica mediante ecuaciones que relacionan el potencial presináptico con la apertura de canales postsinápticos. El modelo de \cite{Destexhe1994} formula la cinética de unión del neurotransmisor al receptor como un sistema de primer orden. El de \cite{Golowasch1999}, empleado en este trabajo, separa la corriente en dos componentes (rápida y lenta) con cinéticas diferenciadas, capturando la transmisión mediada por \textit{spikes} (solos o junto con la onda lenta) y la transmisión gradual sobre la onda lenta. Ofrecen gran flexibilidad para reproducir comportamientos excitatorios e inhibitorios y ajustar independientemente la respuesta a distintas bandas frecuenciales, a costa de un mayor número de parámetros, algunos acoplados, que dificultan su ajuste manual.
 
 \subsubsection{Modelos con plasticidad sináptica a corto plazo}
 
 Los modelos de plasticidad a corto plazo, como el de Tsodyks-Markram \cite{TsodyksMarkram1998}, incorporan facilitación y depresión que modifican dinámicamente la eficacia sináptica según la actividad presináptica reciente, lo que permite capturar fenómenos como la adaptación a estímulos repetidos. Su complejidad añadida no resulta necesaria para este trabajo, cuyo objetivo es reproducir una dinámica de acoplamiento estacionaria sin requerir que la fuerza sináptica varíe con la historia de la actividad.
 
-\subsubsection{Modelo de corrientes graduadas rápida y lenta}
+\subsubsection{Modelo de corrientes graduales rápida y lenta}
 
-El modelo empleado en este trabajo es el de \cite{Golowasch1999}, diseñado para describir sinapsis graduadas en el ganglio estomatogástrico de crustáceos. Su formulación con dos componentes (rápida y lenta) permite reconstruir modularmente la corriente sináptica aislando las contribuciones de alta frecuencia (\textit{spikes}) o la onda completa, y baja frecuencia  (onda lenta) de la señal presináptica. Esta separación frecuencial facilita la adaptación del acoplamiento a cada preparación experimental. Su formulación matemática se detalla en la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA}.
+El modelo empleado en este trabajo es el de Golowasch et al. \cite{Golowasch1999}, diseñado para describir sinapsis graduales en el ganglio estomatogástrico de crustáceos. Su formulación con dos componentes (rápida y lenta) permite reconstruir modularmente la corriente sináptica aislando las contribuciones de alta frecuencia (\textit{spikes}) o la onda completa, y baja frecuencia  (onda lenta) de la señal presináptica. Esta separación frecuencial facilita la adaptación del acoplamiento a cada preparación experimental. Su formulación matemática se detalla en la Sección~\ref{SUBSEC:SINAPSIS_QUIMICA}.
 
 \subsection{Sistemas y herramientas de \acl{rt}\label{SS:SISTEMAS_RT}}
 
-La construcción de circuitos biohíbridos requiere plataformas con garantías de \ac{hrt}. \ac{rtxi} \cite{RTXI2024} es una plataforma de código abierto para \textit{Dynamic Clamp} que opera sobre un \ac{rtos} basado en un \textit{kernel} Linux parcheado con extensiones de \ac{hrt} como Xenomai \cite{Xenomai2024} (en este caso). Proporciona un entorno donde cada funcionalidad se implementa como un módulo independiente ejecutado periódicamente en el hilo de \ac{rt}, permitiendo componer circuitos combinando módulos. \ac{rthybrid} para \ac{rtxi} \cite{Amaducci2019} complementa esta plataforma con módulos para modelos neuronales, escalado de señales y análisis de \textit{bursts} \cite{Reyes-Sanchez2020}, y dispone de una versión \textit{standalone} independiente de \ac{rtxi}.
+La construcción de circuitos biohíbridos requiere plataformas con garantías de \ac{hrt}. \ac{rtxi} \cite{RTXI2010} es una plataforma de código abierto para \textit{Dynamic Clamp} que opera sobre un \ac{rtos} basado en un \textit{kernel} Linux parcheado con extensiones de \ac{hrt} como Xenomai \cite{Xenomai2004} (en este caso). Proporciona un entorno donde cada funcionalidad se implementa como un módulo independiente ejecutado periódicamente en el hilo de \ac{rt}, permitiendo componer circuitos combinando módulos. \ac{rthybrid} para \ac{rtxi} \cite{Amaducci2019} complementa esta plataforma con módulos para modelos neuronales, escalado de señales y análisis de \textit{bursts} \cite{Reyes-Sanchez2020}, y dispone de una versión \textit{standalone} independiente de \ac{rtxi}.
 
 \subsection{Algoritmos de optimización de caja negra\label{SS:ALGORITMOS_OPTIMIZACION}}
 
@@ -106,7 +106,7 @@ Los algoritmos genéticos \cite{Holland1975} mantienen una población de solucio
 
 \subsubsection{\acl{cmaes} (\acs{cmaes})}
 
-\ac{cmaes} \cite{Hansen2001}es una estrategia evolutiva que adapta iterativamente la matriz de covarianza de una distribución normal multivariante para dirigir la búsqueda. Destaca por aprender la estructura de correlaciones: identifica direcciones \textit{stiff} y \textit{sloppy}, concentrando la búsqueda en las primeras, haciéndolo apto para el \textit{parameter sloppiness}. Sin embargo, requiere muchas evaluaciones para adaptar la matriz (coste creciente con la dimensionalidad), haciéndolo inadecuado para casos con neuronas vivas, donde cada evaluación es lenta.
+\ac{cmaes} \cite{Hansen2001} es una estrategia evolutiva que adapta iterativamente la matriz de covarianza de una distribución normal multivariante para dirigir la búsqueda. Destaca por aprender la estructura de correlaciones: identifica direcciones \textit{stiff} y \textit{sloppy}, concentrando la búsqueda en las primeras, haciéndolo apto para el \textit{parameter sloppiness}. Sin embargo, requiere muchas evaluaciones para adaptar la matriz (coste creciente con la dimensionalidad), haciéndolo inadecuado para casos con neuronas vivas, donde cada evaluación es lenta.
 
 \subsubsection{\acl{bo} (\acs{bo})}
 
@@ -114,12 +114,12 @@ La \ac{bo} \cite{Shahriari2016} construye un modelo probabilístico subrogado de
 
 \section{Objetivos\label{SEC:OBJETIVOS}}
 
-A partir de los antecedentes expuestos, el objetivo principal es estudiar la parametrización del modelo de sinapsis química de \cite{Golowasch1999}, desarrollando un algoritmo que la automatice adaptándose a cada experimento para alcanzar dinámicas de acoplamiento específicas (fase o antifase) con un comportamiento sináptico realista. Los objetivos específicos son:
+A partir de los antecedentes expuestos, el objetivo principal de este trabajo es estudiar la parametrización del modelo de sinapsis química de \cite{Golowasch1999}, desarrollando un algoritmo que la automatice adaptándose a cada experimento para alcanzar dinámicas de acoplamiento específicas (fase o antifase) con un comportamiento sináptico realista. Los objetivos específicos son:
 
 \begin{enumerate}
     \item Diseñar e implementar una función de evaluación que cuantifique la calidad de una parametrización sináptica considerando tanto la morfología como el rango de la corriente generada.
     \item Configurar y adaptar el algoritmo de optimización (\ac{bo}) al espacio de parámetros del modelo sináptico, incorporando mecanismos para mitigar el \textit{parameter sloppiness} inherente al problema.
     \item Desarrollar una implementación \textit{offline} que permita la parametrización rápida sobre señales pregrabadas usando una interacción unidireccional, facilitando la depuración y validación del algoritmo.
-    \item Desarrollar un módulo \textit{online} integrado en \ac{rtxi} que ejecute la optimización en \ac{rt} durante el experimento, compatible con interacciones bidireccionales en circuitos computacionales y biohíbridos.
+    \item Desarrollar un módulo \textit{online} integrado en \ac{rtxi} que ejecute la optimización en \ac{rt} durante el experimento, compatible con interacciones bidireccionales en modelos y en circuitos biohíbridos.
     \item Validar ambas implementaciones verificando que producen parametrizaciones que generan corrientes sinápticas con la morfología y escala esperadas en un tiempo razonable, así como comprobando la corrección del proceso de optimización.
 \end{enumerate}
