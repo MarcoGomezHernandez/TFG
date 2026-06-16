@@ -290,7 +290,7 @@
 
 
 \begin{frame}{Función de evaluación de params.}
-    Altas y bajas \textbf{frec. de} $\boldsymbol{V_{\mathrm{pre}}}$ como \textbf{ref. de corrientes (corrientes realistas)} $\to$ \textbf{filtro Butterworth paso bajo sobre} $\boldsymbol{V_{\mathrm{pre}}}$ (lib. KFR)
+    Altas y bajas \textbf{frec. de} $\boldsymbol{V_{\mathrm{pre}}}$ como \textbf{ref. de corrientes (corrientes realistas)} en \textbf{intervalo} $\to$ \textbf{filtro Butterworth paso bajo sobre} $\boldsymbol{V_{\mathrm{pre}}}$ (lib. KFR)
     \vspace{-1em}
     \begin{center}
         \begin{columns}[t]
@@ -312,12 +312,8 @@
                     \end{equation*}
                     \begin{itemize}
                         \item En $\boldsymbol{[-\infty, 1]}$, normalmente $\ge 0$
-                        \item \textbf{Extremos objetivo}:
-                              \begin{itemize}
-                                  \small
-                                  \item Si \textbf{una componente de corriente}: usuario
-                                  \item Si \textbf{ambas}: usuario, escalados con ref. (componente rápida con amplitud; lenta, amplitud + offset)
-                              \end{itemize}
+                        \item \textbf{Extremos objetivo} del usuario
+                        \item Componente \textbf{rápida con amplitud}; \textbf{lenta, amplitud + offset}
                     \end{itemize}
                 \end{block}
             \end{column}
@@ -368,17 +364,12 @@
 
 \begin{frame}{Escalado de señal presináptica de Reyes-Sanchez\footnote{M. Reyes-Sanchez et al., \textit{Neuroinformatics}, 2020.}}
     Neurona \textbf{HR} en \textbf{unidades adimensionales} de amplitud y tiempo; \textbf{viva}, en \textbf{reales}
-    \vspace{-1em}
     \begin{columns}[t]
         \begin{column}{0.48\textwidth}
             \begin{block}{Escalado de amplitud}
-                \vspace{-1em}
+                Calcular \textbf{factor} y \textbf{offset} para
                 \begin{equation*}
-                    \begin{aligned}
-                        \mathrm{factor} & = \frac{\Delta V_{\mathrm{model}}}{\Delta V_{\mathrm{real}}}               \\
-                        \mathrm{offset} & = V_{\mathrm{model,}\min} - (V_{\mathrm{real,}\min} \cdot \mathrm{factor}) \\
-                        \\ \boldsymbol{V_{\mathrm{escalado}}} & \boldsymbol{= V_{\mathrm{real}} \cdot \mathrm{factor} + \mathrm{offset}}
-                    \end{aligned}
+                    V_{\mathrm{escalado}} = V_{\mathrm{real}} \cdot \mathrm{factor} + \mathrm{offset}
                 \end{equation*}
             \end{block}
         \end{column}
@@ -388,8 +379,6 @@
             \end{block}
         \end{column}
     \end{columns}
-    \vspace{1em}
-    \textbf{Programa} para \textbf{precalcular} datos de neurona \textbf{modelo} $\to$ \textbf{no se repite}
 \end{frame}
 
 
@@ -404,7 +393,7 @@
         \item \textbf{Sin esperas} de tiempo real $\to$ \textbf{veloz}
         \item Registro de \textbf{neurona PD de ganglio estomatogástrico de crustáceo} (\textit{bursting} de \textbf{CPG})
         \item Integrador \textbf{Runge-Kutta} $\to$ equilibrio \textbf{eficiencia-coste}
-        \item \textbf{Evals. deterministas} (mismo interval. de reg. y reinicio de vars.) $\to$ \textbf{ruido fijo y reducido} en BO
+        \item \textbf{Evals. deterministas} (mismo. interval. de reg. y reinicio de vars.) $\to$ \textbf{ruido fijo y reducido} en BO
         \item Lib. de modelos \textbf{Neun} $\to$ fácil cambio de modelos
     \end{itemize}
 \end{frame}
@@ -431,7 +420,6 @@
     \begin{itemize}
         \item Módulo \textbf{RTXI 2.3} (lab.)
         \item \textbf{Módulo sináptico}, no solo parametriza
-        \item \textbf{Implementación propia de modelo} para calcular solo corrientes \textbf{seleccionadas} $\to$ \textbf{eficiencia}, crítica en \textbf{tiempo real}
         \item $\boldsymbol{dt}$ \textbf{pequeño, propio y sin submuestreo/escalado temporal}. Estable porque $m_{\mathrm{slow}}$ es lineal en su EDO.
         \item \textbf{Evals. no deterministas} (dist. interval.) $\to$ \textbf{ruido moderado y optimizable} y \textbf{\textit{jitter} bajo} (no explotar ruido) en BO
     \end{itemize}
@@ -467,8 +455,11 @@
     \begin{itemize}
         \item $\boldsymbol{I_{\mathrm{fast}}}$ \textbf{+} $\boldsymbol{I_{\mathrm{slow}}}$
         \item \textbf{50 muestras iniciales + 350 iteraciones = 400 evals.} $\to$ \textbf{suficiente} y \textbf{no excesivo}
-        \item \textbf{Evals.} de $\boldsymbol{\sim 5}$ \textbf{\textit{bursts}}
-        \item Promedio de \textbf{20 ejecuciones} $\to$ \textbf{rigurosidad estadística}
+        \item \textbf{Veloz}
+              \begin{itemize}
+                  \item[] $\to$ \textbf{Evals.} de $\boldsymbol{\sim 5}$ \textbf{\textit{bursts}}
+                  \item[] $\to$ Promedio de \textbf{20 ejecuciones} $\to$ \textbf{rigurosidad estadística}
+              \end{itemize}
         \item \textbf{Rangos de corrientes objetivo suficientes} (fase/antifase) y \textbf{no excesivos}
     \end{itemize}
 \end{frame}
@@ -539,7 +530,6 @@
         \item Parámetros:
               \begin{itemize}
                   \item $\boldsymbol{g_{\mathrm{fast}} < g_{\mathrm{fast}}}$ porque la \textbf{amplitud de \textit{spikes} $<$ amplitud onda lenta}
-                  \item $\boldsymbol{k_1 < k_2}$
                   \item \textbf{\textit{Parameter slopiness}}:
                         \begin{itemize}
                             \item $k_{1/2}$ con \textbf{alta variabilidad}
@@ -556,8 +546,11 @@
     \begin{itemize}
         \item $\boldsymbol{I_{\mathrm{fast}}}$ en \textbf{un sentido} e $\boldsymbol{I_{\mathrm{slow}}}$ en \textbf{otro} $\to$ \textbf{dimensionalidad razonable}
         \item \textbf{Dos neuronas HR}, con \textbf{periodo de \textit{burst} real}
-        \item $\boldsymbol{2,2}$\,\textbf{s (tiempo real) estabilización + eval.} (\textbf{evals. de} $\boldsymbol{\sim 1}$ \textbf{periodo de \textit{burst}}, \textbf{eficiente} pero \textbf{suficiente})
-        \item \textit{spikes} de HR anchos $\to$ Frec. de corte mayor
+        \item \textbf{Lento}
+              \begin{itemize}
+                  \item[] $\to$ \textbf{Evals. de} $\boldsymbol{\sim 1}$ \textbf{periodo de \textit{burst}} (\textbf{suficiente})
+                  \item[] $\to$ \textbf{Sin promedios}
+              \end{itemize}
         \item \textbf{Sin promedios} (mucho tiempo)
     \end{itemize}
 \end{frame}
@@ -631,7 +624,7 @@
                             \item Logran \textbf{corrientes realistas} (reflejan \textbf{\textit{spikes}} y \textbf{onda lenta} de $\boldsymbol{V_{\mathrm{pre}}}$ de forma separada) \textbf{que causen dinámicas de acoplamiento} (fase/antifase)
                         \end{itemize}
                         haciéndolo la \textbf{\textit{online} sin afectar a tiempo real estricto}.\\[0.2em]
-                        Ideal para \textbf{circuitos neuronales biohíbridos}.
+                        Adecuado para \textbf{circuitos neuronales biohíbridos}.
               \end{itemize}
         \item Código disponible
     \end{itemize}
