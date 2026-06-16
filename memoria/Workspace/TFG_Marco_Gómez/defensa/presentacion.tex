@@ -132,7 +132,7 @@
     \begin{itemize}
         \item Útiles para \textbf{investigación}
         \item Interacción mediante \textbf{modelos sinápticos computacionales}, cuyos \textbf{parámetros} definen dinámica de acomplamiento.\\[0.5em]
-        Modelo estudiado: \textbf{sinapsis química gradual de Golowasch}
+              Modelo estudiado: \textbf{sinapsis química gradual de Golowasch}
         \item \textbf{\textit{Dynamic Clamp}}: lazo cerrado
     \end{itemize}
 \end{frame}
@@ -158,15 +158,15 @@
     \begin{table}
         \centering
         \small
-        \begin{tabular}{l *{3}{>{\centering\arraybackslash}m{2.6cm}}}
+        \begin{tabular}{l *{3}{>{\centering\arraybackslash}m{2.5cm}}}
             \toprule
-            \textbf{Alg.}                      & \textbf{Eficiencia en núm. de evals.} & \textbf{Anti-\textit{parameter sloppiness}}    & \textbf{Converg. global}                   \\
+            \textbf{Alg.}                                & \textbf{Eficiencia en núm. de evals.}     & \textbf{Anti-\textit{parameter sloppiness}}    & \textbf{Converg. global}                       \\
             \midrule
-            Nelder-Mead                             & Media                                         & \textcolor{red!70!black}{\ding{55}}            & \textcolor{red!70!black}{\ding{55}}            \\
-            Algoritmos genéticos                    & \textcolor{red!70!black}{Baja}                & \textcolor{red!70!black}{\ding{55}}            & \textcolor{green!50!black}{\ding{51}}          \\
-            PSO                                     & \textcolor{red!70!black}{Baja}                & \textcolor{red!70!black}{\ding{55}}            & \textcolor{green!50!black}{\ding{51}}          \\
-            CMA-ES                                  & \textcolor{red!70!black}{Baja}                & \textcolor{green!50!black}{\ding{51}}          & \textcolor{green!50!black}{\ding{51}}          \\
-            \textbf{\textit{Bayesian Optimization} (BO)} & \textcolor{green!50!black}{\textbf{Alta}}     & \textcolor{green!50!black}{\textbf{\ding{51}}} & \textcolor{green!50!black}{\textbf{\ding{51}}} \\
+            Nelder-Mead                                  & Media                                     & \textcolor{red!70!black}{\ding{55}}            & \textcolor{red!70!black}{\ding{55}}            \\
+            Algoritmos genéticos                         & \textcolor{red!70!black}{Baja}            & \textcolor{red!70!black}{\ding{55}}            & \textcolor{green!50!black}{\ding{51}}          \\
+            PSO                                          & \textcolor{red!70!black}{Baja}            & \textcolor{red!70!black}{\ding{55}}            & \textcolor{green!50!black}{\ding{51}}          \\
+            CMA-ES                                       & \textcolor{red!70!black}{Baja}            & \textcolor{green!50!black}{\ding{51}}          & \textcolor{green!50!black}{\ding{51}}          \\
+            \textbf{\textit{Bayesian Optimization} (BO)} & \textcolor{green!50!black}{\textbf{Alta}} & \textcolor{green!50!black}{\textbf{\ding{51}}} & \textcolor{green!50!black}{\textbf{\ding{51}}} \\
             \bottomrule
         \end{tabular}
     \end{table}
@@ -208,10 +208,8 @@
 
 
 \begin{frame}
-    \vfill
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{hindmarsh-rose_modified}
-    \vfill
 \end{frame}
 
 
@@ -219,29 +217,29 @@
     \textbf{Altas frec./\textit{spikes} de} $\boldsymbol{V_{\mathrm{pre}}}$ \\[0.8em]
     \scriptsize
     \begin{equation*}
-    \boxed{\begin{aligned}
-        \boldsymbol{I_{\mathrm{fast}}} &= g_{\mathrm{fast}} \cdot \sigma_{\mathrm{fast}}(V_{\mathrm{pre}}) \cdot (V_{\mathrm{post}} - E_{\mathrm{syn}}) \\
-        \sigma_{\mathrm{fast}}(V_{\mathrm{pre}}) &= \frac{1}{1 + \exp[ s_{\mathrm{fast}} \cdot (V_{\mathrm{fast}} - V_{\mathrm{pre}}) ]}
-    \end{aligned}}
+        \boxed{\begin{aligned}
+                \boldsymbol{I_{\mathrm{fast}}}           & = g_{\mathrm{fast}} \cdot \sigma_{\mathrm{fast}}(V_{\mathrm{pre}}) \cdot (V_{\mathrm{post}} - E_{\mathrm{syn}}) \\
+                \sigma_{\mathrm{fast}}(V_{\mathrm{pre}}) & = \frac{1}{1 + \exp[ s_{\mathrm{fast}} \cdot (V_{\mathrm{fast}} - V_{\mathrm{pre}}) ]}
+            \end{aligned}}
     \end{equation*}
 
     \begin{center}
-    \setlength{\tabcolsep}{2pt}
-    \begin{tabular}{|l|>{\raggedright\arraybackslash}m{3.4cm}|>{\raggedright\arraybackslash}m{2.6cm}|l|l|}
-        \hline
-        \textbf{Parámetro}       & \textbf{Descripción}                                                                                                                 & \textbf{Escala con}                                                  & \textbf{Unidad}           & \textbf{Valores interesantes}                                         \\
-        \hline
-        \rowcolor{azulclaro}
-        $g_{\mathrm{fast}}$      & Conductancia, controla amplitud                                                                               & Rango $V_{\mathrm{post}}$ inv., rango $I_{\mathrm{fast}}$ objetivo      & $\mathrm{\mu S}$          &                                                                       \\
-        \hline
-        $E_{\mathrm{syn}}$       & Potencial de inversión, controla excitación/inhibición (fase/antifase) mediante signo      & Rango $V_{\mathrm{post}}$                                         & mV                        & \makecell[l]{Alejado de rango $V_{\mathrm{post}}$                 \\\\$>$ rango $V_{\mathrm{post}}$: excitación/fase\\$<$ rango $V_{\mathrm{post}}$: inhibición/antifase} \\
-        \hline
-        \rowcolor{azulclaro}
-        $s_{\mathrm{fast}}$      & Pendiente sigmoide                                                                                                                   & Rango $V_{\mathrm{pre}}$ inv.                                     & $\mathrm{mV}^{-1}$        & $s_{\mathrm{fast}} > s_{\mathrm{slow}}$                               \\
-        \hline
-        $V_{\mathrm{fast}}$      & Umbral sigmoide                                                                                                                      & Rango $V_{\mathrm{pre}}$                                          & mV                        & Valores altos $V_{\mathrm{pre}}$                                   \\
-        \hline
-    \end{tabular}
+        \setlength{\tabcolsep}{2pt}
+        \begin{tabular}{|l|>{\raggedright\arraybackslash}m{3.4cm}|>{\raggedright\arraybackslash}m{2.6cm}|l|l|}
+            \hline
+            \textbf{Parámetro}  & \textbf{Descripción}                                                                  & \textbf{Escala con}                                                & \textbf{Unidad}    & \textbf{Valores interesantes}                     \\
+            \hline
+            \rowcolor{azulclaro}
+            $g_{\mathrm{fast}}$ & Conductancia, controla amplitud                                                       & Rango $V_{\mathrm{post}}$ inv., rango $I_{\mathrm{fast}}$ objetivo & $\mathrm{\mu S}$   &                                                   \\
+            \hline
+            $E_{\mathrm{syn}}$  & Potencial de inversión, controla excitación/inhibición (fase/antifase) mediante signo & Rango $V_{\mathrm{post}}$                                          & mV                 & \makecell[l]{Alejado de rango $V_{\mathrm{post}}$ \\\\$>$ rango $V_{\mathrm{post}}$: excitación/fase\\$<$ rango $V_{\mathrm{post}}$: inhibición/antifase} \\
+            \hline
+            \rowcolor{azulclaro}
+            $s_{\mathrm{fast}}$ & Pendiente sigmoide                                                                    & Rango $V_{\mathrm{pre}}$ inv.                                      & $\mathrm{mV}^{-1}$ & $s_{\mathrm{fast}} > s_{\mathrm{slow}}$           \\
+            \hline
+            $V_{\mathrm{fast}}$ & Umbral sigmoide                                                                       & Rango $V_{\mathrm{pre}}$                                           & mV                 & Valores altos $V_{\mathrm{pre}}$                  \\
+            \hline
+        \end{tabular}
     \end{center}
 \end{frame}
 
@@ -249,30 +247,30 @@
     \textbf{Bajas frec. de} $\boldsymbol{V_{\mathrm{pre}}}$ \\[0.8em]
     \small
     \begin{equation*}
-    \boxed{\begin{aligned}
-        \boldsymbol{I_{\mathrm{slow}}}              & = g_{\mathrm{slow}} \cdot m_{\mathrm{slow}} \cdot (V_{\mathrm{post}} - E_{\mathrm{syn}})                                                             \\
-        \boldsymbol{\frac{d m_{\mathrm{slow}}}{dt}} & \boldsymbol{= k_1 \cdot \sigma_{\mathrm{slow}}(V_{\mathrm{pre}}) \cdot (1 - m_{\mathrm{slow}}) - k_2 \cdot m_{\mathrm{slow}}} \\
-        \sigma_{\mathrm{slow}}(V_{\mathrm{pre}}) &= \frac{1}{1 + \exp[ s_{\mathrm{slow}} \cdot (V_{\mathrm{slow}} - V_{\mathrm{pre}}) ]}
-    \end{aligned}}
+        \boxed{\begin{aligned}
+                \boldsymbol{I_{\mathrm{slow}}}              & = g_{\mathrm{slow}} \cdot m_{\mathrm{slow}} \cdot (V_{\mathrm{post}} - E_{\mathrm{syn}})                                      \\
+                \boldsymbol{\frac{d m_{\mathrm{slow}}}{dt}} & \boldsymbol{= k_1 \cdot \sigma_{\mathrm{slow}}(V_{\mathrm{pre}}) \cdot (1 - m_{\mathrm{slow}}) - k_2 \cdot m_{\mathrm{slow}}} \\
+                \sigma_{\mathrm{slow}}(V_{\mathrm{pre}})    & = \frac{1}{1 + \exp[ s_{\mathrm{slow}} \cdot (V_{\mathrm{slow}} - V_{\mathrm{pre}}) ]}
+            \end{aligned}}
     \end{equation*}
 
     \begin{center}
-    \setlength{\tabcolsep}{2pt}
-    \begin{tabular}{|l|l|l|l|l|}
-        \hline
-        \textbf{Parámetro}       & \textbf{Descripción}                                                                                                                 & \textbf{Escala con}                                                  & \textbf{Unidad}           & \textbf{Valores interesantes}                                         \\
-        \hline
-        \rowcolor{azulclaro}
-        $s_{\mathrm{slow}}$      & Pendiente sigmoide                                                                                                                   & Rango $V_{\mathrm{pre}}$ inv.                                     & $\mathrm{mV}^{-1}$        & $s_{\mathrm{fast}} > s_{\mathrm{slow}}$ \\
-        \hline
-        $V_{\mathrm{slow}}$      & Umbral sigmoide                                                                                                                      & Rango $V_{\mathrm{pre}}$                                          & mV                        & Valores bajos $V_{\mathrm{pre}}$ \\
-        \hline
-        \rowcolor{azulclaro}
-        $k_1$                    & Tasa apertura $m_{\mathrm{slow}}$                                                                                              & Frec. de corte                                                  & $\mathrm{\text{ms}}^{-1}$ & \\
-        \hline
-        $k_2$                    & Tasa cierre $m_{\mathrm{slow}}$                                                                                                & Frec. de corte                                                  & $\mathrm{\text{ms}}^{-1}$ & \\
-        \hline
-    \end{tabular}
+        \setlength{\tabcolsep}{2pt}
+        \begin{tabular}{|l|l|l|l|l|}
+            \hline
+            \textbf{Parámetro}  & \textbf{Descripción}              & \textbf{Escala con}           & \textbf{Unidad}           & \textbf{Valores interesantes}           \\
+            \hline
+            \rowcolor{azulclaro}
+            $s_{\mathrm{slow}}$ & Pendiente sigmoide                & Rango $V_{\mathrm{pre}}$ inv. & $\mathrm{mV}^{-1}$        & $s_{\mathrm{fast}} > s_{\mathrm{slow}}$ \\
+            \hline
+            $V_{\mathrm{slow}}$ & Umbral sigmoide                   & Rango $V_{\mathrm{pre}}$      & mV                        & Valores bajos $V_{\mathrm{pre}}$        \\
+            \hline
+            \rowcolor{azulclaro}
+            $k_1$               & Tasa apertura $m_{\mathrm{slow}}$ & Frec. de corte                & $\mathrm{\text{ms}}^{-1}$ &                                         \\
+            \hline
+            $k_2$               & Tasa cierre $m_{\mathrm{slow}}$   & Frec. de corte                & $\mathrm{\text{ms}}^{-1}$ &                                         \\
+            \hline
+        \end{tabular}
     \end{center}
 \end{frame}
 
@@ -295,37 +293,37 @@
     Altas y bajas \textbf{frec. de} $\boldsymbol{V_{\mathrm{pre}}}$ como \textbf{ref. de corrientes (corrientes realistas)} $\to$ \textbf{filtro Butterworth paso bajo sobre} $\boldsymbol{V_{\mathrm{pre}}}$ (lib. KFR)
     \vspace{-1em}
     \begin{center}
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Puntuación de forma}
-                \small
-                \textbf{Coeficiente de correlación de Pearson} normalizado en $[0, 1]$:
-                \begin{itemize}
-                    \item \textbf{Antifase} $\to$ \textbf{correlación}
-                    \item \textbf{Fase} $\to$ \textbf{correlación negativa}
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Puntuación de rango}
-                \small
-                \begin{equation*}
-                    \mathrm{score}_{\mathrm{rango}} = 1 - \frac{\frac{1}{2}(|\Delta I_{\min}| + |\Delta I_{\max}|)}{d_{\max}}
-                \end{equation*}
-                \begin{itemize}
-                    \item En $\boldsymbol{[-\infty, 1]}$, normalmente $\ge 0$
-                    \item \textbf{Extremos objetivo}:
-                          \begin{itemize}
-                              \small
-                              \item Si \textbf{una componente de corriente}: usuario
-                              \item Si \textbf{ambas}: usuario, escalados con ref. (componente rápida con amplitud; lenta, amplitud + offset)
-                          \end{itemize}
-                \end{itemize}
-            \end{block}
-        \end{column}
-    \end{columns}
-    \vspace{0.8em}
-    \fcolorbox{azulprimario}{azulclaro}{Puntuación = media}
+        \begin{columns}[t]
+            \begin{column}{0.48\textwidth}
+                \begin{block}{Puntuación de forma}
+                    \small
+                    \textbf{Coeficiente de correlación de Pearson} normalizado en $[0, 1]$:
+                    \begin{itemize}
+                        \item \textbf{Antifase} $\to$ \textbf{correlación}
+                        \item \textbf{Fase} $\to$ \textbf{correlación negativa}
+                    \end{itemize}
+                \end{block}
+            \end{column}
+            \begin{column}{0.48\textwidth}
+                \begin{block}{Puntuación de rango}
+                    \small
+                    \begin{equation*}
+                        \mathrm{score}_{\mathrm{rango}} = 1 - \frac{\frac{1}{2}(|\Delta I_{\min}| + |\Delta I_{\max}|)}{d_{\max}}
+                    \end{equation*}
+                    \begin{itemize}
+                        \item En $\boldsymbol{[-\infty, 1]}$, normalmente $\ge 0$
+                        \item \textbf{Extremos objetivo}:
+                              \begin{itemize}
+                                  \small
+                                  \item Si \textbf{una componente de corriente}: usuario
+                                  \item Si \textbf{ambas}: usuario, escalados con ref. (componente rápida con amplitud; lenta, amplitud + offset)
+                              \end{itemize}
+                    \end{itemize}
+                \end{block}
+            \end{column}
+        \end{columns}
+        \vspace{0.8em}
+        \fcolorbox{azulprimario}{azulclaro}{Puntuación = media}
     \end{center}
 \end{frame}
 
@@ -377,8 +375,8 @@
                 \vspace{-1em}
                 \begin{equation*}
                     \begin{aligned}
-                        \mathrm{factor}       & = \frac{\Delta V_{\mathrm{model}}}{\Delta V_{\mathrm{real}}}               \\
-                        \mathrm{offset}       & = V_{\mathrm{model,}\min} - (V_{\mathrm{real,}\min} \cdot \mathrm{factor}) \\
+                        \mathrm{factor} & = \frac{\Delta V_{\mathrm{model}}}{\Delta V_{\mathrm{real}}}               \\
+                        \mathrm{offset} & = V_{\mathrm{model,}\min} - (V_{\mathrm{real,}\min} \cdot \mathrm{factor}) \\
                         \\ \boldsymbol{V_{\mathrm{escalado}}} & \boldsymbol{= V_{\mathrm{real}} \cdot \mathrm{factor} + \mathrm{offset}}
                     \end{aligned}
                 \end{equation*}
@@ -395,11 +393,9 @@
 \end{frame}
 
 
-\begin{frame}{Implementación \textit{offline}}
-    \vfill
+\begin{frame}{Implementación \textit{offline}: esquema}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{esquema_neuronas_offline}
-    \vfill
 \end{frame}
 
 
@@ -425,11 +421,9 @@
 \end{frame}
 
 
-\begin{frame}{Implementación \textit{online}}
-    \vfill
+\begin{frame}{Implementación \textit{online}: esquema}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{esquema_neuronas_online}
-    \vfill
 \end{frame}
 
 
@@ -453,19 +447,15 @@
 \end{frame}
 
 
-\begin{frame}{Esquema de módulos: dos neuronas modelo}
-    \vfill
+\begin{frame}{Implementación \textit{online}: esquema de módulos para dos neuronas modelo}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{esquema_modulos_online_modelo}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Esquema de módulos: neurona modelo + viva}
-    \vfill
+\begin{frame}{Implementación \textit{online}: esquema de módulos para neurona modelo + viva}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{esquema_modulos_online_viva}
-    \vfill
 \end{frame}
 
 
@@ -473,210 +463,205 @@
 
 
 
-\begin{frame}{Resultados de la implementación \textit{offline}}
-    \scriptsize
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            Configuraciones:
-            \begin{itemize}
-                \item $\boldsymbol{I_{\mathrm{fast}}}$ e $\boldsymbol{I_{\mathrm{slow}}}$ a la vez
-                \item \textbf{50 muestras iniciales + 350 iteraciones = 400 evals.} $\to$ \textbf{suficiente} dada la dimensionalidad (9) y \textbf{no excesivo}
-                \item Estabilización de $4000$\,ms y \textbf{eval.} y observación de $7000$\,ms ($\boldsymbol{\sim 5}$ \textbf{\textit{bursts}}). Mucho, pero no hay que esperar eso realmente
-                \item Frecuencia de corte de $0{,}024$\,kHz
-                \item Promedio de \textbf{20 ejecuciones} $\to$ \textbf{rigurosidad estadística}
-                \item \textbf{Rangos de corriente objetivo}:
-                      \begin{itemize}
-                          \scriptsize
-                          \item \textbf{Antifase}: $\boldsymbol{[-1{,}4; -0{,}4]}$ u. a.
-                          \item \textbf{Fase}: $\boldsymbol{[0{,}2; 0{,}8]}$ u. a.
-                      \end{itemize}
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            Resultados:
-            \begin{itemize}
-                \item Tiempos:
-                      \begin{itemize}
-                          \scriptsize
-                          \item \textbf{Antifase}: $\boldsymbol{29{,}57 \pm 9{,}27}$\,\textbf{s}
-                          \item \textbf{Fase}: $\boldsymbol{32{,}2 \pm 6{,}77}$\,\textbf{s}
-                      \end{itemize}
-                \item Parámetros:
-                      \begin{itemize}
-                          \scriptsize
-                          \item $\boldsymbol{g_{\mathrm{fast}} < g_{\mathrm{fast}}}$ porque la \textbf{amplitud de los \textit{spikes} $<$ la de la onda lenta}
-                          \item $\boldsymbol{k_1 < k_2}$, aunque ambas con \textbf{alta variabilidad} $\to$ \textbf{\textit{parameter sloppiness}}
-                          \item $V_{\mathrm{slow}}$ con \textbf{media inesperada y alta variabilidad} $\to$ \textbf{\textit{parameter sloppiness}} (por el pequeño rango de $s_{\mathrm{slow}}$)
-                          \item El resto, según lo esperado de forma estable
-                      \end{itemize}
-            \end{itemize}
-        \end{column}
-    \end{columns}
+\begin{frame}{Resultados implementación \textit{offline}: configs.}
+    \begin{itemize}
+        \item $\boldsymbol{I_{\mathrm{fast}}}$ \textbf{+} $\boldsymbol{I_{\mathrm{slow}}}$
+        \item \textbf{50 muestras iniciales + 350 iteraciones = 400 evals.} $\to$ \textbf{suficiente} y \textbf{no excesivo}
+        \item \textbf{Evals.} de $\boldsymbol{\sim 5}$ \textbf{\textit{bursts}}
+        \item Promedio de \textbf{20 ejecuciones} $\to$ \textbf{rigurosidad estadística}
+        \item \textbf{Rangos de corrientes objetivo suficientes} (fase/antifase) y \textbf{no excesivos}
+    \end{itemize}
 \end{frame}
 
 
-\begin{frame}{Convergencia de la implementación \textit{offline}: antifase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{offline}: convergencia para antifase}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{bo_history_offline_syn_i_antiphase_acc_max}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Convergencia de la implementación \textit{offline}: fase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{offline}: convergencia para fase}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{bo_history_offline_syn_i_phase_acc_max}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Puntuaciones de la implementación \textit{offline}: fase: antifase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{offline}: puntuaciones para antifase}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{bo_history_offline_syn_i_antiphase_avg_scores}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Puntuaciones de una ejecución de la implementación \textit{offline}: antifase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{offline}: puntuaciones de una ejecución para antifase}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{bo_history_offline_syn_i_antiphase_scores}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Dinámica resultante de la implementación \textit{offline}: antifase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{offline}: dinámica result. para antifase}
     \centering
     \vspace{-0.3em}
-    \includegraphics[height=0.88\textheight, keepaspectratio]{offline_syn_i_antiphase}
-    \vfill
-\end{frame}
-
-
-\begin{frame}{Dinámica resultante de la implementación \textit{offline}: fase}
-    \vfill
-    \centering
-    \vspace{-0.3em}
-    \includegraphics[height=0.88\textheight, keepaspectratio]{offline_syn_i_phase}
-    \vfill
-\end{frame}
-
-
-\begin{frame}{Resultados de la implementación \textit{online}}
-    \scriptsize
-    \begin{columns}[t]
-        \begin{column}{0.48\textwidth}
-            Configuraciones:
-            \begin{itemize}
-                \item $\boldsymbol{I_{\mathrm{fast}}}$ en un sentido e $\boldsymbol{I_{\mathrm{slow}}}$ en otro $\to$ dimensionalidad razonable (10)
-                \item \textbf{Ambas neuronas modelo}, con periodo de \textit{burst} de $\boldsymbol{1{,}6}$\,\textbf{s}
-                \item Estabilización de $\boldsymbol{400}$\,\textbf{ms} y \textbf{eval.} de $\boldsymbol{1800}$\,\textbf{ms} ($\boldsymbol{\sim 1}$ \textbf{periodo de \textit{burst}}). \textbf{Tiempo real}
-                \item Periodo de RTXI: $\boldsymbol{1}$\,\textbf{kHz}
-                \item Frecuencia de corte de $0{,}002$\,kHz (\textit{spikes} de la Hindmarsh-Rose anchos)
-                \item \textbf{Sin promedios} por los altos tiempos
-                \item \textbf{Rangos de corriente objetivo}:
-                      \begin{itemize}
-                          \scriptsize
-                          \item \textbf{Antifase}: $\boldsymbol{[-1{,}0; -0{,}0]}$ u. a. para $\boldsymbol{I_{\mathrm{fast}}}$, $\boldsymbol{[-1{,}4; -0{,}4]}$ u. a. para $\boldsymbol{I_{\mathrm{slow}}}$
-                          \item \textbf{Fase}: $\boldsymbol{[0{,}0; 0{,}6]}$ u. a. para $\boldsymbol{I_{\mathrm{fast}}}$, $\boldsymbol{[0{,}2; 0{,}8]}$ u. a. para $\boldsymbol{I_{\mathrm{slow}}}$
-                      \end{itemize}
-            \end{itemize}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            \centering
+            \includegraphics[height=0.92\textheight, keepaspectratio]{offline_syn_i_antiphase}
         \end{column}
-        \begin{column}{0.48\textwidth}
-            Tiempos obtenidos:
+        \begin{column}{0.4\textwidth}
+            \textbf{Rango de corriente objetivo}:
             \begin{itemize}
-                \item \textbf{Antifase}: $\boldsymbol{915{,}46}$\,\textbf{s} ($\boldsymbol{\sim 15}$ \textbf{min.})
-                \item \textbf{Fase}: $\boldsymbol{934{,}14}$\,\textbf{s} ($\boldsymbol{\sim 16}$ \textbf{min.})
+                \item[] $\boldsymbol{[-1{,}4; -0{,}4]}$ u. a.
             \end{itemize}
         \end{column}
     \end{columns}
 \end{frame}
 
 
-\begin{frame}{Convergencia de la implementación \textit{online}: antifase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{offline}: dinámica result. para fase}
+    \centering
+    \vspace{-0.3em}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            \centering
+            \includegraphics[height=0.92\textheight, keepaspectratio]{offline_syn_i_phase}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \textbf{Rango de corriente objetivo}:
+            \begin{itemize}
+                \item[] $\boldsymbol{[0{,}2; 0{,}8]}$ u. a.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Resultados implementación \textit{offline}}
+    \begin{itemize}
+        \item Tiempos de $\boldsymbol{\sim 30}$ \textbf{s} $\to$ \textbf{viable}
+        \item Parámetros:
+              \begin{itemize}
+                  \item $\boldsymbol{g_{\mathrm{fast}} < g_{\mathrm{fast}}}$ porque la \textbf{amplitud de \textit{spikes} $<$ amplitud onda lenta}
+                  \item $\boldsymbol{k_1 < k_2}$
+                  \item \textbf{\textit{Parameter slopiness}}:
+                        \begin{itemize}
+                            \item $k_{1/2}$ con \textbf{alta variabilidad}
+                            \item $V_{\mathrm{slow}}$ con \textbf{media inesperada} y \textbf{alta variabilidad} (por pequeño rango de $s_{\mathrm{slow}}$)
+                        \end{itemize}
+                  \item Resto, según lo esperado
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Resultados implementación \textit{online}: configs.}
+    \begin{itemize}
+        \item $\boldsymbol{I_{\mathrm{fast}}}$ en \textbf{un sentido} e $\boldsymbol{I_{\mathrm{slow}}}$ en \textbf{otro} $\to$ \textbf{dimensionalidad razonable}
+        \item \textbf{Dos neuronas HR}, con \textbf{periodo de \textit{burst} real}
+        \item $\boldsymbol{2,2}$\,\textbf{s (tiempo real) estabilización + eval.} (\textbf{evals. de} $\boldsymbol{\sim 1}$ \textbf{periodo de \textit{burst}}, \textbf{eficiente} pero \textbf{suficiente})
+        \item \textit{spikes} de HR anchos $\to$ Frec. de corte mayor
+        \item \textbf{Sin promedios} (mucho tiempo)
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Resultados implementación \textit{online}: convergencia para antifase}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{bo_history_rtxi_syn_model_ifast_islow_antiphase_acc_max}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Convergencia de la implementación \textit{online}: fase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{online}: convergencia para fase}
     \centering
     \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{bo_history_rtxi_syn_model_ifast_islow_phase_acc_max}
-    \vfill
 \end{frame}
 
 
-\begin{frame}{Dinámica resultante de la implementación \textit{online}: antifase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{online}: dinámica result. para antifase}
     \centering
     \vspace{-0.3em}
-    \includegraphics[width=\textwidth, height=0.88\textheight, keepaspectratio]{rtxi_syn_model_ifast_islow_antiphase}
-    \vfill
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.92\textheight, keepaspectratio]{rtxi_syn_model_ifast_islow_antiphase}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \textbf{Rangos de corrientes objetivo}:
+            \begin{itemize}
+                \item $\boldsymbol{I_{\mathrm{fast}}}$: $\boldsymbol{[-1{,}0; -0{,}0]}$ u. a.
+                \item $\boldsymbol{I_{\mathrm{slow}}}$: $\boldsymbol{[-1{,}4; -0{,}4]}$ u. a.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 
-\begin{frame}{Dinámica resultante de la implementación \textit{online}: fase}
-    \vfill
+\begin{frame}{Resultados implementación \textit{online}: dinámica result. para fase}
     \centering
     \vspace{-0.3em}
-    \includegraphics[width=\textwidth, height=0.88\textheight, keepaspectratio]{rtxi_syn_model_ifast_islow_phase}
-    \vfill
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.92\textheight, keepaspectratio]{rtxi_syn_model_ifast_islow_phase}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \textbf{Rangos de corrientes objetivo}:
+            \begin{itemize}
+                \item $\boldsymbol{I_{\mathrm{fast}}}$: $\boldsymbol{[0{,}0; 0{,}6]}$ u. a.
+                \item $\boldsymbol{I_{\mathrm{slow}}}$: $\boldsymbol{[0{,}2; 0{,}8]}$ u. a.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Resultados implementación \textit{online}: tiempos}
+    $\boldsymbol{\sim 16}$ \textbf{s} $\to$ \textbf{viable}
 \end{frame}
 
 
-\section{Conclusiones y trabajo futuro}
+\section{Conclusiones}
 
 
 
 \begin{frame}{Conclusiones}
-    \small
     \begin{itemize}
-        \item \textbf{Parametrización automática} del modelo de sinapsis química gradual de \textbf{Golowasch et al.} mediante \textbf{BO}
-        \item \textbf{Función de eval.} (forma + rango de corriente) que orienta \textbf{eficazmente} la búsqueda
-        \item Espacio de búsqueda definido \textbf{cuidadosamente}:
+        \item Los \textbf{objetivos se han cumplido}:
               \begin{itemize}
-                  \item Rangos paramétricos \textbf{dinámicos}
-                  \item Estrategias \textbf{anti-\textit{parameter sloppiness}} (\textit{kernel} SE-ARD, reparametrización $R$, escalas logarítmicas)
+                  \item[] Implementaciones \textbf{\textit{offline} y \textit{online}} (\textbf{BO y sus configs + configs. de espacio de búsqueda + función de eval. + configs. extra})
+                        \begin{itemize}
+                            \item \textbf{Convergen adecuadamente} y en \textbf{tiempos viables}
+                            \item Logran \textbf{corrientes realistas} (reflejan \textbf{\textit{spikes}} y \textbf{onda lenta} de $\boldsymbol{V_{\mathrm{pre}}}$ de forma separada) \textbf{que causen dinámicas de acoplamiento} (fase/antifase)
+                        \end{itemize}
+                        haciéndolo la \textbf{\textit{online} sin afectar a tiempo real estricto}.\\[0.2em]
+                        Ideal para \textbf{circuitos neuronales biohíbridos}.
               \end{itemize}
-        \item Implementaciones \textbf{\textit{offline} y \textit{online}} que conseguían \textbf{corrientes realistas} (reflejan \textbf{\textit{spikes}} y \textbf{onda lenta} de $\boldsymbol{V_{\mathrm{pre}}}$ de forma separada) y \textbf{dinámicas de acoplamiento} (fase y antifase),  \textbf{convergiendo adecuadamente} en \textbf{tiempos viables} ($\boldsymbol{\sim 30}$ \textbf{s \textit{offline}} y $\boldsymbol{< 16}$ \textbf{min. \textit{online}}) con \textbf{400 evals.}\\[0.5em]
-              Implementación \textbf{\textit{online} sin bloqueos}, necesario para el tiempo real estricto
-        \item Código disponible para el GNB de la UAM
+        \item Código disponible
     \end{itemize}
 \end{frame}
 
 
-\begin{frame}{Limitaciones y trabajo futuro}
+\begin{frame}{Conclusiones}
     \textbf{Limitaciones:}
     \begin{itemize}
-        \item Módulo específico para \textbf{RTXI 2.3}
-        \item \textbf{Imprecisiones menores en extremos} del rango de corriente
+        \item Módulo de \textbf{RTXI 2.3} $\to$ \textbf{necesaria adaptación para últimas versiones}
+        \item \textbf{Imprecisiones menores en extremos} de rango de corriente resultado respecto a objetivo
     \end{itemize}
     \vspace{0.8em}
     \textbf{Trabajo futuro:}
     \begin{itemize}
-        \item \textbf{Validación con neuronas biológicas} (GNB)
-        \item Optimizar \textbf{ambas componentes en ambas direcciones} en la versión \textit{online}
-        \item Funciones de eval. \textbf{con información temporal más fina}
-        \item Extensión a \textbf{nuevos modelos} neuronales y sinápticos
+        \item \textbf{Validación de implementación online con neuronas vivas} (GNB)
+        \item Optimizar \textbf{ambas componentes en ambas direcciones} en implementación \textit{online}
+        \item Funciones de \textbf{eval. con información temporal más fina}
+        \item Adaptación a \textbf{otros modelos} neuronales y sinápticos
     \end{itemize}
 \end{frame}
 
 
 \begin{frame}[plain]
-    \vfill
     \centering
     {\LARGE\bfseries\textcolor{azuloscuro}{Muchas gracias por su atención}}\\[2em]
     {\large\textcolor{azuloscuro}{Parametrización del modelo de sinapsis química\\para circuitos neuronales biohíbridos}}\\[2.5em]
     {\normalsize\textcolor{grisoscuro}{Marco Gómez Hernández}}\\[1.0em]
     {\scriptsize\textcolor{grismedio}{Escuela Politécnica Superior — Universidad Autónoma de Madrid}}\\[1.4em]
     {\small\textcolor{grismedio}{Tutor: Pablo Varona Martínez}}
-    \vfill
 \end{frame}
 
 \end{document}
