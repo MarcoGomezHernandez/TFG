@@ -6,15 +6,16 @@ import os
 import re
 
 label_size = 7
+axis_label_size = 14
 plt.rcParams.update({
     'font.family': 'sans-serif',
     'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
     'axes.xmargin': 0.0,
     'axes.ymargin': 0.02,
-    'axes.labelsize': label_size,
-    'xtick.labelsize': label_size,
-    'ytick.labelsize': label_size,
-    'legend.fontsize': 5,
+    'axes.labelsize': axis_label_size,
+    'xtick.labelsize': axis_label_size,
+    'ytick.labelsize': axis_label_size,
+    'legend.fontsize': 11,
 })
 
 # 1. Parser de argumentos
@@ -42,12 +43,12 @@ single_axis = args.single_axis == 1
 if args.n1_is_live == 1:
     label_n1, unit_v_n1, unit_i_n1 = "Neur. viva", "mV", "nA"
 else:
-    label_n1, unit_v_n1, unit_i_n1 = "Neur. modelo", "uds. adim.", "uds. adim."
+    label_n1, unit_v_n1, unit_i_n1 = "Neur. modelo", "u. a.", "u. a."
 
 if args.n2_is_live == 1:
     label_n2, unit_v_n2, unit_i_n2 = "Neur. viva", "mV", "nA"
 else:
-    label_n2, unit_v_n2, unit_i_n2 = "Neur. modelo", "uds. adim.", "uds. adim."
+    label_n2, unit_v_n2, unit_i_n2 = "Neur. modelo", "u. a.", "u. a."
 
 # 2. Validar que el archivo existe
 if not os.path.exists(data_path):
@@ -97,15 +98,13 @@ if 1 in modes or 2 in modes:
 n_plots = len(plots)
 heights = {1: 2.94, 2: 4.41, 3: 5.88, 4: 7.35}
 fig, axs = plt.subplots(n_plots, 1, figsize=(
-    5.88, heights[n_plots]), dpi=300, sharex=True)
+    8.0, heights[n_plots]), dpi=300, sharex=True)
 
 # Asegurar que axs sea siempre un iterable
 if n_plots == 1:
     axs = [axs]
 
-title = 'Potenciales de membrana y corriente sináptica de sinapsis química bidireccional en RTXI' if any(
-    mode != -1 for mode in modes) else 'Potenciales de membrana de sinapsis química bidireccional en RTXI'
-fig.suptitle(title, fontsize=8)
+# Título eliminado
 lw = 0.6
 ax_idx = 0
 
@@ -117,15 +116,14 @@ axs[ax_idx].plot(t, vpre12, label=f"{label_n1} (1)",
                  color='dodgerblue', linewidth=lw, alpha=0.6)
 axs[ax_idx].plot(
     t, vpost12, label=f"{label_n2} (2)", color='darkorange', linewidth=lw, alpha=0.9)
-axs[ax_idx].set_ylabel(f'Voltaje ({unit_v_n2})')
-axs[ax_idx].legend()
+axs[ax_idx].set_ylabel(f'Voltaje\n({unit_v_n2})', rotation=0, ha='center', va='center', labelpad=35)
 
 if not single_axis:
     vpre21 = get_d('vpre_21')
     vpost21 = get_d('vpost_21')
 
     ax_v_twin = axs[ax_idx].twinx()
-    ax_v_twin.set_ylabel(f'Voltaje ({unit_v_n1})')
+    ax_v_twin.set_ylabel(f'Voltaje\n({unit_v_n1})', rotation=0, ha='center', va='center', labelpad=35)
 
     axs[ax_idx].set_zorder(ax_v_twin.get_zorder() + 1)
     axs[ax_idx].patch.set_visible(False)
@@ -168,9 +166,9 @@ def plot_current(ax, name, mode_target, c_dark, c_light, lbl):
 
     # Ajuste de límites del eje izquierdo
     if show_12 and (show_21 and not use_twin):
-        ax.set_ylabel(f"{lbl} ({unit_i_n2})")
+        ax.set_ylabel(f"{lbl}\n({unit_i_n2})", rotation=0, ha='center', va='center', labelpad=35)
     elif show_12:
-        ax.set_ylabel(f"{lbl} 1->2 ({unit_i_n2})")
+        ax.set_ylabel(f"{lbl} 1->2\n({unit_i_n2})", rotation=0, ha='center', va='center', labelpad=35)
 
         # --- Eje Derecho (Twin) ---
         if show_21 and use_twin:
@@ -180,27 +178,27 @@ def plot_current(ax, name, mode_target, c_dark, c_light, lbl):
             l2 = ax_twin.plot(
                 t, d21, label="_nolegend_", color=c_light, linewidth=lw)
 
-            ax_twin.set_ylabel(f"{lbl} 2->1 ({unit_i_n1})")
+            ax_twin.set_ylabel(f"{lbl} 2->1\n({unit_i_n1})", rotation=0, ha='center', va='center', labelpad=35)
 
             ax.set_zorder(ax_twin.get_zorder() + 1)
             ax.patch.set_visible(False)
 
     elif show_21 and not use_twin:
-        ax.set_ylabel(f"{lbl} 2->1 ({unit_i_n1})")
+        ax.set_ylabel(f"{lbl} 2->1\n({unit_i_n1})", rotation=0, ha='center', va='center', labelpad=35)
 
     if lns and use_legend:
         labs = [l.get_label() for l in lns]
-        ax.legend(lns, labs)
+        ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(-0.2, 1.05))
 
 
 if 'i' in plots:
     plot_current(axs[ax_idx], 'current', 2, 'green', 'limegreen', 'I')
     ax_idx += 1
 if 'ifast' in plots:
-    plot_current(axs[ax_idx], 'ifast', 0, 'darkred', 'lightcoral', 'I_fast')
+    plot_current(axs[ax_idx], 'ifast', 0, 'darkred', 'lightcoral', 'Ifast')
     ax_idx += 1
 if 'islow' in plots:
-    plot_current(axs[ax_idx], 'islow', 1, 'purple', 'magenta', 'I_slow')
+    plot_current(axs[ax_idx], 'islow', 1, 'purple', 'magenta', 'Islow')
     ax_idx += 1
 
 axs[-1].set_xlabel('Tiempo (ms)')
